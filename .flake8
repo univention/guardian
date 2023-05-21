@@ -1,0 +1,11 @@
+[flake8]
+max-line-length = 105
+
+# https://www.flake8rules.com/
+#
+# E203: Whitespace before ':' (allowed by black)
+# E231: Missing whitespace after ',', ';', or ':' (allowed by black)
+# W503: Line break occurred before a binary operator (produced by black, flake8 will soon change to
+#       recommended this instead of treating it as an error)
+
+ignore = E203,E231,W503

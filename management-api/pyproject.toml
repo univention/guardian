@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "management-api"
+version = "0.1.0"
+description = ""
+authors = ["Ole Schwiegert <schwiegert@univention.de>"]
+readme = "README.md"
+packages = [{include = "guardian_management_api"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
