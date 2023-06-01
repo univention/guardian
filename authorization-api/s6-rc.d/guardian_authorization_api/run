@@ -1,3 +1,4 @@
-#!/bin/sh
+#!/command/with-contenv bash
 
-exec s6-setuidgid guardian with-contenv gunicorn --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 guardian_authorization_api.main:app
+cd $SERVICE_DIR
+exec s6-setuidgid $SERVICE_USER gunicorn --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 guardian_authorization_api.main:app

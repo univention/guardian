@@ -24,6 +24,8 @@ FROM docker-registry.knut.univention.de/python:3.11-slim
 
 ARG commit
 ARG date
+ARG service_user="guardian"
+ARG service_dir="/guardian_service_dir"
 
 LABEL "description"="Guardian Authorization API." \
     "release date"="$date" \
@@ -32,7 +34,10 @@ LABEL "description"="Guardian Authorization API." \
 WORKDIR /app
 ENTRYPOINT ["/init"]
 
-RUN adduser --no-create-home guardian
+ENV SERVICE_USER $service_user
+ENV SERVICE_DIR $service_dir
+
+RUN adduser --no-create-home $service_user && mkdir -p $service_dir && chown $service_user:$service_user $service_dir
 
 # Install s6
 COPY --from=s6_builder /_s6 /

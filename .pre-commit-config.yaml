@@ -25,7 +25,7 @@ repos:
     -   id: mypy
         exclude: "docs/"
         args: []
-        additional_dependencies: [fastapi==0.95.2]
+        additional_dependencies: [fastapi==0.95.2, loguru==0.7.0]
 - repo: https://github.com/jackdewinter/pymarkdown
   rev: v0.9.9
   hooks:
