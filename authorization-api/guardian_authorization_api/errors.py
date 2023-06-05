@@ -6,6 +6,10 @@ class SettingTypeError(TypeError):
     ...
 
 
+class SettingFormatError(RuntimeError):
+    ...
+
+
 class ObjectNotFoundError(ValueError):
     ...
 

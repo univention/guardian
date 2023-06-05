@@ -1,4 +1,4 @@
-from typing import Any, Iterable, Tuple, Type, Optional
+from typing import Any, Iterable, Tuple, Type, Optional, Callable
 
 import pytest
 from pydantic import ValidationError
@@ -48,7 +48,7 @@ class DummySettings(SettingsPort):
     async def get_setting(
         self,
         setting_name: str,
-        setting_type: SettingType,
+        setting_type: Callable[[Any], SettingType],
         default: Optional[SettingType] = None,
     ) -> SettingType:
         return default

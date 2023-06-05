@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import Optional, TypeVar, Type, Iterable, Tuple, Any
+from typing import Optional, TypeVar, Type, Iterable, Tuple, Any, Callable
 
 import loguru
 
+from .errors import SettingFormatError
 from .models.ports import PersistenceObject, ObjectType
 
-SettingType = TypeVar("SettingType", bound=Type)
+SettingType = TypeVar("SettingType")
 
 
 class BasePort(ABC):
@@ -90,29 +91,113 @@ class SettingsPort(BasePort, ABC):
     are the configuration of which adapters to initialize and potential settings the SettingsPort
     adapter itself might need.
 
+    Any setting name is an alphanumeric sequence of characters, where '.', '_' and '-' are
+    also allowed. The '.' character has special meaning and might be used by adapters to model
+    object hierarchies or similar.
+
     Notes for implementing adapters:
         - The code to fetch the settings should ideally be lazy loaded, if access to resources
           is required
         - The code to fetch settings should ideally be cached
     """
 
+    @staticmethod
+    def check_setting_name_format(setting_name: str):
+        """
+        Checks if setting_name is a valid setting name.
+
+        Only [a-zA-Z0-9.-_] is allowed.
+
+        :param setting_name: The setting name to check
+        :raises SettingFormatError: If the setting name does not follow the defined format
+        """
+        check_str = setting_name.replace("-", "").replace("_", "").replace(".", "")
+        if not check_str.isalnum():
+            raise SettingFormatError(
+                f"The requested setting '{setting_name}' does not follow the setting name format "
+                f"and thus cannot be processed."
+            )
+
     @abstractmethod
     async def get_setting(
         self,
         setting_name: str,
-        setting_type: SettingType,
+        setting_type: Callable[[Any], SettingType],
         default: Optional[SettingType] = None,
     ) -> SettingType:
         """
         This function returns a settings value.
 
+        For the standard types str, int, float and bool please use the provided
+        wrapper functions, as they might implement some special handling, that differs
+        from the builtin methods for casting to those types.
 
         :param setting_name: The name of the setting to return
-        :param setting_type: The data type the setting should have
+        :param setting_type: A callable returning a value in the desired data type when given the
+                             raw setting value
         :param default: The optional default value of the setting
         :return: The settings value
+        :raises SettingFormatError: If the requested setting name is malformed.
         :raises SettingTypeError: If a value was found, but cannot be converted to the specified type
         :raises SettingNotFoundError: If no value for the specified setting can be found and no
         default value was specified
         """
         raise NotImplementedError
+
+    async def get_int(self, setting_name: str, default: Optional[int] = None) -> int:
+        """
+        Wrapper for get_setting, where the requested type is int.
+
+        :param setting_name: The name of the setting to return
+        :param default: The optional default value of the setting
+        :return: The settings value
+        :raises SettingFormatError: If the requested setting name is malformed.
+        :raises SettingTypeError: If a value was found, but cannot be converted to the specified type
+        :raises SettingNotFoundError: If no value for the specified setting can be found and no
+        default value was specified
+        """
+        return await self.get_setting(setting_name, int, default)
+
+    async def get_float(
+        self, setting_name: str, default: Optional[float] = None
+    ) -> float:
+        """
+        Wrapper for get_setting, where the requested type is float.
+
+        :param setting_name: The name of the setting to return
+        :param default: The optional default value of the setting
+        :return: The settings value
+        :raises SettingFormatError: If the requested setting name is malformed.
+        :raises SettingTypeError: If a value was found, but cannot be converted to the specified type
+        :raises SettingNotFoundError: If no value for the specified setting can be found and no
+        default value was specified
+        """
+        return await self.get_setting(setting_name, float, default)
+
+    async def get_str(self, setting_name: str, default: Optional[str] = None) -> str:
+        """
+        Wrapper for get_setting, where the requested type is str.
+
+        :param setting_name: The name of the setting to return
+        :param default: The optional default value of the setting
+        :return: The settings value
+        :raises SettingFormatError: If the requested setting name is malformed.
+        :raises SettingTypeError: If a value was found, but cannot be converted to the specified type
+        :raises SettingNotFoundError: If no value for the specified setting can be found and no
+        default value was specified
+        """
+        return await self.get_setting(setting_name, str, default)
+
+    async def get_bool(self, setting_name: str, default: Optional[bool] = None) -> bool:
+        """
+        Wrapper for get_setting, where the requested type is bool.
+
+        :param setting_name: The name of the setting to return
+        :param default: The optional default value of the setting
+        :return: The settings value
+        :raises SettingFormatError: If the requested setting name is malformed.
+        :raises SettingTypeError: If a value was found, but cannot be converted to the specified type
+        :raises SettingNotFoundError: If no value for the specified setting can be found and no
+        default value was specified
+        """
+        return await self.get_setting(setting_name, bool, default)
