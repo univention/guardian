@@ -31,6 +31,16 @@ repos:
   rev: v0.9.9
   hooks:
     - id: pymarkdown
+      args:
+        - --disable-rules
+        - MD013,MD024,MD034
+        - scan
+        # Rules pymarkdown: https://github.com/jackdewinter/pymarkdown/blob/main/docs/rules.md
+        # Rules markdownlint: https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md
+        # MD013: Allow arbitrary line length
+        # MD024: Allow duplicate headings
+        # MD034: Allow bare URLs
+
 - repo: https://github.com/charliermarsh/ruff-pre-commit
   rev: 'v0.0.270'
   hooks:
