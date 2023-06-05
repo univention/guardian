@@ -157,7 +157,7 @@ class SettingsPort(BasePort, ABC):
             )
         else:
             raise SettingTypeError(
-                f"The requested setting type '{setting_type}' is not supported."
+                f"The requested setting type '{setting_type.__name__}' is not supported."
             )
 
     @abstractmethod

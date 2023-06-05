@@ -15,7 +15,7 @@ loguru = "^0.7.0"
 python-dotenv = "^1.0.0"
 
 [tool.poetry.plugins."guardian_authorization_api.SettingsPort"]
-"env" = "guardian_authorization_api.settings:EnvSettings"
+"env" = "guardian_authorization_api.settings:EnvSettingsAdapter"
 
 [tool.poetry.plugins."guardian_authorization_api.PersistencePort"]
 "static_data" = "guardian_authorization_api.persistence:StaticData"
