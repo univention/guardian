@@ -124,5 +124,15 @@ class TestEnvSettings:
         with pytest.raises(SettingTypeError):
             await port_instance.get_bool("SOME_STRING")
 
+    @pytest.mark.parametrize(
+        "setting_type,default", [(bool, False), (str, ""), (int, 0)]
+    )
+    @pytest.mark.asyncio
+    async def test_falsy_defaults(self, port_instance, setting_type, default):
+        assert (
+            await port_instance.get_setting("NON_EXISTENT", setting_type, default)
+            == default
+        )
+
     def test_is_singleton(self, port_instance):
         assert port_instance.is_singleton is True

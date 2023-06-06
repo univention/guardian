@@ -28,7 +28,7 @@ class EnvSettingsAdapter(SettingsPort):
         env_name = self.setting_name_to_env(setting_name)
         env_value = os.getenv(env_name, None)
         if env_value is None:
-            if default:
+            if default is not None:
                 return default
             raise SettingNotFoundError(
                 f"No value for the requested setting {setting_name} could be found."
@@ -45,7 +45,7 @@ class EnvSettingsAdapter(SettingsPort):
         env_name = self.setting_name_to_env(setting_name)
         env_value = os.getenv(env_name, None)
         if env_value is None:
-            if default:
+            if default is not None:
                 return default
             raise SettingNotFoundError(
                 f"No value for the requested setting {setting_name} could be found."
@@ -70,7 +70,7 @@ class EnvSettingsAdapter(SettingsPort):
         env_name = self.setting_name_to_env(setting_name)
         env_value = os.getenv(env_name, None)
         if env_value is None:
-            if default:
+            if default is not None:
                 return default
             raise SettingNotFoundError(
                 f"No value for the requested setting {setting_name} could be found."
