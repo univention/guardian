@@ -60,7 +60,7 @@ GUARDIAN_AUTHZ_LOGGING_STRUCTURED=0
 GUARDIAN_AUTHZ_ADAPTER_SETTINGS_PORT=env
 GUARDIAN_AUTHZ_ADAPTER_PERSISTENCE_PORT=static_data
 EOF
-docker run --rm -p 8000:8000 --mount type=bind,source="$(pwd)"/.env,target=/guardian_service_dir/.env guardian-authz:dev
+docker run --rm -p 8000:8000 --env-file .env guardian-authz:dev
 ```
 
 Alternatively you can start the service directly, without a docker container:
@@ -74,6 +74,7 @@ GUARDIAN_AUTHZ_ADAPTER_PERSISTENCE_PORT=static_data
 EOF
 poetry shell  # Or any other way to activate your virtual env for this project
 poetry install
+export $(xargs <.env)
 gunicorn --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 guardian_authorization_api.main:app
 ```
 

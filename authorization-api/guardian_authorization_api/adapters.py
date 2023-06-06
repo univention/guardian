@@ -1,4 +1,3 @@
-import os
 from collections import defaultdict
 from importlib import metadata
 from typing import Type, Optional, TypeVar, Any
@@ -39,12 +38,6 @@ class AdapterSelection(BaseSettings):
         alias="PersistencePort",
         env="GUARDIAN_AUTHZ_ADAPTER_PERSISTENCE_PORT",
     )
-
-    class Config:
-        env_file = os.getenv(
-            "GUARDIAN_AUTHZ_ENV_FILE",
-            os.path.join(os.getenv("SERVICE_DIR", ""), ".env"),
-        )
 
 
 class AdapterContainer:

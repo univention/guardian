@@ -1,4 +1,3 @@
-import os
 import sys
 from enum import Enum
 from typing import Optional
@@ -27,10 +26,6 @@ class LoggingSettings(BaseSettings):
 
     class Config:
         env_prefix = "GUARDIAN_AUTHZ_LOGGING_"
-        env_file = os.getenv(
-            "GUARDIAN_AUTHZ_ENV_FILE",
-            os.path.join(os.getenv("SERVICE_DIR", ""), ".env"),
-        )
 
 
 def configure_logger(logging_settings: Optional[LoggingSettings] = None):
