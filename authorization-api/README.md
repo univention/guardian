@@ -38,6 +38,30 @@ The `EnvSettingsAdapter` loads settings exclusively from the environment. To fin
 the setting name, e.g. *some.nested.important-option* is converted to uppercase and all dots are replace with double
 underscores: *SOME__NESTED__IMPORTANT-OPTION*
 
+### StaticDataAdapter
+
+**name**: static_data
+**implements**: PersistencePort
+
+The `StaticDataAdapter` loads the persistent data from a json file. This adapter is very rudimentary and not suitable for
+production!
+
+It requires the setting `static_data_adapter.data_file` to point to a JSON file containing the data. It needs to have
+a format like this:
+
+```json
+{
+  "users": {
+      "USER1": {"attributes": {"A": 1, "B": 2}},
+      "USER2": {"attributes": {}}
+  },
+  "groups": {
+      "GROUP1": {"attributes": {"C": 3, "D": 4}},
+      "GROUP2": {"attributes": {"E": 5, "F": 6}}
+  }
+}
+```
+
 ## Local development
 
 ### Running the Guardian Authorization API locally
@@ -59,6 +83,19 @@ GUARDIAN_AUTHZ_LOGGING_LEVEL=DEBUG
 GUARDIAN_AUTHZ_LOGGING_STRUCTURED=0
 GUARDIAN_AUTHZ_ADAPTER_SETTINGS_PORT=env
 GUARDIAN_AUTHZ_ADAPTER_PERSISTENCE_PORT=static_data
+STATIC_DATA_ADAPTER__DATA_FILE=/guardian_service_dir/test_data.json
+EOF
+cat > test_data.json << EOF
+{
+  "users": {
+      "USER1": {"attributes": {"A": 1, "B": 2}},
+      "USER2": {"attributes": {}}
+  },
+  "groups": {
+      "GROUP1": {"attributes": {"C": 3, "D": 4}},
+      "GROUP2": {"attributes": {"E": 5, "F": 6}}
+  }
+}
 EOF
 docker run --rm -p 8000:8000 --env-file .env guardian-authz:dev
 ```
@@ -71,6 +108,19 @@ GUARDIAN_AUTHZ_LOGGING_LEVEL=DEBUG
 GUARDIAN_AUTHZ_LOGGING_STRUCTURED=0
 GUARDIAN_AUTHZ_ADAPTER_SETTINGS_PORT=env
 GUARDIAN_AUTHZ_ADAPTER_PERSISTENCE_PORT=static_data
+STATIC_DATA_ADAPTER__DATA_FILE=test_data.json
+EOF
+cat > test_data.json << EOF
+{
+  "users": {
+      "USER1": {"attributes": {"A": 1, "B": 2}},
+      "USER2": {"attributes": {}}
+  },
+  "groups": {
+      "GROUP1": {"attributes": {"C": 3, "D": 4}},
+      "GROUP2": {"attributes": {"E": 5, "F": 6}}
+  }
+}
 EOF
 poetry shell  # Or any other way to activate your virtual env for this project
 poetry install
