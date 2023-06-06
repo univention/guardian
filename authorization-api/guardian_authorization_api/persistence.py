@@ -1,6 +1,6 @@
-from typing import Any, Iterable, Tuple, Type
+from typing import Any, Iterable
 
-from .models.ports import ObjectType, PersistenceObject
+from .models.ports import ObjectType, PersistenceObject, RequiredSetting
 from .ports import PersistencePort
 
 
@@ -15,7 +15,7 @@ class StaticData(PersistencePort):
         raise NotImplementedError
 
     @staticmethod
-    def required_settings() -> Iterable[Tuple[str, Type, Any]]:
+    def required_settings() -> Iterable[RequiredSetting]:
         return []
 
     async def configure(self, settings: dict[str, Any]):

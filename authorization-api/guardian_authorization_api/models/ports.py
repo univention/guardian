@@ -1,6 +1,14 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any
+from typing import Any, NamedTuple, TypeVar, Type, Optional
+
+SettingType = TypeVar("SettingType", bound=int | str | bool)
+
+
+class RequiredSetting(NamedTuple):
+    name: str
+    setting_type: Type
+    default: Optional[Any]
 
 
 class ObjectType(Enum):

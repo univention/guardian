@@ -1,12 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import Optional, TypeVar, Type, Iterable, Tuple, Any, Callable
+from typing import Optional, Type, Iterable, Any, cast
 
 import loguru
 
-from .errors import SettingFormatError
-from .models.ports import PersistenceObject, ObjectType
-
-SettingType = TypeVar("SettingType")
+from .errors import SettingFormatError, SettingTypeError
+from .models.ports import PersistenceObject, ObjectType, SettingType, RequiredSetting
 
 
 class BasePort(ABC):
@@ -35,7 +33,7 @@ class ConfiguredPort(BasePort, ABC):
 
     @staticmethod
     @abstractmethod
-    def required_settings() -> Iterable[Tuple[str, Type, Any]]:
+    def required_settings() -> Iterable[RequiredSetting]:
         """
         Returns a list of settings that the adapter requires to configure itself.
 
@@ -118,11 +116,10 @@ class SettingsPort(BasePort, ABC):
                 f"and thus cannot be processed."
             )
 
-    @abstractmethod
     async def get_setting(
         self,
         setting_name: str,
-        setting_type: Callable[[Any], SettingType],
+        setting_type: Type[SettingType],
         default: Optional[SettingType] = None,
     ) -> SettingType:
         """
@@ -133,71 +130,77 @@ class SettingsPort(BasePort, ABC):
         from the builtin methods for casting to those types.
 
         :param setting_name: The name of the setting to return
-        :param setting_type: A callable returning a value in the desired data type when given the
-                             raw setting value
+        :param setting_type: The type the setting should have.
         :param default: The optional default value of the setting
         :return: The settings value
         :raises SettingFormatError: If the requested setting name is malformed.
         :raises SettingTypeError: If a value was found, but cannot be converted to the specified type
+                                  or the specified type is not supported
+        :raises SettingNotFoundError: If no value for the specified setting can be found and no
+        default value was specified
+        """
+        self.check_setting_name_format(setting_name)
+        if setting_type is str:
+            return cast(
+                SettingType,
+                await self.get_str(setting_name, cast(Optional[str], default)),
+            )
+        elif setting_type is bool:
+            return cast(
+                SettingType,
+                await self.get_bool(setting_name, cast(Optional[bool], default)),
+            )
+        elif setting_type is int:
+            return cast(
+                SettingType,
+                await self.get_int(setting_name, cast(Optional[int], default)),
+            )
+        else:
+            raise SettingTypeError(
+                f"The requested setting type '{setting_type}' is not supported."
+            )
+
+    @abstractmethod
+    async def get_int(self, setting_name: str, default: Optional[int] = None) -> int:
+        """
+        Returns the requested setting as an integer.
+
+        :param setting_name: The name of the setting to return
+        :param default: The optional default value of the setting
+        :return: The settings value
+        :raises SettingFormatError: If the requested setting name is malformed.
+        :raises SettingTypeError: If a value was found, but cannot be converted to an integer
         :raises SettingNotFoundError: If no value for the specified setting can be found and no
         default value was specified
         """
         raise NotImplementedError
 
-    async def get_int(self, setting_name: str, default: Optional[int] = None) -> int:
-        """
-        Wrapper for get_setting, where the requested type is int.
-
-        :param setting_name: The name of the setting to return
-        :param default: The optional default value of the setting
-        :return: The settings value
-        :raises SettingFormatError: If the requested setting name is malformed.
-        :raises SettingTypeError: If a value was found, but cannot be converted to the specified type
-        :raises SettingNotFoundError: If no value for the specified setting can be found and no
-        default value was specified
-        """
-        return await self.get_setting(setting_name, int, default)
-
-    async def get_float(
-        self, setting_name: str, default: Optional[float] = None
-    ) -> float:
-        """
-        Wrapper for get_setting, where the requested type is float.
-
-        :param setting_name: The name of the setting to return
-        :param default: The optional default value of the setting
-        :return: The settings value
-        :raises SettingFormatError: If the requested setting name is malformed.
-        :raises SettingTypeError: If a value was found, but cannot be converted to the specified type
-        :raises SettingNotFoundError: If no value for the specified setting can be found and no
-        default value was specified
-        """
-        return await self.get_setting(setting_name, float, default)
-
+    @abstractmethod
     async def get_str(self, setting_name: str, default: Optional[str] = None) -> str:
         """
-        Wrapper for get_setting, where the requested type is str.
+        Returns the requested setting as a string.
 
         :param setting_name: The name of the setting to return
         :param default: The optional default value of the setting
         :return: The settings value
         :raises SettingFormatError: If the requested setting name is malformed.
-        :raises SettingTypeError: If a value was found, but cannot be converted to the specified type
+        :raises SettingTypeError: If a value was found, but cannot be converted to a string
         :raises SettingNotFoundError: If no value for the specified setting can be found and no
         default value was specified
         """
-        return await self.get_setting(setting_name, str, default)
+        raise NotImplementedError
 
+    @abstractmethod
     async def get_bool(self, setting_name: str, default: Optional[bool] = None) -> bool:
         """
-        Wrapper for get_setting, where the requested type is bool.
+        Returns the requested setting as a boolean.
 
         :param setting_name: The name of the setting to return
         :param default: The optional default value of the setting
         :return: The settings value
         :raises SettingFormatError: If the requested setting name is malformed.
-        :raises SettingTypeError: If a value was found, but cannot be converted to the specified type
+        :raises SettingTypeError: If a value was found, but cannot be converted to a boolean
         :raises SettingNotFoundError: If no value for the specified setting can be found and no
         default value was specified
         """
-        return await self.get_setting(setting_name, bool, default)
+        raise NotImplementedError

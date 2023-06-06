@@ -1,4 +1,4 @@
-from typing import Any, Iterable, Tuple, Type, Optional, Callable
+from typing import Any, Iterable, Tuple, Type, Optional
 
 import pytest
 from pydantic import ValidationError
@@ -21,7 +21,6 @@ from guardian_authorization_api.models.ports import ObjectType, PersistenceObjec
 from guardian_authorization_api.ports import (
     PersistencePort,
     SettingsPort,
-    SettingType,
     ConfiguredPort,
 )
 
@@ -45,12 +44,13 @@ class DummyPersistence(PersistencePort):
 
 
 class DummySettings(SettingsPort):
-    async def get_setting(
-        self,
-        setting_name: str,
-        setting_type: Callable[[Any], SettingType],
-        default: Optional[SettingType] = None,
-    ) -> SettingType:
+    async def get_int(self, setting_name: str, default: Optional[int] = None) -> int:
+        return default
+
+    async def get_str(self, setting_name: str, default: Optional[str] = None) -> str:
+        return default
+
+    async def get_bool(self, setting_name: str, default: Optional[bool] = None) -> bool:
         return default
 
     @property
