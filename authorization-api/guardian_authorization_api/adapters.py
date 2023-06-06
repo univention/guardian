@@ -126,7 +126,7 @@ class AdapterContainer:
                     )
                 except (SettingNotFoundError, SettingTypeError) as exc:
                     raise AdapterConfigurationError(
-                        f"The adapter {adapter_cls.__class__.__name__} could not be configured. "
+                        f"The adapter {adapter_cls.__name__} could not be configured. "
                         f"The required setting {setting[0]} could not be found or has the wrong type"
                     ) from exc
             self._adapter_settings[adapter_cls.__name__] = settings

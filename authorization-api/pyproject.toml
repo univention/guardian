@@ -17,10 +17,7 @@ loguru = "^0.7.0"
 "env" = "guardian_authorization_api.settings:EnvSettingsAdapter"
 
 [tool.poetry.plugins."guardian_authorization_api.PersistencePort"]
-"static_data" = "guardian_authorization_api.persistence:StaticData"
-
-
-
+"static_data" = "guardian_authorization_api.persistence:StaticDataAdapter"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.3.1"
