@@ -93,6 +93,9 @@ class SettingsPort(BasePort, ABC):
     also allowed. The '.' character has special meaning and might be used by adapters to model
     object hierarchies or similar.
 
+    Setting names are always case-insensitive. The implementing adapters might impose additional
+    requirements on the adapter specific details, e.g. ENV variables must consist of capital letters.
+
     Notes for implementing adapters:
         - The code to fetch the settings should ideally be lazy loaded, if access to resources
           is required

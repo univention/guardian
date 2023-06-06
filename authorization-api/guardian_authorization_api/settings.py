@@ -9,12 +9,11 @@ class EnvSettingsAdapter(SettingsPort):
     """
     This adapter loads all settings exclusively from environment variables.
 
+
     This adapter is a singleton and will be instantiated only once.
     This adapter interprets the '.' symbol in setting name as a double underscore, when
-    converting to an environment variable
+    converting to an environment variable and assumes capital letters only.
 
-    The adapter supports python-dotenv and thus loads the env file specified
-    by GUARDIAN_AUTHZ_ENV_FILE or $SERVICE_DIR/.env by default
     """
 
     def __init__(self, logger):
@@ -23,7 +22,7 @@ class EnvSettingsAdapter(SettingsPort):
 
     @staticmethod
     def setting_name_to_env(setting_name: str):
-        return setting_name.replace(".", "__")
+        return setting_name.replace(".", "__").upper()
 
     async def get_int(self, setting_name: str, default: Optional[int] = None) -> int:
         env_name = self.setting_name_to_env(setting_name)

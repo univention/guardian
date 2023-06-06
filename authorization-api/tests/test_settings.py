@@ -33,10 +33,10 @@ class TestEnvSettings:
     @pytest.mark.parametrize(
         "name,expected",
         [
-            ("setting_name", "setting_name"),
+            ("setting_name", "SETTING_NAME"),
             ("", ""),
-            ("setting.name", "setting__name"),
-            ("setting_.name", "setting___name"),
+            ("setting.name", "SETTING__NAME"),
+            ("setting_.name", "SETTING___NAME"),
         ],
     )
     def test_setting_name_to_env(self, name, expected):
