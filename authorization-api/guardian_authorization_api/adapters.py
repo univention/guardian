@@ -31,12 +31,12 @@ class AdapterSelection(BaseSettings):
     """
 
     settings_port: str = Field(
-        ..., alias="SettingsPort", env="GUARDIAN_AUTHZ_ADAPTER_SETTINGS_PORT"
+        ..., alias="SettingsPort", env="GUARDIAN__AUTHZ__ADAPTER__SETTINGS_PORT"
     )
     persistence_port: str = Field(
         ...,
         alias="PersistencePort",
-        env="GUARDIAN_AUTHZ_ADAPTER_PERSISTENCE_PORT",
+        env="GUARDIAN__AUTHZ__ADAPTER__PERSISTENCE_PORT",
     )
 
 

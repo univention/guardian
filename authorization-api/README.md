@@ -2,28 +2,35 @@
 
 ## Configuration
 
-The app can be fully configured with env variables.
-
-### Logging
-
-**GUARDIAN_AUTHZ_LOGGING_STRUCTURED,type=bool,default=False**: If set to True, the logging output is structured as a JSON object
-
-**GUARDIAN_AUTHZ_LOGGING_LEVEL,type=Enum,default=SUCCESS**: Sets the log level of the application. The choices are TRACE, DEBUG, INFO,
-SUCCESS, WARNING, ERROR, CRITICAL.
-
-**GUARDIAN_AUTHZ_LOGGING_LOG_FORMAT,type=string**: Defines the format of the log output, if not structured. The possible options are
-described [here](https://loguru.readthedocs.io/en/stable/api/logger.html). The default is
-`<green>{time:YYYY-MM-DD HH:mm:ss.SSS ZZ}</green> | <level>{level}</level> | <level>{message}</level> | {extra}`
+The app can be configured through the chosen adapter for the SettingsPort.
 
 ### Adapter settings
 
-These settings are all required, and do not have any default value!
+These settings are the only settings, that are always configured by providing environment variables instead of utilizing the SettingsPort.
+These settings are also all required, and do not have any default value!
 
-**GUARDIAN_AUTHZ_ADAPTER_SETTINGS_PORT,type=string**: Defines which adapter should be used for the settings port.
+**GUARDIAN__AUTHZ__ADAPTER__SETTINGS_PORT,type=string**: Defines which adapter should be used for the settings port.
 The project itself provides the `env` adapter, which can be used.
 
-**GUARDIAN_AUTHZ_ADAPTER_PERSISTENCE_PORT,type=string** Defines which adapter should be used for the persistence port.
+**GUARDIAN__AUTHZ__ADAPTER__PERSISTENCE_PORT,type=string** Defines which adapter should be used for the persistence port.
 The project itself provides the `static_data` adapter, which can be used.
+
+### Logging
+
+**guardian.authz.logging.structured,type=bool,default=False**: If set to True, the logging output is structured as a JSON object
+
+**guardian.authz.logging.level,type=Enum,default=SUCCESS**: Sets the log level of the application. The choices are TRACE, DEBUG, INFO,
+SUCCESS, WARNING, ERROR, CRITICAL.
+
+**guardian.authz.logging.format,type=string**: Defines the format of the log output, if not structured. The possible options are
+described [here](https://loguru.readthedocs.io/en/stable/api/logger.html). The default is
+`<green>{time:YYYY-MM-DD HH:mm:ss.SSS ZZ}</green> | <level>{level}</level> | <level>{message}</level> | {extra}`
+
+**guardian.authz.logging.backtrace,type=bool,default=False**: Whether the exception trace formatted should be
+extended upward, beyond the catching point, to show the full stacktrace which generated the error.
+
+**guardian.authz.logging.diagnose,type=bool,default=False**: Whether the exception trace should display the variables
+values to eases the debugging. This should be set to False in production to avoid leaking sensitive data.
 
 ## Adapters
 
@@ -79,10 +86,10 @@ Prerequisites:
 # pwd == $REPO_DIR/authorization-engine/guardian/authorization-api
 docker build -t guardian-authz:dev .
 cat > .env << EOF
-GUARDIAN_AUTHZ_LOGGING_LEVEL=DEBUG
-GUARDIAN_AUTHZ_LOGGING_STRUCTURED=0
-GUARDIAN_AUTHZ_ADAPTER_SETTINGS_PORT=env
-GUARDIAN_AUTHZ_ADAPTER_PERSISTENCE_PORT=static_data
+GUARDIAN__AUTHZ__LOGGING__LEVEL=DEBUG
+GUARDIAN__AUTHZ__LOGGING__STRUCTURED=0
+GUARDIAN__AUTHZ__ADAPTER__SETTINGS_PORT=env
+GUARDIAN__AUTHZ__ADAPTER__PERSISTENCE_PORT=static_data
 STATIC_DATA_ADAPTER__DATA_FILE=/guardian_service_dir/test_data.json
 EOF
 cat > test_data.json << EOF
@@ -104,10 +111,10 @@ Alternatively you can start the service directly, without a docker container:
 
 ```shell
 cat > .env << EOF
-GUARDIAN_AUTHZ_LOGGING_LEVEL=DEBUG
-GUARDIAN_AUTHZ_LOGGING_STRUCTURED=0
-GUARDIAN_AUTHZ_ADAPTER_SETTINGS_PORT=env
-GUARDIAN_AUTHZ_ADAPTER_PERSISTENCE_PORT=static_data
+GUARDIAN__AUTHZ__LOGGING__LEVEL=DEBUG
+GUARDIAN__AUTHZ__LOGGING__STRUCTURED=0
+GUARDIAN__AUTHZ__ADAPTER__SETTINGS_PORT=env
+GUARDIAN__AUTHZ__ADAPTER__PERSISTENCE_PORT=static_data
 STATIC_DATA_ADAPTER__DATA_FILE=test_data.json
 EOF
 cat > test_data.json << EOF
