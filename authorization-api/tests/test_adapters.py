@@ -39,7 +39,7 @@ class DummyPersistence(PersistencePort):
         pass
 
     @property
-    def is_singleton(self):
+    def is_cached(self):
         return True
 
 
@@ -54,7 +54,7 @@ class DummySettings(SettingsPort):
         return default
 
     @property
-    def is_singleton(self):
+    def is_cached(self):
         return True
 
 
@@ -190,7 +190,7 @@ class TestAdapterContainer:
         assert (await dummy_container.get_adapter(DummySettings)) == port_instance
 
     @pytest.mark.parametrize(
-        "is_singleton,adapter_cls",
+        "is_cached,adapter_cls",
         [
             (True, DummyPersistence),
             (False, DummyPersistence),
@@ -200,10 +200,10 @@ class TestAdapterContainer:
     )
     @pytest.mark.asyncio
     async def test_get_adapter_configured(
-        self, dummy_container, mocker, is_singleton, adapter_cls
+        self, dummy_container, mocker, is_cached, adapter_cls
     ):
         port = adapter_cls(mocker.MagicMock())
-        adapter_cls.is_singleton = mocker.PropertyMock(return_value=is_singleton)
+        adapter_cls.is_cached = mocker.PropertyMock(return_value=is_cached)
         conf_mock = mocker.AsyncMock()
         dummy_container._instantiate_adapter = mocker.MagicMock(return_value=port)
         dummy_container._configure_adapter = conf_mock
@@ -213,7 +213,7 @@ class TestAdapterContainer:
             assert conf_mock.call_args_list == [mocker.call(port)]
         else:
             assert conf_mock.call_args_list == []
-        assert ("PersistencePort" in dummy_container._adapter_instances) == is_singleton
+        assert ("PersistencePort" in dummy_container._adapter_instances) == is_cached
 
 
 def test_load_adapter_classes(entry_points_mock, mocker):

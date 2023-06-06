@@ -22,7 +22,7 @@ class StaticDataAdapter(PersistencePort):
         self._groups = dict()
 
     @property
-    def is_singleton(self):
+    def is_cached(self):
         return True
 
     async def get_object(

@@ -134,5 +134,5 @@ class TestEnvSettings:
             == default
         )
 
-    def test_is_singleton(self, port_instance):
-        assert port_instance.is_singleton is True
+    def test_is_cached(self, port_instance):
+        assert port_instance.is_cached is True

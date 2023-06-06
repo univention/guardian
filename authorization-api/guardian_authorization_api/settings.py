@@ -85,5 +85,5 @@ class EnvSettingsAdapter(SettingsPort):
         )
 
     @property
-    def is_singleton(self):
+    def is_cached(self):
         return True

@@ -44,8 +44,8 @@ class TestStaticDataAdapter:
         port_instance._groups = mock_data["groups"]
         return port_instance
 
-    def test_is_singleton(self, port_instance):
-        assert port_instance.is_singleton is True
+    def test_is_cached(self, port_instance):
+        assert port_instance.is_cached is True
 
     @pytest.mark.asyncio
     async def test_get_user(self, loaded_port_instance, mock_data):

@@ -21,11 +21,12 @@ class BasePort(ABC):
 
     @property
     @abstractmethod
-    def is_singleton(self):
+    def is_cached(self):
         """
-        Returns True if the implementing class should be treated as a Singleton.
+        Returns whether the implementing class should be cached.
 
-        If False is returned, the adapter will be instantiated every time the port is requested.
+        If True the adapter will be instantiated only once and reused for subsequent requests.
+        If False is, the adapter will be instantiated every time the port is requested.
         """
         raise NotImplementedError
 

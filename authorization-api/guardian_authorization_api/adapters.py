@@ -172,7 +172,7 @@ class AdapterContainer:
         instance = self._instantiate_adapter(port_cls)
         if isinstance(instance, ConfiguredPort):
             await self._configure_adapter(instance)
-        if instance.is_singleton:
+        if instance.is_cached:
             self._adapter_instances[port_cls.__name__] = instance
         return instance
 
