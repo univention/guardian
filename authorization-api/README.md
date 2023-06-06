@@ -25,6 +25,19 @@ The project itself provides the `env` adapter, which can be used.
 **GUARDIAN_AUTHZ_ADAPTER_PERSISTENCE_PORT,type=string** Defines which adapter should be used for the persistence port.
 The project itself provides the `static_data` adapter, which can be used.
 
+## Adapters
+
+The Guardian Authorization API provides some adapters, which are documented here
+
+### EnvSettingsAdapter
+
+**name**: env
+**implements**: SettingsPort
+
+The `EnvSettingsAdapter` loads settings exclusively from the environment. To find the correct environment variable
+the setting name, e.g. *some.nested.important-option* is converted to uppercase and all dots are replace with double
+underscores: *SOME__NESTED__IMPORTANT-OPTION*
+
 ## Local development
 
 ### Running the Guardian Authorization API locally
