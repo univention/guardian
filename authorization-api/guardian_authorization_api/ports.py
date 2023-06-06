@@ -5,6 +5,16 @@ import loguru
 
 from .errors import SettingFormatError, SettingTypeError
 from .models.persistence import ObjectType, PersistenceObject
+from .models.policies import (
+    CheckPermissionsResult,
+    Context,
+    GetPermissionsResult,
+    Namespace,
+    Permission,
+    Policy,
+    PolicyObject,
+    Target,
+)
 from .models.settings import RequiredSetting, SettingType
 
 
@@ -202,5 +212,77 @@ class SettingsPort(BasePort, ABC):
         :raises SettingTypeError: If a value was found, but cannot be converted to a boolean
         :raises SettingNotFoundError: If no value for the specified setting can be found and no
         default value was specified
+        """
+        raise NotImplementedError
+
+
+class PolicyPort(ConfiguredPort, ABC):
+    """
+    This port enables access to a policy evaluation agent such as OPA.
+    """
+
+    @abstractmethod
+    async def check_permissions(
+        self,
+        actor: PolicyObject,
+        targets: Optional[Iterable[Target]] = None,
+        target_permissions: Optional[set[Permission]] = None,
+        general_permissions: Optional[set[Permission]] = None,
+        context: Optional[set[Context]] = None,
+        extra_args: Optional[dict[str, Any]] = None,
+    ) -> CheckPermissionsResult:
+        """
+        This method allows to check if an actor has the specified permissions,
+        when acting on the specified targets.
+        It also allows to query for general permissions, if acting on no particular target.
+
+        :param actor: The actor to check the permissions for
+        :param targets: The targets that are acted on
+        :param target_permissions: The permissions to check regarding the targets
+        :param general_permissions: The permissions to check with no regards to a particular target
+        :param context: Additional contexts to pass to the policy evaluation agent
+        :param extra_args: Additional arguments to pass to the policy evaluation agent
+        :return: A result object detailing if the actor has the permissions regarding every target
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_permissions(
+        self,
+        actor: PolicyObject,
+        targets: Optional[Iterable[Target]] = None,
+        namespaces: Optional[Iterable[Namespace]] = None,
+        contexts: Optional[Iterable[Context]] = None,
+        extra_args: Optional[dict[str, Any]] = None,
+        include_general_permissions: bool = False,
+    ) -> GetPermissionsResult:
+        """
+        This method allows to retrieve all permissions an actor has
+        when acting on the specified targets.
+
+        :param actor: The actor to retrieve the permissions for
+        :param targets: The targets that are acted on
+        :param namespaces: A list of namespaces used to restrict the permissions contained in the result
+        :param contexts: Additional contexts to pass to the policy evaluation agent
+        :param extra_args: Additional arguments to pass to the policy evaluation agent
+        :param include_general_permissions: If True the result will contain a list of permissions
+                                            the actor has if acting on no particular target
+        :return: A result object containing the permissions the actor has regarding every target
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    async def custom_policy(
+        self, policy: Policy, data: Optional[dict[str, Any]] = None
+    ) -> dict[str, Any]:
+        """
+        This method allows to query a custom policy that was registered with the Guardian Management API.
+
+        Since the expected data and the response of the custom policy are unknown, arbitrary data
+        is passed and returned.
+
+        :param policy: The policy to query
+        :param data: The data that should be passed to the custom policy
+        :return: The data returned by the custom policy
         """
         raise NotImplementedError

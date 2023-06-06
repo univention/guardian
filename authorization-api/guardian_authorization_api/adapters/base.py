@@ -16,13 +16,14 @@ from ..ports import (
     BasePort,
     ConfiguredPort,
     PersistencePort,
+    PolicyPort,
     SettingsPort,
 )
 
 AdapterClassesDict = dict[str, dict[str, Type]]
 PortType = TypeVar("PortType", bound=BasePort)
 
-PORT_CLASSES = (SettingsPort, PersistencePort)
+PORT_CLASSES = (SettingsPort, PersistencePort, PolicyPort)
 
 
 class AdapterSelection(BaseSettings):
@@ -37,6 +38,11 @@ class AdapterSelection(BaseSettings):
         ...,
         alias="PersistencePort",
         env="GUARDIAN__AUTHZ__ADAPTER__PERSISTENCE_PORT",
+    )
+    policy_port: str = Field(
+        ...,
+        alias="PolicyPort",
+        env="GUARDIAN__AUTHZ__ADAPTER__POLICY_PORT",
     )
 
 
