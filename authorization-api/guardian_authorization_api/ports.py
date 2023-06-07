@@ -13,7 +13,11 @@ class BasePort(ABC):
     """
 
     def __init__(self, logger: "loguru.Logger"):
-        self.logger = logger
+        self._logger = logger
+
+    @property
+    def logger(self) -> "loguru.Logger":
+        return self._logger.bind()
 
     @property
     @abstractmethod

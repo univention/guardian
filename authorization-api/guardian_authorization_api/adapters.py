@@ -104,10 +104,9 @@ class AdapterContainer:
                 f"The class {adapter_cls} selected as the adapter for "
                 f"{port_name} has the wrong type."
             )
-        adapter = adapter_cls(logger)
-        logger.bind(adapter_cls=adapter_cls, port_cls=port_cls).debug(
-            "Adapter instantiated."
-        )
+        custom_logger = logger.bind(adapter_cls=adapter_cls, port_cls=port_cls)
+        adapter = adapter_cls(custom_logger)
+        custom_logger.debug("Adapter instantiated.")
         return adapter
 
     async def _get_adapter_settings(self, adapter_cls: Type[ConfiguredPort]):
