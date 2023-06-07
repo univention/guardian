@@ -1,9 +1,10 @@
 import json
 from typing import Any, Iterable
 
-from .errors import PersistenceError, ObjectNotFoundError
-from .models.ports import ObjectType, PersistenceObject, RequiredSetting
-from .ports import PersistencePort
+from ..errors import PersistenceError, ObjectNotFoundError
+from ..models.persistence import ObjectType, PersistenceObject
+from ..models.settings import RequiredSetting
+from ..ports import PersistencePort
 
 
 class StaticDataAdapter(PersistencePort):

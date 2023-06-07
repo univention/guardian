@@ -5,14 +5,14 @@ from typing import Type, Optional, TypeVar, Any
 from loguru import logger
 from pydantic import BaseSettings, Field, ValidationError
 
-from .errors import (
+from ..errors import (
     AdapterInitializationError,
     SettingTypeError,
     SettingNotFoundError,
     AdapterConfigurationError,
     AdapterLoadingError,
 )
-from .ports import (
+from ..ports import (
     SettingsPort,
     ConfiguredPort,
     PersistencePort,

@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from loguru import logger
 
-from .adapters import AdapterContainer
+from .adapters.base import AdapterContainer
 from .logging import configure_logger
 from .ports import SettingsPort
 

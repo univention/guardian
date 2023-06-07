@@ -4,7 +4,8 @@ from typing import Optional, Type, Iterable, Any, cast
 import loguru
 
 from .errors import SettingFormatError, SettingTypeError
-from .models.ports import PersistenceObject, ObjectType, SettingType, RequiredSetting
+from .models.persistence import PersistenceObject, ObjectType
+from .models.settings import RequiredSetting, SettingType
 
 
 class BasePort(ABC):

@@ -1,8 +1,8 @@
 import os
 from typing import Optional
 
-from .errors import SettingNotFoundError, SettingTypeError
-from .ports import SettingsPort
+from ..errors import SettingNotFoundError, SettingTypeError
+from ..ports import SettingsPort
 
 
 class EnvSettingsAdapter(SettingsPort):

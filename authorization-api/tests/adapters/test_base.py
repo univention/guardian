@@ -3,7 +3,7 @@ from typing import Any, Iterable, Tuple, Type, Optional
 import pytest
 from pydantic import ValidationError
 
-from guardian_authorization_api.adapters import (
+from guardian_authorization_api.adapters.base import (
     AdapterContainer,
     AdapterSelection,
     load_adapter_classes,
@@ -17,7 +17,7 @@ from guardian_authorization_api.errors import (
     SettingNotFoundError,
     SettingTypeError,
 )
-from guardian_authorization_api.models.ports import ObjectType, PersistenceObject
+from guardian_authorization_api.models.persistence import ObjectType, PersistenceObject
 from guardian_authorization_api.ports import (
     PersistencePort,
     SettingsPort,
@@ -90,7 +90,7 @@ class TestAdapterContainer:
     def test_adapter_selection_validation_error(self, dummy_container, mocker):
         dummy_container._adapter_selection = None
         new = mocker.MagicMock(side_effect=ValidationError([], AdapterSelection))
-        mocker.patch("guardian_authorization_api.adapters.AdapterSelection", new)
+        mocker.patch("guardian_authorization_api.adapters.base.AdapterSelection", new)
         with pytest.raises(
             AdapterLoadingError,
             match=r"The configuration for the selection of adapters could not be loaded.",
@@ -103,7 +103,9 @@ class TestAdapterContainer:
             "SettingsPort": {"dummy": DummySettings},
         }
         new = mocker.MagicMock(return_value=adapter_classes_dict)
-        mocker.patch("guardian_authorization_api.adapters.load_adapter_classes", new)
+        mocker.patch(
+            "guardian_authorization_api.adapters.base.load_adapter_classes", new
+        )
         dummy_container._adapter_classes = None
         assert dummy_container.adapter_classes == adapter_classes_dict
 
@@ -125,7 +127,7 @@ class TestAdapterContainer:
         dummy_container._adapter_classes["PersistencePort"]["dummy"] = DummySettings
         with pytest.raises(
             AdapterInitializationError,
-            match=r"The class <class 'test_adapters.DummySettings'> selected as the adapter "
+            match=r"The class <class 'test_base.DummySettings'> selected as the adapter "
             r"for PersistencePort has the wrong type.",
         ):
             dummy_container._instantiate_adapter(PersistencePort)
@@ -218,7 +220,8 @@ class TestAdapterContainer:
 
 def test_load_adapter_classes(entry_points_mock, mocker):
     mocker.patch(
-        "guardian_authorization_api.adapters.metadata.entry_points", entry_points_mock
+        "guardian_authorization_api.adapters.base.metadata.entry_points",
+        entry_points_mock,
     )
     adapter_classes = load_adapter_classes()
     assert dict(adapter_classes) == {
@@ -234,7 +237,8 @@ def test_load_adapter_classes_duplicate(entry_points_mock, mocker):
     )
     entry_points_mock.return_value = return_value
     mocker.patch(
-        "guardian_authorization_api.adapters.metadata.entry_points", entry_points_mock
+        "guardian_authorization_api.adapters.base.metadata.entry_points",
+        entry_points_mock,
     )
     with pytest.raises(
         AdapterLoadingError,

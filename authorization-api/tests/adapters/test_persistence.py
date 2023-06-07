@@ -3,12 +3,12 @@ import json
 import pytest
 
 from guardian_authorization_api.errors import PersistenceError, ObjectNotFoundError
-from guardian_authorization_api.models.ports import (
+from guardian_authorization_api.models.persistence import (
     PersistenceObject,
     ObjectType,
-    RequiredSetting,
 )
-from guardian_authorization_api.persistence import StaticDataAdapter
+from guardian_authorization_api.adapters.persistence import StaticDataAdapter
+from guardian_authorization_api.models.settings import RequiredSetting
 
 
 class TestStaticDataAdapter:

@@ -7,7 +7,7 @@ from guardian_authorization_api.errors import (
     SettingNotFoundError,
     SettingTypeError,
 )
-from guardian_authorization_api.settings import EnvSettingsAdapter
+from guardian_authorization_api.adapters.settings import EnvSettingsAdapter
 
 
 class TestEnvSettings:
