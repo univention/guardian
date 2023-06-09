@@ -105,7 +105,7 @@ class TestAdapterContainer:
         mocker.patch(
             "guardian_authorization_api.adapters.base.load_adapter_classes", new
         )
-        dummy_container._adapter_classes = None
+        dummy_container._adapter_configs = None
         assert dummy_container.adapter_classes == adapter_classes_dict
 
     def test_instantiate_adapter(self, dummy_container):
@@ -123,7 +123,7 @@ class TestAdapterContainer:
             dummy_container._instantiate_adapter(PersistencePort)
 
     def test_instantiate_adapter_wrong_type(self, dummy_container):
-        dummy_container._adapter_classes["PersistencePort"]["dummy"] = DummySettings
+        dummy_container._adapter_configs["PersistencePort"]["dummy"] = DummySettings
         with pytest.raises(
             AdapterInitializationError,
             match=r"The class <class 'test_base.DummySettings'> selected as the adapter "
