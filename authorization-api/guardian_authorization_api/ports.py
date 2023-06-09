@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Type, Iterable, Any, cast
+from typing import Optional, Type, Iterable, Any
 
 import loguru
 
@@ -150,20 +150,11 @@ class SettingsPort(BasePort, ABC):
         """
         self.check_setting_name_format(setting_name)
         if setting_type is str:
-            return cast(
-                SettingType,
-                await self.get_str(setting_name, cast(Optional[str], default)),
-            )
+            return await self.get_str(setting_name, default)  # type: ignore[return-value,arg-type]
         elif setting_type is bool:
-            return cast(
-                SettingType,
-                await self.get_bool(setting_name, cast(Optional[bool], default)),
-            )
+            return await self.get_bool(setting_name, default)  # type: ignore[return-value,arg-type]
         elif setting_type is int:
-            return cast(
-                SettingType,
-                await self.get_int(setting_name, cast(Optional[int], default)),
-            )
+            return await self.get_int(setting_name, default)  # type: ignore[return-value,arg-type]
         else:
             raise SettingTypeError(
                 f"The requested setting type '{setting_type.__name__}' is not supported."
