@@ -15,6 +15,9 @@ The project itself provides the `env` adapter, which can be used.
 **GUARDIAN__AUTHZ__ADAPTER__PERSISTENCE_PORT,type=string** Defines which adapter should be used for the persistence port.
 The project itself provides the `static_data` adapter, which can be used.
 
+**GUARDIAN__AUTHZ__ADAPTER__POLICY_PORT,type=string** Defines which adapter should be used for the policy port.
+The project itself provides the `opa` adapter, which can be used.
+
 ### Logging
 
 **guardian.authz.logging.structured,type=bool,default=False**: If set to True, the logging output is structured as a JSON object
@@ -69,6 +72,15 @@ a format like this:
 }
 ```
 
+### OPAAdapter
+
+**name**: opa
+**implements**: PolicyAdapter
+
+The `OPAAdapter` queries an OPA service to return policy decisions.
+
+It requires the setting `opa_adapter.url`, which should point to the running OPA instance to query.
+
 ## Local development
 
 ### Running the Guardian Authorization API locally
@@ -84,7 +96,7 @@ Prerequisites:
 
 ```shell
 # pwd == $REPO_DIR/authorization-engine/guardian/authorization-api
-docker build -t guardian-authz:dev .
+docker build --add-host "git.knut.univention.de:10.208.1.251" -t guardian-authz:dev .
 cat > .env << EOF
 GUARDIAN__AUTHZ__LOGGING__LEVEL=DEBUG
 GUARDIAN__AUTHZ__LOGGING__STRUCTURED=0

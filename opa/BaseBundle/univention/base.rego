@@ -12,7 +12,7 @@ import future.keywords.contains
 get_permissions contains result if {
     some target_object in input.targets
     result := {
-        "target_id": target_object.id,
+        "target_id": target_object.old_target.id,
         "permissions": []
     }
 }

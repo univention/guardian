@@ -12,6 +12,8 @@ fastapi = "^0.95.2"
 gunicorn = "^20.1.0"
 uvicorn = "^0.22.0"
 loguru = "^0.7.0"
+orjson = "^3.9.0"
+opa-client = {version = "^1.0.3", source = "opa-client"}
 
 [tool.poetry.plugins."guardian_authorization_api.SettingsPort"]
 "env" = "guardian_authorization_api.adapters.settings:EnvSettingsAdapter"
@@ -19,11 +21,20 @@ loguru = "^0.7.0"
 [tool.poetry.plugins."guardian_authorization_api.PersistencePort"]
 "static_data" = "guardian_authorization_api.adapters.persistence:StaticDataAdapter"
 
+[tool.poetry.plugins."guardian_authorization_api.PolicyPort"]
+"opa" = "guardian_authorization_api.policies:OPAAdapter"
+
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.3.1"
 pytest-cov = "^4.1.0"
 pytest-mock = "^3.10.0"
 pytest-asyncio = "^0.21.0"
+
+
+[[tool.poetry.source]]
+name = "opa-client"
+url = "https://git.knut.univention.de/api/v4/projects/688/packages/pypi/simple"
+priority = "explicit"
 
 [build-system]
 requires = ["poetry-core"]

@@ -28,3 +28,7 @@ class AdapterInitializationError(RuntimeError):
 
 class AdapterConfigurationError(ValueError):
     ...
+
+
+class PolicyUpstreamError(Exception):
+    ...
