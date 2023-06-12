@@ -1,9 +1,4 @@
-from typing import Any, NamedTuple, Optional, Type, TypeVar
+from typing import TypeVar
 
 SettingType = TypeVar("SettingType", bound=int | str | bool)
-
-
-class RequiredSetting(NamedTuple):
-    name: str
-    setting_type: Type
-    default: Optional[Any]
+SETTINGS_NAME_METADATA = "guardian_authz_settings_name"

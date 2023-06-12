@@ -1,11 +1,16 @@
 import os
-from typing import Optional
+from dataclasses import MISSING, fields
+from typing import Optional, Type
+
+from port_loader import AsyncAdapterSettingsProvider, Settings, is_cached
 
 from ..errors import SettingNotFoundError, SettingTypeError
+from ..models.settings import SETTINGS_NAME_METADATA
 from ..ports import SettingsPort
 
 
-class EnvSettingsAdapter(SettingsPort):
+@is_cached
+class EnvSettingsAdapter(SettingsPort, AsyncAdapterSettingsProvider):
     """
     This adapter loads all settings exclusively from environment variables.
 
@@ -15,10 +20,6 @@ class EnvSettingsAdapter(SettingsPort):
     converting to an environment variable and assumes capital letters only.
 
     """
-
-    def __init__(self, logger):
-        super().__init__(logger)
-        self._dotenv = None
 
     @staticmethod
     def setting_name_to_env(setting_name: str):
@@ -84,6 +85,14 @@ class EnvSettingsAdapter(SettingsPort):
             f"be transformed to the desired type."
         )
 
-    @property
-    def is_cached(self):
-        return True
+    async def get_adapter_settings(self, settings_cls: Type[Settings]) -> Settings:
+        setting_fields = fields(settings_cls)  # type: ignore[arg-type]
+        settings_data = {}
+        for field in setting_fields:
+            settings_default = None if field.default is MISSING else field.default
+            settings_name = field.metadata.get(SETTINGS_NAME_METADATA, "")
+            settings_type = field.type
+            settings_data[field.name] = await self.get_setting(
+                settings_name, settings_type, settings_default
+            )
+        return settings_cls(**settings_data)

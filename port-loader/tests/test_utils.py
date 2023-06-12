@@ -1,8 +1,7 @@
 import pytest
-
 from port_loader import AsyncAdapterRegistry, get_fqcn, load_from_entry_point
 from port_loader.errors import PortInjectionError
-from port_loader.utils import inject_port, is_cached, injected_port
+from port_loader.utils import inject_port, injected_port, is_cached
 
 
 class DummyPort:

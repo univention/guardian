@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Type, Generic
+from typing import Generic, Type
 
 from port_loader.models import Settings
 

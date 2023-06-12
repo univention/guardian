@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from loguru import logger
 
-from .adapters.base import AdapterContainer
+from .adapters.base import ADAPTER_REGISTRY, configure_registry, initialize_adapters
 from .logging import configure_logger
 from .ports import SettingsPort
 
@@ -12,13 +12,13 @@ from .ports import SettingsPort
 @asynccontextmanager
 async def lifespan(fastapi_app: FastAPI):
     await configure_logger()
-    adapter_container = AdapterContainer.instance()
-    settings_port = await adapter_container.get_adapter(SettingsPort)
+    configure_registry(ADAPTER_REGISTRY)
+    settings_port = await ADAPTER_REGISTRY.get_adapter(SettingsPort)
     await configure_logger(settings_port)
     logger.info(
         f"Starting Guardian Authorization API with working dir '{os.getcwd()}'."
     )
-    await adapter_container.initialize_adapters()
+    await initialize_adapters(ADAPTER_REGISTRY)
     yield
 
 

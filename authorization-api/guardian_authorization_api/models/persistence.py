@@ -1,6 +1,10 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
+
+from guardian_authorization_api.models.settings import SETTINGS_NAME_METADATA
+
+DATA_FILE_SETTING_NAME = "static_data_adapter.data_file"
 
 
 class ObjectType(Enum):
@@ -25,3 +29,10 @@ class PersistenceObject:
     id: str
     object_type: ObjectType
     attributes: dict[str, Any]
+
+
+@dataclass
+class StaticDataAdapterSettings:
+    data_file_path: str = field(
+        metadata={SETTINGS_NAME_METADATA: DATA_FILE_SETTING_NAME}
+    )

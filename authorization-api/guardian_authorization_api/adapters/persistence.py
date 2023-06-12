@@ -1,13 +1,20 @@
 import json
-from typing import Any, Iterable
+from typing import Type
+
+from port_loader import AsyncConfiguredAdapterMixin
+from port_loader.utils import is_cached
 
 from ..errors import ObjectNotFoundError, PersistenceError
-from ..models.persistence import ObjectType, PersistenceObject
-from ..models.settings import RequiredSetting
+from ..models.persistence import (
+    ObjectType,
+    PersistenceObject,
+    StaticDataAdapterSettings,
+)
 from ..ports import PersistencePort
 
 
-class StaticDataAdapter(PersistencePort):
+@is_cached
+class StaticDataAdapter(PersistencePort, AsyncConfiguredAdapterMixin):
     """
     This adapter for the PersistencePort implements a data store that is held in memory and
     seeded by a json file that is loaded from the path configured by 'static_data_adapter.data_file'.
@@ -15,16 +22,16 @@ class StaticDataAdapter(PersistencePort):
     This adapter is not meant for production but rather for testing purposes.
     """
 
-    DATA_FILE_SETTING_NAME = "static_data_adapter.data_file"
+    @classmethod
+    def get_settings_cls(cls) -> Type[StaticDataAdapterSettings]:
+        return StaticDataAdapterSettings
 
-    def __init__(self, logger):
-        super().__init__(logger)
+    async def configure(self, settings: StaticDataAdapterSettings):
+        self._load_static_data(settings.data_file_path)
+
+    def __init__(self):
         self._users = dict()
         self._groups = dict()
-
-    @property
-    def is_cached(self):
-        return True
 
     async def get_object(
         self, identifier: str, object_type: ObjectType
@@ -64,10 +71,3 @@ class StaticDataAdapter(PersistencePort):
         self._groups = data.get("groups", {})
         if type(self._users) != dict or type(self._groups) != dict:
             raise RuntimeError("The json file did not contain the correct data.")
-
-    @staticmethod
-    def required_settings() -> Iterable[RequiredSetting]:
-        return [RequiredSetting(StaticDataAdapter.DATA_FILE_SETTING_NAME, str, None)]
-
-    async def configure(self, settings: dict[str, Any]):
-        self._load_static_data(settings[StaticDataAdapter.DATA_FILE_SETTING_NAME])

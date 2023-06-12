@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Optional
 
+import port_loader
 from loguru import logger
 
 from guardian_authorization_api.ports import SettingsPort
@@ -30,7 +31,7 @@ class LoggingDefaultSettings:
         "<green>{time:YYYY-MM-DD HH:mm:ss.SSS ZZ}</green> | <level>{level}</level> "
         "| <level>{message}</level> | {extra}"
     )
-    level: str = "INFO"
+    level: str = "DEBUG"
     structured: bool = False
     backtrace: bool = False
     diagnose: bool = False
@@ -72,6 +73,7 @@ async def configure_logger(settings_port: Optional[SettingsPort] = None):
     for logger_name in ("uvicorn", "uvicorn.error", "uvicorn.access", "fastapi"):
         _logger = logging.getLogger(logger_name)
         _logger.handlers = [InterceptHandler()]
+    logger.enable(port_loader.__name__)
     settings = LoggingDefaultSettings()
     if settings_port:
         settings.format = await settings_port.get_setting(

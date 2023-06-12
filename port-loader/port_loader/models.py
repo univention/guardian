@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TypeVar, Generic, Type, Optional
+from typing import Generic, Optional, Type, TypeVar
 
 Adapter = TypeVar("Adapter")
 Port = TypeVar("Port")

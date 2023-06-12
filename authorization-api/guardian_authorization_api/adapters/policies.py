@@ -1,23 +1,22 @@
-from typing import Any, Iterable, Optional
+from typing import Any, Iterable, Optional, Type
 
-import loguru
-from opa_client.client import OPAClient  # type: ignore[import]
+from opa_client.client import OPAClient
+from port_loader import AsyncConfiguredAdapterMixin, is_cached
 
 from guardian_authorization_api.errors import PolicyUpstreamError
 from guardian_authorization_api.models.policies import (
-    PolicyObject,
-    Target,
-    Permission,
-    Context,
     CheckPermissionsResult,
-    Policy,
+    Context,
     GetPermissionsResult,
     Namespace,
+    OPAAdapterSettings,
+    Permission,
+    Policy,
+    PolicyObject,
+    Target,
     TargetPermissions,
 )
-from guardian_authorization_api.models.settings import RequiredSetting
 from guardian_authorization_api.ports import PolicyPort
-
 
 EMPTY_TARGET = Target(
     old_target=PolicyObject(id="", attributes={}, roles=[]),
@@ -25,31 +24,26 @@ EMPTY_TARGET = Target(
 )
 
 
-class OPAAdapter(PolicyPort):
-    OPA_URL_SETTING_NAME = "opa_adapter.url"
+@is_cached
+class OPAAdapter(PolicyPort, AsyncConfiguredAdapterMixin):
     OPA_GET_PERMISSIONS_POLICY = "/v1/data/univention/base/get_permissions"
 
-    def __init__(self, logger: "loguru.Logger"):
-        super().__init__(logger)
+    def __init__(self):
         self._opa_url = ""
         self._opa_client = None
 
-    @staticmethod
-    def required_settings() -> Iterable[RequiredSetting]:
-        return [RequiredSetting(OPAAdapter.OPA_URL_SETTING_NAME, str, None)]
+    @classmethod
+    def get_settings_cls(cls) -> Type[OPAAdapterSettings]:
+        return OPAAdapterSettings
 
-    @property
-    def is_cached(self):
-        return True
+    async def configure(self, settings: OPAAdapterSettings):
+        self._opa_url = settings.opa_url
 
     @property
     def opa_client(self):
         if self._opa_client is None:
             self._opa_client = OPAClient(self._opa_url)
         return self._opa_client
-
-    async def configure(self, settings: dict[str, Any]):
-        self._opa_url = settings[OPAAdapter.OPA_URL_SETTING_NAME]
 
     async def check_permissions(
         self,

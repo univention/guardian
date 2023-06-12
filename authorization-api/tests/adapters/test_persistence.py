@@ -6,8 +6,8 @@ from guardian_authorization_api.errors import ObjectNotFoundError, PersistenceEr
 from guardian_authorization_api.models.persistence import (
     ObjectType,
     PersistenceObject,
+    StaticDataAdapterSettings,
 )
-from guardian_authorization_api.models.settings import RequiredSetting
 
 
 class TestStaticDataAdapter:
@@ -34,8 +34,8 @@ class TestStaticDataAdapter:
         }
 
     @pytest.fixture
-    def port_instance(self, mocker) -> StaticDataAdapter:
-        return StaticDataAdapter(mocker.MagicMock())
+    def port_instance(self) -> StaticDataAdapter:
+        return StaticDataAdapter()
 
     @pytest.fixture
     def loaded_port_instance(self, port_instance, mock_data):
@@ -44,7 +44,7 @@ class TestStaticDataAdapter:
         return port_instance
 
     def test_is_cached(self, port_instance):
-        assert port_instance.is_cached is True
+        assert getattr(port_instance, "__port_loader_is_cached") is True
 
     @pytest.mark.asyncio
     async def test_get_user(self, loaded_port_instance, mock_data):
@@ -107,17 +107,14 @@ class TestStaticDataAdapter:
         ):
             port_instance._load_static_data(str(file))
 
-    @pytest.mark.asyncio
-    async def test_required_settings(self):
-        required_settings = list(StaticDataAdapter.required_settings())
-        assert len(required_settings) == 1
-        assert required_settings[0] == RequiredSetting(
-            "static_data_adapter.data_file", str, None
-        )
+    def test_get_settings_cls(self, port_instance):
+        assert port_instance.get_settings_cls() == StaticDataAdapterSettings
 
     @pytest.mark.asyncio
     async def test_configure(self, port_instance, mocker):
         func_mock = mocker.MagicMock()
         port_instance._load_static_data = func_mock
-        await port_instance.configure({"static_data_adapter.data_file": "some_file"})
+        await port_instance.configure(
+            StaticDataAdapterSettings(data_file_path="some_file")
+        )
         assert func_mock.call_args_list == [mocker.call("some_file")]

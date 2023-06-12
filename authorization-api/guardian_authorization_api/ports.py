@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Iterable, Optional, Type
 
 import loguru
+from port_loader import AsyncAdapterSettingsProvider
 
 from .errors import SettingFormatError, SettingTypeError
 from .models.persistence import ObjectType, PersistenceObject
@@ -15,7 +16,7 @@ from .models.policies import (
     PolicyObject,
     Target,
 )
-from .models.settings import RequiredSetting, SettingType
+from .models.settings import SettingType
 
 
 class BasePort(ABC):
@@ -23,57 +24,12 @@ class BasePort(ABC):
     Base class for all ports.
     """
 
-    def __init__(self, logger: "loguru.Logger"):
-        self._logger = logger
-
     @property
     def logger(self) -> "loguru.Logger":
-        return self._logger.bind()
-
-    @property
-    @abstractmethod
-    def is_cached(self):
-        """
-        Returns whether the implementing class should be cached.
-
-        If True the adapter will be instantiated only once and reused for subsequent requests.
-        If False is, the adapter will be instantiated every time the port is requested.
-        """
-        raise NotImplementedError
+        return loguru.logger.bind()
 
 
-class ConfiguredPort(BasePort, ABC):
-    """
-    Base class for all ports that should support configuration.
-    """
-
-    @staticmethod
-    @abstractmethod
-    def required_settings() -> Iterable[RequiredSetting]:
-        """
-        Returns a list of settings that the adapter requires to configure itself.
-
-        The format of the returned settings are tuples containing
-        (setting name, setting type, default value) just as the SettingsPort expects
-        for fetching settings.
-
-        :return: A list containing the required settings for the configure method
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    async def configure(self, settings: dict[str, Any]):
-        """
-        Method to configure the adapter.
-
-        This method is called after instantiation, but before the adapter is ever used.
-
-        :param settings: The settings fetched from the SettingsPort
-        """
-        raise NotImplementedError
-
-
-class PersistencePort(ConfiguredPort, ABC):
+class PersistencePort(BasePort, ABC):
     """
     This port enables access to objects in a persistent database.
 
@@ -97,7 +53,7 @@ class PersistencePort(ConfiguredPort, ABC):
         raise NotImplementedError
 
 
-class SettingsPort(BasePort, ABC):
+class SettingsPort(BasePort, AsyncAdapterSettingsProvider, ABC):
     """
     This port enables access to settings defined for the application.
 
@@ -216,7 +172,7 @@ class SettingsPort(BasePort, ABC):
         raise NotImplementedError
 
 
-class PolicyPort(ConfiguredPort, ABC):
+class PolicyPort(BasePort, ABC):
     """
     This port enables access to a policy evaluation agent such as OPA.
     """

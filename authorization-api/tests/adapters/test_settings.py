@@ -1,4 +1,5 @@
 import os
+from dataclasses import dataclass, field
 
 import pytest
 from guardian_authorization_api.adapters.settings import EnvSettingsAdapter
@@ -7,12 +8,13 @@ from guardian_authorization_api.errors import (
     SettingNotFoundError,
     SettingTypeError,
 )
+from guardian_authorization_api.models.settings import SETTINGS_NAME_METADATA
 
 
 class TestEnvSettings:
     @pytest.fixture
-    def port_instance(self, mocker):
-        return EnvSettingsAdapter(mocker.MagicMock())
+    def port_instance(self):
+        return EnvSettingsAdapter()
 
     @pytest.fixture(scope="session")
     def mock_env(self):
@@ -134,4 +136,22 @@ class TestEnvSettings:
         )
 
     def test_is_cached(self, port_instance):
-        assert port_instance.is_cached is True
+        assert getattr(port_instance, "__port_loader_is_cached") is True
+
+    @pytest.mark.asyncio
+    async def test_get_adapter_settings(self, port_instance):
+        @dataclass
+        class TestSettings:
+            a: int = field(metadata={SETTINGS_NAME_METADATA: "number_one"})
+            b: bool = field(metadata={SETTINGS_NAME_METADATA: "true"})
+            c: int = field(metadata={SETTINGS_NAME_METADATA: "nested.value"})
+            d: str = field(
+                default="some value",
+                metadata={SETTINGS_NAME_METADATA: "unknown.settings.5"},
+            )
+
+        settings = await port_instance.get_adapter_settings(TestSettings)
+        assert settings.a == 1
+        assert settings.b is True
+        assert settings.c == 1
+        assert settings.d == "some value"

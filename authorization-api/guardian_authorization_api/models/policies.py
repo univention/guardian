@@ -1,5 +1,14 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Iterable, Optional
+
+from guardian_authorization_api.models.settings import SETTINGS_NAME_METADATA
+
+OPA_URL_SETTING_NAME = "opa_adapter.url"
+
+
+@dataclass
+class OPAAdapterSettings:
+    opa_url: str = field(metadata={SETTINGS_NAME_METADATA: OPA_URL_SETTING_NAME})
 
 
 @dataclass(frozen=True)

@@ -1,5 +1,4 @@
 import pytest
-
 from port_loader import AsyncAdapterRegistry
 
 

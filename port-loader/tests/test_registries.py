@@ -5,19 +5,19 @@ import pytest
 from port_loader import (
     AsyncAdapterSettingsProvider,
     AsyncConfiguredAdapterMixin,
+    Settings,
     get_fqcn,
     is_cached,
-    Settings,
 )
 from port_loader.errors import (
+    AdapterConfigurationError,
+    AdapterInstantiationError,
+    AdapterNotFoundError,
+    AdapterNotSetError,
     DuplicateAdapterError,
     DuplicatePortError,
-    PortTypeError,
-    AdapterNotFoundError,
     PortNotFoundError,
-    AdapterNotSetError,
-    AdapterInstantiationError,
-    AdapterConfigurationError,
+    PortTypeError,
 )
 
 

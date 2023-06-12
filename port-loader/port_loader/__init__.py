@@ -6,11 +6,11 @@ from port_loader.adapters import (
     AsyncConfiguredAdapterMixin,
 )
 from port_loader.models import (
-    Settings,
-    Port,
     Adapter,
-    PortConfiguration,
     AdapterConfiguration,
+    Port,
+    PortConfiguration,
+    Settings,
 )
 from port_loader.registries import AsyncAdapterRegistry
 from port_loader.utils import get_fqcn, is_cached, load_from_entry_point

@@ -1,7 +1,6 @@
 from typing import Callable
 
 import pytest
-
 from guardian_authorization_api.adapters.policies import OPAAdapter
 from guardian_authorization_api.errors import PolicyUpstreamError
 from guardian_authorization_api.models.policies import PolicyObject

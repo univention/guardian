@@ -1,21 +1,21 @@
 from collections import defaultdict
 from dataclasses import asdict
-from typing import Type, Callable, Any, Optional, cast
+from typing import Any, Callable, Optional, Type, cast
 
 from loguru import logger
 
 from .adapters import AsyncAdapterSettingsProvider, AsyncConfiguredAdapterMixin
 from .errors import (
+    AdapterConfigurationError,
+    AdapterInstantiationError,
+    AdapterNotFoundError,
+    AdapterNotSetError,
     DuplicateAdapterError,
     DuplicatePortError,
-    PortTypeError,
-    AdapterNotFoundError,
     PortNotFoundError,
-    AdapterNotSetError,
-    AdapterInstantiationError,
-    AdapterConfigurationError,
+    PortTypeError,
 )
-from .models import Adapter, Port, AdapterConfiguration, PortConfiguration
+from .models import Adapter, AdapterConfiguration, Port, PortConfiguration
 from .utils import get_fqcn
 
 

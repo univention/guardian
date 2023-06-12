@@ -1,7 +1,7 @@
 import inspect
-from functools import wraps, partial
+from functools import partial, wraps
 from importlib import metadata
-from typing import Type, TYPE_CHECKING, Callable, Any, cast
+from typing import TYPE_CHECKING, Any, Callable, Type, cast
 
 from loguru import logger
 
