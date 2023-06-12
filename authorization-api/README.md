@@ -22,8 +22,8 @@ The project itself provides the `opa` adapter, which can be used.
 
 **guardian.authz.logging.structured,type=bool,default=False**: If set to True, the logging output is structured as a JSON object
 
-**guardian.authz.logging.level,type=Enum,default=SUCCESS**: Sets the log level of the application. The choices are TRACE, DEBUG, INFO,
-SUCCESS, WARNING, ERROR, CRITICAL.
+**guardian.authz.logging.level,type=Enum,default=SUCCESS**: Sets the log level of the application. The choices are DEBUG, INFO,
+WARNING, ERROR, CRITICAL.
 
 **guardian.authz.logging.format,type=string**: Defines the format of the log output, if not structured. The possible options are
 described [here](https://loguru.readthedocs.io/en/stable/api/logger.html). The default is
@@ -90,19 +90,17 @@ To start the API on your local machine, follow these steps:
 Prerequisites:
 
 - Docker installed
-- If run without docker:
-  - Python 3.11 installed
-  - [Poetry](https://python-poetry.org/) installed
 
 ```shell
-# pwd == $REPO_DIR/authorization-engine/guardian/authorization-api
-docker build --add-host "git.knut.univention.de:10.208.1.251" -t guardian-authz:dev .
+# pwd == $REPO_DIR/authorization-engine/guardian/
 cat > .env << EOF
 GUARDIAN__AUTHZ__LOGGING__LEVEL=DEBUG
 GUARDIAN__AUTHZ__LOGGING__STRUCTURED=0
 GUARDIAN__AUTHZ__ADAPTER__SETTINGS_PORT=env
 GUARDIAN__AUTHZ__ADAPTER__PERSISTENCE_PORT=static_data
+GUARDIAN__AUTHZ__ADAPTER__POLICY_PORT=opa
 STATIC_DATA_ADAPTER__DATA_FILE=/guardian_service_dir/test_data.json
+OPA_ADAPTER__URL="http://opa:8181/"
 EOF
 cat > test_data.json << EOF
 {
@@ -116,35 +114,57 @@ cat > test_data.json << EOF
   }
 }
 EOF
-docker run --rm -p 8000:8000 --env-file .env guardian-authz:dev
+cat > docker-compose.yaml << EOF
+services:
+  opa:
+    image: guardian-opa:dev
+    build: opa/
+  authorization-api:
+    image: guardian-authz:dev
+    build:
+      context: authorization-api/
+      extra_hosts:
+        - git.knut.univention.de:\${GITLAB_IP}
+    depends_on:
+      - opa
+    ports:
+      - 8000:8000
+    volumes:
+      - ./test_data.json:/guardian_service_dir/test_data.json
+    env_file: .env
+EOF
+GITLAB_IP=$(dig +short git.knut.univention.de | tail -n1) docker compose build
+docker compose up
 ```
 
-Alternatively you can start the service directly, without a docker container:
+You can test the API by running a test query:
 
 ```shell
-cat > .env << EOF
-GUARDIAN__AUTHZ__LOGGING__LEVEL=DEBUG
-GUARDIAN__AUTHZ__LOGGING__STRUCTURED=0
-GUARDIAN__AUTHZ__ADAPTER__SETTINGS_PORT=env
-GUARDIAN__AUTHZ__ADAPTER__PERSISTENCE_PORT=static_data
-STATIC_DATA_ADAPTER__DATA_FILE=test_data.json
-EOF
-cat > test_data.json << EOF
-{
-  "users": {
-      "USER1": {"attributes": {"A": 1, "B": 2}},
-      "USER2": {"attributes": {}}
+curl -X 'POST' \
+  'http://localhost:8001/permissions' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "actor": {
+    "id": "my actor",
+    "roles": [
+      {
+        "app_name": "string",
+        "namespace_name": "string",
+        "role_name": "string"
+      }
+    ],
+    "attributes": {}
   },
-  "groups": {
-      "GROUP1": {"attributes": {"C": 3, "D": 4}},
-      "GROUP2": {"attributes": {"E": 5, "F": 6}}
-  }
-}
-EOF
-poetry shell  # Or any other way to activate your virtual env for this project
-poetry install
-export $(xargs <.env)
-gunicorn --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 guardian_authorization_api.main:app
+  "include_general_permissions": false,
+  "extra_request_data": {},
+  "targets": [
+    {
+      "old_target": {"id": "target1", "roles": [], "attributes": []},
+      "new_target": {"id": "target1", "roles": [], "attributes": []}
+    }
+  ]
+}'
 ```
 
 ### Running the tests
