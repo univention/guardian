@@ -5,6 +5,7 @@ import loguru
 from port_loader import AsyncAdapterSettingsProvider
 
 from .errors import SettingFormatError, SettingTypeError
+from .models.incoming import GetPermissionAPIResponse
 from .models.persistence import ObjectType, PersistenceObject
 from .models.policies import (
     CheckPermissionsResult,
@@ -240,5 +241,32 @@ class PolicyPort(BasePort, ABC):
         :param policy: The policy to query
         :param data: The data that should be passed to the custom policy
         :return: The data returned by the custom policy
+        """
+        raise NotImplementedError
+
+
+class GetPermissionAPIPort(BasePort, ABC):
+    @abstractmethod
+    async def get_permissions(
+        self,
+        actor: PolicyObject,
+        targets: Iterable[Target],
+        contexts: Iterable[Context],
+        extra_request_data: dict[str, Any],
+        namespaces: Iterable[Namespace],
+        include_general_permissions: bool,
+    ) -> GetPermissionAPIResponse:
+        """
+        This method allows to retrieve all permissions an actor has
+        when acting on the specified targets.
+
+        :param actor: The actor to retrieve the permissions for
+        :param targets: The targets that are acted on
+        :param namespaces: A list of namespaces used to restrict the permissions contained in the result
+        :param contexts: Additional contexts to pass to the policy evaluation agent
+        :param extra_request_data: Additional arguments to pass to the policy evaluation agent
+        :param include_general_permissions: If True the result will contain a list of permissions
+        the actor has if acting on no particular target
+        :return: A response object containing the permissions the actor has regarding every target
         """
         raise NotImplementedError

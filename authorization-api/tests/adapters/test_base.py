@@ -6,7 +6,12 @@ from guardian_authorization_api.adapters.base import (
     configure_registry,
     initialize_adapters,
 )
-from guardian_authorization_api.ports import PersistencePort, PolicyPort, SettingsPort
+from guardian_authorization_api.ports import (
+    GetPermissionAPIPort,
+    PersistencePort,
+    PolicyPort,
+    SettingsPort,
+)
 from port_loader.adapters import AsyncAdapterSettingsProvider
 from port_loader.registries import AsyncAdapterRegistry
 
@@ -34,6 +39,7 @@ def test_configure_registry(adapter_registry, mocker):
     load_ep_mock = mocker.MagicMock()
     adapter_registry.register_port = register_port_mock
     adapter_registry.set_adapter = set_adapter_mock
+    adapter_registry.register_adapter = mocker.MagicMock()
     mocker.patch(
         "guardian_authorization_api.adapters.base.load_from_entry_point", load_ep_mock
     )
@@ -42,6 +48,7 @@ def test_configure_registry(adapter_registry, mocker):
         mocker.call(SettingsPort),
         mocker.call(PersistencePort),
         mocker.call(PolicyPort),
+        mocker.call(GetPermissionAPIPort),
     ]
     assert set_adapter_mock.call_args_list == [
         mocker.call(SettingsPort, "my_settings"),

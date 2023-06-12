@@ -1,3 +1,5 @@
+from typing import Type
+
 import lazy_object_proxy
 from port_loader import (
     AsyncAdapterRegistry,
@@ -7,10 +9,12 @@ from port_loader import (
 from pydantic import BaseSettings, Field
 
 from ..ports import (
+    GetPermissionAPIPort,
     PersistencePort,
     PolicyPort,
     SettingsPort,
 )
+from .incoming import GetPermissionAPIAdapter
 
 PORT_CLASSES = (SettingsPort, PersistencePort, PolicyPort)
 ADAPTER_REGISTRY = lazy_object_proxy.Proxy(AsyncAdapterRegistry)
@@ -54,8 +58,19 @@ def configure_registry(adapter_registry: AsyncAdapterRegistry):
     adapter_registry.set_adapter(
         AsyncAdapterSettingsProvider, selection[SettingsPort.__name__]
     )
+    adapter_registry.register_port(GetPermissionAPIPort)
+    adapter_registry.register_adapter(GetPermissionAPIPort, set_adapter=True)(
+        GetPermissionAPIAdapter
+    )
 
 
 async def initialize_adapters(adapter_registry: AsyncAdapterRegistry):
     for port_cls in PORT_CLASSES:
         await adapter_registry(port_cls)
+
+
+def port_dep(port_cls: Type):
+    async def _wrapper():
+        return await ADAPTER_REGISTRY(port_cls)
+
+    return _wrapper

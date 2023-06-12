@@ -7,6 +7,7 @@ from loguru import logger
 from .adapters.base import ADAPTER_REGISTRY, configure_registry, initialize_adapters
 from .logging import configure_logger
 from .ports import SettingsPort
+from .routes import router
 
 
 @asynccontextmanager
@@ -23,3 +24,4 @@ async def lifespan(fastapi_app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+app.include_router(router)
