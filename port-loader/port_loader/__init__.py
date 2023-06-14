@@ -5,6 +5,7 @@ from port_loader.adapters import (
     AsyncAdapterSettingsProvider,
     AsyncConfiguredAdapterMixin,
 )
+from port_loader.injection import inject_port
 from port_loader.models import (
     Adapter,
     AdapterConfiguration,
@@ -32,4 +33,5 @@ def __dir__():
         get_fqcn,
         is_cached,
         load_from_entry_point,
-    ]
+        inject_port,
+    ]  # pragma: no cover

@@ -760,13 +760,12 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "port-loader"
-version = "0.4.0"
+version = "0.7.0"
 description = ""
 optional = false
 python-versions = ">=3.10,<4.0"
 files = [
-    {file = "port_loader-0.4.0-py3-none-any.whl", hash = "sha256:305fe59e92c282f30fb27065e52c65109ba7e2dbc36f0329177514b269ac7ba1"},
-    {file = "port_loader-0.4.0.tar.gz", hash = "sha256:0cb2ec58bacbd07f553f951653cd716f231836ec3373b9685da5d1509151a2c7"},
+    {file = "port_loader-0.7.0-py3-none-any.whl", hash = "sha256:d72dddfbcf9aafabd3cfa1114d4e30bfd3222a3928600c5faa7fc6aaceac7719"},
 ]
 
 [package.dependencies]
@@ -1079,4 +1078,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "0cff48807226a99049777115263e228fd0c431339797b1d3711a4cc44da60ddf"
+content-hash = "4f0d02b4629834c4ba02aa6aebf41d07852354f437d0e0ca62336268028872b3"

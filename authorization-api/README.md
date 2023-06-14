@@ -99,7 +99,7 @@ GUARDIAN__AUTHZ__LOGGING__STRUCTURED=0
 GUARDIAN__AUTHZ__ADAPTER__SETTINGS_PORT=env
 GUARDIAN__AUTHZ__ADAPTER__PERSISTENCE_PORT=static_data
 GUARDIAN__AUTHZ__ADAPTER__POLICY_PORT=opa
-STATIC_DATA_ADAPTER__DATA_FILE=/guardian_service_dir/test_data.json
+STATIC_DATA_ADAPTER__DATA_FILE=test_data.json
 OPA_ADAPTER__URL="http://opa:8181/"
 EOF
 cat > test_data.json << EOF
@@ -141,7 +141,7 @@ You can test the API by running a test query:
 
 ```shell
 curl -X 'POST' \
-  'http://localhost:8001/permissions' \
+  'http://localhost:8000/permissions' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
   -d '{

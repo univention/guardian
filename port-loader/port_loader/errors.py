@@ -30,5 +30,5 @@ class AdapterConfigurationError(RuntimeError):
     ...
 
 
-class PortInjectionError(RuntimeError):
+class InjectionError(RuntimeError):
     ...

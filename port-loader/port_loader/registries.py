@@ -15,6 +15,7 @@ from .errors import (
     PortNotFoundError,
     PortTypeError,
 )
+from .injection import inject_adapter
 from .models import Adapter, AdapterConfiguration, Port, PortConfiguration
 from .utils import get_fqcn
 
@@ -126,12 +127,12 @@ class AsyncAdapterRegistry:
                     f"The adapter class '{adapter_fqcn}' has already been "
                     f"registered for the port '{get_fqcn(port_cls)}'."
                 )
+            inject_adapter(self)(adapter_cls)
             self._adapter_configs[port_fqcn][adapter_fqcn] = AdapterConfiguration(
                 adapter_cls=adapter_cls,
                 is_cached=getattr(adapter_cls, "__port_loader_is_cached", False),
                 name=name,
             )
-            setattr(adapter_cls, "__port_loader_registry", self)
             local_logger.info("Adapter registered.")
             if set_adapter:
                 self.set_adapter(port_cls, adapter_cls)

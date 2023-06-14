@@ -17,7 +17,7 @@ class AsyncAdapterSettingsProvider(ABC):
         """
         This method gets a data class type and is expected to return an instance of that dataclass.
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
 
 class AsyncConfiguredAdapterMixin(ABC, Generic[Settings]):
@@ -35,7 +35,7 @@ class AsyncConfiguredAdapterMixin(ABC, Generic[Settings]):
         """
         Returns the data class type which is expected as the parameter in the configure method.
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     @abstractmethod
     async def configure(self, settings: Settings):
@@ -47,4 +47,4 @@ class AsyncConfiguredAdapterMixin(ABC, Generic[Settings]):
         :param settings: An instance of the data class type specified in the
         get_settings_cls method.
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover

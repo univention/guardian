@@ -1,15 +1,12 @@
-import inspect
-from functools import partial, wraps
 from importlib import metadata
-from typing import TYPE_CHECKING, Any, Callable, Type, cast
+from typing import TYPE_CHECKING, Type
 
 from loguru import logger
 
-from port_loader.errors import PortInjectionError
-from port_loader.models import Adapter, Port
+from port_loader.models import Adapter
 
 if TYPE_CHECKING:
-    from port_loader.registries import AsyncAdapterRegistry
+    from port_loader.registries import AsyncAdapterRegistry  # pragma: no cover
 
 
 def get_fqcn(cls: Type) -> str:
@@ -53,44 +50,3 @@ def load_from_entry_point(
     for entry_point in entry_points:
         adapter_cls = entry_point.load()
         adapter_registry.register_adapter(port_cls, name=entry_point.name)(adapter_cls)
-
-
-def inject_port(**port_classes: Type[Port]):
-    """
-    This is a function decorator to inject adapter instances for ports into other functions.
-
-    This works only on classes which have been registered as adapters with an adapter
-    registry before.
-
-    Note: As of now this decorator works on async functions only.
-    """
-
-    def _inject_port(func: Callable) -> Callable:
-        @wraps(func)
-        async def _async_wrapper(self, *args, **kwargs) -> Any:
-            try:
-                registry: AsyncAdapterRegistry = getattr(self, "__port_loader_registry")
-            except AttributeError as exc:
-                raise PortInjectionError(
-                    f"Error during port injection in '{get_fqcn(self.__class__)}'."
-                ) from exc
-            port_instances = dict()
-            for param_name, port_cls in port_classes.items():
-                port_instances[param_name] = await registry.get_adapter(port_cls)
-            partial_func = partial(func, **port_instances)
-            return await partial_func(self, *args, **kwargs)
-
-        if inspect.iscoroutinefunction(func):
-            return _async_wrapper
-        raise PortInjectionError(
-            "Currently the port injection works for async methods only."
-        )
-
-    return _inject_port
-
-
-def injected_port(_port_cls: Type[Port]) -> Port:
-    """
-    This is a function meant to be used as a default for injected port parameters.
-    """
-    return cast(Port, object())

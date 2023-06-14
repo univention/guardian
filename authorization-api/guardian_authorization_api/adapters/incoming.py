@@ -1,6 +1,6 @@
 from typing import Any, Iterable
 
-from port_loader.utils import inject_port, injected_port
+from port_loader import inject_port
 
 from ..models.incoming import GetPermissionAPIResponse, GetPermissionAPIResult
 from ..models.policies import Context, Namespace, PolicyObject, Target
@@ -8,7 +8,6 @@ from ..ports import GetPermissionAPIPort, PolicyPort
 
 
 class GetPermissionAPIAdapter(GetPermissionAPIPort):
-    @inject_port(policy_port=PolicyPort)
     async def get_permissions(
         self,
         actor: PolicyObject,
@@ -17,7 +16,7 @@ class GetPermissionAPIAdapter(GetPermissionAPIPort):
         extra_request_data: dict[str, Any],
         namespaces: Iterable[Namespace],
         include_general_permissions: bool,
-        policy_port: PolicyPort = injected_port(PolicyPort),
+        policy_port: PolicyPort = inject_port(PolicyPort),
     ) -> GetPermissionAPIResponse:
         result = await policy_port.get_permissions(
             actor,
