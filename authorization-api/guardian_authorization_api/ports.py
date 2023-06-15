@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Type, Iterable, Any
+from typing import Any, Iterable, Optional, Type
 
 import loguru
 
 from .errors import SettingFormatError, SettingTypeError
-from .models.persistence import PersistenceObject, ObjectType
+from .models.persistence import ObjectType, PersistenceObject
 from .models.settings import RequiredSetting, SettingType
 
 

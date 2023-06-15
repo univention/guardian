@@ -1,28 +1,27 @@
-from typing import Any, Iterable, Tuple, Type, Optional
+from typing import Any, Iterable, Optional, Tuple, Type
 
 import pytest
-from pydantic import ValidationError
-
 from guardian_authorization_api.adapters.base import (
+    PORT_CLASSES,
     AdapterContainer,
     AdapterSelection,
-    load_adapter_classes,
-    PORT_CLASSES,
     get_port,
+    load_adapter_classes,
 )
 from guardian_authorization_api.errors import (
+    AdapterConfigurationError,
     AdapterInitializationError,
     AdapterLoadingError,
-    AdapterConfigurationError,
     SettingNotFoundError,
     SettingTypeError,
 )
 from guardian_authorization_api.models.persistence import ObjectType, PersistenceObject
 from guardian_authorization_api.ports import (
+    ConfiguredPort,
     PersistencePort,
     SettingsPort,
-    ConfiguredPort,
 )
+from pydantic import ValidationError
 
 
 class DummyPersistence(PersistencePort):

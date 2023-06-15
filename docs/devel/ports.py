@@ -6,8 +6,7 @@ It should be deleted once the actual implementations exist
 from abc import ABC
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Iterable, Type, Optional
-
+from typing import Any, Iterable, Optional, Type
 
 # Models
 
@@ -21,6 +20,7 @@ class ObjectType(Enum):
 @dataclass
 class PolicyObject:
     """Actor or target sent to the policy agent to evaluate permissions"""
+
     id: str
     roles: set["Role"]
     attributes: dict[str, Any]
@@ -40,6 +40,7 @@ class PersistenceObject:
     construct the query to the data store, such as hinting which
     table to use or how to construct the dn.
     """
+
     id: str
     object_type: ObjectType
     attributes: dict[str, Any]

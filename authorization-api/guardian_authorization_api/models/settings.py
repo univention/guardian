@@ -1,6 +1,5 @@
 from typing import Any, NamedTuple, Optional, Type, TypeVar
 
-
 SettingType = TypeVar("SettingType", bound=int | str | bool)
 
 

@@ -1,13 +1,12 @@
 import os
 
 import pytest
-
+from guardian_authorization_api.adapters.settings import EnvSettingsAdapter
 from guardian_authorization_api.errors import (
     SettingFormatError,
     SettingNotFoundError,
     SettingTypeError,
 )
-from guardian_authorization_api.adapters.settings import EnvSettingsAdapter
 
 
 class TestEnvSettings:

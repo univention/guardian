@@ -1,7 +1,7 @@
 import json
 from typing import Any, Iterable
 
-from ..errors import PersistenceError, ObjectNotFoundError
+from ..errors import ObjectNotFoundError, PersistenceError
 from ..models.persistence import ObjectType, PersistenceObject
 from ..models.settings import RequiredSetting
 from ..ports import PersistencePort
