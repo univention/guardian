@@ -1,6 +1,6 @@
 from collections import defaultdict
 from dataclasses import asdict
-from typing import Any, Callable, Optional, Type, cast
+from typing import Any, Optional, Type, cast
 
 from loguru import logger
 
@@ -13,7 +13,7 @@ from .errors import (
     DuplicateAdapterError,
     DuplicatePortError,
     PortNotFoundError,
-    PortTypeError,
+    PortSubclassError,
 )
 from .injection import inject_adapter
 from .models import Adapter, AdapterConfiguration, Port, PortConfiguration
@@ -25,10 +25,10 @@ class AsyncAdapterRegistry:
     This is an Async adapter registry.
 
     This class allows to register ports and adapters for those ports.
-    It allows to retrieve an object instance for a given port without knowing
+    It allows to request an object instance for a given port without knowing
     which specific implementation (adapter) is used.
 
-    The adapter registry can be called directly to retrieve a port object instance, e.g.:
+    The adapter registry can be called directly to request a port object instance, e.g.:
 
     port_adapter = await adapter_registry(SomePortClass)
     """
@@ -42,11 +42,11 @@ class AsyncAdapterRegistry:
         self.register_port(AsyncAdapterSettingsProvider)
 
     async def __call__(self, port_cls):
-        return await self.get_adapter(port_cls)
+        return await self.request_port(port_cls)
 
     async def _configure_adapter(self, adapter: AsyncConfiguredAdapterMixin):
         local_logger = logger.bind(adaper=get_fqcn(adapter.__class__))
-        settings_provider = await self.get_adapter(AsyncAdapterSettingsProvider)
+        settings_provider = await self.request_port(AsyncAdapterSettingsProvider)
         settings = await settings_provider.get_adapter_settings(
             adapter.get_settings_cls()
         )
@@ -56,7 +56,7 @@ class AsyncAdapterRegistry:
 
     def register_port(self, port_cls: Type[Port]) -> Type[Port]:
         """
-        Register a port with the adapter registry.
+        Registers a port with the adapter registry.
 
         :param port_cls: The port class to register
         :raises DuplicatePortError: If the port class was already registered
@@ -72,20 +72,25 @@ class AsyncAdapterRegistry:
         return port_cls
 
     def register_adapter(
-        self, port_cls: Type, *, set_adapter: bool = False, name: Optional[str] = None
-    ) -> Callable[[Type[Adapter]], Type[Adapter]]:
+        self,
+        port_cls: Type,
+        *,
+        adapter_cls: Optional[Type[Adapter]] = None,
+    ):
         """
         This method returns a class decorator that can be used to register an adapter for a given port.
+        If the optional parameter adapter_cls is supplied to this function, the decorator
+        is immediately applied to that adapter class.
 
-        The adapter can be given an optional name to reference it by.
+        If the registered adapter specifies inject_port() parameters, the adapters method are augmented
+        here.
 
         The documented exceptions are raised by the decorator function, not this method itself!
 
         :param port_cls: The port to register the adapter for
-        :param set_adapter: If True the adapter is automatically set for the port as well
-        :param name: The optional name of the adapter
+        :param adapter_cls: The class to apply the generated decorator to.
         :return: The class decorator
-        :raises PortTypeError: If the adapter is not a subclass of the specified port, or you try
+        :raises PortSubclassError: If the adapter is not a subclass of the specified port, or you try
         to register a ConfiguredAdapter to the AsyncAdapterSettingsProvider port
         :raises PortNotFoundError: If the port you want to register the adapter for was not
         registered before
@@ -96,48 +101,48 @@ class AsyncAdapterRegistry:
         def _register_adapter(adapter_cls: Type[Adapter]) -> Type[Adapter]:
             adapter_fqcn = get_fqcn(adapter_cls)
             port_fqcn = get_fqcn(port_cls)
+            adapter_config_cls = getattr(adapter_cls, "Config", None)
             local_logger = logger.bind(port=port_fqcn, adapter=adapter_fqcn)
             if port_cls is AsyncAdapterSettingsProvider and issubclass(
                 adapter_cls, AsyncConfiguredAdapterMixin
             ):
-                raise PortTypeError(
+                raise PortSubclassError(
                     f"An adapter for the port '{port_fqcn}' must never be a ConfiguredAdapter."
                 )
             if port_fqcn not in self._port_configs:
-                raise PortNotFoundError(
-                    f"Could not find a port of the class '{port_fqcn}'."
-                )
+                raise PortNotFoundError(f"The port '{port_fqcn}' was not registered.")
             if not issubclass(adapter_cls, port_cls):
-                raise PortTypeError(
+                raise PortSubclassError(
                     f"The adapter '{adapter_fqcn}' is not valid for port '{port_fqcn}'"
                 )
-            if name and any(
+            alias = getattr(adapter_config_cls, "alias", None)
+            if alias and any(
                 (
                     adapter_config
                     for adapter_config in self._adapter_configs[port_fqcn].values()
-                    if (adapter_config.name == name)
+                    if (adapter_config.alias == alias)
                 )
             ):
                 raise DuplicateAdapterError(
-                    f"An adapter class with the name '{name}' has already been "
+                    f"An adapter class with the alias '{alias}' has already been "
                     f"registered for the port {port_fqcn}."
                 )
             if adapter_fqcn in self._adapter_configs[port_fqcn]:
                 raise DuplicateAdapterError(
                     f"The adapter class '{adapter_fqcn}' has already been "
-                    f"registered for the port '{get_fqcn(port_cls)}'."
+                    f"registered for the port '{port_fqcn}'."
                 )
-            inject_adapter(self)(adapter_cls)
+            inject_adapter(self, adapter_cls=adapter_cls)
             self._adapter_configs[port_fqcn][adapter_fqcn] = AdapterConfiguration(
                 adapter_cls=adapter_cls,
-                is_cached=getattr(adapter_cls, "__port_loader_is_cached", False),
-                name=name,
+                is_cached=getattr(adapter_config_cls, "is_cached", True),
+                alias=alias,
             )
             local_logger.info("Adapter registered.")
-            if set_adapter:
-                self.set_adapter(port_cls, adapter_cls)
             return adapter_cls
 
+        if adapter_cls:
+            return _register_adapter(adapter_cls)
         return _register_adapter
 
     def set_adapter(self, port_cls: Type, adapter_cls: Type | str):
@@ -145,22 +150,24 @@ class AsyncAdapterRegistry:
         Method to set which adapter to return if the specified port is requested.
 
         :param port_cls: The port to set the adapter for
-        :param adapter_cls: The adapter type or adapter name to set for the port
+        :param adapter_cls: The adapter type or adapter alias to set for the port
         :raises AdapterNotFoundError: If the specified adapter was not registered
         """
         port_fqcn = get_fqcn(port_cls)
         local_logger = logger.bind(port=port_fqcn)
+        if port_fqcn not in self._port_configs:
+            raise PortNotFoundError(f"The port '{port_fqcn}' was not registered.")
         if type(adapter_cls) is str:
             adapter_configs = list(
                 [
                     adapter_config
                     for adapter_config in self._adapter_configs[port_fqcn].values()
-                    if adapter_config.name == adapter_cls
+                    if adapter_config.alias == adapter_cls
                 ]
             )
             if len(adapter_configs) == 0:
                 raise AdapterNotFoundError(
-                    f"No adapter with the name '{adapter_cls}' was registered "
+                    f"No adapter with the alias '{adapter_cls}' was registered "
                     f"for the port '{port_fqcn}'."
                 )
             adapter_fqcn = get_fqcn(adapter_configs[0].adapter_cls)
@@ -174,30 +181,48 @@ class AsyncAdapterRegistry:
         local_logger.bind(adapter=adapter_fqcn).info("Adapter set.")
         self._port_configs[port_fqcn].selected_adapter = adapter_fqcn
 
-    async def get_adapter(self, port_cls: Type[Port]) -> Port:
+    async def request_port(self, port_cls: Type[Port]) -> Port:
         """
-        Method to get an object instance for the specified port.
+        Method to get an object instance for the requested port.
 
         This will be an instance of the type of the adapter class set for
         the port.
 
-        This method can be called directly by calling the adapter instance as well.
+        If multiple adapters were registered for the specified port, but none was set,
+        an exception is raised. If only one adapter was registered for the port though,
+        it is automatically assumed that this adapter was set for the port.
+
+        This method can be called directly by calling the registry instance as well.
 
         :param port_cls: The port to retrieve the object instance for
         :return: The port/adapter object instance
+        :raises PortNotFoundError: If the requested port was not registered before
+        :raises AdapterNotSetError: If no adapter was set for the requested port or
+        if no adapter was set for the AsyncAdapterSettingsProvider port if the requested
+        port is a AsyncConfiguredAdapterMixin
+        :raises AdapterInstantiationError: If there was an exception during adapter instantiation
+        :raises AdapterConfigurationError: If there was an exception during adapter configuration
         """
         port_fqcn = get_fqcn(port_cls)
-        adapter_fqcn = self._port_configs[port_fqcn].selected_adapter
-        local_logger = logger.bind(port=port_fqcn, adapter=adapter_fqcn)
+        local_logger = logger.bind(port=port_fqcn)
+        try:
+            adapter_fqcn = self._port_configs[port_fqcn].selected_adapter
+        except KeyError:
+            raise PortNotFoundError(f"The port '{port_fqcn}' was not registered.")
         if adapter_fqcn is None:
-            raise AdapterNotSetError(
-                f"There was no adapter set for the port '{port_fqcn}'."
-            )
+            registered_adapters = list(self._adapter_configs[port_fqcn].keys())
+            if len(registered_adapters) == 1:
+                adapter_fqcn = registered_adapters[0]
+            else:
+                raise AdapterNotSetError(
+                    f"There was no adapter set for the port '{port_fqcn}'."
+                )
+        local_logger = local_logger.bind(adapter=adapter_fqcn)
         adapter_config = self._adapter_configs[port_fqcn][adapter_fqcn]
         adapter_cls = adapter_config.adapter_cls
         cached_adapter = self._cached_adapters.get(adapter_fqcn)
         if cached_adapter and isinstance(cached_adapter, adapter_cls):
-            local_logger.bind(adapter_cached=True).debug("Get adapter.")
+            local_logger.bind(adapter_cached=True).debug("Adapter retrieved.")
             return cached_adapter
         try:
             adapter = adapter_cls()
@@ -218,5 +243,5 @@ class AsyncAdapterRegistry:
                 ) from exc
         if adapter_config.is_cached is True:
             self._cached_adapters[adapter_fqcn] = adapter
-        local_logger.debug("Get adapter.")
+        local_logger.debug("Adapter retrieved.")
         return adapter

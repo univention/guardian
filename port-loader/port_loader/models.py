@@ -15,7 +15,7 @@ class AdapterConfiguration(Generic[Adapter]):
 
     adapter_cls: Type[Adapter]
     is_cached: bool
-    name: Optional[str] = None
+    alias: Optional[str] = None
 
 
 @dataclass

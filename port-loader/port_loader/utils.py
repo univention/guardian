@@ -1,10 +1,6 @@
 from importlib import metadata
 from typing import TYPE_CHECKING, Type
 
-from loguru import logger
-
-from port_loader.models import Adapter
-
 if TYPE_CHECKING:
     from port_loader.registries import AsyncAdapterRegistry  # pragma: no cover
 
@@ -16,21 +12,6 @@ def get_fqcn(cls: Type) -> str:
 
     fqcn = f"{cls.__module__}.{cls.__name__}"
     return fqcn
-
-
-def is_cached(adapter_to_decorate: Type[Adapter]) -> Type[Adapter]:
-    """
-    Decorator to use on an adapter class to indicate that this adapter
-    should be cached by an adapter registry.
-
-    Internally the class attribute `__port_loader_is_cached` is added
-    to the class and set to True.
-    """
-    setattr(adapter_to_decorate, "__port_loader_is_cached", True)
-    logger.bind(adapter=get_fqcn(adapter_to_decorate)).debug(
-        "Setting is_cached attribute on adapter class."
-    )
-    return adapter_to_decorate
 
 
 def load_from_entry_point(
@@ -49,4 +30,4 @@ def load_from_entry_point(
     entry_points = metadata.entry_points().get(entry_point_str, ())
     for entry_point in entry_points:
         adapter_cls = entry_point.load()
-        adapter_registry.register_adapter(port_cls, name=entry_point.name)(adapter_cls)
+        adapter_registry.register_adapter(port_cls, adapter_cls=adapter_cls)

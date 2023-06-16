@@ -1,38 +1,26 @@
 import pytest
 from port_loader import AsyncAdapterRegistry, get_fqcn, load_from_entry_point
-from port_loader.utils import is_cached
-
-
-class DummyPort:
-    ...
-
-
-@is_cached
-class DummyAdapter(DummyPort):
-    ...
 
 
 @pytest.mark.parametrize(
-    "cls,expected",
+    "subject,expected",
     [
         (int, "builtins.int"),
         (AsyncAdapterRegistry, "port_loader.registries.AsyncAdapterRegistry"),
     ],
 )
-def test_get_fqcn(cls, expected):
-    assert get_fqcn(cls) == expected
+def test_get_fqcn(subject, expected):
+    assert get_fqcn(subject) == expected
 
 
-def test_load_from_entry_point(async_port_loader, mocker):
-    async_port_loader.register_port(DummyPort)
-    ep_mock = mocker.MagicMock()
-    ep_mock.name = "my_adapter"
-    ep_mock.load = mocker.MagicMock(return_value=DummyAdapter)
-    ep_load_mock = mocker.MagicMock(return_value={"some_ep": (ep_mock,)})
-    mocker.patch("port_loader.utils.metadata.entry_points", ep_load_mock)
-    load_from_entry_point(async_port_loader, DummyPort, "some_ep")
-    adapter_config = async_port_loader._adapter_configs[get_fqcn(DummyPort)][
-        get_fqcn(DummyAdapter)
+def test_load_from_entry_point(mocker):
+    registry_mock = mocker.MagicMock()
+    ep1_mock = mocker.MagicMock()
+    ep2_mock = mocker.MagicMock()
+    ep_mock = mocker.MagicMock(return_value={"some_string": (ep1_mock, ep2_mock)})
+    mocker.patch("port_loader.utils.metadata.entry_points", ep_mock)
+    load_from_entry_point(registry_mock, object, "some_string")
+    assert registry_mock.register_adapter.call_args_list == [
+        mocker.call(object, adapter_cls=ep1_mock.load()),
+        mocker.call(object, adapter_cls=ep2_mock.load()),
     ]
-    assert adapter_config.name == "my_adapter"
-    assert adapter_config.adapter_cls == DummyAdapter

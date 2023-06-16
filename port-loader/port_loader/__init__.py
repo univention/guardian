@@ -5,16 +5,14 @@ from port_loader.adapters import (
     AsyncAdapterSettingsProvider,
     AsyncConfiguredAdapterMixin,
 )
-from port_loader.injection import inject_port
+from port_loader.injection import inject_function, inject_port
 from port_loader.models import (
     Adapter,
-    AdapterConfiguration,
     Port,
-    PortConfiguration,
     Settings,
 )
 from port_loader.registries import AsyncAdapterRegistry
-from port_loader.utils import get_fqcn, is_cached, load_from_entry_point
+from port_loader.utils import get_fqcn, load_from_entry_point
 
 logger.disable(__name__)
 
@@ -28,10 +26,8 @@ def __dir__():
         Settings,
         Port,
         Adapter,
-        AdapterConfiguration,
-        PortConfiguration,
         get_fqcn,
-        is_cached,
         load_from_entry_point,
         inject_port,
+        inject_function,
     ]  # pragma: no cover
