@@ -2,7 +2,6 @@ import json
 from typing import Type
 
 from port_loader import AsyncConfiguredAdapterMixin
-from port_loader.utils import is_cached
 
 from ..errors import ObjectNotFoundError, PersistenceError
 from ..models.persistence import (
@@ -13,7 +12,6 @@ from ..models.persistence import (
 from ..ports import PersistencePort
 
 
-@is_cached
 class StaticDataAdapter(PersistencePort, AsyncConfiguredAdapterMixin):
     """
     This adapter for the PersistencePort implements a data store that is held in memory and
@@ -21,6 +19,10 @@ class StaticDataAdapter(PersistencePort, AsyncConfiguredAdapterMixin):
 
     This adapter is not meant for production but rather for testing purposes.
     """
+
+    class Config:
+        is_cached = True
+        alias = "static_data"
 
     @classmethod
     def get_settings_cls(cls) -> Type[StaticDataAdapterSettings]:

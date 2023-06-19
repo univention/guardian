@@ -8,13 +8,13 @@ from port_loader import (
 )
 from pydantic import BaseSettings, Field
 
-from ..ports import (
-    GetPermissionAPIPort,
+from guardian_authorization_api.adapters.api import FastAPIGetPermissionsAPIAdapter
+from guardian_authorization_api.ports import (
+    GetPermissionsAPIPort,
     PersistencePort,
     PolicyPort,
     SettingsPort,
 )
-from .incoming import GetPermissionAPIAdapter
 
 PORT_CLASSES = (SettingsPort, PersistencePort, PolicyPort)
 ADAPTER_REGISTRY = lazy_object_proxy.Proxy(AsyncAdapterRegistry)
@@ -58,10 +58,11 @@ def configure_registry(adapter_registry: AsyncAdapterRegistry):
     adapter_registry.set_adapter(
         AsyncAdapterSettingsProvider, selection[SettingsPort.__name__]
     )
-    adapter_registry.register_port(GetPermissionAPIPort)
-    adapter_registry.register_adapter(GetPermissionAPIPort, set_adapter=True)(
-        GetPermissionAPIAdapter
+    adapter_registry.register_port(GetPermissionsAPIPort)
+    adapter_registry.register_adapter(
+        GetPermissionsAPIPort, adapter_cls=FastAPIGetPermissionsAPIAdapter
     )
+    adapter_registry.set_adapter(GetPermissionsAPIPort, FastAPIGetPermissionsAPIAdapter)
 
 
 async def initialize_adapters(adapter_registry: AsyncAdapterRegistry):

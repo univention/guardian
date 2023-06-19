@@ -44,7 +44,7 @@ class TestStaticDataAdapter:
         return port_instance
 
     def test_is_cached(self, port_instance):
-        assert getattr(port_instance, "__port_loader_is_cached") is True
+        assert port_instance.Config.is_cached is True
 
     @pytest.mark.asyncio
     async def test_get_user(self, loaded_port_instance, mock_data):

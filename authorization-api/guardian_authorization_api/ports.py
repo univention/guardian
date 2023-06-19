@@ -1,23 +1,22 @@
 from abc import ABC, abstractmethod
-from typing import Any, Iterable, Optional, Type
+from typing import Any, Generic, Optional, Type, TypeVar
 
 import loguru
 from port_loader import AsyncAdapterSettingsProvider
 
 from .errors import SettingFormatError, SettingTypeError
-from .models.incoming import GetPermissionAPIResponse
 from .models.persistence import ObjectType, PersistenceObject
 from .models.policies import (
+    CheckPermissionsQuery,
     CheckPermissionsResult,
-    Context,
+    GetPermissionsQuery,
     GetPermissionsResult,
-    Namespace,
-    Permission,
     Policy,
-    PolicyObject,
-    Target,
 )
 from .models.settings import SettingType
+
+GetPermissionsAPIResponseObject = TypeVar("GetPermissionsAPIResponseObject")
+GetPermissionsAPIRequestObject = TypeVar("GetPermissionsAPIRequestObject")
 
 
 class BasePort(ABC):
@@ -51,7 +50,7 @@ class PersistencePort(BasePort, ABC):
         :raises ObjectNotFoundError: If the requested object could not be found
         :raises PersistenceError: For any errors other than object not found
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
 
 class SettingsPort(BasePort, AsyncAdapterSettingsProvider, ABC):
@@ -140,7 +139,7 @@ class SettingsPort(BasePort, AsyncAdapterSettingsProvider, ABC):
         :raises SettingNotFoundError: If no value for the specified setting can be found and no
         default value was specified
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     @abstractmethod
     async def get_str(self, setting_name: str, default: Optional[str] = None) -> str:
@@ -155,7 +154,7 @@ class SettingsPort(BasePort, AsyncAdapterSettingsProvider, ABC):
         :raises SettingNotFoundError: If no value for the specified setting can be found and no
         default value was specified
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     @abstractmethod
     async def get_bool(self, setting_name: str, default: Optional[bool] = None) -> bool:
@@ -170,7 +169,7 @@ class SettingsPort(BasePort, AsyncAdapterSettingsProvider, ABC):
         :raises SettingNotFoundError: If no value for the specified setting can be found and no
         default value was specified
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
 
 class PolicyPort(BasePort, ABC):
@@ -180,53 +179,26 @@ class PolicyPort(BasePort, ABC):
 
     @abstractmethod
     async def check_permissions(
-        self,
-        actor: PolicyObject,
-        targets: Optional[Iterable[Target]] = None,
-        target_permissions: Optional[set[Permission]] = None,
-        general_permissions: Optional[set[Permission]] = None,
-        context: Optional[set[Context]] = None,
-        extra_args: Optional[dict[str, Any]] = None,
+        self, query: CheckPermissionsQuery
     ) -> CheckPermissionsResult:
         """
         This method allows to check if an actor has the specified permissions,
         when acting on the specified targets.
         It also allows to query for general permissions, if acting on no particular target.
 
-        :param actor: The actor to check the permissions for
-        :param targets: The targets that are acted on
-        :param target_permissions: The permissions to check regarding the targets
-        :param general_permissions: The permissions to check with no regards to a particular target
-        :param context: Additional contexts to pass to the policy evaluation agent
-        :param extra_args: Additional arguments to pass to the policy evaluation agent
         :return: A result object detailing if the actor has the permissions regarding every target
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     @abstractmethod
-    async def get_permissions(
-        self,
-        actor: PolicyObject,
-        targets: Optional[Iterable[Target]] = None,
-        namespaces: Optional[Iterable[Namespace]] = None,
-        contexts: Optional[Iterable[Context]] = None,
-        extra_args: Optional[dict[str, Any]] = None,
-        include_general_permissions: bool = False,
-    ) -> GetPermissionsResult:
+    async def get_permissions(self, query: GetPermissionsQuery) -> GetPermissionsResult:
         """
         This method allows to retrieve all permissions an actor has
         when acting on the specified targets.
 
-        :param actor: The actor to retrieve the permissions for
-        :param targets: The targets that are acted on
-        :param namespaces: A list of namespaces used to restrict the permissions contained in the result
-        :param contexts: Additional contexts to pass to the policy evaluation agent
-        :param extra_args: Additional arguments to pass to the policy evaluation agent
-        :param include_general_permissions: If True the result will contain a list of permissions
-                                            the actor has if acting on no particular target
         :return: A result object containing the permissions the actor has regarding every target
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     @abstractmethod
     async def custom_policy(
@@ -242,31 +214,22 @@ class PolicyPort(BasePort, ABC):
         :param data: The data that should be passed to the custom policy
         :return: The data returned by the custom policy
         """
+        raise NotImplementedError  # pragma: no cover
+
+
+class GetPermissionsAPIPort(
+    BasePort,
+    ABC,
+    Generic[GetPermissionsAPIRequestObject, GetPermissionsAPIResponseObject],
+):
+    @abstractmethod
+    async def to_policy_query(
+        self, api_request: GetPermissionsAPIRequestObject
+    ) -> GetPermissionsQuery:
         raise NotImplementedError
 
-
-class GetPermissionAPIPort(BasePort, ABC):
     @abstractmethod
-    async def get_permissions(
-        self,
-        actor: PolicyObject,
-        targets: Iterable[Target],
-        contexts: Iterable[Context],
-        extra_request_data: dict[str, Any],
-        namespaces: Iterable[Namespace],
-        include_general_permissions: bool,
-    ) -> GetPermissionAPIResponse:
-        """
-        This method allows to retrieve all permissions an actor has
-        when acting on the specified targets.
-
-        :param actor: The actor to retrieve the permissions for
-        :param targets: The targets that are acted on
-        :param namespaces: A list of namespaces used to restrict the permissions contained in the result
-        :param contexts: Additional contexts to pass to the policy evaluation agent
-        :param extra_request_data: Additional arguments to pass to the policy evaluation agent
-        :param include_general_permissions: If True the result will contain a list of permissions
-        the actor has if acting on no particular target
-        :return: A response object containing the permissions the actor has regarding every target
-        """
+    async def to_api_response(
+        self, permissions_result: GetPermissionsResult
+    ) -> GetPermissionsAPIResponseObject:
         raise NotImplementedError

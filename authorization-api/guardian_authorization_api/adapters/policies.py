@@ -1,14 +1,14 @@
-from typing import Any, Iterable, Optional, Type
+from typing import Any, Optional, Type
 
 from opa_client.client import OPAClient
-from port_loader import AsyncConfiguredAdapterMixin, is_cached
+from port_loader import AsyncConfiguredAdapterMixin
 
 from guardian_authorization_api.errors import PolicyUpstreamError
 from guardian_authorization_api.models.policies import (
+    CheckPermissionsQuery,
     CheckPermissionsResult,
-    Context,
+    GetPermissionsQuery,
     GetPermissionsResult,
-    Namespace,
     OPAAdapterSettings,
     Permission,
     Policy,
@@ -24,9 +24,12 @@ EMPTY_TARGET = Target(
 )
 
 
-@is_cached
 class OPAAdapter(PolicyPort, AsyncConfiguredAdapterMixin):
     OPA_GET_PERMISSIONS_POLICY = "/v1/data/univention/base/get_permissions"
+
+    class Config:
+        is_cached = True
+        alias = "opa"
 
     def __init__(self):
         self._opa_url = ""
@@ -46,40 +49,22 @@ class OPAAdapter(PolicyPort, AsyncConfiguredAdapterMixin):
         return self._opa_client
 
     async def check_permissions(
-        self,
-        actor: PolicyObject,
-        targets: Optional[Iterable[Target]] = None,
-        target_permissions: Optional[set[Permission]] = None,
-        general_permissions: Optional[set[Permission]] = None,
-        context: Optional[set[Context]] = None,
-        extra_args: Optional[dict[str, Any]] = None,
+        self, query: CheckPermissionsQuery
     ) -> CheckPermissionsResult:
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
-    async def get_permissions(
-        self,
-        actor: PolicyObject,
-        targets: Optional[Iterable[Target]] = None,
-        namespaces: Optional[Iterable[Namespace]] = None,
-        contexts: Optional[Iterable[Context]] = None,
-        extra_args: Optional[dict[str, Any]] = None,
-        include_general_permissions: bool = False,
-    ) -> GetPermissionsResult:
-        if targets is None:
-            targets = []
-        if namespaces is None:
-            namespaces = []
-        if contexts is None:
-            contexts = []
-        if extra_args is None:
-            extra_args = {}
-        if include_general_permissions:
+    async def get_permissions(self, query: GetPermissionsQuery) -> GetPermissionsResult:
+        targets = [] if query.targets is None else query.targets
+        namespaces = [] if query.namespaces is None else query.namespaces
+        contexts = [] if query.contexts is None else query.contexts
+        extra_args = {} if query.extra_args is None else query.extra_args
+        if query.include_general_permissions:
             targets = list(targets) + [EMPTY_TARGET]
         try:
             opa_response = await self.opa_client.check_policy(
                 self.OPA_GET_PERMISSIONS_POLICY,
                 data=dict(
-                    actor=actor,
+                    actor=query.actor,
                     targets=targets,
                     namespaces=namespaces,
                     contexts=contexts,
@@ -103,6 +88,7 @@ class OPAAdapter(PolicyPort, AsyncConfiguredAdapterMixin):
                         TargetPermissions(target_id=target_id, permissions=permissions)
                     )
             return GetPermissionsResult(
+                actor=query.actor,
                 target_permissions=target_permissions,
                 general_permissions=general_permissions,
             )

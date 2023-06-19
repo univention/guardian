@@ -2,14 +2,13 @@ import os
 from dataclasses import MISSING, fields
 from typing import Optional, Type
 
-from port_loader import AsyncAdapterSettingsProvider, Settings, is_cached
+from port_loader import AsyncAdapterSettingsProvider, Settings
 
 from ..errors import SettingNotFoundError, SettingTypeError
 from ..models.settings import SETTINGS_NAME_METADATA
 from ..ports import SettingsPort
 
 
-@is_cached
 class EnvSettingsAdapter(SettingsPort, AsyncAdapterSettingsProvider):
     """
     This adapter loads all settings exclusively from environment variables.
@@ -20,6 +19,10 @@ class EnvSettingsAdapter(SettingsPort, AsyncAdapterSettingsProvider):
     converting to an environment variable and assumes capital letters only.
 
     """
+
+    class Config:
+        is_cached = True
+        alias = "env"
 
     @staticmethod
     def setting_name_to_env(setting_name: str):

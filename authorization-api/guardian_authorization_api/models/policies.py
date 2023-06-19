@@ -83,5 +83,26 @@ class CheckPermissionsResult:
 
 @dataclass(frozen=True)
 class GetPermissionsResult:
+    actor: PolicyObject
     target_permissions: Iterable[TargetPermissions]
     general_permissions: Optional[Iterable[Permission]] = None
+
+
+@dataclass(frozen=True)
+class GetPermissionsQuery:
+    actor: PolicyObject
+    targets: Optional[Iterable[Target]] = None
+    namespaces: Optional[Iterable[Namespace]] = None
+    contexts: Optional[Iterable[Context]] = None
+    extra_args: Optional[dict[str, Any]] = None
+    include_general_permissions: bool = False
+
+
+@dataclass(frozen=True)
+class CheckPermissionsQuery:
+    actor: PolicyObject
+    targets: Optional[Iterable[Target]] = None
+    target_permissions: Optional[set[Permission]] = None
+    general_permissions: Optional[set[Permission]] = None
+    context: Optional[set[Context]] = None
+    extra_args: Optional[dict[str, Any]] = None

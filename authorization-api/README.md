@@ -151,7 +151,7 @@ curl -X 'POST' \
       {
         "app_name": "string",
         "namespace_name": "string",
-        "role_name": "string"
+        "name": "string"
       }
     ],
     "attributes": {}
