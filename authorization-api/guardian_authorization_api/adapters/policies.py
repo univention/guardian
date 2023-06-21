@@ -43,7 +43,7 @@ class OPAAdapter(PolicyPort, AsyncConfiguredAdapterMixin):
         self._opa_url = settings.opa_url
 
     @property
-    def opa_client(self):
+    def opa_client(self):  # pragma: no cover
         if self._opa_client is None:
             self._opa_client = OPAClient(self._opa_url)
         return self._opa_client
@@ -100,4 +100,4 @@ class OPAAdapter(PolicyPort, AsyncConfiguredAdapterMixin):
     async def custom_policy(
         self, policy: Policy, data: Optional[dict[str, Any]] = None
     ) -> dict[str, Any]:
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover

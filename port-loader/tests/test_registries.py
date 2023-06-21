@@ -66,6 +66,14 @@ class TestAsyncAdapterRegistry:
 
         return TestAdapter
 
+    @pytest.fixture
+    def test_adapter_cached(self, test_port):
+        class CachedTestAdapter(test_port):
+            class Config:
+                is_cached = True
+
+        return CachedTestAdapter
+
     def test_settings_provider_registered_during_init(self, async_registry):
         assert (
             async_registry._port_configs[
@@ -75,11 +83,22 @@ class TestAsyncAdapterRegistry:
         )
 
     @pytest.mark.asyncio
-    async def test_registry_is_callable(self, mocker, async_registry):
-        request_port_mock = mocker.AsyncMock()
-        async_registry.request_port = request_port_mock
-        await async_registry(int)
-        assert request_port_mock.call_args_list == [mocker.call(int)]
+    async def test_registry_called(self, async_registry, test_port, test_adapter):
+        async_registry.register_port(test_port)
+        async_registry.register_adapter(test_port, adapter_cls=test_adapter)
+        assert isinstance(await async_registry(test_port), test_adapter)
+
+    @pytest.mark.asyncio
+    async def test_registry_called_with_adapter(
+        self, async_registry, test_port, test_adapter, test_adapter_cached
+    ):
+        async_registry.register_port(test_port)
+        async_registry.register_adapter(test_port, adapter_cls=test_adapter)
+        async_registry.register_adapter(test_port, adapter_cls=test_adapter_cached)
+        assert isinstance(await async_registry(test_port, test_adapter), test_adapter)
+        assert isinstance(
+            await async_registry(test_port, test_adapter_cached), test_adapter_cached
+        )
 
     @pytest.mark.asyncio
     async def test_configure_adapter(
@@ -278,7 +297,7 @@ class TestAsyncAdapterRegistry:
         with pytest.raises(
             AdapterInstantiationError,
             match="An error occurred during the instantiation of adapter "
-            "'test_registries.TestAdapter' for the port test_registries.TestPort.",
+            "'test_registries.TestAdapter' for the port 'test_registries.TestPort'.",
         ):
             await async_registry.request_port(test_port)
 
@@ -294,7 +313,7 @@ class TestAsyncAdapterRegistry:
         register_and_set_adapter(async_registry, test_port, configured_adapter)
         with pytest.raises(
             AdapterConfigurationError,
-            match="The adapter test_registries.ConfiguredAdapter could not be configured.",
+            match="The adapter 'test_registries.ConfiguredAdapter' could not be configured.",
         ):
             await async_registry.request_port(test_port)
 
@@ -325,14 +344,10 @@ class TestAsyncAdapterRegistry:
 
     @pytest.mark.asyncio
     async def test_request_port_cached(
-        self, async_registry, test_port, test_adapter, register_and_set_adapter
+        self, async_registry, test_port, test_adapter_cached, register_and_set_adapter
     ):
-        class Config:
-            is_cached = True
-
-        test_adapter.Config = Config
         async_registry.register_port(test_port)
-        register_and_set_adapter(async_registry, test_port, test_adapter)
+        register_and_set_adapter(async_registry, test_port, test_adapter_cached)
         instance1 = await async_registry.request_port(test_port)
         instance2 = await async_registry.request_port(test_port)
         assert instance1 == instance2
@@ -372,3 +387,105 @@ class TestAsyncAdapterRegistry:
             match="There was no adapter set for the port 'test_registries.TestPort'.",
         ):
             await async_registry.request_port(test_port)
+
+    @pytest.mark.asyncio
+    async def test_request_adapter(
+        self, async_registry, test_port, test_adapter, register_and_set_adapter
+    ):
+        async_registry.register_port(test_port)
+        register_and_set_adapter(async_registry, test_port, test_adapter)
+        assert isinstance(
+            await async_registry.request_adapter(test_port, test_adapter),
+            test_adapter,
+        )
+
+    @pytest.mark.asyncio
+    async def test_request_adapter_unset(self, async_registry, test_port, test_adapter):
+        async_registry.register_port(test_port)
+        async_registry.register_adapter(test_port, adapter_cls=test_adapter)
+        assert isinstance(
+            await async_registry.request_adapter(test_port, test_adapter),
+            test_adapter,
+        )
+
+    @pytest.mark.asyncio
+    async def test_request_adapter_cached(
+        self, async_registry, test_port, test_adapter_cached
+    ):
+        async_registry.register_port(test_port)
+        async_registry.register_adapter(test_port, adapter_cls=test_adapter_cached)
+        instance1 = await async_registry.request_adapter(test_port, test_adapter_cached)
+        instance2 = await async_registry.request_adapter(test_port, test_adapter_cached)
+        assert instance1 == instance2
+
+    @pytest.mark.asyncio
+    async def test_request_adapter_port_not_found_error(
+        self, async_registry, test_port, test_adapter
+    ):
+        with pytest.raises(
+            PortNotFoundError,
+            match="The port 'test_registries.TestPort' was not registered.",
+        ):
+            await async_registry.request_adapter(test_port, test_adapter)
+
+    @pytest.mark.asyncio
+    async def test_request_adapter_adapter_not_found_error(
+        self, async_registry, test_port, test_adapter
+    ):
+        async_registry.register_port(test_port)
+        with pytest.raises(
+            AdapterNotFoundError,
+            match="No adapter for the type 'test_registries.TestAdapter' "
+            "was registered for the port 'test_registries.TestPort'.",
+        ):
+            await async_registry.request_adapter(test_port, test_adapter)
+
+    @pytest.mark.asyncio
+    async def test_request_adapter_instantiation_error(
+        self, async_registry, test_port, test_adapter
+    ):
+        def faulty_init(self):
+            raise RuntimeError()
+
+        test_adapter.__init__ = faulty_init
+        async_registry.register_port(test_port)
+        async_registry.register_adapter(test_port, adapter_cls=test_adapter)
+        with pytest.raises(
+            AdapterInstantiationError,
+            match="An error occurred during the instantiation of adapter "
+            "'test_registries.TestAdapter' for the port 'test_registries.TestPort'.",
+        ):
+            await async_registry.request_adapter(test_port, test_adapter)
+
+    @pytest.mark.asyncio
+    async def test_request_adapter_adapter_not_set_error(
+        self, async_registry, test_port, configured_adapter
+    ):
+        """
+        This tests the case that we request a configured adapter,
+        but no settings provider is present.
+        """
+        async_registry.register_port(test_port)
+        async_registry.register_adapter(test_port, adapter_cls=configured_adapter)
+        with pytest.raises(
+            AdapterNotSetError,
+            match="There was no adapter set for the port "
+            "'port_loader.adapters.AsyncAdapterSettingsProvider'.",
+        ):
+            await async_registry.request_adapter(test_port, configured_adapter)
+
+    @pytest.mark.asyncio
+    async def test_request_adapter_configuration_error(
+        self, async_registry, test_port, configured_adapter
+    ):
+        async def faulty_configure(self, settings):
+            raise RuntimeError()
+
+        async_registry._configure_adapter = faulty_configure
+        async_registry.register_port(test_port)
+        async_registry.register_adapter(test_port, adapter_cls=configured_adapter)
+        with pytest.raises(
+            AdapterConfigurationError,
+            match="The adapter 'test_registries.ConfiguredAdapter' could not be configured.",
+        ):
+            await async_registry.request_adapter(test_port, configured_adapter)

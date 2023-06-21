@@ -15,7 +15,7 @@ loguru = "^0.7.0"
 orjson = "^3.9.0"
 opa-client = {version = "^1.0.3", source = "opa-client"}
 lazy-object-proxy = "^1.9.0"
-port-loader = {version = "^0.9.0", source = "port-loader"}
+port-loader = {version = "~1.0", source = "port-loader"}
 
 [tool.poetry.plugins."guardian_authorization_api.SettingsPort"]
 "env" = "guardian_authorization_api.adapters.settings:EnvSettingsAdapter"

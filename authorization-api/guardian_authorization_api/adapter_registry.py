@@ -1,4 +1,4 @@
-from typing import Type
+from typing import Optional, Type
 
 import lazy_object_proxy
 from port_loader import (
@@ -70,8 +70,8 @@ async def initialize_adapters(adapter_registry: AsyncAdapterRegistry):
         await adapter_registry(port_cls)
 
 
-def port_dep(port_cls: Type):
+def port_dep(port_cls: Type, adapter_cls: Optional[Type] = None):
     async def _wrapper():
-        return await ADAPTER_REGISTRY(port_cls)
+        return await ADAPTER_REGISTRY(port_cls, adapter_cls)
 
     return _wrapper

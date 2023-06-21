@@ -37,7 +37,7 @@ class LoggingDefaultSettings:
     diagnose: bool = False
 
 
-class InterceptHandler(logging.Handler):
+class InterceptHandler(logging.Handler):  # pragma: no cover
     """
     Copied from https://loguru.readthedocs.io/en/stable/overview.html#entirely-compatible-with-standard-logging
 
@@ -75,7 +75,9 @@ async def configure_logger(settings_port: Optional[SettingsPort] = None):
         _logger.handlers = [InterceptHandler()]
     logger.enable(port_loader.__name__)
     settings = LoggingDefaultSettings()
-    if settings_port:
+    if (
+        settings_port
+    ):  # pragma: no cover  here we just read from the settings port, which is tested elsewhere
         settings.format = await settings_port.get_setting(
             LOG_FORMAT_SETTING_NAME, str, settings.format
         )

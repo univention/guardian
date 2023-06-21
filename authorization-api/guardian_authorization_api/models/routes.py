@@ -46,13 +46,13 @@ class NamespaceMinimal(GuardianBaseModel):
     """A minimal namespace object for requests (e.g. role-capability-mapping)"""
 
     app_name: AppName
-    namespace_name: NamespaceName
+    name: NamespaceName
 
 
 class Role(GuardianBaseModel):
     app_name: AppName
     namespace_name: NamespaceName
-    name: PermissionName
+    name: ObjectIdentifier
 
 
 class Object(GuardianBaseModel):

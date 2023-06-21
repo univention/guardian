@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any, Iterable, Optional
+from typing import Any, Optional
 
 from guardian_authorization_api.models.settings import SETTINGS_NAME_METADATA
 
@@ -72,28 +72,28 @@ class CheckResult:
 @dataclass(frozen=True)
 class TargetPermissions:
     target_id: str
-    permissions: Iterable[Permission]
+    permissions: list[Permission]
 
 
 @dataclass(frozen=True)
 class CheckPermissionsResult:
-    target_permissions: Iterable[CheckResult]
+    target_permissions: list[CheckResult]
     actor_has_general_permissions: Optional[bool]
 
 
 @dataclass(frozen=True)
 class GetPermissionsResult:
     actor: PolicyObject
-    target_permissions: Iterable[TargetPermissions]
-    general_permissions: Optional[Iterable[Permission]] = None
+    target_permissions: list[TargetPermissions]
+    general_permissions: Optional[list[Permission]] = None
 
 
 @dataclass(frozen=True)
 class GetPermissionsQuery:
     actor: PolicyObject
-    targets: Optional[Iterable[Target]] = None
-    namespaces: Optional[Iterable[Namespace]] = None
-    contexts: Optional[Iterable[Context]] = None
+    targets: Optional[list[Target]] = None
+    namespaces: Optional[list[Namespace]] = None
+    contexts: Optional[list[Context]] = None
     extra_args: Optional[dict[str, Any]] = None
     include_general_permissions: bool = False
 
@@ -101,7 +101,7 @@ class GetPermissionsQuery:
 @dataclass(frozen=True)
 class CheckPermissionsQuery:
     actor: PolicyObject
-    targets: Optional[Iterable[Target]] = None
+    targets: Optional[list[Target]] = None
     target_permissions: Optional[set[Permission]] = None
     general_permissions: Optional[set[Permission]] = None
     context: Optional[set[Context]] = None

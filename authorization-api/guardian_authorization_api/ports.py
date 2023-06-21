@@ -226,10 +226,10 @@ class GetPermissionsAPIPort(
     async def to_policy_query(
         self, api_request: GetPermissionsAPIRequestObject
     ) -> GetPermissionsQuery:
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     @abstractmethod
     async def to_api_response(
         self, permissions_result: GetPermissionsResult
     ) -> GetPermissionsAPIResponseObject:
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover

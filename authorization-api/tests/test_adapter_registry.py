@@ -112,7 +112,7 @@ def test_port_dep_is_callable():
 
 
 @pytest.mark.asyncio
-async def test_port_dep(mocker):
+async def test_port_dep_port_only(mocker):
     registry = AsyncAdapterRegistry()
     call_mock = mocker.AsyncMock()
     registry.request_port = call_mock
@@ -121,3 +121,18 @@ async def test_port_dep(mocker):
     )
     await port_dep(SettingsPort)()
     assert call_mock.called_once_with(SettingsPort)
+
+
+@pytest.mark.asyncio
+async def test_port_dep_with_adapter(mocker):
+    registry = AsyncAdapterRegistry()
+    call_mock = mocker.AsyncMock()
+    registry.request_adapter = call_mock
+    mocker.patch(
+        "guardian_authorization_api.adapter_registry.ADAPTER_REGISTRY", registry
+    )
+    await port_dep(GetPermissionsAPIPort, FastAPIGetPermissionsAPIAdapter)()
+    assert call_mock.called_once_with(
+        GetPermissionsAPIPort,
+        FastAPIGetPermissionsAPIAdapter,
+    )

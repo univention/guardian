@@ -27,39 +27,40 @@ from ..ports import GetPermissionsAPIPort
 class FastAPIGetPermissionsAPIAdapter(GetPermissionsAPIPort):
     @staticmethod
     def _to_policy_object(obj: Object) -> PolicyObject:
+        roles = [
+            PoliciesRole(
+                app_name=role.app_name,
+                namespace_name=role.namespace_name,
+                name=role.name,
+            )
+            for role in obj.roles
+        ]
         return PolicyObject(
             id=str(obj.id),
-            roles=[
-                PoliciesRole(
-                    app_name=role.app_name,
-                    namespace_name=role.app_name,
-                    name=role.name,
-                )
-                for role in obj.roles
-            ],
+            roles=roles,
             attributes=obj.attributes,
         )
 
     @staticmethod
     def _to_policy_target(target: Target) -> PoliciesTarget:
-        return PoliciesTarget(
-            old_target=FastAPIGetPermissionsAPIAdapter._to_policy_object(
-                target.old_target
-            )
+        old_target = (
+            FastAPIGetPermissionsAPIAdapter._to_policy_object(target.old_target)
             if target.old_target
-            else None,
-            new_target=FastAPIGetPermissionsAPIAdapter._to_policy_object(
-                target.new_target
-            )
+            else None
+        )
+        new_target = (
+            FastAPIGetPermissionsAPIAdapter._to_policy_object(target.new_target)
             if target.new_target
-            else None,
+            else None
+        )
+        return PoliciesTarget(
+            old_target=old_target,
+            new_target=new_target,
         )
 
     @staticmethod
     def _to_policy_namespace(namespace: NamespaceMinimal) -> PoliciesNamespace:
-        return PoliciesNamespace(
-            app_name=namespace.app_name, name=namespace.namespace_name
-        )
+        return PoliciesNamespace(app_name=namespace.app_name, name=namespace.name)
 
     @staticmethod
     def _to_policy_context(context: Context) -> PoliciesContext:
@@ -72,22 +73,29 @@ class FastAPIGetPermissionsAPIAdapter(GetPermissionsAPIPort):
     async def to_policy_query(
         self, api_request: AuthzPermissionsPostRequest
     ) -> GetPermissionsQuery:
-        return GetPermissionsQuery(
-            actor=self._to_policy_object(api_request.actor),
-            targets=[self._to_policy_target(target) for target in api_request.targets]
+        targets = (
+            [self._to_policy_target(target) for target in api_request.targets]
             if api_request.targets
-            else [],
-            namespaces=[
+            else []
+        )
+        namespaces = (
+            [
                 self._to_policy_namespace(namespace)
                 for namespace in api_request.namespaces
             ]
             if api_request.namespaces
-            else [],
-            contexts=[
-                self._to_policy_context(context) for context in api_request.contexts
-            ]
+            else []
+        )
+        contexts = (
+            [self._to_policy_context(context) for context in api_request.contexts]
             if api_request.contexts
-            else [],
+            else []
+        )
+        return GetPermissionsQuery(
+            actor=self._to_policy_object(api_request.actor),
+            targets=targets,
+            namespaces=namespaces,
+            contexts=contexts,
             extra_args=api_request.extra_request_data,
             include_general_permissions=api_request.include_general_permissions,
         )

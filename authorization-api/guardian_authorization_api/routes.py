@@ -13,7 +13,7 @@ router = APIRouter()
 async def get_permissions(
     permissions_fetch_request: AuthzPermissionsPostRequest,
     get_permission_api: FastAPIGetPermissionsAPIAdapter = Depends(
-        port_dep(GetPermissionsAPIPort)
+        port_dep(GetPermissionsAPIPort, FastAPIGetPermissionsAPIAdapter)
     ),
     policy_port: PolicyPort = Depends(port_dep(PolicyPort)),
 ) -> AuthzPermissionsPostResponse:

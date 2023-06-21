@@ -173,7 +173,7 @@ To run the tests locally on your machine follow these steps:
 
 Prerequisites:
 - Python 3.11 installed
-- [Poetry](https://python-poetry.org/) installed
+- [Poetry 1.5.1](https://python-poetry.org/) installed
 
 ```shell
 # pwd == $REPO_DIR/authorization-engine/guardian/authorization-api
