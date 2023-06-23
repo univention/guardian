@@ -1,3 +1,7 @@
+# Copyright (C) 2023 Univention GmbH
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
 FROM docker-registry.knut.univention.de/python:3.11-slim as s6_builder
 
 ARG S6_OVERLAY_VERSION="3.1.5.0"

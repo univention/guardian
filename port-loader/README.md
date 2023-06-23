@@ -1,3 +1,9 @@
+<!--
+Copyright (C) 2023 Univention GmbH
+
+SPDX-License-Identifier: AGPL-3.0-only
+-->
+
 # Port Loader
 
 This library provides you with a AdapterRegistry with which you can implement a configurable

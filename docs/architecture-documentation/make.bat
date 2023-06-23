@@ -1,3 +1,7 @@
+REM Copyright (C) 2023 Univention GmbH
+REM
+REM SPDX-License-Identifier: AGPL-3.0-only
+
 @ECHO OFF
 
 pushd %~dp0

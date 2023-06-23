@@ -1,3 +1,8 @@
+# Copyright (C) 2023 Univention GmbH
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
+
 class DuplicateAdapterError(ValueError):
     """
     Another adapter of the same kind already exists for the port.
