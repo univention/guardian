@@ -1,49 +1,192 @@
-# This file is a template, and might need editing before it works on your project.
-# This is a sample GitLab CI/CD configuration file that should run without any modifications.
-# It demonstrates a basic 3 stage CI/CD pipeline. Instead of real tests or scripts,
-# it uses echo commands to simulate the pipeline execution.
-#
-# A pipeline is composed of independent jobs that run scripts, grouped into stages.
-# Stages run in sequential order, but jobs within stages run in parallel.
-#
-# For more information, see: https://docs.gitlab.com/ee/ci/yaml/index.html#stages
-#
-# You can copy and paste this template into a new `.gitlab-ci.yml` file.
-# You should not add this template to an existing `.gitlab-ci.yml` file by using the `include:` keyword.
-#
-# To contribute improvements to CI/CD templates, please follow the Development guide at:
-# https://docs.gitlab.com/ee/development/cicd/templates.html
-# This specific template is located at:
-# https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/Getting-Started.gitlab-ci.yml
+include:
+  - project: univention/dist/docker-services
+    file:
+      - kaniko.yml
+      - pre-commit.yml
 
-stages:          # List of stages for jobs, and their order of execution
-  - build
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_OPEN_MERGE_REQUESTS
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_PROTECTED == "true"
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_PIPELINE_SOURCE == "webide"
+stages:
   - test
-  - deploy
+  - build_python
+  - build_docker
+  - publish
+  - lint
 
-build-job:       # This job runs in the build stage, which runs first.
-  stage: build
-  script:
-    - echo "Compiling the code..."
-    - echo "Compile complete."
+run_pre_commit:
+  stage: lint
+  needs: []
+  extends: .pre-commit
 
-unit-test-job:   # This job runs in the test stage.
-  stage: test    # It only starts when the job in the build stage completes successfully.
-  script:
-    - echo "Running unit tests... This will take about 60 seconds."
-    - sleep 60
-    - echo "Code coverage is 90%"
+# No jobs for OPA code were created, since the form and structure of the OPA code is not final yet. TODO
 
-lint-test-job:   # This job also runs in the test stage.
-  stage: test    # It can run at the same time as unit-test-job (in parallel).
+test_management:
+  stage: test
+  rules:
+    - changes:
+        - management-api/**/*
+  image: docker-registry.knut.univention.de/python:3.11-slim
   script:
-    - echo "Linting code... This will take about 10 seconds."
-    - sleep 10
-    - echo "No lint issues found."
+    - cd management-api
+    - pip install poetry
+    - poetry config --local virtualenvs.create false
+    - poetry install
+    - pytest -vv .
 
-deploy-job:      # This job runs in the deploy stage.
-  stage: deploy  # It only runs when *both* jobs in the test stage complete successfully.
-  environment: production
+coverage_management:
+  stage: test
+  rules:
+    - changes:
+        - management-api/**/*
+  image: docker-registry.knut.univention.de/python:3.11-slim
   script:
-    - echo "Deploying application..."
-    - echo "Application successfully deployed."
+    - cd management-api
+    - pip install poetry
+    - poetry config --local virtualenvs.create false
+    - poetry install
+    - pytest -vv --cov=guardian_management_api .
+    - coverage report --fail-under="$MANAGEMENT_COVERAGE_LIMIT"  # Variable set in Gitlab UI
+
+test_authz:
+  stage: test
+  rules:
+    - changes:
+        - authorization-api/**/*
+  image: docker-registry.knut.univention.de/python:3.11-slim
+  script:
+    - cd authorization-api
+    - pip install poetry
+    - poetry config --local virtualenvs.create false
+    - poetry install
+    - pytest -vv .
+
+coverage_authz:
+  stage: test
+  rules:
+    - changes:
+        - authorization-api/**/*
+  image: docker-registry.knut.univention.de/python:3.11-slim
+  script:
+    - cd authorization-api
+    - pip install poetry
+    - poetry config --local virtualenvs.create false
+    - poetry install
+    - pytest -vv --cov=guardian_authorization_api .
+    - coverage report --fail-under="$AUTHZ_COVERAGE_LIMIT"  # Variable set in Gitlab UI
+
+test_port_loader:
+  stage: test
+  rules:
+    - changes:
+        - port-loader/**/*
+  image: docker-registry.knut.univention.de/python:3.11-slim
+  script:
+    - cd port-loader
+    - pip install poetry
+    - poetry config --local virtualenvs.create false
+    - poetry install
+    - pytest -vv .
+
+coverage_port_loader:
+  stage: test
+  rules:
+    - changes:
+        - port-loader/**/*
+  image: docker-registry.knut.univention.de/python:3.11-slim
+  script:
+    - cd port-loader
+    - pip install poetry
+    - poetry config --local virtualenvs.create false
+    - poetry install
+    - pytest -vv --cov=port_loader .
+    - coverage report --fail-under="$PORT_LOADER_COVERAGE_LIMIT"  # Variable set in Gitlab UI
+
+build_port_loader:
+  stage: build_python
+  needs:
+    - test_port_loader
+    - coverage_port_loader
+  rules:
+    - changes:
+        - port-loader/**/*
+  artifacts:
+    paths:
+      - port-loader/dist/
+    expire_in: 1 week
+  image: docker-registry.knut.univention.de/python:3.11-slim
+  script:
+    - cd port-loader
+    - pip install poetry
+    - |-
+      if [ "$CI_COMMIT_BRANCH" != "$CI_DEFAULT_BRANCH" ]; then
+        poetry version "0.0.0.dev0+${CI_COMMIT_REF_SLUG//-/.}.$CI_COMMIT_SHORT_SHA"
+      else
+        true
+      fi
+    - poetry config --local virtualenvs.create false
+    - poetry build
+
+build_docker_image_opa:
+  stage: build_docker
+  rules:
+    - changes:
+        - opa/**/*
+  extends: .kaniko
+  variables:
+    KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR/opa"
+    KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
+
+build_docker_image_authz:
+  stage: build_docker
+  needs:
+    - test_authz
+    - coverage_authz
+  rules:
+    - changes:
+        - authorization-api/**/*
+  extends: .kaniko
+  variables:
+    KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR/authorization-api"
+    KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
+
+build_docker_image_management:
+  stage: build_docker
+  needs:
+    - test_management
+    - coverage_management
+  rules:
+    - changes:
+        - management-api/**/*
+  extends: .kaniko
+  variables:
+    KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR/management-api"
+    KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
+
+publish_port_loader:
+  stage: publish
+  when: manual
+  rules:
+    - changes:
+        - port-loader/**/*
+  dependencies:
+    - build_port_loader
+  needs:
+    - build_port_loader
+  image: docker-registry.knut.univention.de/python:3.11-slim
+  script:
+    - cd port-loader
+    - pip install poetry
+    - |-
+      if [ "$CI_COMMIT_BRANCH" != "$CI_DEFAULT_BRANCH" ]; then
+        poetry version "0.0.0.dev0+${CI_COMMIT_REF_SLUG//-/.}.$CI_COMMIT_SHORT_SHA"
+      else
+        true
+      fi
+    - poetry config --local virtualenvs.create false
+    - poetry config --local repositories.project_local ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi
+    - poetry publish -r project_local --username gitlab-ci-token --password ${CI_JOB_TOKEN}
+
