@@ -52,7 +52,7 @@ class AsyncAdapterRegistry:
             return await self.request_port(port_cls)
 
     async def _configure_adapter(self, adapter: AsyncConfiguredAdapterMixin):
-        local_logger = logger.bind(adaper=get_fqcn(adapter.__class__))
+        local_logger = logger.bind(adapter=get_fqcn(adapter.__class__))
         settings_provider = await self.request_port(AsyncAdapterSettingsProvider)
         settings = await settings_provider.get_adapter_settings(
             adapter.get_settings_cls()
