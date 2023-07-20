@@ -22,6 +22,8 @@ from guardian_authorization_api.models.policies import Target as PoliciesTarget
 from guardian_authorization_api.models.routes import (
     Actor,
     AppName,
+    AuthzObject,
+    AuthzObjectIdentifier,
     AuthzPermissionsPostRequest,
     AuthzPermissionsPostResponse,
     Context,
@@ -29,8 +31,6 @@ from guardian_authorization_api.models.routes import (
     ContextName,
     NamespaceMinimal,
     NamespaceName,
-    Object,
-    ObjectIdentifier,
     Permission,
     PermissionName,
     PermissionResult,
@@ -40,15 +40,15 @@ from guardian_authorization_api.models.routes import (
 
 
 @pytest.fixture
-def get_route_object() -> Callable[[], Object]:
-    def _get_route_object() -> Object:
-        return Object(
-            id=ObjectIdentifier("id"),
+def get_route_object() -> Callable[[], AuthzObject]:
+    def _get_route_object() -> AuthzObject:
+        return AuthzObject(
+            id=AuthzObjectIdentifier("id"),
             roles=[
                 Role(
                     app_name=AppName("app"),
                     namespace_name=NamespaceName("namespace"),
-                    name=ObjectIdentifier("role"),
+                    name=AuthzObjectIdentifier("role"),
                 )
             ],
             attributes={"a": "b"},
@@ -109,7 +109,7 @@ class TestFastAPIGetPermissionsAPIAdapter:
             app_name=AppName("app"),
             namespace_name=NamespaceName("namespace"),
             name=ContextName("context"),
-            displayname=ContextDisplayName("ctx"),
+            display_name=ContextDisplayName("ctx"),
         )
         result = FastAPIGetPermissionsAPIAdapter._to_policy_context(input_ctx)
         assert result == PoliciesContext(
@@ -133,7 +133,7 @@ class TestFastAPIGetPermissionsAPIAdapter:
                     app_name=AppName("app"),
                     namespace_name=NamespaceName("namespace"),
                     name=ContextName("context"),
-                    displayname=ContextDisplayName("ctx"),
+                    display_name=ContextDisplayName("ctx"),
                 )
             ],
             include_general_permissions=True,
@@ -216,10 +216,10 @@ class TestFastAPIGetPermissionsAPIAdapter:
         )
         result = await adapter_instance.to_api_response(input_obj)
         assert result == AuthzPermissionsPostResponse(
-            actor_id=ObjectIdentifier("id"),
+            actor_id=AuthzObjectIdentifier("id"),
             target_permissions=[
                 PermissionResult(
-                    target_id=ObjectIdentifier("id"),
+                    target_id=AuthzObjectIdentifier("id"),
                     permissions=[
                         Permission(
                             app_name=AppName("app"),

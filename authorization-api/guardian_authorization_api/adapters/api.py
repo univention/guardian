@@ -13,13 +13,13 @@ from ..models.policies import Role as PoliciesRole
 from ..models.policies import Target as PoliciesTarget
 from ..models.routes import (
     AppName,
+    AuthzObject,
+    AuthzObjectIdentifier,
     AuthzPermissionsPostRequest,
     AuthzPermissionsPostResponse,
     Context,
     NamespaceMinimal,
     NamespaceName,
-    Object,
-    ObjectIdentifier,
     Permission,
     PermissionName,
     PermissionResult,
@@ -30,7 +30,7 @@ from ..ports import GetPermissionsAPIPort
 
 class FastAPIGetPermissionsAPIAdapter(GetPermissionsAPIPort):
     @staticmethod
-    def _to_policy_object(obj: Object) -> PolicyObject:
+    def _to_policy_object(obj: AuthzObject) -> PolicyObject:
         roles = [
             PoliciesRole(
                 app_name=role.app_name,
@@ -109,7 +109,7 @@ class FastAPIGetPermissionsAPIAdapter(GetPermissionsAPIPort):
     ) -> AuthzPermissionsPostResponse:
         target_permissions = [
             PermissionResult(
-                target_id=ObjectIdentifier(target_p.target_id),
+                target_id=AuthzObjectIdentifier(target_p.target_id),
                 permissions=[
                     Permission(
                         name=PermissionName(perm.name),
@@ -134,7 +134,7 @@ class FastAPIGetPermissionsAPIAdapter(GetPermissionsAPIPort):
             else []
         )
         return AuthzPermissionsPostResponse(
-            actor_id=ObjectIdentifier(permissions_result.actor.id),
+            actor_id=AuthzObjectIdentifier(permissions_result.actor.id),
             target_permissions=target_permissions,
             general_permissions=general_permissions,
         )

@@ -1,7 +1,7 @@
 version: '3.1'
 services:
   authorization-api:
-    image: gitregistry.knut.univention.de/univention/components/authorization-engine/guardian/guardian-authorization-api:branch-9-create-appcenter-apps-for-authz-and-management-api
+    image: gitregistry.knut.univention.de/univention/components/authorization-engine/guardian/guardian-authorization-api:latest
     security_opt:
       - seccomp:/etc/docker/seccomp-systemd.json
     depends_on:
