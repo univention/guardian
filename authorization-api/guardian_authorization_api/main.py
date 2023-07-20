@@ -1,7 +1,6 @@
 # Copyright (C) 2023 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
-
 import os
 from contextlib import asynccontextmanager
 
@@ -27,5 +26,11 @@ async def lifespan(fastapi_app: FastAPI):
     yield
 
 
-app = FastAPI(lifespan=lifespan)
-app.include_router(router)
+API_PREFIX = os.environ.get("GUARDIAN__AUTHZ__API_PREFIX", "/guardian/authorization")
+app = FastAPI(
+    lifespan=lifespan,
+    title="Guardian Authorization API",
+    openapi_url=f"{API_PREFIX}/openapi.json",
+    docs_url=f"{API_PREFIX}/docs",
+)
+app.include_router(router, prefix=API_PREFIX)

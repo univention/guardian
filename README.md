@@ -34,6 +34,13 @@ The Guardian Authorization API relies on an Open Policy Agent. An implementation
 
 More information can be found [here](opa/README.md)
 
+## Apps
+
+### Guardian Authorization API
+
+This app contains the components `Guardian Authorization API` and the OPA service in a docker compose app.
+The configuration files can be found in `appcenter-authz`. The App ID is `guardian-authorization-api`.
+
 ## Development
 
 Most information regarding development and setup of local environments can be found in the component sub folders.

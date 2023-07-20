@@ -1,8 +1,15 @@
+# Copyright (C) 2023 Univention GmbH
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
 include:
   - project: univention/dist/docker-services
     file:
       - kaniko.yml
       - pre-commit.yml
+
+variables:
+  APPCENTER_CONTROL_IMAGE: "docker-registry.knut.univention.de/knut/univention-appcenter-control"
 
 workflow:
   rules:
@@ -138,6 +145,7 @@ build_docker_image_opa:
   extends: .kaniko
   variables:
     KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR/opa"
+    CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-opa
     KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
 
 build_docker_image_authz:
@@ -151,6 +159,7 @@ build_docker_image_authz:
   extends: .kaniko
   variables:
     KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR/authorization-api"
+    CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-authorization-api
     KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
 
 build_docker_image_management:
@@ -164,6 +173,7 @@ build_docker_image_management:
   extends: .kaniko
   variables:
     KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR/management-api"
+    CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-management-api
     KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
 
 publish_port_loader:
@@ -190,3 +200,20 @@ publish_port_loader:
     - poetry config --local repositories.project_local ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi
     - poetry publish -r project_local --username gitlab-ci-token --password ${CI_JOB_TOKEN}
 
+upload_app_to_test_appcenter:
+  stage: publish
+  image: $APPCENTER_CONTROL_IMAGE
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - appcenter-authz/**/*
+  needs: []
+  variables:
+    APP_ID: "guardian-authorization-api"
+    APP_DIR: "appcenter-authz"
+    APP_NAME: "5.0/$APP_ID"
+  script:
+    - cd "$APP_DIR"
+    - APP_VERSION="$(sed -n 's/^Version\s*=\s*//p' ini)"
+    - echo "updating $APP_NAME=$APP_VERSION"
+    - univention-appcenter-control upload "$APP_NAME=$APP_VERSION" compose configure_host ini ini README_UPDATE_DE README_UPDATE_EN settings uinst

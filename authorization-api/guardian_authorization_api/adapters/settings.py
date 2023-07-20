@@ -83,9 +83,9 @@ class EnvSettingsAdapter(SettingsPort, AsyncAdapterSettingsProvider):
             raise SettingNotFoundError(
                 f"No value for the requested setting {setting_name} could be found."
             )
-        if env_value == "0":
+        if env_value in ("0", "false", "False", "FALSE"):
             return False
-        elif env_value == "1":
+        elif env_value in ("1", "true", "True", "TRUE"):
             return True
         raise SettingTypeError(
             f"The value '{env_value}' for the setting {setting_name} could not "

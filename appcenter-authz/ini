@@ -1,0 +1,21 @@
+[Application]
+ID = guardian-authorization-api
+Code = 47
+Version = 0.1.0
+Name = Guardian Authorization API
+Vendor = Univention
+DockerScriptRestoreDataAfterSetup =
+DockerScriptStoreData =
+DockerScriptUpdateAvailable =
+DockerScriptRestoreDataBeforeSetup =
+DockerScriptUpdatePackages =
+DockerScriptUpdateAppVersion =
+DockerScriptUpdateRelease =
+DockerScriptSetup =
+DockerMainService = authorization-api
+WebInterface = /guardian/authorization
+WebInterfaceName = Guardian Authorization API
+WebInterfacePortHttp = 8000
+WebInterfacePortHttps = 8000
+WebInterfaceProxyScheme = http
+DockerScriptConfigure = /tmp/guardian-authorization-api-configure

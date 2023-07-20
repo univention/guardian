@@ -109,7 +109,15 @@ class TestEnvSettings:
             await port_instance.get_int("SOME_STRING")
 
     @pytest.mark.parametrize(
-        "setting_name,expected", [("TRUE", True), ("FALSE", False)]
+        "setting_name,expected",
+        [
+            ("TRUE", True),
+            ("FALSE", False),
+            ("true", True),
+            ("True", True),
+            ("false", False),
+            ("False", False),
+        ],
     )
     @pytest.mark.asyncio
     async def test_get_bool(self, port_instance, setting_name, expected):

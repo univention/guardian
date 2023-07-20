@@ -1,3 +1,9 @@
+<!--
+Copyright (C) 2023 Univention GmbH
+
+SPDX-License-Identifier: AGPL-3.0-only
+-->
+
 # Requirements and concept for the UCS authorization engine
 
 [[_TOC_]]

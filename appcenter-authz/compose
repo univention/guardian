@@ -1,0 +1,25 @@
+version: '3.1'
+services:
+  authorization-api:
+    image: gitregistry.knut.univention.de/univention/components/authorization-engine/guardian/guardian-authorization-api:branch-9-create-appcenter-apps-for-authz-and-management-api
+    security_opt:
+      - seccomp:/etc/docker/seccomp-systemd.json
+    depends_on:
+      - opa
+    environment:
+      GUARDIAN__AUTHZ__ADAPTER__SETTINGS_PORT: env
+      GUARDIAN__AUTHZ__ADAPTER__PERSISTENCE_PORT: static_data
+      GUARDIAN__AUTHZ__ADAPTER__POLICY_PORT: opa
+      IS_UNIVENTION_APPCENTER: 1
+      STATIC_DATA_ADAPTER__DATA_FILE: /tmp/test_data.json
+      OPA_ADAPTER__URL: http://opa:8181/
+      GUARDIAN__AUTHZ__LOGGING__LEVEL: @%@guardian-authorization-api/logging/level@%@
+      GUARDIAN__AUTHZ__LOGGING__STRUCTURED: "@%@guardian-authorization-api/logging/structured@%@"
+      GUARDIAN__AUTHZ__LOGGING__FORMAT: @%@guardian-authorization-api/logging/format@%@
+  opa:
+    image: gitregistry.knut.univention.de/univention/components/authorization-engine/guardian/guardian-opa:branch-9-create-appcenter-apps-for-authz-and-management-api
+    security_opt:
+      - seccomp:/etc/docker/seccomp-systemd.json
+    environment:
+      IS_UNIVENTION_APPCENTER: 1
+

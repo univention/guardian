@@ -26,6 +26,8 @@ RUN poetry export -f requirements.txt --output requirements.txt --dev --without-
 
 FROM docker-registry.knut.univention.de/python:3.11-slim
 
+EXPOSE 8000
+
 ARG commit
 ARG date
 ARG service_user="guardian"
@@ -54,5 +56,4 @@ RUN pip install --no-cache-dir -U pip wheel && pip install --no-cache-dir -r req
 # Install project
 COPY . .
 RUN pip install --no-cache-dir . && pip list
-
-
+RUN echo '{"users": {}, "groups": {}}' > /tmp/test_data.json  # TODO: Remove with https://git.knut.univention.de/univention/components/authorization-engine/guardian/-/issues/3
