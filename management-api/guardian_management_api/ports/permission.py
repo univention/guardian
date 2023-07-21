@@ -6,15 +6,18 @@
 Proposed layout for permission ports/models
 """
 
+from abc import abstractmethod
 from dataclasses import dataclass
 from typing import List, Optional
 
-from .base import (
-    BasePort,
+from ..models.base import (
     NamespacedPersistenceObject,
     NamespacedResponseObject,
     PaginatedAPIResponse,
     QueryResponse,
+)
+from .base import (
+    BasePort,
 )
 
 ###############################################################################
@@ -53,6 +56,7 @@ class PermissionsListAPIResponse(PaginatedAPIResponse):
 
 
 class PermissionAPIPort(BasePort):
+    @abstractmethod
     def create(
         self,
         app_name: str,
@@ -62,6 +66,7 @@ class PermissionAPIPort(BasePort):
     ) -> PermissionAPIResponse:
         pass
 
+    @abstractmethod
     def read_one(
         self,
         app_name: str,
@@ -70,6 +75,7 @@ class PermissionAPIPort(BasePort):
     ) -> PermissionAPIResponse:
         pass
 
+    @abstractmethod
     def read_many(
         self,
         app_name: Optional[str] = None,
@@ -79,6 +85,7 @@ class PermissionAPIPort(BasePort):
     ) -> PermissionsListAPIResponse:
         pass
 
+    @abstractmethod
     def update(
         self,
         app_name: str,
@@ -97,12 +104,14 @@ class PermissionAPIPort(BasePort):
 
 
 class PermissionPersistencePort(BasePort):
+    @abstractmethod
     async def create(
         self,
         permission: Permission,
     ) -> Permission:
         pass
 
+    @abstractmethod
     async def read_one(
         self,
         app_name: str,
@@ -111,6 +120,7 @@ class PermissionPersistencePort(BasePort):
     ) -> Permission:
         pass
 
+    @abstractmethod
     async def read_many(
         self,
         app_name: Optional[str] = None,
@@ -120,6 +130,7 @@ class PermissionPersistencePort(BasePort):
     ) -> PermissionQuery:
         pass
 
+    @abstractmethod
     async def update(
         self,
         permission: Permission,

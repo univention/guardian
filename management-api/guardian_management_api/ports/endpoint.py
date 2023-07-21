@@ -6,14 +6,17 @@
 Proposed layout for the role-capability-mapping ports/models
 """
 
+from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Optional
 
-from .base import (
-    BasePort,
+from ..models.base import (
     NamespacedObject,
     NamespacedPersistenceObject,
     ResponseObject,
+)
+from .base import (
+    BasePort,
 )
 
 ###############################################################################
@@ -50,6 +53,7 @@ class CustomEndpointAPIResponse:
 
 
 class CustomEndpointAPIPort(BasePort):
+    @abstractmethod
     async def create(
         self,
         app_name: str,
@@ -59,7 +63,9 @@ class CustomEndpointAPIPort(BasePort):
     ) -> CustomEndpointAPIResponse:
         pass
 
+    @abstractmethod
     async def update(
+        self,
         app_name: str,
         namespace_name: str,
         endpoint_name: str,
@@ -76,12 +82,14 @@ class CustomEndpointAPIPort(BasePort):
 
 
 class CustomEndpointPersistencePort(BasePort):
+    @abstractmethod
     async def create(
         self,
         endpoint: CustomEndpoint,
     ) -> CustomEndpointDiff:
         pass
 
+    @abstractmethod
     async def update(
         self,
         endpoint: CustomEndpoint,

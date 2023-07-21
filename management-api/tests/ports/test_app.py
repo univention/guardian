@@ -2,32 +2,36 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-from typing import Optional, Type
 
 import pytest
 from guardian_management_api.models.app import App, AppCreateQuery, AppGetQuery, Apps
 from guardian_management_api.ports.app import (
-    AppAPIPort,
-    AppPersistencePort,
     AppAPICreateRequestObject,
     AppAPICreateResponseObject,
     AppAPIGetRequestObject,
     AppAPIGetResponseObject,
+    AppAPIPort,
+    AppPersistencePort,
 )
-from port_loader import Settings
 
 
 class AppAPIPortAdapter(AppAPIPort):
-    async def create_to_query(self, api_request: AppAPICreateRequestObject) -> AppCreateQuery:
+    async def create_to_query(
+        self, api_request: AppAPICreateRequestObject
+    ) -> AppCreateQuery:
         pass
 
-    async def create_to_api_response(self, app_result: App) -> AppAPICreateResponseObject:
+    async def create_to_api_response(
+        self, app_result: App
+    ) -> AppAPICreateResponseObject:
         pass
 
     async def get_to_query(self, api_request: AppAPIGetRequestObject) -> AppGetQuery:
         pass
 
-    async def get_to_api_response(self, app_result: App | None) -> AppAPIGetResponseObject | None:
+    async def get_to_api_response(
+        self, app_result: App | None
+    ) -> AppAPIGetResponseObject | None:
         pass
 
 

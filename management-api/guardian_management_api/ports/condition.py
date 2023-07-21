@@ -6,14 +6,17 @@
 Proposed layout for condition ports/models
 """
 
+from abc import abstractmethod
 from dataclasses import dataclass
 from typing import List, Optional
 
-from .base import (
-    BasePort,
+from ..models.base import (
     NamespacedPersistenceObject,
     NamespacedResponseObject,
     QueryResponse,
+)
+from .base import (
+    BasePort,
 )
 
 ###############################################################################
@@ -62,6 +65,7 @@ class ConditionsListAPIResponse:
 
 
 class ConditionAPIPort(BasePort):
+    @abstractmethod
     async def create(
         self,
         app_name: str,
@@ -73,6 +77,7 @@ class ConditionAPIPort(BasePort):
     ) -> ConditionAPIResponse:
         pass
 
+    @abstractmethod
     async def read_one(
         self,
         app_name: str,
@@ -81,6 +86,7 @@ class ConditionAPIPort(BasePort):
     ) -> ConditionAPIResponse:
         pass
 
+    @abstractmethod
     async def read_many(
         self,
         app_name: Optional[str] = None,
@@ -90,6 +96,7 @@ class ConditionAPIPort(BasePort):
     ) -> ConditionsListAPIResponse:
         pass
 
+    @abstractmethod
     async def update(
         self,
         app_name: str,
@@ -110,12 +117,14 @@ class ConditionAPIPort(BasePort):
 
 
 class ConditionPersistencePort(BasePort):
+    @abstractmethod
     async def create(
         self,
         Condition: Condition,
     ) -> ConditionDiff:
         pass
 
+    @abstractmethod
     async def read_one(
         self,
         app_name: str,
@@ -124,6 +133,7 @@ class ConditionPersistencePort(BasePort):
     ) -> Condition:
         pass
 
+    @abstractmethod
     async def read_many(
         self,
         app_name: Optional[str] = None,
@@ -133,6 +143,7 @@ class ConditionPersistencePort(BasePort):
     ) -> List[Condition]:
         pass
 
+    @abstractmethod
     async def update(
         self,
         condition: Condition,

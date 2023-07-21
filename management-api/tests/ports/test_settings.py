@@ -6,7 +6,6 @@ from typing import Optional, Type
 
 import pytest
 from guardian_management_api.errors import SettingFormatError, SettingTypeError
-from guardian_management_api.ports.base import BasePort
 from guardian_management_api.ports.settings import SettingsPort
 from port_loader import Settings
 

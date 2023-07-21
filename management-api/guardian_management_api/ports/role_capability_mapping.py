@@ -6,6 +6,7 @@
 Proposed layout for the role-capability-mapping ports/models
 """
 
+from abc import abstractmethod
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Dict, List, Optional, Union
@@ -126,9 +127,11 @@ class DeletedRoleCapabilityMappingAPIResponse:
 
 
 class RoleCapabilityMappingAPIPort(BasePort):
+    @abstractmethod
     async def read(self) -> RoleCapabilityMappingAPIResponse:
         pass
 
+    @abstractmethod
     async def read_namespace(
         self,
         app_name: str,
@@ -136,17 +139,20 @@ class RoleCapabilityMappingAPIPort(BasePort):
     ) -> RoleCapabilityMappingAPIResponse:
         pass
 
+    @abstractmethod
     async def update(
         self,
         mappings: List[APIMapping],
     ) -> RoleCapabilityMappingAPIResponse:
         pass
 
+    @abstractmethod
     async def update_namespace(
         self, app_name: str, namespace_name: str, mappings: List[APIMapping]
     ) -> RoleCapabilityMappingAPIResponse:
         pass
 
+    @abstractmethod
     async def delete_namespace(
         self,
         app_name: str,
@@ -167,6 +173,7 @@ class RoleCapabilityMappingAPIPort(BasePort):
 class RoleCapabilityMappingPersistencePort(BasePort):
     # Here, the namespace acts as a filter;
     # otherwise, everything is returned.
+    @abstractmethod
     async def read(
         self,
         app_name: Optional[str] = None,
@@ -179,6 +186,7 @@ class RoleCapabilityMappingPersistencePort(BasePort):
     # but if we're doing this as a file, it might not make sense.
     # Perhaps leave it up to the adapter to figure out whether it needs to handle
     # "already exists" errors?
+    @abstractmethod
     async def write(
         self,
         mappings: List[Mapping],
@@ -186,6 +194,7 @@ class RoleCapabilityMappingPersistencePort(BasePort):
         pass
 
     # A delete for a namespace is just passing an empty list
+    @abstractmethod
     async def write_namespace(
         self,
         app_name: str,

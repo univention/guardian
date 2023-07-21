@@ -6,10 +6,12 @@
 Proposed layout for the namespace ports/models
 """
 
+from abc import abstractmethod
 from dataclasses import dataclass
 from typing import List, Optional
 
-from .base import BasePort, PaginatedAPIResponse, QueryResponse, ResponseObject
+from ..models.base import PaginatedAPIResponse, QueryResponse, ResponseObject
+from .base import BasePort
 
 ###############################################################################
 #                                                                             #
@@ -55,6 +57,7 @@ class NamespacesListAPIResponse(PaginatedAPIResponse):
 
 
 class NamespaceAPIPort(BasePort):
+    @abstractmethod
     async def create(
         self,
         app_name: str,
@@ -63,6 +66,7 @@ class NamespaceAPIPort(BasePort):
     ) -> NamespaceAPIResponse:
         pass
 
+    @abstractmethod
     async def read_one(
         self,
         app_name: str,
@@ -70,6 +74,7 @@ class NamespaceAPIPort(BasePort):
     ) -> NamespaceAPIResponse:
         pass
 
+    @abstractmethod
     async def read_many(
         self,
         app_name: Optional[str] = None,
@@ -79,6 +84,7 @@ class NamespaceAPIPort(BasePort):
     ) -> NamespacesListAPIResponse:
         pass
 
+    @abstractmethod
     async def update(
         self,
         app_name: str,
@@ -96,12 +102,14 @@ class NamespaceAPIPort(BasePort):
 
 
 class NamespacePersistencePort(BasePort):
+    @abstractmethod
     async def create(
         self,
         namespace: Namespace,
     ) -> Namespace:
         pass
 
+    @abstractmethod
     async def read_one(
         self,
         app_name: str,
@@ -109,6 +117,7 @@ class NamespacePersistencePort(BasePort):
     ) -> Namespace:
         pass
 
+    @abstractmethod
     async def read_many(
         self,
         app_name: Optional[str] = None,
@@ -118,6 +127,7 @@ class NamespacePersistencePort(BasePort):
     ) -> NamespaceQuery:
         pass
 
+    @abstractmethod
     async def update(
         self,
         namespace: Namespace,
