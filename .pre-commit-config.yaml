@@ -23,12 +23,12 @@ repos:
     rev: 1.7.5
     hooks:
     -   id: bandit
-        exclude: "authorization-api/tests/|port-loader/tests/"
+        exclude: "authorization-api/tests/|port-loader/tests/|management-api/tests"
 -   repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.3.0
     hooks:
     -   id: mypy
-        exclude: "docs/|authorization-api/tests/|port-loader/tests/"
+        exclude: "docs/|authorization-api/tests/|port-loader/tests/|management-api/tests"
         args: []
         additional_dependencies: [fastapi==0.95.2, loguru==0.7.0]
 - repo: https://github.com/jackdewinter/pymarkdown

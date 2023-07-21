@@ -6,44 +6,13 @@
 Proposed layout for role ports/models
 """
 
-from dataclasses import dataclass
-from typing import List, Optional
+from abc import ABC, abstractmethod
+from typing import Optional
 
+from ..models.role import Role, RoleAPIResponse, RoleQuery, RolesListAPIResponse
 from .base import (
     BasePort,
-    NamespacedPersistenceObject,
-    NamespacedResponseObject,
-    PaginatedAPIResponse,
-    QueryResponse,
 )
-
-###############################################################################
-#                                                                             #
-#  Models                                                                     #
-#                                                                             #
-###############################################################################
-
-
-class Role(NamespacedPersistenceObject):
-    ...
-
-
-class RoleQuery(QueryResponse):
-    roles: List[Role]
-
-
-class ResponseRole(NamespacedResponseObject):
-    ...
-
-
-@dataclass
-class RoleAPIResponse:
-    role: ResponseRole
-
-
-class RolesListAPIResponse(PaginatedAPIResponse):
-    roles: List[ResponseRole]
-
 
 ###############################################################################
 #                                                                             #
@@ -52,7 +21,8 @@ class RolesListAPIResponse(PaginatedAPIResponse):
 ###############################################################################
 
 
-class RoleAPIPort(BasePort):
+class RoleAPIPort(BasePort, ABC):
+    @abstractmethod
     def create(
         self,
         app_name: str,
@@ -62,6 +32,7 @@ class RoleAPIPort(BasePort):
     ) -> RoleAPIResponse:
         pass
 
+    @abstractmethod
     def read_one(
         self,
         app_name: str,
@@ -70,6 +41,7 @@ class RoleAPIPort(BasePort):
     ) -> RoleAPIResponse:
         pass
 
+    @abstractmethod
     def read_many(
         self,
         app_name: Optional[str] = None,
@@ -79,6 +51,7 @@ class RoleAPIPort(BasePort):
     ) -> RolesListAPIResponse:
         pass
 
+    @abstractmethod
     def update(
         self,
         app_name: str,
@@ -96,13 +69,15 @@ class RoleAPIPort(BasePort):
 ###############################################################################
 
 
-class RolePersistencePort(BasePort):
+class RolePersistencePort(BasePort, ABC):
+    @abstractmethod
     async def create(
         self,
         role: Role,
     ) -> Role:
         pass
 
+    @abstractmethod
     async def read_one(
         self,
         app_name: str,
@@ -111,6 +86,7 @@ class RolePersistencePort(BasePort):
     ) -> Role:
         pass
 
+    @abstractmethod
     async def read_many(
         self,
         app_name: Optional[str] = None,
@@ -120,6 +96,7 @@ class RolePersistencePort(BasePort):
     ) -> RoleQuery:
         pass
 
+    @abstractmethod
     async def update(
         self,
         role: Role,

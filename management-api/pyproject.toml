@@ -12,6 +12,7 @@ packages = [{include = "guardian_management_api"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
+httpx = "^0.24.1"
 
 
 [build-system]
