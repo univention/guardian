@@ -11,10 +11,6 @@ from guardian_management_api.ports.settings import SettingsPort
 from port_loader import Settings
 
 
-class BaseAdapter(BasePort):
-    ...
-
-
 class SettingsAdapter(SettingsPort):
     async def get_int(self, setting_name: str, default: Optional[int] = None) -> int:
         pass
@@ -27,11 +23,6 @@ class SettingsAdapter(SettingsPort):
 
     async def get_adapter_settings(self, settings_cls: Type[Settings]) -> Settings:
         pass
-
-
-class TestBasePort:
-    def test_base_port(self):
-        BaseAdapter()
 
 
 class TestSettingsPort:
