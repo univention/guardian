@@ -32,3 +32,9 @@ pytest-mock = "^3.11.1"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.coverage.run]
+omit = [
+    # ports should not be tested, adapters should
+    "*/ports/*",
+    ]
