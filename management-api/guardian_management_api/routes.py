@@ -21,8 +21,8 @@ from .ports.app import AppAPIPort, AppPersistencePort
 router = APIRouter()
 
 
-@router.post("/apps/register")
-async def register_app(
+@router.post("/apps")
+async def create_app(
     app_create_request: Annotated[ManagementAppCreateRequest, Body()],
     management_app_api: FastAPIAppAPIAdapter = Depends(
         port_dep(AppAPIPort, FastAPIAppAPIAdapter)

@@ -10,7 +10,7 @@ from port_loader import (
     AsyncAdapterSettingsProvider,
     load_from_entry_point,
 )
-from pydantic import Field, BaseSettings
+from pydantic import BaseSettings, Field
 
 from guardian_management_api.adapters.app import FastAPIAppAPIAdapter
 from guardian_management_api.ports.app import (

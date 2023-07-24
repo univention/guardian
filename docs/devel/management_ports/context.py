@@ -6,18 +6,15 @@
 Proposed layout for context ports/models
 """
 
-from abc import abstractmethod
 from dataclasses import dataclass
 from typing import List, Optional
 
-from ..models.base import (
+from .base import (
+    BasePort,
     NamespacedPersistenceObject,
     NamespacedResponseObject,
     PaginatedAPIResponse,
     QueryResponse,
-)
-from .base import (
-    BasePort,
 )
 
 ###############################################################################
@@ -56,7 +53,6 @@ class ContextsListAPIResponse(PaginatedAPIResponse):
 
 
 class ContextAPIPort(BasePort):
-    @abstractmethod
     def create(
         self,
         app_name: str,
@@ -66,7 +62,6 @@ class ContextAPIPort(BasePort):
     ) -> ContextAPIResponse:
         pass
 
-    @abstractmethod
     def read_one(
         self,
         app_name: str,
@@ -75,7 +70,6 @@ class ContextAPIPort(BasePort):
     ) -> ContextAPIResponse:
         pass
 
-    @abstractmethod
     def read_many(
         self,
         app_name: Optional[str] = None,
@@ -85,7 +79,6 @@ class ContextAPIPort(BasePort):
     ) -> ContextsListAPIResponse:
         pass
 
-    @abstractmethod
     def update(
         self,
         app_name: str,
@@ -104,14 +97,12 @@ class ContextAPIPort(BasePort):
 
 
 class ContextPersistencePort(BasePort):
-    @abstractmethod
     async def create(
         self,
         context: Context,
     ) -> Context:
         pass
 
-    @abstractmethod
     async def read_one(
         self,
         app_name: str,
@@ -120,7 +111,6 @@ class ContextPersistencePort(BasePort):
     ) -> Context:
         pass
 
-    @abstractmethod
     async def read_many(
         self,
         app_name: Optional[str] = None,
@@ -130,7 +120,6 @@ class ContextPersistencePort(BasePort):
     ) -> ContextQuery:
         pass
 
-    @abstractmethod
     async def update(
         self,
         context: Context,

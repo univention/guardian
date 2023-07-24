@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 import inspect
-import os
 
 import pytest
 from guardian_management_api.adapter_registry import (
@@ -22,40 +21,20 @@ from guardian_management_api.ports.settings import SettingsPort
 from port_loader import AsyncAdapterRegistry, AsyncAdapterSettingsProvider
 
 
-@pytest.fixture
-def adapter_selection_env():
-    return {
-        "GUARDIAN__MANAGEMENT__ADAPTER__SETTINGS_PORT": "SETTINGS_PORT",
-        "GUARDIAN__MANAGEMENT__ADAPTER__APP_PERSISTENCE_PORT": "APP_PERSISTENCE_PORT",
-        "GUARDIAN__MANAGEMENT__ADAPTER__APP_API_PORT": "APP_API_PORT",
-    }
-
-
-@pytest.fixture
-def apply_adapter_selection_env(mocker, adapter_selection_env):
-    mocker.patch.dict(os.environ, adapter_selection_env)
-
-
-def test_adapter_selection_loading(adapter_selection_env, apply_adapter_selection_env):
+def test_adapter_selection_loading(register_test_adapters):
     """
     This test ensures that we load the correct env vars for adapter selection.
 
     If this test fails, please check that the env var change is intended and properly
     documented!
     """
-    expected_env = {
-        "GUARDIAN__MANAGEMENT__ADAPTER__SETTINGS_PORT": "SETTINGS_PORT",
-        "GUARDIAN__MANAGEMENT__ADAPTER__APP_PERSISTENCE_PORT": "APP_PERSISTENCE_PORT",
-        "GUARDIAN__MANAGEMENT__ADAPTER__APP_API_PORT": "APP_API_PORT",
-    }
-    assert adapter_selection_env == expected_env
     adapter_selection = AdapterSelection()
     assert adapter_selection.app_api_port == "APP_API_PORT"
-    assert adapter_selection.settings_port == "SETTINGS_PORT"
-    assert adapter_selection.app_persistence_port == "APP_PERSISTENCE_PORT"
+    assert adapter_selection.settings_port == "dummy"
+    assert adapter_selection.app_persistence_port == "in_memory"
 
 
-def test_configure_registry(mocker, apply_adapter_selection_env):
+def test_configure_registry(mocker, register_test_adapters):
     registry_mock = mocker.MagicMock()
     load_from_ep_mock = mocker.MagicMock()
     mocker.patch(
@@ -64,9 +43,9 @@ def test_configure_registry(mocker, apply_adapter_selection_env):
     )
     configure_registry(registry_mock)
     assert registry_mock.set_adapter.call_args_list == [
-        mocker.call(SettingsPort, "SETTINGS_PORT"),
-        mocker.call(AppPersistencePort, "APP_PERSISTENCE_PORT"),
-        mocker.call(AsyncAdapterSettingsProvider, "SETTINGS_PORT"),
+        mocker.call(SettingsPort, "dummy"),
+        mocker.call(AppPersistencePort, "in_memory"),
+        mocker.call(AsyncAdapterSettingsProvider, "dummy"),
         mocker.call(AppAPIPort, FastAPIAppAPIAdapter),
     ]
     assert registry_mock.register_port.call_args_list == [

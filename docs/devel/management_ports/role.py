@@ -3,15 +3,19 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 """
-Proposed layout for the namespace ports/models
+Proposed layout for role ports/models
 """
 
-from abc import abstractmethod
 from dataclasses import dataclass
 from typing import List, Optional
 
-from ..models.base import PaginatedAPIResponse, QueryResponse, ResponseObject
-from .base import BasePort
+from .base import (
+    BasePort,
+    NamespacedPersistenceObject,
+    NamespacedResponseObject,
+    PaginatedAPIResponse,
+    QueryResponse,
+)
 
 ###############################################################################
 #                                                                             #
@@ -20,33 +24,25 @@ from .base import BasePort
 ###############################################################################
 
 
-@dataclass
-class Namespace:
-    app_name: str
-    name: str
-    display_name: Optional[str]
+class Role(NamespacedPersistenceObject):
+    ...
 
 
-class NamespaceQuery(QueryResponse):
-    namespaces: List[Namespace]
+class RoleQuery(QueryResponse):
+    roles: List[Role]
 
 
-# We're intentionally not tying this to Namespace,
-# because we'd like to make sure changes to the persistence layer don't
-# accidentally affect the response layer.
-class ResponseNamespace(ResponseObject):
-    app_name: str
-    name: str
-    display_name: Optional[str]
+class ResponseRole(NamespacedResponseObject):
+    ...
 
 
 @dataclass
-class NamespaceAPIResponse:
-    namespace: ResponseNamespace
+class RoleAPIResponse:
+    role: ResponseRole
 
 
-class NamespacesListAPIResponse(PaginatedAPIResponse):
-    namespaces: List[ResponseNamespace]
+class RolesListAPIResponse(PaginatedAPIResponse):
+    roles: List[ResponseRole]
 
 
 ###############################################################################
@@ -56,41 +52,40 @@ class NamespacesListAPIResponse(PaginatedAPIResponse):
 ###############################################################################
 
 
-class NamespaceAPIPort(BasePort):
-    @abstractmethod
-    async def create(
+class RoleAPIPort(BasePort):
+    def create(
         self,
         app_name: str,
         namespace_name: str,
+        role_name: str,
         display_name: Optional[str] = None,
-    ) -> NamespaceAPIResponse:
+    ) -> RoleAPIResponse:
         pass
 
-    @abstractmethod
-    async def read_one(
+    def read_one(
         self,
         app_name: str,
         namespace_name: str,
-    ) -> NamespaceAPIResponse:
+        role_name: str,
+    ) -> RoleAPIResponse:
         pass
 
-    @abstractmethod
-    async def read_many(
+    def read_many(
         self,
         app_name: Optional[str] = None,
         namespace_name: Optional[str] = None,
         pagination_offset: Optional[int] = None,
         pagination_limit: Optional[int] = None,
-    ) -> NamespacesListAPIResponse:
+    ) -> RolesListAPIResponse:
         pass
 
-    @abstractmethod
-    async def update(
+    def update(
         self,
         app_name: str,
         namespace_name: str,
+        role_name: str,
         display_name: str,
-    ) -> NamespaceAPIResponse:
+    ) -> RoleAPIResponse:
         pass
 
 
@@ -101,35 +96,32 @@ class NamespaceAPIPort(BasePort):
 ###############################################################################
 
 
-class NamespacePersistencePort(BasePort):
-    @abstractmethod
+class RolePersistencePort(BasePort):
     async def create(
         self,
-        namespace: Namespace,
-    ) -> Namespace:
+        role: Role,
+    ) -> Role:
         pass
 
-    @abstractmethod
     async def read_one(
         self,
         app_name: str,
         namespace_name: str,
-    ) -> Namespace:
+        role_name: str,
+    ) -> Role:
         pass
 
-    @abstractmethod
     async def read_many(
         self,
         app_name: Optional[str] = None,
         namespace_name: Optional[str] = None,
         query_offset: Optional[int] = None,
         query_limit: Optional[int] = None,
-    ) -> NamespaceQuery:
+    ) -> RoleQuery:
         pass
 
-    @abstractmethod
     async def update(
         self,
-        namespace: Namespace,
-    ) -> Namespace:
+        role: Role,
+    ) -> Role:
         pass

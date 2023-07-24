@@ -3,22 +3,13 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 """
-Proposed layout for permission ports/models
+Proposed layout for the namespace ports/models
 """
 
-from abc import abstractmethod
 from dataclasses import dataclass
 from typing import List, Optional
 
-from ..models.base import (
-    NamespacedPersistenceObject,
-    NamespacedResponseObject,
-    PaginatedAPIResponse,
-    QueryResponse,
-)
-from .base import (
-    BasePort,
-)
+from .base import BasePort, PaginatedAPIResponse, QueryResponse, ResponseObject
 
 ###############################################################################
 #                                                                             #
@@ -27,25 +18,33 @@ from .base import (
 ###############################################################################
 
 
-class Permission(NamespacedPersistenceObject):
-    ...
+@dataclass
+class Namespace:
+    app_name: str
+    name: str
+    display_name: Optional[str]
 
 
-class PermissionQuery(QueryResponse):
-    permissions: List[Permission]
+class NamespaceQuery(QueryResponse):
+    namespaces: List[Namespace]
 
 
-class ResponsePermission(NamespacedResponseObject):
-    ...
+# We're intentionally not tying this to Namespace,
+# because we'd like to make sure changes to the persistence layer don't
+# accidentally affect the response layer.
+class ResponseNamespace(ResponseObject):
+    app_name: str
+    name: str
+    display_name: Optional[str]
 
 
 @dataclass
-class PermissionAPIResponse:
-    permission: ResponsePermission
+class NamespaceAPIResponse:
+    namespace: ResponseNamespace
 
 
-class PermissionsListAPIResponse(PaginatedAPIResponse):
-    permissions: List[ResponsePermission]
+class NamespacesListAPIResponse(PaginatedAPIResponse):
+    namespaces: List[ResponseNamespace]
 
 
 ###############################################################################
@@ -55,44 +54,37 @@ class PermissionsListAPIResponse(PaginatedAPIResponse):
 ###############################################################################
 
 
-class PermissionAPIPort(BasePort):
-    @abstractmethod
-    def create(
+class NamespaceAPIPort(BasePort):
+    async def create(
         self,
         app_name: str,
         namespace_name: str,
-        permission_name: str,
         display_name: Optional[str] = None,
-    ) -> PermissionAPIResponse:
+    ) -> NamespaceAPIResponse:
         pass
 
-    @abstractmethod
-    def read_one(
+    async def read_one(
         self,
         app_name: str,
         namespace_name: str,
-        permission_name: str,
-    ) -> PermissionAPIResponse:
+    ) -> NamespaceAPIResponse:
         pass
 
-    @abstractmethod
-    def read_many(
+    async def read_many(
         self,
         app_name: Optional[str] = None,
         namespace_name: Optional[str] = None,
         pagination_offset: Optional[int] = None,
         pagination_limit: Optional[int] = None,
-    ) -> PermissionsListAPIResponse:
+    ) -> NamespacesListAPIResponse:
         pass
 
-    @abstractmethod
-    def update(
+    async def update(
         self,
         app_name: str,
         namespace_name: str,
-        permission_name: str,
         display_name: str,
-    ) -> PermissionAPIResponse:
+    ) -> NamespaceAPIResponse:
         pass
 
 
@@ -103,36 +95,31 @@ class PermissionAPIPort(BasePort):
 ###############################################################################
 
 
-class PermissionPersistencePort(BasePort):
-    @abstractmethod
+class NamespacePersistencePort(BasePort):
     async def create(
         self,
-        permission: Permission,
-    ) -> Permission:
+        namespace: Namespace,
+    ) -> Namespace:
         pass
 
-    @abstractmethod
     async def read_one(
         self,
         app_name: str,
         namespace_name: str,
-        permission_name: str,
-    ) -> Permission:
+    ) -> Namespace:
         pass
 
-    @abstractmethod
     async def read_many(
         self,
         app_name: Optional[str] = None,
         namespace_name: Optional[str] = None,
         query_offset: Optional[int] = None,
         query_limit: Optional[int] = None,
-    ) -> PermissionQuery:
+    ) -> NamespaceQuery:
         pass
 
-    @abstractmethod
     async def update(
         self,
-        permission: Permission,
-    ) -> Permission:
+        namespace: Namespace,
+    ) -> Namespace:
         pass

@@ -41,7 +41,7 @@ class AppGetQuery:
 
 
 # We're intentionally not tying this to App,
-# because we'd like to make sure changes to the persistence layer don't
+# because we'd like to make sure changes to the persistence layer doesn't
 # accidentally affect the response layer.
 @dataclass(frozen=True)
 class ResponseApp(ResponseObject):

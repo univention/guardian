@@ -18,7 +18,9 @@ class TestAppEndpoints:
         "guardian_management_api.adapters.app.AppStaticDataAdapter._data.apps", new=[]
     )
     def test_post_app(self, client, register_test_adapters):
-        response = client.post(f"{API_PREFIX}/apps/register", json={"name": "test_app"})
+        response = client.post(
+            app.url_path_for("create_app"), json={"name": "test_app"}
+        )
         assert response.status_code == 200
         assert response.json() == {
             "name": "test_app",
@@ -33,14 +35,14 @@ class TestAppEndpoints:
 
     @patch(
         "guardian_management_api.adapters.app.AppStaticDataAdapter._data.apps",
-        new=[App(name="test_app")],
+        new=[App(name="test_app2")],
     )
     def test_get_app(self, client, register_test_adapters):
-        name: str = "test_app"
-        response = client.get(f"{API_PREFIX}/apps/{name}")
+        name: str = "test_app2"
+        response = client.get(app.url_path_for("get_app", name=name))
         assert response.status_code == 200
         assert response.json() == {
-            "name": "test_app",
+            "name": "test_app2",
             "display_name": None,
             "app_admin": {
                 "display_name": "admin",
