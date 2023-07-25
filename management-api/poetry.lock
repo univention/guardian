@@ -393,16 +393,19 @@ name = "port-loader"
 version = "1.0.0"
 description = ""
 optional = false
-python-versions = "^3.10"
-files = []
-develop = false
+python-versions = ">=3.10,<4.0"
+files = [
+    {file = "port_loader-1.0.0-py3-none-any.whl", hash = "sha256:54e333e62f8f07783cd25a9b714b01607b0429e41fed70f3a4828ec4d4d9fa1e"},
+    {file = "port_loader-1.0.0.tar.gz", hash = "sha256:93d74e25647915def9cd085e8db98897329f3fff9db3bb3761f80a281e1cce7d"},
+]
 
 [package.dependencies]
-loguru = "^0.7.0"
+loguru = ">=0.7.0,<0.8.0"
 
 [package.source]
-type = "directory"
-url = "../port-loader"
+type = "legacy"
+url = "https://git.knut.univention.de/api/v4/projects/830/packages/pypi/simple"
+reference = "port-loader"
 
 [[package]]
 name = "pydantic"
@@ -619,4 +622,4 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "b73849fb907dd616cfd1fad45ca1ea0753f90c64606ba00d73bed0d1a5e01268"
+content-hash = "89221a8966b437c9c1111d0d2025356e33e9ea586d011e391dbdb0436aad31f7"
