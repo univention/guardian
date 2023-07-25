@@ -17,7 +17,7 @@ class TestAppEndpoints:
     @patch(
         "guardian_management_api.adapters.app.AppStaticDataAdapter._data.apps", new=[]
     )
-    def test_post_app(self, client, register_test_adapters):
+    def test_post_app_minimal(self, client, register_test_adapters):
         response = client.post(
             app.url_path_for("create_app"), json={"name": "test_app"}
         )
@@ -35,6 +35,32 @@ class TestAppEndpoints:
                 },
             },
             "display_name": None,
+            "name": "test_app",
+            "resource_url": "https://localhost/guardian/management/apps/test_app",
+        }
+
+    @patch(
+        "guardian_management_api.adapters.app.AppStaticDataAdapter._data.apps", new=[]
+    )
+    def test_post_app_all(self, client, register_test_adapters):
+        response = client.post(
+            app.url_path_for("create_app"),
+            json={"name": "test_app", "display_name": "test_app display_name"},
+        )
+        assert response.status_code == 200
+        assert response.json() == {
+            "app_admin": {
+                "display_name": "test_app Admin",
+                "name": "test_app-admin",
+                "role": {
+                    "app_name": "guardian",
+                    "display_name": "test_app App Admin",
+                    "name": "app-admin",
+                    "namespace_name": "test_app",
+                    "resource_url": "https://localhost/guardian/management/roles/test_app/app-admin",
+                },
+            },
+            "display_name": "test_app display_name",
             "name": "test_app",
             "resource_url": "https://localhost/guardian/management/apps/test_app",
         }
@@ -63,3 +89,12 @@ class TestAppEndpoints:
             "name": "test_app2",
             "resource_url": "https://localhost/guardian/management/apps/test_app2",
         }
+
+    @patch(
+        "guardian_management_api.adapters.app.AppStaticDataAdapter._data.apps",
+        new=[],
+    )
+    def test_get_app_404(self, client, register_test_adapters):
+        name: str = "test_app3"
+        response = client.get(app.url_path_for("get_app", name=name))
+        assert response.status_code == 404

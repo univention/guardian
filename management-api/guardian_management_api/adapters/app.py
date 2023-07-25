@@ -120,13 +120,14 @@ class AppStaticDataAdapter(AppPersistencePort):
         query_offset: Optional[int] = None,
         query_limit: Optional[int] = None,
     ) -> Apps:
-        return Apps(apps=self._data.apps[query_offset:query_limit])
+        raise NotImplementedError  # pragma: no cover
 
     async def update(
         self,
         app: App,
     ) -> App:
-        self._data.apps = [
-            app if app.name == app.name else app for app in self._data.apps
-        ]
-        return app
+        # self._data.apps = [
+        #    app if app.name == app.name else app for app in self._data.apps
+        # ]
+        # return app
+        raise NotImplementedError  # pragma: no cover
