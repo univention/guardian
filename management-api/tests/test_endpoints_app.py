@@ -23,14 +23,20 @@ class TestAppEndpoints:
         )
         assert response.status_code == 200
         assert response.json() == {
-            "name": "test_app",
-            "display_name": None,
-            "resource_url": "",
             "app_admin": {
-                "display_name": "admin",
-                "name": "admin",
-                "namespace": "default",
+                "display_name": "test_app Admin",
+                "name": "test_app-admin",
+                "role": {
+                    "app_name": "guardian",
+                    "display_name": "test_app App Admin",
+                    "name": "app-admin",
+                    "namespace_name": "test_app",
+                    "resource_url": "https://localhost/guardian/management/roles/test_app/app-admin",
+                },
             },
+            "display_name": None,
+            "name": "test_app",
+            "resource_url": "https://localhost/guardian/management/apps/test_app",
         }
 
     @patch(
@@ -42,12 +48,18 @@ class TestAppEndpoints:
         response = client.get(app.url_path_for("get_app", name=name))
         assert response.status_code == 200
         assert response.json() == {
-            "name": "test_app2",
-            "display_name": None,
             "app_admin": {
-                "display_name": "admin",
-                "name": "admin",
-                "namespace": "default",
+                "display_name": "test_app2 Admin",
+                "name": "test_app2-admin",
+                "role": {
+                    "app_name": "guardian",
+                    "display_name": "test_app2 App Admin",
+                    "name": "app-admin",
+                    "namespace_name": "test_app2",
+                    "resource_url": "https://localhost/guardian/management/roles/test_app2/app-admin",
+                },
             },
-            "resource_url": "",
+            "display_name": None,
+            "name": "test_app2",
+            "resource_url": "https://localhost/guardian/management/apps/test_app2",
         }

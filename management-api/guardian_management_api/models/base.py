@@ -60,5 +60,5 @@ class PaginatedAPIResponse:
 # accidentally affect the response layer.
 @dataclass(frozen=True)
 class NamespacedResponseObject(NamespacedObject, ResponseObject):
-    namespace: str
+    namespace_name: str
     display_name: Optional[str]

@@ -5,6 +5,7 @@ import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.responses import ORJSONResponse
 from loguru import logger
 
 from .adapter_registry import ADAPTER_REGISTRY, configure_registry, initialize_adapters
@@ -30,5 +31,6 @@ app = FastAPI(
     title="Guardian Management API",
     openapi_url=f"{API_PREFIX}/openapi.json",
     docs_url=f"{API_PREFIX}/docs",
+    default_response_class=ORJSONResponse,
 )
 app.include_router(router, prefix=API_PREFIX)

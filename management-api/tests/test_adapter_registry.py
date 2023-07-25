@@ -29,7 +29,6 @@ def test_adapter_selection_loading(register_test_adapters):
     documented!
     """
     adapter_selection = AdapterSelection()
-    assert adapter_selection.app_api_port == "APP_API_PORT"
     assert adapter_selection.settings_port == "dummy"
     assert adapter_selection.app_persistence_port == "in_memory"
 

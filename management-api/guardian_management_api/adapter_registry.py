@@ -33,11 +33,6 @@ class AdapterSelection(BaseSettings):
     settings_port: str = Field(
         ..., alias="SettingsPort", env="GUARDIAN__MANAGEMENT__ADAPTER__SETTINGS_PORT"
     )
-    app_api_port: str = Field(
-        ...,
-        alias="AppAPIPort",
-        env="GUARDIAN__MANAGEMENT__ADAPTER__APP_API_PORT",
-    )
     app_persistence_port: str = Field(
         ...,
         alias="AppPersistencePort",

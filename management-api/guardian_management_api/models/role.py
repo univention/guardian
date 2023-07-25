@@ -26,7 +26,8 @@ class RoleQuery(QueryResponse):
 
 
 class ResponseRole(NamespacedResponseObject):
-    ...
+    app_name: str
+    name: str
 
 
 @dataclass(frozen=True)

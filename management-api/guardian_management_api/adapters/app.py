@@ -2,20 +2,27 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
+import os
 from typing import Optional
+from urllib.parse import urljoin
 
 from ..models.app import App, AppCreateQuery, AppGetQuery, Apps
+from ..models.role import ResponseRole
 from ..models.routes import (
+    AppAdminResponse,
     ManagementAppCreateRequest,
     ManagementAppCreateResponse,
     ManagementAppGetRequest,
     ManagementAppGetResponse,
-    RoleResponse,
 )
 from ..ports.app import (
     AppAPIPort,
     AppPersistencePort,
 )
+
+API_PREFIX = os.environ.get("GUARDIAN__MANAGEMENT__API_PREFIX", "/guardian/management")
+BASE_URL = os.environ.get("GUARDIAN__MANAGEMENT__BASE_URL", "https://localhost/")
+COMPLETE_URL = urljoin(BASE_URL, API_PREFIX)
 
 
 class FastAPIAppAPIAdapter(
@@ -26,6 +33,9 @@ class FastAPIAppAPIAdapter(
         ManagementAppGetResponse,
     ]
 ):
+    class Config:
+        alias = "fastapi"
+
     async def create_to_query(
         self, api_request: ManagementAppCreateRequest
     ) -> AppCreateQuery:
@@ -39,9 +49,17 @@ class FastAPIAppAPIAdapter(
         return ManagementAppCreateResponse(
             name=app_result.name,
             display_name=app_result.display_name,
-            resource_url="",
-            app_admin=RoleResponse(
-                namespace="default", name="admin", display_name="admin"
+            resource_url=f"{COMPLETE_URL}/apps/{app_result.name}",
+            app_admin=AppAdminResponse(
+                name=f"{app_result.name}-admin",
+                display_name=f"{app_result.name} Admin",
+                role=ResponseRole(
+                    namespace_name=app_result.name,
+                    name="app-admin",
+                    app_name="guardian",
+                    resource_url=f"{COMPLETE_URL}/roles/{app_result.name}/app-admin",
+                    display_name=f"{app_result.name} App Admin",
+                ),
             ),
         )
 
@@ -56,9 +74,17 @@ class FastAPIAppAPIAdapter(
         return ManagementAppGetResponse(
             name=app_result.name,
             display_name=app_result.display_name,
-            resource_url="",
-            app_admin=RoleResponse(
-                namespace="default", name="admin", display_name="admin"
+            resource_url=f"{COMPLETE_URL}/apps/{app_result.name}",
+            app_admin=AppAdminResponse(
+                name=f"{app_result.name}-admin",
+                display_name=f"{app_result.name} Admin",
+                role=ResponseRole(
+                    namespace_name=app_result.name,
+                    name="app-admin",
+                    app_name="guardian",
+                    resource_url=f"{COMPLETE_URL}/roles/{app_result.name}/app-admin",
+                    display_name=f"{app_result.name} App Admin",
+                ),
             ),
         )
 

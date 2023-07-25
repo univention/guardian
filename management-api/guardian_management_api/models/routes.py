@@ -6,6 +6,8 @@
 from fastapi import Path
 from pydantic import BaseModel, Field
 
+from .role import ResponseRole
+
 
 class GuardianBaseModel(BaseModel):
     class Config:
@@ -19,10 +21,10 @@ class ManagementAppCreateRequest(GuardianBaseModel):
     )
 
 
-class RoleResponse(GuardianBaseModel):
-    namespace: str = Field(..., description="Namespace of the role.")
-    name: str = Field(..., description="Name of the role.")
-    display_name: str = Field(..., description="Display name of the role.")
+class AppAdminResponse(GuardianBaseModel):
+    name: str = Field(..., description="Name of the app admin.")
+    display_name: str | None = Field(None, description="Display name of the app admin.")
+    role: ResponseRole = Field(..., description="Role of the app admin.")
 
 
 class ManagementAppCreateResponse(GuardianBaseModel):
@@ -31,7 +33,7 @@ class ManagementAppCreateResponse(GuardianBaseModel):
         None, description="Display name of the app to create."
     )
     resource_url: str = Field(..., description="URL to the created app.")
-    app_admin: RoleResponse = Field(
+    app_admin: AppAdminResponse = Field(
         ..., description="App admin role of the created app."
     )
 
@@ -42,7 +44,7 @@ class ManagementAppGetResponse(GuardianBaseModel):
         None, description="Display name of the app to create."
     )
     resource_url: str = Field(..., description="URL to the created app.")
-    app_admin: RoleResponse = Field(
+    app_admin: AppAdminResponse = Field(
         ..., description="App admin role of the created app."
     )
 
