@@ -36,23 +36,23 @@ class AppAPIPort(
     ],
 ):
     @abstractmethod
-    async def create_to_query(
+    async def to_app_create(
         self, api_request: AppAPICreateRequestObject
     ) -> AppCreateQuery:
         raise NotImplementedError  # pragma: no cover
 
     @abstractmethod
-    async def create_to_api_response(
+    async def to_api_create_response(
         self, app_result: App
     ) -> AppAPICreateResponseObject:
         raise NotImplementedError  # pragma: no cover
 
     @abstractmethod
-    async def get_to_query(self, api_request: AppAPIGetRequestObject) -> AppGetQuery:
+    async def to_app_get(self, api_request: AppAPIGetRequestObject) -> AppGetQuery:
         raise NotImplementedError  # pragma: no cover
 
     @abstractmethod
-    async def get_to_api_response(
+    async def to_api_get_response(
         self, app_result: App | None
     ) -> AppAPIGetResponseObject | None:
         raise NotImplementedError  # pragma: no cover

@@ -36,14 +36,19 @@ class FastAPIAppAPIAdapter(
     class Config:
         alias = "fastapi"
 
-    async def create_to_query(
+    async def to_app_create(
         self, api_request: ManagementAppCreateRequest
     ) -> AppCreateQuery:
         return AppCreateQuery(
-            apps=[App(name=api_request.name, display_name=api_request.display_name)]
+            apps=[
+                App(
+                    name=api_request.name.__root__,
+                    display_name=api_request.display_name,
+                )
+            ]
         )
 
-    async def create_to_api_response(
+    async def to_api_create_response(
         self, app_result: App
     ) -> ManagementAppCreateResponse:
         return ManagementAppCreateResponse(
@@ -63,10 +68,10 @@ class FastAPIAppAPIAdapter(
             ),
         )
 
-    async def get_to_query(self, api_request: ManagementAppGetRequest) -> AppGetQuery:
+    async def to_app_get(self, api_request: ManagementAppGetRequest) -> AppGetQuery:
         return AppGetQuery(apps=[App(name=api_request.name, display_name="")])
 
-    async def get_to_api_response(
+    async def to_api_get_response(
         self, app_result: App | None
     ) -> ManagementAppGetResponse | None:
         if not app_result:

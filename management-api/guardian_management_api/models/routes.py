@@ -5,6 +5,7 @@
 
 from fastapi import Path
 from pydantic import BaseModel, Field
+from pydantic.networks import AnyHttpUrl
 
 from .role import ResponseRole
 
@@ -14,8 +15,16 @@ class GuardianBaseModel(BaseModel):
         allow_population_by_field_name = True
 
 
+class AppName(GuardianBaseModel):
+    """Name of an app"""
+
+    __root__: str = Field(
+        example="kelvin-rest-api", regex=r"[a-z][a-z0-9\-]*", min_length=1
+    )
+
+
 class ManagementAppCreateRequest(GuardianBaseModel):
-    name: str = Field(..., description="Name of the app to create.")
+    name: AppName = Field(..., description="Name of the app to create.")
     display_name: str | None = Field(
         None, description="Display name of the app to create."
     )
@@ -28,22 +37,22 @@ class AppAdminResponse(GuardianBaseModel):
 
 
 class ManagementAppCreateResponse(GuardianBaseModel):
-    name: str = Field(..., description="Name of the created app.")
+    name: AppName = Field(..., description="Name of the created app.")
     display_name: str | None = Field(
         None, description="Display name of the app to create."
     )
-    resource_url: str = Field(..., description="URL to the created app.")
+    resource_url: AnyHttpUrl = Field(..., description="URL to the created app.")
     app_admin: AppAdminResponse = Field(
         ..., description="App admin role of the created app."
     )
 
 
 class ManagementAppGetResponse(GuardianBaseModel):
-    name: str = Field(..., description="Name of the app.")
+    name: AppName = Field(..., description="Name of the app.")
     display_name: str | None = Field(
         None, description="Display name of the app to create."
     )
-    resource_url: str = Field(..., description="URL to the created app.")
+    resource_url: AnyHttpUrl = Field(..., description="URL to the created app.")
     app_admin: AppAdminResponse = Field(
         ..., description="App admin role of the created app."
     )
