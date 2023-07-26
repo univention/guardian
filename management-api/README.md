@@ -96,9 +96,9 @@ services:
     build:
       context: management-api/
       extra_hosts:
-        - git.knut.univention.de:\${GITLAB_IP}
+        - git.knut.univention.de:${GITLAB_IP}
     ports:
-      - 8000:8000
+      - 8001:8000
     env_file: .env
 EOF
 GITLAB_IP=$(dig +short git.knut.univention.de | tail -n1) docker compose build

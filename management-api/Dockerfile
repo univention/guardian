@@ -23,7 +23,6 @@ RUN pip install poetry
 COPY pyproject.toml poetry.lock ./
 RUN poetry export -f requirements.txt --output requirements.txt --dev --without-hashes
 
-
 FROM docker-registry.knut.univention.de/python:3.11-slim
 
 EXPOSE 8000

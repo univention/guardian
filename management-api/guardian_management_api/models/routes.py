@@ -19,7 +19,7 @@ class AppName(GuardianBaseModel):
     """Name of an app"""
 
     __root__: str = Field(
-        example="kelvin-rest-api", regex=r"[a-z][a-z0-9\-]*", min_length=1
+        example="kelvin-rest-api", regex=r"[a-z][a-z0-9\-_]*", min_length=1
     )
 
 

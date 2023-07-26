@@ -18,8 +18,8 @@ async def create_app(
 ) -> ManagementAppCreateResponse:
     query = await management_app_api_port.to_app_create(api_request)
     app = query.apps[0]
-    await persistence_port.create(app)
-    return await management_app_api_port.to_api_create_response(app)
+    created_app = await persistence_port.create(app)
+    return await management_app_api_port.to_api_create_response(created_app)
 
 
 async def get_app(
