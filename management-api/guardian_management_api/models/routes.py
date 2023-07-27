@@ -15,29 +15,32 @@ class GuardianBaseModel(BaseModel):
         allow_population_by_field_name = True
 
 
-class AppName(GuardianBaseModel):
+MANAGEMENT_OBJECT_NAME_REGEX = r"[a-z][a-z0-9\-_]*"
+
+
+class ManagementObjectName(GuardianBaseModel):
     """Name of an app"""
 
     __root__: str = Field(
-        example="kelvin-rest-api", regex=r"[a-z][a-z0-9\-_]*", min_length=1
+        example="kelvin-rest-api", regex=MANAGEMENT_OBJECT_NAME_REGEX, min_length=1
     )
 
 
 class ManagementAppCreateRequest(GuardianBaseModel):
-    name: AppName = Field(..., description="Name of the app to create.")
+    name: ManagementObjectName = Field(..., description="Name of the app to create.")
     display_name: str | None = Field(
         None, description="Display name of the app to create."
     )
 
 
 class AppAdminResponse(GuardianBaseModel):
-    name: str = Field(..., description="Name of the app admin.")
+    name: ManagementObjectName = Field(..., description="Name of the app admin.")
     display_name: str | None = Field(None, description="Display name of the app admin.")
     role: ResponseRole = Field(..., description="Role of the app admin.")
 
 
 class ManagementAppCreateResponse(GuardianBaseModel):
-    name: AppName = Field(..., description="Name of the created app.")
+    name: ManagementObjectName = Field(..., description="Name of the created app.")
     display_name: str | None = Field(
         None, description="Display name of the app to create."
     )
@@ -48,7 +51,7 @@ class ManagementAppCreateResponse(GuardianBaseModel):
 
 
 class ManagementAppGetResponse(GuardianBaseModel):
-    name: AppName = Field(..., description="Name of the app.")
+    name: ManagementObjectName = Field(..., description="Name of the app.")
     display_name: str | None = Field(
         None, description="Display name of the app to create."
     )
@@ -59,4 +62,6 @@ class ManagementAppGetResponse(GuardianBaseModel):
 
 
 class ManagementAppGetRequest(GuardianBaseModel):
-    name: str = Path(..., description="Name of the app to get.")
+    name: str = Path(
+        ..., description="Name of the app to get.", regex=MANAGEMENT_OBJECT_NAME_REGEX
+    )
