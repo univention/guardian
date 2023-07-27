@@ -34,6 +34,10 @@ pytest-cov = "^4.1.0"
 pytest-asyncio = "^0.21.1"
 pytest-mock = "^3.11.1"
 
+
+[tool.poetry.group.testing.dependencies]
+pytest-env = "^0.8.2"
+
 [[tool.poetry.source]]
 name = "port-loader"
 url = "https://git.knut.univention.de/api/v4/projects/830/packages/pypi/simple"
@@ -48,3 +52,8 @@ omit = [
     # ports should not be tested, adapters should
     "*/ports/*",
     ]
+
+[tool.pytest.ini_options]
+env = [
+    "GUARDIAN__MANAGEMENT__BASE_URL = http://localhost:8001"
+]

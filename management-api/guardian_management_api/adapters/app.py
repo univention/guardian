@@ -2,10 +2,9 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-import os
 from typing import Optional
-from urllib.parse import urljoin
 
+from ..constants import COMPLETE_URL
 from ..models.app import App, AppCreateQuery, AppGetQuery, Apps
 from ..models.role import ResponseRole
 from ..models.routes import (
@@ -19,10 +18,6 @@ from ..ports.app import (
     AppAPIPort,
     AppPersistencePort,
 )
-
-API_PREFIX = os.environ.get("GUARDIAN__MANAGEMENT__API_PREFIX", "/guardian/management")
-BASE_URL = os.environ.get("GUARDIAN__MANAGEMENT__BASE_URL", "https://localhost/")
-COMPLETE_URL = urljoin(BASE_URL, API_PREFIX)
 
 
 class FastAPIAppAPIAdapter(

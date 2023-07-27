@@ -1,11 +1,9 @@
-import os
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
+from guardian_management_api.constants import API_PREFIX
 from guardian_management_api.main import app
 from port_loader import AsyncAdapterRegistry
-
-API_PREFIX = os.environ.get("GUARDIAN__MANAGEMENT__API_PREFIX", "/guardian/management")
 
 
 class TestSetup:

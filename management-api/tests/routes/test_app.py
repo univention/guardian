@@ -1,12 +1,10 @@
-import os
 from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
+from guardian_management_api.constants import COMPLETE_URL
 from guardian_management_api.main import app
 from guardian_management_api.models.app import App
-
-API_PREFIX = os.environ.get("GUARDIAN__MANAGEMENT__API_PREFIX", "/guardian/management")
 
 
 class TestAppEndpoints:
@@ -31,12 +29,12 @@ class TestAppEndpoints:
                     "display_name": "test_app App Admin",
                     "name": "app-admin",
                     "namespace_name": "test_app",
-                    "resource_url": "https://localhost/guardian/management/roles/test_app/app-admin",
+                    "resource_url": f"{COMPLETE_URL}/roles/test_app/app-admin",
                 },
             },
             "display_name": None,
             "name": "test_app",
-            "resource_url": "https://localhost/guardian/management/apps/test_app",
+            "resource_url": f"{COMPLETE_URL}/apps/test_app",
         }
 
     @patch(
@@ -57,12 +55,12 @@ class TestAppEndpoints:
                     "display_name": "test_app App Admin",
                     "name": "app-admin",
                     "namespace_name": "test_app",
-                    "resource_url": "https://localhost/guardian/management/roles/test_app/app-admin",
+                    "resource_url": f"{COMPLETE_URL}/roles/test_app/app-admin",
                 },
             },
             "display_name": "test_app display_name",
             "name": "test_app",
-            "resource_url": "https://localhost/guardian/management/apps/test_app",
+            "resource_url": f"{COMPLETE_URL}/apps/test_app",
         }
 
     @patch(
@@ -82,12 +80,12 @@ class TestAppEndpoints:
                     "display_name": "test_app2 App Admin",
                     "name": "app-admin",
                     "namespace_name": "test_app2",
-                    "resource_url": "https://localhost/guardian/management/roles/test_app2/app-admin",
+                    "resource_url": f"{COMPLETE_URL}/roles/test_app2/app-admin",
                 },
             },
             "display_name": None,
             "name": "test_app2",
-            "resource_url": "https://localhost/guardian/management/apps/test_app2",
+            "resource_url": f"{COMPLETE_URL}/apps/test_app2",
         }
 
     @patch(

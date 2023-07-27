@@ -9,6 +9,7 @@ from fastapi.responses import ORJSONResponse
 from loguru import logger
 
 from .adapter_registry import ADAPTER_REGISTRY, configure_registry, initialize_adapters
+from .constants import API_PREFIX
 from .logging import configure_logger
 from .ports.settings import SettingsPort
 from .routes import router
@@ -25,7 +26,6 @@ async def lifespan(fastapi_app: FastAPI):
     yield
 
 
-API_PREFIX = os.environ.get("GUARDIAN__MANAGEMENT__API_PREFIX", "/guardian/management")
 app = FastAPI(
     lifespan=lifespan,
     title="Guardian Management API",

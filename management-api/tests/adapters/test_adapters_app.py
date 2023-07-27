@@ -3,6 +3,7 @@ from guardian_management_api.adapters.app import (
     AppStaticDataAdapter,
     FastAPIAppAPIAdapter,
 )
+from guardian_management_api.constants import COMPLETE_URL
 from guardian_management_api.models.app import App, AppCreateQuery, AppGetQuery
 from guardian_management_api.models.role import ResponseRole
 from guardian_management_api.models.routes import (
@@ -45,12 +46,12 @@ class TestFastAPIAppAdapter:
         assert result == ManagementAppCreateResponse(
             name="name",
             display_name="display_name",
-            resource_url="https://localhost/guardian/management/apps/name",
+            resource_url=f"{COMPLETE_URL}/apps/name",
             app_admin=AppAdminResponse(
                 name="name-admin",
                 display_name="name Admin",
                 role=ResponseRole(
-                    resource_url="https://localhost/guardian/management/roles/name/app-admin",
+                    resource_url=f"{COMPLETE_URL}/roles/name/app-admin",
                     app_name="guardian",
                     namespace_name="name",
                     name="app-admin",
@@ -79,12 +80,12 @@ class TestFastAPIAppAdapter:
         assert result == ManagementAppGetResponse(
             name="name",
             display_name="display_name",
-            resource_url="https://localhost/guardian/management/apps/name",
+            resource_url=f"{COMPLETE_URL}/apps/name",
             app_admin=AppAdminResponse(
                 name="name-admin",
                 display_name="name Admin",
                 role=ResponseRole(
-                    resource_url="https://localhost/guardian/management/roles/name/app-admin",
+                    resource_url=f"{COMPLETE_URL}/roles/name/app-admin",
                     app_name="guardian",
                     namespace_name="name",
                     name="app-admin",
