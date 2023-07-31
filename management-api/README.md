@@ -96,7 +96,7 @@ services:
     build:
       context: management-api/
       extra_hosts:
-        - git.knut.univention.de:${GITLAB_IP}
+        - git.knut.univention.de:\${GITLAB_IP}
     ports:
       - 8001:8000
     env_file: .env
