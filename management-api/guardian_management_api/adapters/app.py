@@ -50,6 +50,7 @@ class FastAPIAppAPIAdapter(
             name=app_result.name,
             display_name=app_result.display_name,
             resource_url=f"{COMPLETE_URL}/apps/{app_result.name}",
+            # TODO: this is currently hardcoded, should be fixed in the future
             app_admin=AppAdminResponse(
                 name=f"{app_result.name}-admin",
                 display_name=f"{app_result.name} Admin",
@@ -75,6 +76,7 @@ class FastAPIAppAPIAdapter(
             name=app_result.name,
             display_name=app_result.display_name,
             resource_url=f"{COMPLETE_URL}/apps/{app_result.name}",
+            # TODO: this is currently hardcoded, should be fixed in the future
             app_admin=AppAdminResponse(
                 name=f"{app_result.name}-admin",
                 display_name=f"{app_result.name} Admin",
