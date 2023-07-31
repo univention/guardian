@@ -71,14 +71,14 @@ class AppPersistencePort(BasePort, ABC):
         self,
         app: App,
     ) -> App:
-        pass
+        raise NotImplementedError  # pragma: no cover
 
     @abstractmethod
     async def read_one(
         self,
         query: AppGetQuery,
     ) -> App | None:
-        pass
+        raise NotImplementedError  # pragma: no cover
 
     @abstractmethod
     async def read_many(
@@ -86,11 +86,11 @@ class AppPersistencePort(BasePort, ABC):
         query_offset: Optional[int] = None,
         query_limit: Optional[int] = None,
     ) -> Apps:
-        pass
+        raise NotImplementedError  # pragma: no cover
 
     @abstractmethod
     async def update(
         self,
         app: App,
     ) -> App:
-        pass
+        raise NotImplementedError  # pragma: no cover
