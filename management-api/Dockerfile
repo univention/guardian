@@ -19,7 +19,7 @@ RUN tar -C /_s6 -Jxpf /tmp/s6-overlay-x86_64.tar.xz
 # Calculate Python dependencies
 FROM docker-registry.knut.univention.de/python:3.11-slim as requirements_builder
 WORKDIR /build
-RUN pip install poetry
+RUN pip install poetry==1.5.1
 COPY pyproject.toml poetry.lock ./
 RUN poetry export -f requirements.txt --output requirements.txt --dev --without-hashes
 
