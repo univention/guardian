@@ -4,9 +4,9 @@
 
 from typing import Annotated, Any, Dict
 
-from fastapi import APIRouter, Depends
-from fastapi.exceptions import HTTPException
+from fastapi import APIRouter, Depends, status
 from fastapi.params import Body
+from fastapi.responses import ORJSONResponse
 
 from . import business_logic
 from .adapter_registry import port_dep
@@ -52,5 +52,7 @@ async def get_app(
         persistence_port=persistence,
     )
     if response is None:
-        raise HTTPException(status_code=404, detail="App not found")
+        return ORJSONResponse(  # type: ignore
+            status_code=status.HTTP_404_NOT_FOUND, content={"message": "App not found"}
+        )
     return response.dict()
