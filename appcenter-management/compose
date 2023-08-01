@@ -1,0 +1,19 @@
+version: '3.1'
+services:
+  management-api:
+    image: gitregistry.knut.univention.de/univention/components/authorization-engine/guardian/guardian-management-api:latest
+    security_opt:
+      - seccomp:/etc/docker/seccomp-systemd.json
+    environment:
+      GUARDIAN__MANAGEMENT__ADAPTER__SETTINGS_PORT: env
+      GUARDIAN__MANAGEMENT__ADAPTER__APP_PERSISTENCE_PORT: in_memory
+      IS_UNIVENTION_APPCENTER: 1
+      GUARDIAN__MANAGEMENT__LOGGING__LEVEL: @%@guardian-management-api/logging/level@%@
+      GUARDIAN__MANAGEMENT__LOGGING__STRUCTURED: "@%@guardian-management-api/logging/structured@%@"
+      GUARDIAN__MANAGEMENT__LOGGING__FORMAT: @%@guardian-management-api/logging/format@%@
+      GUARDIAN__MANAGEMENT__BASE_URL: @!@
+ucr = configRegistry
+protocol = ucr.get('guardian-management-api/protocol')
+fqdn = f"{ucr.get('hostname')}.{ucr.get('domainname')}"
+management_fqdn = ucr.get('guardian-management-api/base_url')
+print(f"{protocol}://{management_fqdn if management_fqdn else fqdn}")@!@

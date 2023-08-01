@@ -1,0 +1,21 @@
+[Application]
+ID = guardian-management-api
+Code = 49
+Version = 0.1.0
+Name = Guardian Management API
+Vendor = Univention
+DockerScriptRestoreDataAfterSetup =
+DockerScriptStoreData =
+DockerScriptUpdateAvailable =
+DockerScriptRestoreDataBeforeSetup =
+DockerScriptUpdatePackages =
+DockerScriptUpdateAppVersion =
+DockerScriptUpdateRelease =
+DockerScriptSetup =
+DockerMainService = management-api
+WebInterface = /guardian/management
+WebInterfaceName = Guardian Management API
+WebInterfacePortHttp = 8000
+WebInterfacePortHttps = 8000
+WebInterfaceProxyScheme = http
+DockerScriptConfigure = /tmp/guardian-management-api-configure

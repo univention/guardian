@@ -200,7 +200,7 @@ publish_port_loader:
     - poetry config --local repositories.project_local ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi
     - poetry publish -r project_local --username gitlab-ci-token --password ${CI_JOB_TOKEN}
 
-upload_app_to_test_appcenter:
+authz_app_to_test_appcenter:
   stage: publish
   image: $APPCENTER_CONTROL_IMAGE
   rules:
@@ -211,6 +211,24 @@ upload_app_to_test_appcenter:
   variables:
     APP_ID: "guardian-authorization-api"
     APP_DIR: "appcenter-authz"
+    APP_NAME: "5.0/$APP_ID"
+  script:
+    - cd "$APP_DIR"
+    - APP_VERSION="$(sed -n 's/^Version\s*=\s*//p' ini)"
+    - echo "updating $APP_NAME=$APP_VERSION"
+    - univention-appcenter-control upload "$APP_NAME=$APP_VERSION" compose configure_host ini ini README_UPDATE_DE README_UPDATE_EN settings uinst
+
+management_app_to_test_appcenter:
+  stage: publish
+  image: $APPCENTER_CONTROL_IMAGE
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - appcenter-management/**/*
+  needs: []
+  variables:
+    APP_ID: "guardian-management-api"
+    APP_DIR: "appcenter-management"
     APP_NAME: "5.0/$APP_ID"
   script:
     - cd "$APP_DIR"
