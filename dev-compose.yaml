@@ -1,0 +1,59 @@
+services:
+  proxy:
+    image: traefik:v2.10
+    command: --providers.docker --entryPoints.web.address=:80
+    networks:
+      - proxy-net
+    ports:
+      - 80:80
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+  opa:
+    container_name: opa-guardian-dev
+    image: guardian-opa:dev
+    build: opa/
+    networks:
+      - proxy-net
+  authorization-api:
+    container_name: authz-guardian-dev
+    image: guardian-authorization-api:dev
+    build:
+      context: authorization-api/
+      target: dev
+      extra_hosts:
+        - git.knut.univention.de:${GITLAB_IP}
+    depends_on:
+      - opa
+    networks:
+      - proxy-net
+    volumes:
+      - ./authorization-api:/app
+    env_file: .env-dev
+    labels:
+      traefik.http.routers.authz.entrypoints: web
+      traefik.http.routers.authz.rule: PathPrefix(`/guardian/authorization`)
+      traefik.http.routers.authz.service: authz
+      traefik.http.services.authz.loadbalancer.server.port: 8000
+  management-api:
+    container_name: management-guardian-dev
+    image: guardian-management-api:dev
+    build:
+      context: management-api/
+      target: dev
+      extra_hosts:
+        - git.knut.univention.de:${GITLAB_IP}
+    depends_on:
+      - opa
+    networks:
+      - proxy-net
+    volumes:
+      - ./management-api:/app
+    env_file: .env-dev
+    labels:
+      traefik.http.routers.management.entrypoints: web
+      traefik.http.routers.management.rule: PathPrefix(`/guardian/management`)
+      traefik.http.routers.management.service: management
+      traefik.http.services.management.loadbalancer.server.port: 8000
+networks:
+  proxy-net:
+    name: proxy-net

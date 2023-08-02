@@ -43,7 +43,15 @@ The configuration files can be found in `appcenter-authz`. The App ID is `guardi
 
 ## Development
 
-Most information regarding development and setup of local environments can be found in the component sub folders.
+This repository provides a dev-compose.yaml as well as an .env-dev file. If the docker environment is started
+via
+
+```shell
+GITLAB_IP=$(dig +short git.knut.univention.de | tail -n1) docker compose -f dev-compose.yaml build
+docker compose -f dev-compose.yaml up
+```
+
+you get both APIs up and running on port 80, including live reload when editing your local files.
 
 ### Shared dependencies
 

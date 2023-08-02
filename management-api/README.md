@@ -75,36 +75,7 @@ It's used by default and partly configured by environment variables.
 
 ### Running the Guardian Management API locally
 
-To start the API on your local machine, follow these steps:
-
-Prerequisites:
-
-- Docker installed
-
-```shell
-# pwd == $REPO_DIR/management-engine/guardian/
-cat > .env << EOF
-GUARDIAN__MANAGEMENT__LOGGING__LEVEL=DEBUG
-GUARDIAN__MANAGEMENT__LOGGING__STRUCTURED=0
-GUARDIAN__MANAGEMENT__ADAPTER__SETTINGS_PORT=env
-GUARDIAN__MANAGEMENT__ADAPTER__APP_PERSISTENCE_PORT=in_memory
-GUARDIAN__MANAGEMENT__BASE_URL=http://localhost:8001
-EOF
-cat > docker-compose.yaml << EOF
-services:
-  management-api:
-    image: guardian-management:dev
-    build:
-      context: management-api/
-      extra_hosts:
-        - git.knut.univention.de:\${GITLAB_IP}
-    ports:
-      - 8001:8000
-    env_file: .env
-EOF
-GITLAB_IP=$(dig +short git.knut.univention.de | tail -n1) docker compose build
-docker compose up
-```
+A local development environment is described [here](../README.md).
 
 You can test the API by running a test query:
 
@@ -124,6 +95,7 @@ curl -X 'POST' \
 To run the tests locally on your machine follow these steps:
 
 Prerequisites:
+
 - Python 3.11 installed
 - [Poetry 1.5.1](https://python-poetry.org/) installed
 

@@ -91,57 +91,7 @@ It requires the setting `opa_adapter.url`, which should point to the running OPA
 
 ### Running the Guardian Authorization API locally
 
-To start the API on your local machine, follow these steps:
-
-Prerequisites:
-
-- Docker installed
-
-```shell
-# pwd == $REPO_DIR/authorization-engine/guardian/
-cat > .env << EOF
-GUARDIAN__AUTHZ__LOGGING__LEVEL=DEBUG
-GUARDIAN__AUTHZ__LOGGING__STRUCTURED=0
-GUARDIAN__AUTHZ__ADAPTER__SETTINGS_PORT=env
-GUARDIAN__AUTHZ__ADAPTER__PERSISTENCE_PORT=static_data
-GUARDIAN__AUTHZ__ADAPTER__POLICY_PORT=opa
-STATIC_DATA_ADAPTER__DATA_FILE=test_data.json
-OPA_ADAPTER__URL="http://opa:8181/"
-EOF
-cat > test_data.json << EOF
-{
-  "users": {
-      "USER1": {"attributes": {"A": 1, "B": 2}},
-      "USER2": {"attributes": {}}
-  },
-  "groups": {
-      "GROUP1": {"attributes": {"C": 3, "D": 4}},
-      "GROUP2": {"attributes": {"E": 5, "F": 6}}
-  }
-}
-EOF
-cat > docker-compose.yaml << EOF
-services:
-  opa:
-    image: guardian-opa:dev
-    build: opa/
-  authorization-api:
-    image: guardian-authz:dev
-    build:
-      context: authorization-api/
-      extra_hosts:
-        - git.knut.univention.de:\${GITLAB_IP}
-    depends_on:
-      - opa
-    ports:
-      - 8000:8000
-    volumes:
-      - ./test_data.json:/guardian_service_dir/test_data.json
-    env_file: .env
-EOF
-GITLAB_IP=$(dig +short git.knut.univention.de | tail -n1) docker compose build
-docker compose up
-```
+A local development environment is described [here](../README.md).
 
 You can test the API by running a test query:
 
@@ -178,6 +128,7 @@ curl -X 'POST' \
 To run the tests locally on your machine follow these steps:
 
 Prerequisites:
+
 - Python 3.11 installed
 - [Poetry 1.5.1](https://python-poetry.org/) installed
 
