@@ -78,6 +78,17 @@ a format like this:
 }
 ```
 
+### UDMPersistenceAdapter
+
+**name** udm_data
+**implements** PersistencePort
+
+The `UDMPersistenceAdapter` loads the persistent data from a UDM REST API. It requires the following settings:
+
+- `udm_data_adapter.url`: The URL of the UDM REST API
+- `udm_data.username`: The username as which to connect to the REST API
+- `udm_data.password`: The password for the login to the UDM REST API
+
 ### OPAAdapter
 
 **name**: opa
@@ -131,6 +142,7 @@ Prerequisites:
 
 - Python 3.11 installed
 - [Poetry 1.5.1](https://python-poetry.org/) installed
+- xargs (to load env file into terminal)
 
 ```shell
 # pwd == $REPO_DIR/authorization-engine/guardian/authorization-api
@@ -138,3 +150,20 @@ poetry shell  # Or any other way to activate your virtual env for this project
 poetry install
 pytest -vv --cov=guardian_authorization_api .
 ```
+
+There are also integration tests, that run automatically, if their prerequisites are met. You can enable or disable
+the integration tests on purpose by using the `integration` mark:
+
+```shell
+#pwd == $REPO_DIR/authorization-engine/guardian/authorization-api
+poetry shell  # Or any other way to activate your virtual env for this project
+poetry install
+export $(xargs < ../.env-dev)  # Exports the env of the dev setup into your current shell
+pytest -vv -m integration .  # Runs integration tests only
+pytest -vv --cov=guardian_authorization_api -m "not integration" .  # Never runs integration tests
+```
+
+#### UDMPersistenceAdapter integration tests
+
+The integration tests for the `UDMPersistenceAdapter` require the settings for the adapter to be available in the env.
+The UDM REST API it connects to is expected to be set up with [this Jenkins Job](https://univention-dist-jenkins.k8s.knut.univention.de/job/UCSschool-5.0/view/Environments/job/SchoolMultiserverEnvironment/)

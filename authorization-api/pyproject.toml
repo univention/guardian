@@ -51,6 +51,11 @@ name = "port-loader"
 url = "https://git.knut.univention.de/api/v4/projects/830/packages/pypi/simple"
 priority = "explicit"
 
+[tool.pytest.ini_options]
+markers = [
+    "integration: marks test as requiring services outside of the guardian"
+]
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

@@ -8,7 +8,13 @@ from typing import Any
 
 from guardian_authorization_api.models.settings import SETTINGS_NAME_METADATA
 
-DATA_FILE_SETTING_NAME = "static_data_adapter.data_file"
+# Used with StaticDataAdapter
+STATIC_DATA_FILE_SETTING_NAME = "static_data_adapter.data_file"
+
+# Used with UDMPersistenceAdapter
+UDM_URL_SETTINGS_NAME = "udm_data_adapter.url"
+UDM_USERNAME_SETTINGS_NAME = "udm_data_adapter.username"
+UDM_PASSWORD_SETTINGS_NAME = "udm_data_adapter.password"  # nosec B105
 
 
 class ObjectType(Enum):
@@ -33,10 +39,18 @@ class PersistenceObject:
     id: str
     object_type: ObjectType
     attributes: dict[str, Any]
+    roles: list[str]
 
 
 @dataclass
 class StaticDataAdapterSettings:
     data_file_path: str = field(
-        metadata={SETTINGS_NAME_METADATA: DATA_FILE_SETTING_NAME}
+        metadata={SETTINGS_NAME_METADATA: STATIC_DATA_FILE_SETTING_NAME}
     )
+
+
+@dataclass(frozen=True)
+class UDMPersistenceAdapterSettings:
+    url: str = field(metadata={SETTINGS_NAME_METADATA: UDM_URL_SETTINGS_NAME})
+    username: str = field(metadata={SETTINGS_NAME_METADATA: UDM_USERNAME_SETTINGS_NAME})
+    password: str = field(metadata={SETTINGS_NAME_METADATA: UDM_PASSWORD_SETTINGS_NAME})

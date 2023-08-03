@@ -30,7 +30,6 @@ EXPOSE 8000
 WORKDIR /app
 CMD uvicorn --reload --log-level debug --host 0.0.0.0 --port 8000 guardian_authorization_api.main:app
 
-RUN echo '{"users": {}, "groups": {}}' > /tmp/test_data.json  # TODO: Remove with https://git.knut.univention.de/univention/components/authorization-engine/guardian/-/issues/3
 RUN pip install --no-cache-dir -U pip wheel && pip install --no-cache-dir poetry && poetry config virtualenvs.create false
 COPY . .
 RUN poetry install
@@ -68,4 +67,3 @@ RUN pip install --no-cache-dir -U pip wheel && pip install --no-cache-dir -r req
 # Install project
 COPY . .
 RUN pip install --no-cache-dir . && pip list
-RUN echo '{"users": {}, "groups": {}}' > /tmp/test_data.json  # TODO: Remove with https://git.knut.univention.de/univention/components/authorization-engine/guardian/-/issues/3

@@ -12,8 +12,98 @@ from ..models.persistence import (
     ObjectType,
     PersistenceObject,
     StaticDataAdapterSettings,
+    UDMPersistenceAdapterSettings,
 )
 from ..ports import PersistencePort
+from ..udm_client import (  # type: ignore[attr-defined]
+    UDM,
+    NotFound,
+    Object,
+    Unauthorized,
+    UnprocessableEntity,
+)
+from ..udm_client import (  # type: ignore[attr-defined]
+    ConnectionError as UDMConnectionError,
+)
+
+
+class UDMPersistenceAdapter(PersistencePort, AsyncConfiguredAdapterMixin):
+    """
+    This adapter for the data storage queries a UDM REST API for the required objects.
+
+    It expects the identifier of objects to be their DN in UDM.
+    """
+
+    class Config:
+        is_cached = True
+        alias = "udm_data"
+
+    TYPE_MODULE_MAPPING = {
+        ObjectType.GROUP: "groups/group",
+        ObjectType.USER: "users/user",
+    }
+
+    def __init__(self):
+        self._settings = None
+        self._udm_client = None
+
+    @property
+    def udm_client(self):
+        if self._udm_client is None:
+            self._udm_client = UDM(
+                self._settings.url, self._settings.username, self._settings.password
+            )
+        return self._udm_client
+
+    async def configure(self, settings: UDMPersistenceAdapterSettings):
+        self._settings = settings
+
+    async def get_object(
+        self, identifier: str, object_type: ObjectType
+    ) -> PersistenceObject:
+        module_name = self.TYPE_MODULE_MAPPING.get(object_type, "")
+        local_logger = self.logger.bind(
+            module_name=module_name, identifier=identifier, object_type=object_type
+        )
+        local_logger.debug("Fetching object from UDM.")
+        if not module_name:
+            raise PersistenceError(
+                f"The object type '{object_type.name}' is not supported by {self.__class__.__name__}."
+            )
+        try:
+            module = self.udm_client.get(module_name)
+        except (NotFound, UDMConnectionError) as exc:
+            raise PersistenceError(
+                f"The UDM at '{self._settings.url}' could not be reached."
+            ) from exc
+        except Unauthorized as exc:
+            raise PersistenceError(
+                f"Could not authorize against UDM at '{self._settings.url}'."
+            ) from exc
+        except Exception as exc:
+            raise PersistenceError(
+                "An unexpected error occurred while fetching data from UDM."
+            ) from exc
+        try:
+            raw_object: Object = module.get(identifier)
+        except UnprocessableEntity as exc:
+            raise ObjectNotFoundError(
+                f"Could not find object of type '{object_type.name}' with identifier '{identifier}'."
+            ) from exc
+        result = PersistenceObject(
+            id=raw_object.dn,
+            object_type=object_type,
+            attributes=raw_object.properties,
+            roles=raw_object.properties.get("guardianRole", []),
+        )
+        local_logger.debug("Object retrieved from UDM.")
+        return result
+
+    @classmethod
+    def get_settings_cls(
+        cls,
+    ) -> Type[UDMPersistenceAdapterSettings]:  # pragma: no cover
+        return UDMPersistenceAdapterSettings
 
 
 class StaticDataAdapter(PersistencePort, AsyncConfiguredAdapterMixin):
@@ -61,7 +151,10 @@ class StaticDataAdapter(PersistencePort, AsyncConfiguredAdapterMixin):
                 f"'{identifier}' is malformed and could not be loaded."
             )
         return PersistenceObject(
-            object_type=object_type, id=identifier, attributes=attributes
+            object_type=object_type,
+            id=identifier,
+            attributes=attributes,
+            roles=attributes.get("roles", []),
         )
 
     def _load_static_data(self, data_file_path: str):

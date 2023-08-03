@@ -26,3 +26,27 @@ Description[de] = Bestimmt das Format der Logeinträge, wenn die Logs nicht stru
 Group = Logging
 Scope = outside
 Show = Install,Settings
+
+[guardian-authorization-api/udm_data/url]
+Type = String
+Description = The URL of the UDM REST API for data queries.
+Description[de] = Die URL der UDM REST API, welche zum Abrufen von Daten genutzt wird.
+Group = UDM
+Scope = outside
+Show = Install,Settings
+
+[guardian-authorization-api/udm_data/username]
+Type = String
+Description = Username for authenticating against the UDM REST API
+Description[de] = Der Nutzername, um gegen die UDM REST API zu authentifizieren.
+Group = UDM
+Scope = outside
+Show = Install,Settings
+
+[guardian-authorization-api/udm_data/password]
+Type = String
+Description = Password for authenticating against the UDM REST API
+Description[de] = Das Password, um gegen die UDM REST API zu authentifizieren.
+Group = UDM
+Scope = outside
+Show = Install,Settings
