@@ -4,6 +4,4 @@
 
 .coverage
 .env
-test_data.json
-docker-compose.yaml
 dist/

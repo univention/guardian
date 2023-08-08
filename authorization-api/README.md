@@ -142,7 +142,6 @@ Prerequisites:
 
 - Python 3.11 installed
 - [Poetry 1.5.1](https://python-poetry.org/) installed
-- xargs (to load env file into terminal)
 
 ```shell
 # pwd == $REPO_DIR/authorization-engine/guardian/authorization-api
@@ -158,7 +157,6 @@ the integration tests on purpose by using the `integration` mark:
 #pwd == $REPO_DIR/authorization-engine/guardian/authorization-api
 poetry shell  # Or any other way to activate your virtual env for this project
 poetry install
-export $(xargs < ../.env-dev)  # Exports the env of the dev setup into your current shell
 pytest -vv -m integration .  # Runs integration tests only
 pytest -vv --cov=guardian_authorization_api -m "not integration" .  # Never runs integration tests
 ```

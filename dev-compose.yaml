@@ -28,7 +28,17 @@ services:
       - proxy-net
     volumes:
       - ./authorization-api:/app
-    env_file: .env-dev
+    environment:
+      - GUARDIAN__AUTHZ__LOGGING__LEVEL
+      - GUARDIAN__AUTHZ__LOGGING__STRUCTURED
+      - GUARDIAN__AUTHZ__ADAPTER__SETTINGS_PORT
+      - GUARDIAN__AUTHZ__ADAPTER__PERSISTENCE_PORT
+      - GUARDIAN__AUTHZ__ADAPTER__POLICY_PORT
+      - GUARDIAN__AUTHZ__API_PREFIX
+      - UDM_DATA_ADAPTER__USERNAME
+      - UDM_DATA_ADAPTER__PASSWORD
+      - UDM_DATA_ADAPTER__URL
+      - OPA_ADAPTER__URL
     labels:
       traefik.http.routers.authz.entrypoints: web
       traefik.http.routers.authz.rule: PathPrefix(`/guardian/authorization`)
@@ -48,7 +58,12 @@ services:
       - proxy-net
     volumes:
       - ./management-api:/app
-    env_file: .env-dev
+    environment:
+      - GUARDIAN__MANAGEMENT__LOGGING__LEVEL
+      - GUARDIAN__MANAGEMENT__LOGGING__STRUCTURED
+      - GUARDIAN__MANAGEMENT__ADAPTER__SETTINGS_PORT
+      - GUARDIAN__MANAGEMENT__ADAPTER__APP_PERSISTENCE_PORT
+      - GUARDIAN__MANAGEMENT__BASE_URL
     labels:
       traefik.http.routers.management.entrypoints: web
       traefik.http.routers.management.rule: PathPrefix(`/guardian/management`)

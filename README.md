@@ -43,11 +43,20 @@ The configuration files can be found in `appcenter-authz`. The App ID is `guardi
 
 ## Development
 
-This repository provides a dev-compose.yaml as well as an .env-dev file. If the docker environment is started
+The first step is to create a copy of the example env file and adapt it to your environment. After that you want
+to make sure that it is sourced in any shell you want to use for local development:
+
+```shell
+cp .env.example .env
+#  Edit .env
+source .env
+```
+
+This repository provides a dev-compose.yaml. If the docker environment is started
 via
 
 ```shell
-GITLAB_IP=$(dig +short git.knut.univention.de | tail -n1) docker compose -f dev-compose.yaml build
+docker compose -f dev-compose.yaml build  # This should only be necessary once and if the docker files change
 docker compose -f dev-compose.yaml up
 ```
 
