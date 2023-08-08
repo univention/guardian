@@ -19,3 +19,4 @@ WebInterfacePortHttp = 8000
 WebInterfacePortHttps = 8000
 WebInterfaceProxyScheme = http
 DockerScriptConfigure = /tmp/guardian-authorization-api-configure
+RequiredAppsInDomain = guardian-management-api
