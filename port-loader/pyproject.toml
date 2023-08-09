@@ -4,7 +4,7 @@
 
 [tool.poetry]
 name = "port-loader"
-version = "1.0.0"
+version = "1.0.1"
 description = ""
 authors = ["Ole Schwiegert <schwiegert@univention.de>"]
 readme = "README.md"

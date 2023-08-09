@@ -31,7 +31,7 @@ def load_from_entry_point(
     :param port_cls: The port to register the adapters for
     :param entry_point_str: The name of the entry point group to load
     """
-    entry_points = metadata.entry_points().get(entry_point_str, ())
+    entry_points = metadata.entry_points(group=entry_point_str)
     for entry_point in entry_points:
         adapter_cls = entry_point.load()
         adapter_registry.register_adapter(port_cls, adapter_cls=adapter_cls)
