@@ -8,6 +8,7 @@ omit=
     */routers/namespace.py
     */routers/role.py
     */routers/context.py
+    */routers/permission.py
     */ports/role.py
 
 [report]
