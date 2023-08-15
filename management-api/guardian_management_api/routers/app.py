@@ -10,16 +10,15 @@ from ..adapter_registry import port_dep
 from ..adapters.app import FastAPIAppAPIAdapter
 from ..models.routers.app import (
     AppCreateRequest,
-    AppCreateResponse,
     AppGetRequest,
-    AppGetResponse,
+    AppSingleResponse,
 )
 from ..ports.app import AppAPIPort, AppPersistencePort
 
 router = APIRouter(tags=["app"])
 
 
-@router.post("/apps", response_model=AppCreateResponse)
+@router.post("/apps", response_model=AppSingleResponse)
 async def create_app(
     app_create_request: Annotated[AppCreateRequest, Body()],
     management_app_api: FastAPIAppAPIAdapter = Depends(
@@ -27,7 +26,7 @@ async def create_app(
     ),
     persistence: AppPersistencePort = Depends(port_dep(AppPersistencePort)),
 ) -> Dict[str, Any]:
-    response: AppCreateResponse = await business_logic.create_app(
+    response: AppSingleResponse = await business_logic.create_app(
         api_request=app_create_request,
         management_app_api_port=management_app_api,
         persistence_port=persistence,
@@ -35,7 +34,7 @@ async def create_app(
     return response.dict()
 
 
-@router.get("/apps/{name}", response_model=AppGetResponse)
+@router.get("/apps/{name}", response_model=AppSingleResponse)
 async def get_app(
     app_get_request: AppGetRequest = Depends(),
     management_app_api: FastAPIAppAPIAdapter = Depends(
@@ -43,7 +42,7 @@ async def get_app(
     ),
     persistence: AppPersistencePort = Depends(port_dep(AppPersistencePort)),
 ) -> Dict[str, Any]:
-    response: AppGetResponse | None = await business_logic.get_app(
+    response: AppSingleResponse | None = await business_logic.get_app(
         api_request=app_get_request,
         management_app_api_port=management_app_api,
         persistence_port=persistence,

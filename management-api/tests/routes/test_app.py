@@ -21,20 +21,22 @@ class TestAppEndpoints:
         )
         assert response.status_code == 200
         assert response.json() == {
-            "app_admin": {
-                "display_name": "test_app Admin",
-                "name": "test_app-admin",
-                "role": {
-                    "app_name": "guardian",
-                    "display_name": "test_app App Admin",
-                    "name": "app-admin",
-                    "namespace_name": "test_app",
-                    "resource_url": f"{COMPLETE_URL}/roles/test_app/app-admin",
+            "app": {
+                "app_admin": {
+                    "display_name": "test_app Admin",
+                    "name": "test_app-admin",
+                    "role": {
+                        "app_name": "guardian",
+                        "display_name": "test_app App Admin",
+                        "name": "app-admin",
+                        "namespace_name": "test_app",
+                        "resource_url": f"{COMPLETE_URL}/roles/test_app/app-admin",
+                    },
                 },
-            },
-            "display_name": None,
-            "name": "test_app",
-            "resource_url": f"{COMPLETE_URL}/apps/test_app",
+                "display_name": None,
+                "name": "test_app",
+                "resource_url": f"{COMPLETE_URL}/apps/test_app",
+            }
         }
 
     @patch(
@@ -47,20 +49,22 @@ class TestAppEndpoints:
         )
         assert response.status_code == 200
         assert response.json() == {
-            "app_admin": {
-                "display_name": "test_app Admin",
-                "name": "test_app-admin",
-                "role": {
-                    "app_name": "guardian",
-                    "display_name": "test_app App Admin",
-                    "name": "app-admin",
-                    "namespace_name": "test_app",
-                    "resource_url": f"{COMPLETE_URL}/roles/test_app/app-admin",
+            "app": {
+                "app_admin": {
+                    "display_name": "test_app Admin",
+                    "name": "test_app-admin",
+                    "role": {
+                        "app_name": "guardian",
+                        "display_name": "test_app App Admin",
+                        "name": "app-admin",
+                        "namespace_name": "test_app",
+                        "resource_url": f"{COMPLETE_URL}/roles/test_app/app-admin",
+                    },
                 },
-            },
-            "display_name": "test_app display_name",
-            "name": "test_app",
-            "resource_url": f"{COMPLETE_URL}/apps/test_app",
+                "display_name": "test_app display_name",
+                "name": "test_app",
+                "resource_url": f"{COMPLETE_URL}/apps/test_app",
+            }
         }
 
     @patch(
@@ -72,20 +76,22 @@ class TestAppEndpoints:
         response = client.get(app.url_path_for("get_app", name=name))
         assert response.status_code == 200
         assert response.json() == {
-            "app_admin": {
-                "display_name": "test_app2 Admin",
-                "name": "test_app2-admin",
-                "role": {
-                    "app_name": "guardian",
-                    "display_name": "test_app2 App Admin",
-                    "name": "app-admin",
-                    "namespace_name": "test_app2",
-                    "resource_url": f"{COMPLETE_URL}/roles/test_app2/app-admin",
+            "app": {
+                "app_admin": {
+                    "display_name": "test_app2 Admin",
+                    "name": "test_app2-admin",
+                    "role": {
+                        "app_name": "guardian",
+                        "display_name": "test_app2 App Admin",
+                        "name": "app-admin",
+                        "namespace_name": "test_app2",
+                        "resource_url": f"{COMPLETE_URL}/roles/test_app2/app-admin",
+                    },
                 },
-            },
-            "display_name": None,
-            "name": "test_app2",
-            "resource_url": f"{COMPLETE_URL}/apps/test_app2",
+                "display_name": None,
+                "name": "test_app2",
+                "resource_url": f"{COMPLETE_URL}/apps/test_app2",
+            }
         }
 
     @patch(

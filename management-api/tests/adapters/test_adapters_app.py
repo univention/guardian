@@ -7,11 +7,13 @@ from guardian_management_api.constants import COMPLETE_URL
 from guardian_management_api.models.app import App, AppCreateQuery, AppGetQuery
 from guardian_management_api.models.role import ResponseRole
 from guardian_management_api.models.routers.app import (
-    AppAdminResponse,
+    App as ResponseApp,
+)
+from guardian_management_api.models.routers.app import (
+    AppAdmin,
     AppCreateRequest,
-    AppCreateResponse,
     AppGetRequest,
-    AppGetResponse,
+    AppSingleResponse,
 )
 
 
@@ -43,21 +45,23 @@ class TestFastAPIAppAdapter:
             display_name="display_name",
         )
         result = await adapter.to_api_create_response(app)
-        assert result == AppCreateResponse(
-            name="name",
-            display_name="display_name",
-            resource_url=f"{COMPLETE_URL}/apps/name",
-            app_admin=AppAdminResponse(
-                name="name-admin",
-                display_name="name Admin",
-                role=ResponseRole(
-                    resource_url=f"{COMPLETE_URL}/roles/name/app-admin",
-                    app_name="guardian",
-                    namespace_name="name",
-                    name="app-admin",
-                    display_name="name App Admin",
+        assert result == AppSingleResponse(
+            app=ResponseApp(
+                name="name",
+                display_name="display_name",
+                resource_url=f"{COMPLETE_URL}/apps/name",
+                app_admin=AppAdmin(
+                    name="name-admin",
+                    display_name="name Admin",
+                    role=ResponseRole(
+                        resource_url=f"{COMPLETE_URL}/roles/name/app-admin",
+                        app_name="guardian",
+                        namespace_name="name",
+                        name="app-admin",
+                        display_name="name App Admin",
+                    ),
                 ),
-            ),
+            )
         )
 
     @pytest.mark.asyncio
@@ -77,21 +81,23 @@ class TestFastAPIAppAdapter:
             display_name="display_name",
         )
         result = await adapter.to_api_get_response(app)
-        assert result == AppGetResponse(
-            name="name",
-            display_name="display_name",
-            resource_url=f"{COMPLETE_URL}/apps/name",
-            app_admin=AppAdminResponse(
-                name="name-admin",
-                display_name="name Admin",
-                role=ResponseRole(
-                    resource_url=f"{COMPLETE_URL}/roles/name/app-admin",
-                    app_name="guardian",
-                    namespace_name="name",
-                    name="app-admin",
-                    display_name="name App Admin",
+        assert result == AppSingleResponse(
+            app=ResponseApp(
+                name="name",
+                display_name="display_name",
+                resource_url=f"{COMPLETE_URL}/apps/name",
+                app_admin=AppAdmin(
+                    name="name-admin",
+                    display_name="name Admin",
+                    role=ResponseRole(
+                        resource_url=f"{COMPLETE_URL}/roles/name/app-admin",
+                        app_name="guardian",
+                        namespace_name="name",
+                        name="app-admin",
+                        display_name="name App Admin",
+                    ),
                 ),
-            ),
+            )
         )
 
 

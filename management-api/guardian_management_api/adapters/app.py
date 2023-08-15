@@ -8,11 +8,13 @@ from ..constants import COMPLETE_URL
 from ..models.app import App, AppCreateQuery, AppGetQuery, Apps
 from ..models.role import ResponseRole
 from ..models.routers.app import (
-    AppAdminResponse,
+    App as ResponseApp,
+)
+from ..models.routers.app import (
+    AppAdmin,
     AppCreateRequest,
-    AppCreateResponse,
     AppGetRequest,
-    AppGetResponse,
+    AppSingleResponse,
 )
 from ..ports.app import (
     AppAPIPort,
@@ -23,9 +25,9 @@ from ..ports.app import (
 class FastAPIAppAPIAdapter(
     AppAPIPort[
         AppCreateRequest,
-        AppCreateResponse,
+        AppSingleResponse,
         AppGetRequest,
-        AppGetResponse,
+        AppSingleResponse,
     ]
 ):
     class Config:
@@ -41,23 +43,25 @@ class FastAPIAppAPIAdapter(
             ]
         )
 
-    async def to_api_create_response(self, app_result: App) -> AppCreateResponse:
-        return AppCreateResponse(
-            name=app_result.name,
-            display_name=app_result.display_name,
-            resource_url=f"{COMPLETE_URL}/apps/{app_result.name}",
-            # TODO: this is currently hardcoded, should be fixed in the future
-            app_admin=AppAdminResponse(
-                name=f"{app_result.name}-admin",
-                display_name=f"{app_result.name} Admin",
-                role=ResponseRole(
-                    namespace_name=app_result.name,
-                    name="app-admin",
-                    app_name="guardian",
-                    resource_url=f"{COMPLETE_URL}/roles/{app_result.name}/app-admin",
-                    display_name=f"{app_result.name} App Admin",
+    async def to_api_create_response(self, app_result: App) -> AppSingleResponse:
+        return AppSingleResponse(
+            app=ResponseApp(
+                name=app_result.name,
+                display_name=app_result.display_name,
+                resource_url=f"{COMPLETE_URL}/apps/{app_result.name}",
+                # TODO: this is currently hardcoded, should be fixed in the future
+                app_admin=AppAdmin(
+                    name=f"{app_result.name}-admin",
+                    display_name=f"{app_result.name} Admin",
+                    role=ResponseRole(
+                        namespace_name=app_result.name,
+                        name="app-admin",
+                        app_name="guardian",
+                        resource_url=f"{COMPLETE_URL}/roles/{app_result.name}/app-admin",
+                        display_name=f"{app_result.name} App Admin",
+                    ),
                 ),
-            ),
+            )
         )
 
     async def to_app_get(self, api_request: AppGetRequest) -> AppGetQuery:
@@ -65,25 +69,27 @@ class FastAPIAppAPIAdapter(
 
     async def to_api_get_response(
         self, app_result: App | None
-    ) -> AppGetResponse | None:
+    ) -> AppSingleResponse | None:
         if not app_result:
             return None
-        return AppGetResponse(
-            name=app_result.name,
-            display_name=app_result.display_name,
-            resource_url=f"{COMPLETE_URL}/apps/{app_result.name}",
-            # TODO: this is currently hardcoded, should be fixed in the future
-            app_admin=AppAdminResponse(
-                name=f"{app_result.name}-admin",
-                display_name=f"{app_result.name} Admin",
-                role=ResponseRole(
-                    namespace_name=app_result.name,
-                    name="app-admin",
-                    app_name="guardian",
-                    resource_url=f"{COMPLETE_URL}/roles/{app_result.name}/app-admin",
-                    display_name=f"{app_result.name} App Admin",
+        return AppSingleResponse(
+            app=ResponseApp(
+                name=app_result.name,
+                display_name=app_result.display_name,
+                resource_url=f"{COMPLETE_URL}/apps/{app_result.name}",
+                # TODO: this is currently hardcoded, should be fixed in the future
+                app_admin=AppAdmin(
+                    name=f"{app_result.name}-admin",
+                    display_name=f"{app_result.name} Admin",
+                    role=ResponseRole(
+                        namespace_name=app_result.name,
+                        name="app-admin",
+                        app_name="guardian",
+                        resource_url=f"{COMPLETE_URL}/roles/{app_result.name}/app-admin",
+                        display_name=f"{app_result.name} App Admin",
+                    ),
                 ),
-            ),
+            )
         )
 
 
