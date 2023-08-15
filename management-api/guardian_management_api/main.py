@@ -13,6 +13,7 @@ from .constants import API_PREFIX
 from .logging import configure_logger
 from .ports.settings import SettingsPort
 from .routers.app import router as app_router
+from .routers.namespace import router as namespace_router
 
 
 @asynccontextmanager
@@ -34,3 +35,4 @@ app = FastAPI(
     default_response_class=ORJSONResponse,
 )
 app.include_router(app_router, prefix=API_PREFIX)
+app.include_router(namespace_router, prefix=API_PREFIX)
