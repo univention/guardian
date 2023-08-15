@@ -1,29 +1,12 @@
-# Copyright (C) 2023 Univention GmbH
-#
-# SPDX-License-Identifier: AGPL-3.0-only
-
-
 from fastapi import Path
-from pydantic import BaseModel, Field
-from pydantic.networks import AnyHttpUrl
+from pydantic import AnyHttpUrl, Field
 
-from .role import ResponseRole
-
-
-class GuardianBaseModel(BaseModel):
-    class Config:
-        allow_population_by_field_name = True
-
-
-MANAGEMENT_OBJECT_NAME_REGEX = r"[a-z][a-z0-9\-_]*"
-
-
-class ManagementObjectName(GuardianBaseModel):
-    """Name of an app"""
-
-    __root__: str = Field(
-        example="kelvin-rest-api", regex=MANAGEMENT_OBJECT_NAME_REGEX, min_length=1
-    )
+from guardian_management_api.models.role import ResponseRole
+from guardian_management_api.models.routers.base import (
+    MANAGEMENT_OBJECT_NAME_REGEX,
+    GuardianBaseModel,
+    ManagementObjectName,
+)
 
 
 class ManagementAppCreateRequest(GuardianBaseModel):

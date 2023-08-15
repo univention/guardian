@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-from .models.routes import (
+from .models.routers.app import (
     ManagementAppCreateRequest,
     ManagementAppCreateResponse,
     ManagementAppGetRequest,

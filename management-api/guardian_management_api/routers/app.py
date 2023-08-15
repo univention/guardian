@@ -1,25 +1,22 @@
-# Copyright (C) 2023 Univention GmbH
-#
-# SPDX-License-Identifier: AGPL-3.0-only
-
 from typing import Annotated, Any, Dict
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends
 from fastapi.params import Body
 from fastapi.responses import ORJSONResponse
+from starlette import status
 
-from . import business_logic
-from .adapter_registry import port_dep
-from .adapters.app import FastAPIAppAPIAdapter
-from .models.routes import (
+from .. import business_logic
+from ..adapter_registry import port_dep
+from ..adapters.app import FastAPIAppAPIAdapter
+from ..models.routers.app import (
     ManagementAppCreateRequest,
     ManagementAppCreateResponse,
     ManagementAppGetRequest,
     ManagementAppGetResponse,
 )
-from .ports.app import AppAPIPort, AppPersistencePort
+from ..ports.app import AppAPIPort, AppPersistencePort
 
-router = APIRouter()
+router = APIRouter(tags=["app"])
 
 
 @router.post("/apps", response_model=ManagementAppCreateResponse)

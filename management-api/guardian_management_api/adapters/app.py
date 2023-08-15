@@ -7,7 +7,7 @@ from typing import Optional
 from ..constants import COMPLETE_URL
 from ..models.app import App, AppCreateQuery, AppGetQuery, Apps
 from ..models.role import ResponseRole
-from ..models.routes import (
+from ..models.routers.app import (
     AppAdminResponse,
     ManagementAppCreateRequest,
     ManagementAppCreateResponse,

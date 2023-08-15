@@ -6,7 +6,7 @@ from guardian_management_api.adapters.app import (
 from guardian_management_api.constants import COMPLETE_URL
 from guardian_management_api.models.app import App, AppCreateQuery, AppGetQuery
 from guardian_management_api.models.role import ResponseRole
-from guardian_management_api.models.routes import (
+from guardian_management_api.models.routers.app import (
     AppAdminResponse,
     ManagementAppCreateRequest,
     ManagementAppCreateResponse,
