@@ -2,15 +2,18 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-from fastapi import Path
-from pydantic import AnyHttpUrl, Field
+from pydantic import Field
 
-from guardian_management_api.models.role import ResponseRole
-from guardian_management_api.models.routers.base import (
-    MANAGEMENT_OBJECT_NAME_REGEX,
+from ...models.routers.base import (
+    DisplayNameObjectMixin,
     GuardianBaseModel,
     ManagementObjectName,
+    NameObjectMixin,
+    NamePathMixin,
+    PaginationObjectMixin,
+    ResourceURLObjectMixin,
 )
+from ...models.routers.role import Role as ResponseRole
 
 #####
 # Requests
@@ -24,10 +27,16 @@ class AppCreateRequest(GuardianBaseModel):
     )
 
 
-class AppGetRequest(GuardianBaseModel):
-    name: str = Path(
-        ..., description="Name of the app to get.", regex=MANAGEMENT_OBJECT_NAME_REGEX
-    )
+class AppGetRequest(GuardianBaseModel, NamePathMixin):
+    ...
+
+
+class AppEditData(GuardianBaseModel, DisplayNameObjectMixin):
+    ...
+
+
+class AppEditRequest(AppGetRequest):
+    data: AppEditData
 
 
 #####
@@ -35,20 +44,21 @@ class AppGetRequest(GuardianBaseModel):
 #####
 
 
-class AppAdmin(GuardianBaseModel):
-    name: ManagementObjectName = Field(..., description="Name of the app admin.")
-    display_name: str | None = Field(None, description="Display name of the app admin.")
+class AppAdmin(GuardianBaseModel, DisplayNameObjectMixin, NameObjectMixin):
     role: ResponseRole = Field(..., description="Role of the app admin.")
 
 
-class App(GuardianBaseModel):
-    name: ManagementObjectName = Field(..., description="Name of the created app.")
-    display_name: str | None = Field(
-        None, description="Display name of the app to create."
+class App(
+    GuardianBaseModel, ResourceURLObjectMixin, DisplayNameObjectMixin, NameObjectMixin
+):
+    app_admin: AppAdmin | None = Field(
+        None, description="App admin role of the created app."
     )
-    resource_url: AnyHttpUrl = Field(..., description="URL to the created app.")
-    app_admin: AppAdmin = Field(..., description="App admin role of the created app.")
 
 
 class AppSingleResponse(GuardianBaseModel):
     app: App
+
+
+class AppMultipleResponse(GuardianBaseModel, PaginationObjectMixin):
+    apps: list[App]

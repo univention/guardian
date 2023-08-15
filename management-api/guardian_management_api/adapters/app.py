@@ -6,7 +6,6 @@ from typing import Optional
 
 from ..constants import COMPLETE_URL
 from ..models.app import App, AppCreateQuery, AppGetQuery, Apps
-from ..models.role import ResponseRole
 from ..models.routers.app import (
     App as ResponseApp,
 )
@@ -16,6 +15,7 @@ from ..models.routers.app import (
     AppGetRequest,
     AppSingleResponse,
 )
+from ..models.routers.role import Role as ResponseRole
 from ..ports.app import (
     AppAPIPort,
     AppPersistencePort,

@@ -13,13 +13,76 @@ from .. import business_logic
 from ..adapter_registry import port_dep
 from ..adapters.app import FastAPIAppAPIAdapter
 from ..models.routers.app import (
+    App as ResponseApp,
+)
+from ..models.routers.app import (
+    AppAdmin as ResponseAppAdmin,
+)
+from ..models.routers.app import (
     AppCreateRequest,
+    AppEditRequest,
     AppGetRequest,
+    AppMultipleResponse,
     AppSingleResponse,
 )
+from ..models.routers.base import PaginationInfo, PaginationRequestMixin
+from ..models.routers.role import Role as ResponseRole
 from ..ports.app import AppAPIPort, AppPersistencePort
 
 router = APIRouter(tags=["app"])
+
+
+@router.get("/apps/{name}", response_model=AppSingleResponse)
+async def get_app(
+    app_get_request: AppGetRequest = Depends(),
+    management_app_api: FastAPIAppAPIAdapter = Depends(
+        port_dep(AppAPIPort, FastAPIAppAPIAdapter)
+    ),
+    persistence: AppPersistencePort = Depends(port_dep(AppPersistencePort)),
+) -> Dict[str, Any]:
+    """
+    Returns an app identified by `name`
+    """
+    response: AppSingleResponse | None = await business_logic.get_app(
+        api_request=app_get_request,
+        management_app_api_port=management_app_api,
+        persistence_port=persistence,
+    )
+    if response is None:
+        return ORJSONResponse(  # type: ignore
+            status_code=status.HTTP_404_NOT_FOUND, content={"message": "App not found"}
+        )
+    return response.dict()
+
+
+@router.get("/apps", response_model=AppMultipleResponse)
+async def get_all_apps(
+    app_get_request: PaginationRequestMixin = Depends(),
+):  # pragma: no cover
+    """
+    Returns a list of all apps.
+    """
+    return AppMultipleResponse(
+        apps=[
+            ResponseApp(
+                name="my-app",
+                display_name="My App",
+                resource_url="https://fqdn/guardian/management/apps/my-app",
+                app_admin=ResponseAppAdmin(
+                    name="my-admin",
+                    display_name="My Admin",
+                    role=ResponseRole(
+                        app_name="my-app",
+                        name="my-role",
+                        display_name="My Role",
+                        namespace_name="my-namespace",
+                        resource_url="https://fqdn/roles/my-app/my-namespace/my-role",
+                    ),
+                ),
+            )
+        ],
+        pagination=PaginationInfo(total_count=1, limit=1000, offset=0),
+    ).dict()
 
 
 @router.post("/apps", response_model=AppSingleResponse)
@@ -38,21 +101,45 @@ async def create_app(
     return response.dict()
 
 
-@router.get("/apps/{name}", response_model=AppSingleResponse)
-async def get_app(
-    app_get_request: AppGetRequest = Depends(),
-    management_app_api: FastAPIAppAPIAdapter = Depends(
-        port_dep(AppAPIPort, FastAPIAppAPIAdapter)
-    ),
-    persistence: AppPersistencePort = Depends(port_dep(AppPersistencePort)),
-) -> Dict[str, Any]:
-    response: AppSingleResponse | None = await business_logic.get_app(
-        api_request=app_get_request,
-        management_app_api_port=management_app_api,
-        persistence_port=persistence,
-    )
-    if response is None:
-        return ORJSONResponse(  # type: ignore
-            status_code=status.HTTP_404_NOT_FOUND, content={"message": "App not found"}
+@router.post("/apps/register", response_model=AppSingleResponse)
+async def register_app(
+    app_create_request: Annotated[AppCreateRequest, Body()],
+):  # pragma: no cover
+    """
+    Register an app.
+
+    This will also create an admin role to administrate the app.
+    """
+    return AppSingleResponse(
+        app=ResponseApp(
+            name="my-app",
+            display_name="My App",
+            resource_url="https://fqdn/guardian/management/apps/my-app",
+            app_admin=ResponseAppAdmin(
+                name="my-admin",
+                display_name="My Admin",
+                role=ResponseRole(
+                    app_name="my-app",
+                    name="my-role",
+                    display_name="My Role",
+                    namespace_name="my-namespace",
+                    resource_url="https://fqdn/roles/my-app/my-namespace/my-role",
+                ),
+            ),
         )
-    return response.dict()
+    ).dict()
+
+
+@router.patch("/apps/{name}", response_model=AppSingleResponse)
+async def edit_app(app_edit_request: AppEditRequest = Depends()):  # pragma: no cover
+    """
+    Update an app.
+    """
+    return AppSingleResponse(
+        app=ResponseApp(
+            name="my-app",
+            display_name="My App",
+            resource_url="https://fqdn/guardian/management/apps/my-app",
+            app_admin=None,
+        )
+    ).dict()
