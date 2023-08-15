@@ -9,7 +9,7 @@ from guardian_management_api.models.routers.base import (
 )
 
 
-class ManagementAppCreateRequest(GuardianBaseModel):
+class AppCreateRequest(GuardianBaseModel):
     name: ManagementObjectName = Field(..., description="Name of the app to create.")
     display_name: str | None = Field(
         None, description="Display name of the app to create."
@@ -22,7 +22,7 @@ class AppAdminResponse(GuardianBaseModel):
     role: ResponseRole = Field(..., description="Role of the app admin.")
 
 
-class ManagementAppCreateResponse(GuardianBaseModel):
+class AppCreateResponse(GuardianBaseModel):
     name: ManagementObjectName = Field(..., description="Name of the created app.")
     display_name: str | None = Field(
         None, description="Display name of the app to create."
@@ -33,7 +33,7 @@ class ManagementAppCreateResponse(GuardianBaseModel):
     )
 
 
-class ManagementAppGetResponse(GuardianBaseModel):
+class AppGetResponse(GuardianBaseModel):
     name: ManagementObjectName = Field(..., description="Name of the app.")
     display_name: str | None = Field(
         None, description="Display name of the app to create."
@@ -44,7 +44,7 @@ class ManagementAppGetResponse(GuardianBaseModel):
     )
 
 
-class ManagementAppGetRequest(GuardianBaseModel):
+class AppGetRequest(GuardianBaseModel):
     name: str = Path(
         ..., description="Name of the app to get.", regex=MANAGEMENT_OBJECT_NAME_REGEX
     )

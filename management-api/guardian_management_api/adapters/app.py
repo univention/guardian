@@ -9,10 +9,10 @@ from ..models.app import App, AppCreateQuery, AppGetQuery, Apps
 from ..models.role import ResponseRole
 from ..models.routers.app import (
     AppAdminResponse,
-    ManagementAppCreateRequest,
-    ManagementAppCreateResponse,
-    ManagementAppGetRequest,
-    ManagementAppGetResponse,
+    AppCreateRequest,
+    AppCreateResponse,
+    AppGetRequest,
+    AppGetResponse,
 )
 from ..ports.app import (
     AppAPIPort,
@@ -22,18 +22,16 @@ from ..ports.app import (
 
 class FastAPIAppAPIAdapter(
     AppAPIPort[
-        ManagementAppCreateRequest,
-        ManagementAppCreateResponse,
-        ManagementAppGetRequest,
-        ManagementAppGetResponse,
+        AppCreateRequest,
+        AppCreateResponse,
+        AppGetRequest,
+        AppGetResponse,
     ]
 ):
     class Config:
         alias = "fastapi"
 
-    async def to_app_create(
-        self, api_request: ManagementAppCreateRequest
-    ) -> AppCreateQuery:
+    async def to_app_create(self, api_request: AppCreateRequest) -> AppCreateQuery:
         return AppCreateQuery(
             apps=[
                 App(
@@ -43,10 +41,8 @@ class FastAPIAppAPIAdapter(
             ]
         )
 
-    async def to_api_create_response(
-        self, app_result: App
-    ) -> ManagementAppCreateResponse:
-        return ManagementAppCreateResponse(
+    async def to_api_create_response(self, app_result: App) -> AppCreateResponse:
+        return AppCreateResponse(
             name=app_result.name,
             display_name=app_result.display_name,
             resource_url=f"{COMPLETE_URL}/apps/{app_result.name}",
@@ -64,15 +60,15 @@ class FastAPIAppAPIAdapter(
             ),
         )
 
-    async def to_app_get(self, api_request: ManagementAppGetRequest) -> AppGetQuery:
+    async def to_app_get(self, api_request: AppGetRequest) -> AppGetQuery:
         return AppGetQuery(apps=[App(name=api_request.name, display_name="")])
 
     async def to_api_get_response(
         self, app_result: App | None
-    ) -> ManagementAppGetResponse | None:
+    ) -> AppGetResponse | None:
         if not app_result:
             return None
-        return ManagementAppGetResponse(
+        return AppGetResponse(
             name=app_result.name,
             display_name=app_result.display_name,
             resource_url=f"{COMPLETE_URL}/apps/{app_result.name}",

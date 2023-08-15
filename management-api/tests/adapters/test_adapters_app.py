@@ -8,10 +8,10 @@ from guardian_management_api.models.app import App, AppCreateQuery, AppGetQuery
 from guardian_management_api.models.role import ResponseRole
 from guardian_management_api.models.routers.app import (
     AppAdminResponse,
-    ManagementAppCreateRequest,
-    ManagementAppCreateResponse,
-    ManagementAppGetRequest,
-    ManagementAppGetResponse,
+    AppCreateRequest,
+    AppCreateResponse,
+    AppGetRequest,
+    AppGetResponse,
 )
 
 
@@ -22,7 +22,7 @@ class TestFastAPIAppAdapter:
 
     @pytest.mark.asyncio
     async def test_to_app_create(self, adapter):
-        api_request = ManagementAppCreateRequest(
+        api_request = AppCreateRequest(
             name="name",
             display_name="display_name",
         )
@@ -43,7 +43,7 @@ class TestFastAPIAppAdapter:
             display_name="display_name",
         )
         result = await adapter.to_api_create_response(app)
-        assert result == ManagementAppCreateResponse(
+        assert result == AppCreateResponse(
             name="name",
             display_name="display_name",
             resource_url=f"{COMPLETE_URL}/apps/name",
@@ -62,7 +62,7 @@ class TestFastAPIAppAdapter:
 
     @pytest.mark.asyncio
     async def test_to_app_get(self, adapter):
-        api_request = ManagementAppGetRequest(
+        api_request = AppGetRequest(
             name="name",
         )
         result = await adapter.to_app_get(api_request)
@@ -77,7 +77,7 @@ class TestFastAPIAppAdapter:
             display_name="display_name",
         )
         result = await adapter.to_api_get_response(app)
-        assert result == ManagementAppGetResponse(
+        assert result == AppGetResponse(
             name="name",
             display_name="display_name",
             resource_url=f"{COMPLETE_URL}/apps/name",
