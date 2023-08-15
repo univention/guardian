@@ -28,6 +28,7 @@ services:
         - git.knut.univention.de:${GITLAB_IP}
     depends_on:
       - opa
+      - proxy
     networks:
       - proxy-net
     volumes:
@@ -57,7 +58,7 @@ services:
       extra_hosts:
         - git.knut.univention.de:${GITLAB_IP}
     depends_on:
-      - opa
+      - proxy
     networks:
       - proxy-net
     volumes:
