@@ -37,7 +37,7 @@ class FastAPIAppAPIAdapter(
         return AppCreateQuery(
             apps=[
                 App(
-                    name=api_request.name.__root__,
+                    name=api_request.name,
                     display_name=api_request.display_name,
                 )
             ]
