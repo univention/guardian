@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 [run]
-# Those omits should be removed, once integration tests are added
+# Those omits should be removed, once integration tests are added. See univention/components/authorization-engine/guardian#7
 omit=
     main.py
     routes.py

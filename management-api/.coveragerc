@@ -1,0 +1,13 @@
+# Copyright (C) 2023 Univention GmbH
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
+[run]
+# Those omits should be removed, once integration tests are added. See univention/components/authorization-engine/guardian#32
+omit=
+    */routers/namespace.py
+    */ports/role.py
+
+[report]
+show_missing = True
+skip_covered = True
