@@ -4,16 +4,14 @@
 
 from fastapi import APIRouter, Depends
 
+from ..models.routers.base import GetAllRequest, GetByAppRequest, PaginationInfo
 from ..models.routers.namespace import (
     Namespace,
     NamespaceCreateRequest,
     NamespaceEditRequest,
-    NamespaceGetByAppRequest,
     NamespaceGetRequest,
     NamespaceMultipleResponse,
     NamespaceSingleResponse,
-    PaginationInfo,
-    PaginationRequestMixin,
 )
 
 router = APIRouter(tags=["namespace"])
@@ -35,7 +33,7 @@ async def get_namespace(namespace_get_request: NamespaceGetRequest = Depends()):
 
 
 @router.get("/namespaces", response_model=NamespaceMultipleResponse)
-async def get_all_namespaces(namespace_get_request: PaginationRequestMixin = Depends()):
+async def get_all_namespaces(namespace_get_request: GetAllRequest = Depends()):
     """
     Returns a list of all namespaces.
     """
@@ -54,7 +52,7 @@ async def get_all_namespaces(namespace_get_request: PaginationRequestMixin = Dep
 
 @router.get("/namespaces/{app_name}", response_model=NamespaceMultipleResponse)
 async def get_namespaces_by_app(
-    namespace_get_request: NamespaceGetByAppRequest = Depends(),
+    namespace_get_request: GetByAppRequest = Depends(),
 ):
     """
     Returns a list of all namespaces that belong to `app_name`.
