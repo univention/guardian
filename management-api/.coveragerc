@@ -6,6 +6,7 @@
 # Those omits should be removed, once integration tests are added. See univention/components/authorization-engine/guardian#32
 omit=
     */routers/namespace.py
+    */routers/role.py
     */ports/role.py
 
 [report]
