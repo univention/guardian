@@ -13,6 +13,7 @@ from .constants import API_PREFIX
 from .logging import configure_logger
 from .ports.settings import SettingsPort
 from .routers.app import router as app_router
+from .routers.context import router as context_router
 from .routers.namespace import router as namespace_router
 from .routers.role import router as role_router
 
@@ -38,3 +39,4 @@ app = FastAPI(
 app.include_router(app_router, prefix=API_PREFIX)
 app.include_router(namespace_router, prefix=API_PREFIX)
 app.include_router(role_router, prefix=API_PREFIX)
+app.include_router(context_router, prefix=API_PREFIX)

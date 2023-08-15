@@ -7,6 +7,7 @@
 omit=
     */routers/namespace.py
     */routers/role.py
+    */routers/context.py
     */ports/role.py
 
 [report]
