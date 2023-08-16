@@ -10,6 +10,7 @@ omit=
     */routers/context.py
     */routers/permission.py
     */routers/condition.py
+    */routers/mapping.py
     */ports/role.py
 
 [report]

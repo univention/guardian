@@ -15,6 +15,7 @@ from .ports.settings import SettingsPort
 from .routers.app import router as app_router
 from .routers.condition import router as condition_router
 from .routers.context import router as context_router
+from .routers.mapping import router as mapping_router
 from .routers.namespace import router as namespace_router
 from .routers.permission import router as permission_router
 from .routers.role import router as role_router
@@ -44,3 +45,4 @@ app.include_router(role_router, prefix=API_PREFIX)
 app.include_router(context_router, prefix=API_PREFIX)
 app.include_router(permission_router, prefix=API_PREFIX)
 app.include_router(condition_router, prefix=API_PREFIX)
+app.include_router(mapping_router, prefix=API_PREFIX)
