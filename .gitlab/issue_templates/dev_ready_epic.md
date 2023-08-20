@@ -7,11 +7,13 @@ SPDX-License-Identifier: AGPL-3.0-only
 /label ~"App::Guardian"
 /label ~"Team::UCS@school"
 /label ~"Status::New"
+/epic univention&567
+/milestone %"First public Guardian release"
 
 ## Accounting
 
 - Univention GmbH (424)
-- Development: UCS@school Development (22605)
+- Development: Epic 567 - Implement a development-ready Guardian (22605)
 
 ## Story
 

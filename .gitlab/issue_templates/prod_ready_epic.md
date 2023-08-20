@@ -7,11 +7,13 @@ SPDX-License-Identifier: AGPL-3.0-only
 /label ~"App::Guardian"
 /label ~"Team::UCS@school"
 /label ~"Status::New"
+/epic univention&573
+/milestone %"First public Guardian release"
 
 ## Accounting
 
 - Univention GmbH (424)
-- Development: UCS@school Development (22605)
+- Development: Epic 573 - Make Guardian production ready (22605)
 
 ## Story
 
@@ -51,3 +53,5 @@ Additional points:
 If the changes affect security features such as authentication or authorization:
 
 - [ ] The affected security feature has a dedicated end to end integration test.
+
+/label ~"App::Guardian"
