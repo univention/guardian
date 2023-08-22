@@ -9,10 +9,9 @@ Proposed layout for role ports/models
 from abc import ABC, abstractmethod
 from typing import Optional
 
+from guardian_lib.ports import BasePort
+
 from ..models.role import Role, RoleAPIResponse, RoleQuery, RolesListAPIResponse
-from .base import (
-    BasePort,
-)
 
 ###############################################################################
 #                                                                             #

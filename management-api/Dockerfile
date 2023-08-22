@@ -31,8 +31,10 @@ WORKDIR /app
 CMD uvicorn --reload --log-level debug --host 0.0.0.0 --port 8000 guardian_management_api.main:app
 
 RUN pip install --no-cache-dir -U pip wheel && pip install --no-cache-dir poetry && poetry config virtualenvs.create false
-COPY . .
-RUN poetry install
+COPY management-api management-api
+COPY guardian-lib guardian-lib
+RUN cd management-api && poetry install && cd ..
+RUN cd guardian-lib && poetry install && cd ..
 
 
 FROM docker-registry.knut.univention.de/python:3.11-slim

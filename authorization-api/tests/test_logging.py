@@ -14,7 +14,7 @@ async def test_configure_logger(mocker):
     This test checks some assumptions about the logging configuration
     """
     log_mock = mocker.MagicMock()
-    mocker.patch("guardian_authorization_api.logging.logger", log_mock)
+    mocker.patch("guardian_lib.logging.logger", log_mock)
     await configure_logger()
     # port-loader logging is enabled
     log_mock.enable.assert_called_once_with("port_loader")

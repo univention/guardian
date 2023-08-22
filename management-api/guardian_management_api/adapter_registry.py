@@ -1,10 +1,10 @@
 # Copyright (C) 2023 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
+from functools import partial
 
-from typing import Optional, Type
-
-import lazy_object_proxy
+from guardian_lib.adapter_registry import initialize_adapters as lib_initialize_adapters
+from guardian_lib.ports import SettingsPort
 from port_loader import (
     AsyncAdapterRegistry,
     AsyncAdapterSettingsProvider,
@@ -17,12 +17,8 @@ from guardian_management_api.ports.app import (
     AppAPIPort,
     AppPersistencePort,
 )
-from guardian_management_api.ports.settings import (
-    SettingsPort,
-)
 
 PORT_CLASSES = (SettingsPort, AppPersistencePort)
-ADAPTER_REGISTRY = lazy_object_proxy.Proxy(AsyncAdapterRegistry)
 
 
 class AdapterSelection(BaseSettings):
@@ -63,13 +59,4 @@ def configure_registry(adapter_registry: AsyncAdapterRegistry):
     adapter_registry.set_adapter(AppAPIPort, FastAPIAppAPIAdapter)
 
 
-async def initialize_adapters(adapter_registry: AsyncAdapterRegistry):
-    for port_cls in PORT_CLASSES:
-        await adapter_registry(port_cls)
-
-
-def port_dep(port_cls: Type, adapter_cls: Optional[Type] = None):
-    async def _wrapper():
-        return await ADAPTER_REGISTRY(port_cls, adapter_cls)
-
-    return _wrapper
+initialize_adapters = partial(lib_initialize_adapters, port_classes=PORT_CLASSES)

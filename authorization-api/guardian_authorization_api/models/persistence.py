@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from guardian_authorization_api.models.settings import SETTINGS_NAME_METADATA
+from guardian_lib.models.settings import SETTINGS_NAME_METADATA
 
 # Used with StaticDataAdapter
 STATIC_DATA_FILE_SETTING_NAME = "static_data_adapter.data_file"

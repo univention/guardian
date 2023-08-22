@@ -7,10 +7,10 @@ from typing import Annotated, Any, Dict
 from fastapi import APIRouter, Depends
 from fastapi.params import Body
 from fastapi.responses import ORJSONResponse
+from guardian_lib.adapter_registry import port_dep
 from starlette import status
 
 from .. import business_logic
-from ..adapter_registry import port_dep
 from ..adapters.app import FastAPIAppAPIAdapter
 from ..constants import COMPLETE_URL
 from ..models.routers.app import (

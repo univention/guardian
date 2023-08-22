@@ -6,12 +6,13 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
+from guardian_lib.adapter_registry import ADAPTER_REGISTRY
+from guardian_lib.ports import SettingsPort
 from loguru import logger
 
-from .adapter_registry import ADAPTER_REGISTRY, configure_registry, initialize_adapters
+from .adapter_registry import configure_registry, initialize_adapters
 from .constants import API_PREFIX
 from .logging import configure_logger
-from .ports.settings import SettingsPort
 from .routers.app import router as app_router
 from .routers.condition import router as condition_router
 from .routers.context import router as context_router

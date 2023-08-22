@@ -5,8 +5,9 @@
 import os
 from typing import Optional
 
-import guardian_management_api.adapter_registry as adapter_registry
+import guardian_lib.adapter_registry as adapter_registry
 import pytest
+from guardian_lib.ports import SettingsPort
 from guardian_management_api.adapters.app import (
     AppStaticDataAdapter,
     FastAPIAppAPIAdapter,
@@ -15,7 +16,6 @@ from guardian_management_api.ports.app import (
     AppAPIPort,
     AppPersistencePort,
 )
-from guardian_management_api.ports.settings import SettingsPort
 from port_loader import AsyncAdapterRegistry
 
 

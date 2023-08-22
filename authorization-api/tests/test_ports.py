@@ -5,8 +5,8 @@
 from typing import Optional, Type
 
 import pytest
-from guardian_authorization_api.errors import SettingFormatError, SettingTypeError
-from guardian_authorization_api.ports import BasePort, SettingsPort
+from guardian_lib.errors import SettingFormatError, SettingTypeError
+from guardian_lib.ports import BasePort, SettingsPort
 from port_loader import Settings
 
 

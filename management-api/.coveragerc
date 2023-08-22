@@ -13,6 +13,7 @@ omit=
     */routers/mapping.py
     */routers/custom_endpoint.py
     */ports/role.py
+    errors.py
 
 [report]
 show_missing = True

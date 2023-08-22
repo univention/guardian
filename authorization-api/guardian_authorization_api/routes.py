@@ -3,9 +3,9 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 from fastapi import APIRouter, Depends
+from guardian_lib.adapter_registry import port_dep
 
 from . import business_logic
-from .adapter_registry import port_dep
 from .adapters.api import FastAPIGetPermissionsAPIAdapter, GetPermissionsAPIPort
 from .models.routes import (
     AuthzCustomEndpointPostRequest,

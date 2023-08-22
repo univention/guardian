@@ -447,6 +447,27 @@ files = [
 ]
 
 [[package]]
+name = "guardian-lib"
+version = "1.0.0"
+description = ""
+optional = false
+python-versions = ">=3.11,<4.0"
+files = [
+    {file = "guardian_lib-1.0.0-py3-none-any.whl", hash = "sha256:bd306fcc6fef7f7bfcc37c07f8a6085bfc6fd40ce356586bc232fc2d1b1231e0"},
+    {file = "guardian_lib-1.0.0.tar.gz", hash = "sha256:b4b79bef9540492dd9f1cbed55a7812b01dd0039cc65766a0c103e2b000b4c90"},
+]
+
+[package.dependencies]
+lazy-object-proxy = ">=1.9.0,<2.0.0"
+loguru = ">=0.7.0,<0.8.0"
+port-loader = ">=1.0.1,<2.0.0"
+
+[package.source]
+type = "legacy"
+url = "https://git.knut.univention.de/api/v4/projects/830/packages/pypi/simple"
+reference = "guardian"
+
+[[package]]
 name = "gunicorn"
 version = "20.1.0"
 description = "WSGI HTTP Server for UNIX"
@@ -779,7 +800,7 @@ loguru = ">=0.7.0,<0.8.0"
 [package.source]
 type = "legacy"
 url = "https://git.knut.univention.de/api/v4/projects/830/packages/pypi/simple"
-reference = "port-loader"
+reference = "guardian"
 
 [[package]]
 name = "pydantic"
@@ -1132,4 +1153,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "26e204d31fc4be60f7b6543bff3fbe973ec28c096bf6061dbdbfc994e4b287f5"
+content-hash = "9648aaeeff1297473764ea29cc3b4905fdfbf35122fa7213d0a6b124921e482f"

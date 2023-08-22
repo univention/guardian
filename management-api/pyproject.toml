@@ -8,22 +8,21 @@ version = "0.1.0"
 description = ""
 authors = ["Ole Schwiegert <schwiegert@univention.de>"]
 readme = "README.md"
-packages = [{include = "guardian_management_api"}]
+packages = [{include = "guardian_management_api"}, ]
 
 [tool.poetry.dependencies]
 python = "^3.11"
 httpx = "^0.24.1"
-lazy-object-proxy = "^1.9.0"
-port-loader = {version = "~1.0", source = "port-loader"}
 pydantic = "^1.8.2"
 fastapi = "^0.100.0"
 gunicorn = "^20.1.0"
 uvicorn = "^0.22.0"
 loguru = "^0.7.0"
 orjson = "^3.9.0"
+guardian-lib = "^1.0.0"
 
 [tool.poetry.plugins."guardian_management_api.SettingsPort"]
-"env" = "guardian_management_api.adapters.settings:EnvSettingsAdapter"
+"env" = "guardian_lib.adapters.settings:EnvSettingsAdapter"
 
 [tool.poetry.plugins."guardian_management_api.AppPersistencePort"]
 "in_memory" = "guardian_management_api.adapters.app:AppStaticDataAdapter"
@@ -34,14 +33,17 @@ pytest-cov = "^4.1.0"
 pytest-asyncio = "^0.21.1"
 pytest-mock = "^3.11.1"
 
-
 [tool.poetry.group.testing.dependencies]
 pytest-env = "^0.8.2"
 
 [[tool.poetry.source]]
-name = "port-loader"
+name = "PyPI"
+priority = "primary"
+
+[[tool.poetry.source]]
+name = "guardian"
 url = "https://git.knut.univention.de/api/v4/projects/830/packages/pypi/simple"
-priority = "explicit"
+priority = "supplemental"
 
 [build-system]
 requires = ["poetry-core"]

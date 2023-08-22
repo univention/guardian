@@ -9,6 +9,8 @@ Proposed layout for the app-related ports
 from abc import ABC, abstractmethod
 from typing import Generic, List, Optional, TypeVar
 
+from guardian_lib.ports import BasePort
+
 from ..models.app import (
     App,
     AppCreateQuery,
@@ -16,7 +18,6 @@ from ..models.app import (
     AppsGetQuery,
     ManyApps,
 )
-from .base import BasePort
 
 AppAPICreateRequestObject = TypeVar("AppAPICreateRequestObject")
 AppAPICreateResponseObject = TypeVar("AppAPICreateResponseObject")

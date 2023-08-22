@@ -22,7 +22,8 @@ services:
     container_name: authz-guardian-dev
     image: guardian-authorization-api:dev
     build:
-      context: authorization-api/
+      context: ./
+      dockerfile: authorization-api/Dockerfile
       target: dev
       extra_hosts:
         - git.knut.univention.de:${GITLAB_IP}
@@ -32,7 +33,7 @@ services:
     networks:
       - proxy-net
     volumes:
-      - ./authorization-api:/app
+      - ./authorization-api:/app/authorization-api
     environment:
       - GUARDIAN__AUTHZ__LOGGING__LEVEL
       - GUARDIAN__AUTHZ__LOGGING__STRUCTURED
@@ -53,7 +54,8 @@ services:
     container_name: management-guardian-dev
     image: guardian-management-api:dev
     build:
-      context: management-api/
+      context: ./
+      dockerfile: management-api/Dockerfile
       target: dev
       extra_hosts:
         - git.knut.univention.de:${GITLAB_IP}
@@ -62,7 +64,7 @@ services:
     networks:
       - proxy-net
     volumes:
-      - ./management-api:/app
+      - ./management-api:/app/management-api
     environment:
       - GUARDIAN__MANAGEMENT__LOGGING__LEVEL
       - GUARDIAN__MANAGEMENT__LOGGING__STRUCTURED
