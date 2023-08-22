@@ -1,0 +1,36 @@
+# Copyright (C) 2023 Univention GmbH
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
+[tool.poetry]
+name = "guardian-lib"
+version = "1.0.0"
+description = ""
+authors = ["Ole Schwiegert <schwiegert@univention.de>"]
+readme = "README.md"
+packages = [{include = "guardian_lib"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+loguru = "^0.7.0"
+port-loader = "^1.0.1"
+lazy-object-proxy = "^1.9.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+pytest-asyncio = "^0.21.1"
+pytest-mock = "^3.11.1"
+pytest-cov = "^4.1.0"
+
+[[tool.poetry.source]]
+name = "guardian"
+url = "https://git.knut.univention.de/api/v4/projects/830/packages/pypi/simple"
+priority = "supplemental"
+
+[[tool.poetry.source]]
+name = "PyPI"
+priority = "primary"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
