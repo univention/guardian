@@ -1,6 +1,7 @@
 # Copyright (C) 2023 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
+from typing import Optional
 
 from fastapi import Path, Query
 from pydantic import AnyHttpUrl, BaseModel, ConstrainedStr, Field
@@ -17,7 +18,7 @@ MANAGEMENT_OBJECT_NAME_REGEX = r"[a-z][a-z0-9\-_]*"
 class ManagementObjectName(ConstrainedStr):
     """Name of an object"""
 
-    regex = MANAGEMENT_OBJECT_NAME_REGEX
+    pattern = MANAGEMENT_OBJECT_NAME_REGEX
     min_length = 1
 
 
@@ -154,8 +155,8 @@ class PaginationRequestMixin(BaseModel):
     """
 
     offset: int = Query(0, description="The offset for the paginated result.")
-    limit: int = Query(
-        1000, description="The maximum amount of items to return in one response."
+    limit: Optional[int] = Query(
+        None, description="The maximum amount of items to return in one response."
     )
 
 

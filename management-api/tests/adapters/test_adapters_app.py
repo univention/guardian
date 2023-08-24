@@ -8,7 +8,14 @@ from guardian_management_api.adapters.app import (
     FastAPIAppAPIAdapter,
 )
 from guardian_management_api.constants import COMPLETE_URL
-from guardian_management_api.models.app import App, AppCreateQuery, AppGetQuery
+from guardian_management_api.models.app import (
+    App,
+    AppCreateQuery,
+    AppGetQuery,
+    AppsGetQuery,
+    ManyApps,
+)
+from guardian_management_api.models.base import PaginationRequest
 from guardian_management_api.models.routers.app import (
     App as ResponseApp,
 )
@@ -118,7 +125,7 @@ class TestAppStaticDataAdapter:
         )
         result = await adapter.create(app)
         assert result == app
-        assert app in adapter._data.apps
+        assert app in adapter._data["apps"]
 
     @pytest.mark.asyncio
     async def test_read_one(self, adapter):
@@ -126,6 +133,61 @@ class TestAppStaticDataAdapter:
             name="name",
             display_name="display_name",
         )
-        adapter._data.apps.append(app)
+        adapter._data["apps"].append(app)
         result = await adapter.read_one(query=AppGetQuery(apps=[app]))
         assert result == app
+
+    apps = [
+        App(
+            name="name",
+            display_name="display_name",
+        ),
+        App(
+            name="name2",
+            display_name="display_name2",
+        ),
+    ]
+
+    @pytest.mark.parametrize(
+        "query,expected",
+        [
+            (
+                AppsGetQuery(
+                    pagination=PaginationRequest(query_offset=0, query_limit=None),
+                ),
+                ManyApps(apps=apps, total_count=2),
+            ),
+            (
+                AppsGetQuery(
+                    pagination=PaginationRequest(
+                        query_offset=0,
+                        query_limit=1,
+                    ),
+                ),
+                ManyApps(apps=apps[:1], total_count=2),
+            ),
+            (
+                AppsGetQuery(
+                    pagination=PaginationRequest(
+                        query_offset=1,
+                        query_limit=10,
+                    )
+                ),
+                ManyApps(apps=apps[1:], total_count=2),
+            ),
+            (
+                AppsGetQuery(
+                    pagination=PaginationRequest(
+                        query_offset=1,
+                        query_limit=1,
+                    )
+                ),
+                ManyApps(apps=apps[1:2], total_count=2),
+            ),
+        ],
+    )
+    @pytest.mark.asyncio
+    async def test_read_many(self, adapter, query, expected):
+        adapter._data["apps"] = self.apps
+        result = await adapter.read_many(query)
+        assert result == expected

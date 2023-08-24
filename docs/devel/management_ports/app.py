@@ -116,7 +116,7 @@ class AppPersistencePort(BasePort):
         self,
         query_offset: Optional[int] = None,
         query_limit: Optional[int] = None,
-    ) -> AppQuery:
+    ) -> (List[App], int):
         pass
 
     async def update(

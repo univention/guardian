@@ -62,3 +62,9 @@ class PaginatedAPIResponse:
 class NamespacedResponseObject(NamespacedObject, ResponseObject):
     namespace_name: str
     display_name: Optional[str]
+
+
+@dataclass(frozen=True)
+class PaginationRequest:
+    query_offset: int
+    query_limit: Optional[int]

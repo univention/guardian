@@ -9,9 +9,7 @@ App-related models
 from dataclasses import dataclass
 from typing import List, Optional
 
-from pydantic import BaseModel
-
-from .base import PaginatedAPIResponse, QueryResponse, ResponseObject
+from .base import PaginatedAPIResponse, PaginationRequest, QueryResponse, ResponseObject
 from .role import ResponseRole
 
 
@@ -19,10 +17,6 @@ from .role import ResponseRole
 class App:
     name: str
     display_name: Optional[str] = None
-
-
-class Apps(BaseModel):
-    apps: List[App] = []
 
 
 @dataclass(frozen=True)
@@ -38,6 +32,17 @@ class AppCreateQuery:
 @dataclass(frozen=True)
 class AppGetQuery:
     apps: List[App]
+
+
+@dataclass(frozen=True)
+class AppsGetQuery:
+    pagination: PaginationRequest
+
+
+@dataclass(frozen=True)
+class ManyApps:
+    apps: List[App]
+    total_count: int
 
 
 # We're intentionally not tying this to App,

@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
+
 from pydantic import Field
 
 from ...models.routers.base import (
@@ -11,6 +12,7 @@ from ...models.routers.base import (
     NameObjectMixin,
     NamePathMixin,
     PaginationObjectMixin,
+    PaginationRequestMixin,
     ResourceURLObjectMixin,
 )
 from ...models.routers.role import Role as ResponseRole
@@ -37,6 +39,10 @@ class AppEditData(GuardianBaseModel, DisplayNameObjectMixin):
 
 class AppEditRequest(AppGetRequest):
     data: AppEditData
+
+
+class AppsGetRequest(GuardianBaseModel, PaginationRequestMixin):
+    ...
 
 
 #####

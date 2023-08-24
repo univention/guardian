@@ -17,7 +17,8 @@ class TestAppEndpoints:
         return TestClient(app)
 
     @patch(
-        "guardian_management_api.adapters.app.AppStaticDataAdapter._data.apps", new=[]
+        "guardian_management_api.adapters.app.AppStaticDataAdapter._data",
+        new={"apps": []},
     )
     def test_post_app_minimal(self, client, register_test_adapters):
         response = client.post(
@@ -44,7 +45,8 @@ class TestAppEndpoints:
         }
 
     @patch(
-        "guardian_management_api.adapters.app.AppStaticDataAdapter._data.apps", new=[]
+        "guardian_management_api.adapters.app.AppStaticDataAdapter._data",
+        new={"apps": []},
     )
     def test_post_app_all(self, client, register_test_adapters):
         response = client.post(
@@ -72,8 +74,8 @@ class TestAppEndpoints:
         }
 
     @patch(
-        "guardian_management_api.adapters.app.AppStaticDataAdapter._data.apps",
-        new=[App(name="test_app2")],
+        "guardian_management_api.adapters.app.AppStaticDataAdapter._data",
+        new={"apps": [App(name="test_app2")]},
     )
     def test_get_app(self, client, register_test_adapters):
         name: str = "test_app2"
@@ -99,10 +101,84 @@ class TestAppEndpoints:
         }
 
     @patch(
-        "guardian_management_api.adapters.app.AppStaticDataAdapter._data.apps",
-        new=[],
+        "guardian_management_api.adapters.app.AppStaticDataAdapter._data",
+        new={"apps": []},
     )
     def test_get_app_404(self, client, register_test_adapters):
         name: str = "test_app3"
         response = client.get(app.url_path_for("get_app", name=name))
         assert response.status_code == 404
+
+    @patch(
+        "guardian_management_api.adapters.app.AppStaticDataAdapter._data",
+        new={"apps": [App(name="test_app"), App(name="test_app2")]},
+    )
+    def test_get_all_apps(self, client, register_test_adapters):
+        response = client.get(app.url_path_for("get_all_apps"))
+        assert response.status_code == 200
+        assert response.json() == {
+            "apps": [
+                {
+                    "app_admin": {
+                        "display_name": "test_app Admin",
+                        "name": "test_app-admin",
+                        "role": {
+                            "app_name": "guardian",
+                            "display_name": "test_app App Admin",
+                            "name": "app-admin",
+                            "namespace_name": "test_app",
+                            "resource_url": f"{COMPLETE_URL}/roles/test_app/app-admin",
+                        },
+                    },
+                    "display_name": None,
+                    "name": "test_app",
+                    "resource_url": f"{COMPLETE_URL}/apps/test_app",
+                },
+                {
+                    "app_admin": {
+                        "display_name": "test_app2 Admin",
+                        "name": "test_app2-admin",
+                        "role": {
+                            "app_name": "guardian",
+                            "display_name": "test_app2 App Admin",
+                            "name": "app-admin",
+                            "namespace_name": "test_app2",
+                            "resource_url": f"{COMPLETE_URL}/roles/test_app2/app-admin",
+                        },
+                    },
+                    "display_name": None,
+                    "name": "test_app2",
+                    "resource_url": f"{COMPLETE_URL}/apps/test_app2",
+                },
+            ],
+            "pagination": {"limit": 2, "offset": 0, "total_count": 2},
+        }
+
+    @patch(
+        "guardian_management_api.adapters.app.AppStaticDataAdapter._data",
+        new={"apps": [App(name="test_app"), App(name="test_app2")]},
+    )
+    def test_get_all_apps_limit_and_offset(self, client, register_test_adapters):
+        response = client.get(app.url_path_for("get_all_apps") + "?limit=1&offset=1")
+        assert response.status_code == 200
+        assert response.json() == {
+            "apps": [
+                {
+                    "app_admin": {
+                        "display_name": "test_app2 Admin",
+                        "name": "test_app2-admin",
+                        "role": {
+                            "app_name": "guardian",
+                            "display_name": "test_app2 App Admin",
+                            "name": "app-admin",
+                            "namespace_name": "test_app2",
+                            "resource_url": f"{COMPLETE_URL}/roles/test_app2/app-admin",
+                        },
+                    },
+                    "display_name": None,
+                    "name": "test_app2",
+                    "resource_url": f"{COMPLETE_URL}/apps/test_app2",
+                }
+            ],
+            "pagination": {"limit": 1, "offset": 1, "total_count": 2},
+        }
