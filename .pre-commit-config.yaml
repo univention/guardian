@@ -10,11 +10,12 @@ repos:
     hooks:
     -   id: check-added-large-files
     -   id: check-json
-        exclude: frontend/conffiles/usr/share/ucs-school-ui-users-frontend/app/config.json
+        exclude: management-ui/
     -   id: check-xml
     -   id: check-yaml
     -   id: trailing-whitespace
     -   id: pretty-format-json
+        exclude: management-ui/
 -   repo: https://github.com/psf/black
     rev: 23.3.0
     hooks:

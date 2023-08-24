@@ -1,0 +1,93 @@
+{
+  "App": {
+    "error": {
+      "config": "Es ist ein Konfigurationsfehler aufgetreten. Bitte wenden Sie sich an einen Systemadministrator.",
+      "loginFailed": "Login fehlgeschlagen."
+    }
+  },
+  "SearchLimitReachedModal": {
+    "title": "Such-Limit erreicht",
+    "description": "Es wurden mehr als {{limit}} Objekte gefunden. Das Laden könnte einige Zeit dauern. Möchten Sie mit der Suche fortfahren?",
+    "button": {
+      "confirm": "Fortfahren"
+    }
+  },
+  "ErrorModal": {
+    "heading": "Fehler",
+    "button": {
+      "confirmation": "OK"
+    }
+  },
+  "ListView": {
+    "heading": {
+      "role": "Rollen",
+      "context": "Contexts",
+      "namespace": "Namespaces"
+    },
+    "searchForm": {
+      "resetButtonLabel": "Zurücksetzen",
+      "searchButtonLabel": "Suchen"
+    },
+    "contextActions": {
+      "editLabel": "Bearbeiten"
+    },
+    "globalActions": {
+      "addLabel": "Hinzufügen"
+    }
+  },
+  "EditView": {
+    "heading": {
+      "add.role": "Rolle anlegen",
+      "add.context": "Context anlegen",
+      "add.namespace": "Namespace anlegen",
+      "edit.role": "Rolle",
+      "edit.context": "Context",
+      "edit.namespace": "Namespace"
+    },
+    "button": {
+      "back": "Zurück",
+      "save": "Speichern",
+      "add.role": "Rolle anlegen",
+      "add.context": "Context anlegen",
+      "add.namespace": "Namespace anlegen"
+    },
+    "notFound.role": "Das Rollen-Object existiert nicht",
+    "notFound.context": "Das Context-Object existiert nicht",
+    "notFound.namespace": "Das Namespace-Object existiert nicht",
+    "creationFailed.role": "Die Rolle konnte nicht angelegt werden",
+    "loadAddViewConfigFailed": "Die Seite konnte nicht geladen werden"
+  },
+  "ConfirmBackModal": {
+    "heading": "Bestätigung",
+    "description_edit": "Einige Änderungen sind noch nicht gespeichert. Möchten Sie abbrechen?",
+    "description_add": "Möchten Sie den Erstellungsdialog abbrechen?",
+    "button": {
+      "continue_edit": "Bearbeiten fortführen",
+      "continue_add": "Erstellen fortführen",
+      "discard_edit": "Änderungen verwerfen",
+      "discard_add": "Erstellen abbrechen"
+    }
+  },
+  "EditViewSaveFailedModal": {
+    "heading.role_edit": "Das Rollen-Objekt konnte nicht gespeichert werden",
+    "heading.context_edit": "Das Context-Objekt konnte nicht gespeichert werden",
+    "heading.namespace_edit": "Das Namespace-Objekt konnte nicht gespeichert werden",
+    "heading.role_add": "Das Rollen-Objekt konnte nicht angelegt werden",
+    "heading.context_add": "Das Context-Objekt konnte nicht angelegt werden",
+    "heading.namespace_add": "Das Namespace-Objekt konnte nicht angelegt werden",
+    "baseDescription_edit": "Beim Speichern ist ein unbekannter Fehler aufgetreten",
+    "baseDescription_add": "Beim Anlegen ist ein unbekannter Fehler aufgetreten",
+    "fieldErrors.description": "Einige Felder enthalten Fehler:",
+    "button": {
+      "confirmation": "OK"
+    }
+  },
+  "EditViewSaveSuccessModal": {
+    "heading.role": "Das Rollen-Objekt '{{name}}' wurde erfolgreich angelegt",
+    "heading.context": "Das Context-Objekt '{{name}}' wurde erfolgreich angelegt",
+    "heading.namespace": "Das Namespace-Objekt '{{name}}' wurde erfolgreich angelegt",
+    "button": {
+      "confirmation": "OK"
+    }
+  }
+}

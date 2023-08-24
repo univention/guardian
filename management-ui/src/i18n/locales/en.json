@@ -1,0 +1,93 @@
+{
+  "App": {
+    "error": {
+      "config": "A configuration error occurred. Please contact your system administrator.",
+      "loginFailed": "Login failed."
+    }
+  },
+  "SearchLimitReachedModal": {
+    "title": "Search limit reached",
+    "description": "More than {{limit}} objects were found. Loading could take some time. Would you like to continue with your search?",
+    "button": {
+      "confirm": "Continue"
+    }
+  },
+  "ErrorModal": {
+    "heading": "Error",
+    "button": {
+      "confirmation": "OK"
+    }
+  },
+  "ListView": {
+    "heading": {
+      "role": "Roles",
+      "context": "Contexts",
+      "namespace": "Namespaces"
+    },
+    "searchForm": {
+      "resetButtonLabel": "Reset",
+      "searchButtonLabel": "Search"
+    },
+    "contextActions": {
+      "editLabel": "Edit"
+    },
+    "globalActions": {
+      "addLabel": "Add"
+    }
+  },
+  "EditView": {
+    "heading": {
+      "add.role": "Create role",
+      "add.context": "Create context",
+      "add.namespace": "Create namespace",
+      "edit.role": "Role",
+      "edit.context": "Context",
+      "edit.namespace": "Namespace"
+    },
+    "button": {
+      "back": "Back",
+      "save": "Save",
+      "add.role": "Create role",
+      "add.context": "Create context",
+      "add.namespace": "Create namespace"
+    },
+    "notFound.role": "The role object does not exist",
+    "notFound.context": "The context object does not exist",
+    "notFound.namespace": "The namespace object does not exist",
+    "creationFailed.role": "The role could not be created",
+    "loadAddViewConfigFailed": "The page could not be loaded"
+  },
+  "ConfirmBackModal": {
+    "heading": "Confirmation",
+    "description_edit": "There are unsaved changes. Are you sure to cancel?",
+    "description_add": "Do you want to cancel the creation dialog?",
+    "button": {
+      "continue_edit": "Continue editing",
+      "continue_add": "Continue creating",
+      "discard_edit": "Discard changes",
+      "discard_add": "Cancel creation"
+    }
+  },
+  "EditViewSaveFailedModal": {
+    "heading_edit.role": "The role object could not be saved",
+    "heading_edit.context": "The context object could not be saved",
+    "heading_edit.namespace": "The namespace object could not be saved",
+    "heading_add.role": "The role object could not be created",
+    "heading_add.context": "The context object could not be created",
+    "heading_add.namespace": "The namespace object could not be created",
+    "baseDescription_edit": "An unknown error occurred during saving",
+    "baseDescription_add": "An unknown error occurred during creation",
+    "fieldErrors.description": "Some fields contain errors:",
+    "button": {
+      "confirmation": "OK"
+    }
+  },
+  "EditViewSaveSuccessModal": {
+    "heading.role": "The role object '{{name}}' was successfully created",
+    "heading.context": "The context object '{{name}}' was successfully created",
+    "heading.namespace": "The namespace object '{{name}}' was successfully created",
+    "button": {
+      "confirmation": "OK"
+    }
+  }
+}
