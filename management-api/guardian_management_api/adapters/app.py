@@ -10,9 +10,8 @@ from ..models.app import (
     AppCreateQuery,
     AppGetQuery,
     AppsGetQuery,
-    ManyApps,
 )
-from ..models.base import PaginationRequest
+from ..models.base import PaginationRequest, PersistenceGetManyResult
 from ..models.routers.app import (
     App as ResponseApp,
 )
@@ -77,7 +76,7 @@ class FastAPIAppAPIAdapter(
         )
 
     async def to_app_get(self, api_request: AppGetRequest) -> AppGetQuery:
-        return AppGetQuery(apps=[App(name=api_request.name, display_name="")])
+        return AppGetQuery(name=api_request.name)
 
     async def to_api_get_response(
         self, app_result: App | None
@@ -167,14 +166,12 @@ class AppStaticDataAdapter(AppPersistencePort):
         self,
         query: AppGetQuery,
     ) -> App | None:
-        return next(
-            (app for app in self._data["apps"] if app.name == query.apps[0].name), None
-        )
+        return next((app for app in self._data["apps"] if app.name == query.name), None)
 
     async def read_many(
         self,
         query: AppsGetQuery,
-    ) -> ManyApps:
+    ) -> PersistenceGetManyResult[App]:
         total_count = len(self._data["apps"])
         result = []
 
@@ -186,7 +183,7 @@ class AppStaticDataAdapter(AppPersistencePort):
         else:
             result = self._data["apps"][query.pagination.query_offset :]
 
-        return ManyApps(apps=result, total_count=total_count)
+        return PersistenceGetManyResult(objects=result, total_count=total_count)
 
     async def update(
         self,

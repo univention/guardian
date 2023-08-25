@@ -31,18 +31,12 @@ class AppCreateQuery:
 
 @dataclass(frozen=True)
 class AppGetQuery:
-    apps: List[App]
+    name: str
 
 
 @dataclass(frozen=True)
 class AppsGetQuery:
     pagination: PaginationRequest
-
-
-@dataclass(frozen=True)
-class ManyApps:
-    apps: List[App]
-    total_count: int
 
 
 # We're intentionally not tying this to App,

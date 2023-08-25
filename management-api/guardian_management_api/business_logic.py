@@ -40,7 +40,7 @@ async def get_apps(
     query = await app_api_port.to_apps_get(api_request)
     many_apps = await persistence_port.read_many(query)
     return await app_api_port.to_api_apps_get_response(
-        apps=many_apps.apps,
+        apps=list(many_apps.objects),
         query_offset=query.pagination.query_offset,
         query_limit=query.pagination.query_limit
         if query.pagination.query_limit

@@ -67,7 +67,7 @@ class NamespacedResponseObject(NamespacedObject, ResponseObject):
 @dataclass(frozen=True)
 class PaginationRequest:
     query_offset: int
-    query_limit: Optional[int]
+    query_limit: Optional[int] = None
 
 
 PersistenceObject = TypeVar("PersistenceObject")

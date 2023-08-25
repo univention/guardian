@@ -13,9 +13,11 @@ from guardian_management_api.models.app import (
     AppCreateQuery,
     AppGetQuery,
     AppsGetQuery,
-    ManyApps,
 )
-from guardian_management_api.models.base import PaginationRequest
+from guardian_management_api.models.base import (
+    PaginationRequest,
+    PersistenceGetManyResult,
+)
 from guardian_management_api.models.routers.app import (
     App as ResponseApp,
 )
@@ -81,9 +83,7 @@ class TestFastAPIAppAdapter:
             name="name",
         )
         result = await adapter.to_app_get(api_request)
-        assert result == AppGetQuery(
-            apps=[App(name="name", display_name="")],
-        )
+        assert result == AppGetQuery(name="name")
 
     @pytest.mark.asyncio
     async def test_to_api_get_response(self, adapter):
@@ -134,7 +134,7 @@ class TestAppStaticDataAdapter:
             display_name="display_name",
         )
         adapter._data["apps"].append(app)
-        result = await adapter.read_one(query=AppGetQuery(apps=[app]))
+        result = await adapter.read_one(query=AppGetQuery(name=app.name))
         assert result == app
 
     apps = [
@@ -155,7 +155,7 @@ class TestAppStaticDataAdapter:
                 AppsGetQuery(
                     pagination=PaginationRequest(query_offset=0, query_limit=None),
                 ),
-                ManyApps(apps=apps, total_count=2),
+                PersistenceGetManyResult(objects=apps, total_count=2),
             ),
             (
                 AppsGetQuery(
@@ -164,7 +164,7 @@ class TestAppStaticDataAdapter:
                         query_limit=1,
                     ),
                 ),
-                ManyApps(apps=apps[:1], total_count=2),
+                PersistenceGetManyResult(objects=apps[:1], total_count=2),
             ),
             (
                 AppsGetQuery(
@@ -173,7 +173,7 @@ class TestAppStaticDataAdapter:
                         query_limit=10,
                     )
                 ),
-                ManyApps(apps=apps[1:], total_count=2),
+                PersistenceGetManyResult(objects=apps[1:], total_count=2),
             ),
             (
                 AppsGetQuery(
@@ -182,7 +182,7 @@ class TestAppStaticDataAdapter:
                         query_limit=1,
                     )
                 ),
-                ManyApps(apps=apps[1:2], total_count=2),
+                PersistenceGetManyResult(objects=apps[1:2], total_count=2),
             ),
         ],
     )
