@@ -16,8 +16,8 @@ from ..models.app import (
     AppCreateQuery,
     AppGetQuery,
     AppsGetQuery,
-    ManyApps,
 )
+from .base import BasePersistencePort
 
 AppAPICreateRequestObject = TypeVar("AppAPICreateRequestObject")
 AppAPICreateResponseObject = TypeVar("AppAPICreateResponseObject")
@@ -27,6 +27,7 @@ AppAPIGetResponseObject = TypeVar("AppAPIGetResponseObject")
 
 AppsAPIGetRequestObject = TypeVar("AppsAPIGetRequestObject")
 AppsAPIGetResponseObject = TypeVar("AppsAPIGetResponseObject")
+
 
 ###############################################################################
 #                                                                             #
@@ -91,31 +92,5 @@ class AppAPIPort(
 ###############################################################################
 
 
-class AppPersistencePort(BasePort, ABC):
-    @abstractmethod
-    async def create(
-        self,
-        app: App,
-    ) -> App:
-        raise NotImplementedError  # pragma: no cover
-
-    @abstractmethod
-    async def read_one(
-        self,
-        query: AppGetQuery,
-    ) -> App | None:
-        raise NotImplementedError  # pragma: no cover
-
-    @abstractmethod
-    async def read_many(
-        self,
-        query: AppsGetQuery,
-    ) -> ManyApps:
-        raise NotImplementedError  # pragma: no cover
-
-    @abstractmethod
-    async def update(
-        self,
-        app: App,
-    ) -> App:
-        raise NotImplementedError  # pragma: no cover
+class AppPersistencePort(BasePersistencePort[App, AppGetQuery, AppsGetQuery], ABC):
+    ...

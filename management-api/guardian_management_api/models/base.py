@@ -7,7 +7,7 @@ Shared classes for the ports/models implementations
 """
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Generic, Iterable, Optional, TypeVar
 
 ###############################################################################
 #                                                                             #
@@ -68,3 +68,14 @@ class NamespacedResponseObject(NamespacedObject, ResponseObject):
 class PaginationRequest:
     query_offset: int
     query_limit: Optional[int]
+
+
+PersistenceObject = TypeVar("PersistenceObject")
+PersistenceGetQuery = TypeVar("PersistenceGetQuery")
+PersistenceGetManyQuery = TypeVar("PersistenceGetManyQuery")
+
+
+@dataclass(frozen=True)
+class PersistenceGetManyResult(Generic[PersistenceObject]):
+    objects: Iterable[PersistenceObject]
+    total_count: int
