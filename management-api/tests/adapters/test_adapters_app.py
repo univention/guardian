@@ -11,6 +11,7 @@ from guardian_management_api.constants import COMPLETE_URL
 from guardian_management_api.models.app import (
     App,
     AppCreateQuery,
+    AppEditQuery,
     AppGetQuery,
     AppsGetQuery,
 )
@@ -24,6 +25,8 @@ from guardian_management_api.models.routers.app import (
 from guardian_management_api.models.routers.app import (
     AppAdmin,
     AppCreateRequest,
+    AppEditData,
+    AppEditRequest,
     AppGetRequest,
     AppSingleResponse,
 )
@@ -109,6 +112,50 @@ class TestFastAPIAppAdapter:
                     ),
                 ),
             )
+        )
+
+    @pytest.mark.asyncio
+    async def test_to_api_edit_response(self, adapter):
+        app = App(
+            name="name",
+            display_name="display_name",
+        )
+        result = await adapter.to_api_edit_response(app)
+        assert result == AppSingleResponse(
+            app=ResponseApp(
+                name="name",
+                display_name="display_name",
+                resource_url=f"{COMPLETE_URL}/apps/name",
+                app_admin=AppAdmin(
+                    name="name-admin",
+                    display_name="name Admin",
+                    role=ResponseRole(
+                        resource_url=f"{COMPLETE_URL}/roles/name/app-admin",
+                        app_name="guardian",
+                        namespace_name="name",
+                        name="app-admin",
+                        display_name="name App Admin",
+                    ),
+                ),
+            )
+        )
+
+    @pytest.mark.asyncio
+    async def test_to_app_edit(self, adapter):
+        api_request = AppEditRequest(
+            name="name",
+            data=AppEditData(
+                display_name="display_name",
+            ),
+        )
+        result = await adapter.to_app_edit(api_request)
+        assert result == AppEditQuery(
+            apps=[
+                App(
+                    name="name",
+                    display_name="display_name",
+                )
+            ],
         )
 
 

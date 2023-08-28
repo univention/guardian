@@ -182,3 +182,43 @@ class TestAppEndpoints:
             ],
             "pagination": {"limit": 1, "offset": 1, "total_count": 2},
         }
+
+    @patch(
+        "guardian_management_api.adapters.app.AppStaticDataAdapter._data",
+        new={"apps": [App(name="test_app2")]},
+    )
+    def test_patch_app(self, client, register_test_adapters):
+        response = client.patch(
+            app.url_path_for("edit_app", name="test_app2"),
+            json={"name": "test_app2", "display_name": "expected displayname"},
+        )
+        assert response.status_code == 201
+        assert response.json() == {
+            "app": {
+                "app_admin": {
+                    "display_name": "test_app2 Admin",
+                    "name": "test_app2-admin",
+                    "role": {
+                        "app_name": "guardian",
+                        "display_name": "test_app2 App Admin",
+                        "name": "app-admin",
+                        "namespace_name": "test_app2",
+                        "resource_url": f"{COMPLETE_URL}/roles/test_app2/app-admin",
+                    },
+                },
+                "display_name": "expected displayname",
+                "name": "test_app2",
+                "resource_url": f"{COMPLETE_URL}/apps/test_app2",
+            }
+        }
+
+    @patch(
+        "guardian_management_api.adapters.app.AppStaticDataAdapter._data",
+        new={"apps": []},
+    )
+    def test_patch_non_existing_app_fails(self, client, register_test_adapters):
+        response = client.patch(
+            app.url_path_for("edit_app", name="non-existing"),
+            json={"name": "non-existing", "display_name": "displayname"},
+        )
+        assert response.status_code == 404

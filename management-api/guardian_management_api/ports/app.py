@@ -14,6 +14,7 @@ from guardian_lib.ports import BasePort
 from ..models.app import (
     App,
     AppCreateQuery,
+    AppEditQuery,
     AppGetQuery,
     AppsGetQuery,
 )
@@ -28,6 +29,8 @@ AppAPIGetResponseObject = TypeVar("AppAPIGetResponseObject")
 AppsAPIGetRequestObject = TypeVar("AppsAPIGetRequestObject")
 AppsAPIGetResponseObject = TypeVar("AppsAPIGetResponseObject")
 
+AppAPIEditRequestObject = TypeVar("AppAPIEditRequestObject")
+AppAPIEditResponseObject = TypeVar("AppAPIEditResponseObject")
 
 ###############################################################################
 #                                                                             #
@@ -46,6 +49,8 @@ class AppAPIPort(
         AppAPIGetResponseObject,
         AppsAPIGetRequestObject,
         AppsAPIGetResponseObject,
+        AppAPIEditRequestObject,
+        AppAPIEditResponseObject,
     ],
 ):
     @abstractmethod
@@ -58,6 +63,16 @@ class AppAPIPort(
     async def to_api_create_response(
         self, app_result: App
     ) -> AppAPICreateResponseObject:
+        raise NotImplementedError  # pragma: no cover
+
+    @abstractmethod
+    async def to_app_edit(self, api_request: AppAPIEditRequestObject) -> AppEditQuery:
+        raise NotImplementedError  # pragma: no cover
+
+    @abstractmethod
+    async def to_api_edit_response(
+        self, app_result: App | None
+    ) -> AppAPIEditResponseObject | None:
         raise NotImplementedError  # pragma: no cover
 
     @abstractmethod

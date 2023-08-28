@@ -1,8 +1,10 @@
 # Copyright (C) 2023 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
+from .errors import ObjectNotFoundError
 from .models.routers.app import (
     AppCreateRequest,
+    AppEditRequest,
     AppGetRequest,
     AppMultipleResponse,
     AppsGetRequest,
@@ -47,3 +49,17 @@ async def get_apps(
         else many_apps.total_count,
         total_count=many_apps.total_count,
     )
+
+
+async def edit_app(
+    api_request: AppEditRequest,
+    app_api_port: AppAPIPort,
+    persistence_port: AppPersistencePort,
+) -> AppSingleResponse | None:
+    query = await app_api_port.to_app_edit(api_request)
+    app = query.apps[0]
+    try:
+        updated_app = await persistence_port.update(app)
+    except ObjectNotFoundError:
+        updated_app = None
+    return await app_api_port.to_api_edit_response(updated_app)

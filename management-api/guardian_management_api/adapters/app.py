@@ -5,9 +5,11 @@
 from typing import Any, Dict, List, Optional
 
 from ..constants import COMPLETE_URL
+from ..errors import ObjectNotFoundError
 from ..models.app import (
     App,
     AppCreateQuery,
+    AppEditQuery,
     AppGetQuery,
     AppsGetQuery,
 )
@@ -18,6 +20,7 @@ from ..models.routers.app import (
 from ..models.routers.app import (
     AppAdmin,
     AppCreateRequest,
+    AppEditRequest,
     AppGetRequest,
     AppMultipleResponse,
     AppsGetRequest,
@@ -39,6 +42,8 @@ class FastAPIAppAPIAdapter(
         AppSingleResponse,
         AppsGetRequest,
         AppMultipleResponse,
+        AppEditRequest,
+        AppSingleResponse,
     ]
 ):
     class Config:
@@ -52,6 +57,41 @@ class FastAPIAppAPIAdapter(
                     display_name=api_request.display_name,
                 )
             ]
+        )
+
+    async def to_app_edit(self, api_request: AppEditRequest) -> AppEditQuery:
+        return AppEditQuery(
+            apps=[
+                App(
+                    name=api_request.name,
+                    display_name=api_request.data.display_name,
+                )
+            ]
+        )
+
+    async def to_api_edit_response(
+        self, app_result: App | None
+    ) -> AppSingleResponse | None:
+        if not app_result:
+            return None
+        return AppSingleResponse(
+            app=ResponseApp(
+                name=app_result.name,
+                display_name=app_result.display_name,
+                resource_url=f"{COMPLETE_URL}/apps/{app_result.name}",
+                # TODO: this is currently hardcoded, should be fixed in the future
+                app_admin=AppAdmin(
+                    name=f"{app_result.name}-admin",
+                    display_name=f"{app_result.name} Admin",
+                    role=ResponseRole(
+                        namespace_name=app_result.name,
+                        name="app-admin",
+                        app_name="guardian",
+                        resource_url=f"{COMPLETE_URL}/roles/{app_result.name}/app-admin",
+                        display_name=f"{app_result.name} App Admin",
+                    ),
+                ),
+            )
         )
 
     async def to_api_create_response(self, app_result: App) -> AppSingleResponse:
@@ -187,10 +227,12 @@ class AppStaticDataAdapter(AppPersistencePort):
 
     async def update(
         self,
-        app: App,
+        updated_app: App,
     ) -> App:
-        # self._data.apps = [
-        #    app if app.name == app.name else app for app in self._data.apps
-        # ]
-        # return app
-        raise NotImplementedError  # pragma: no cover
+        if not any(app.name == updated_app.name for app in self._data["apps"]):
+            raise ObjectNotFoundError("The app could not be found.")
+        self._data["apps"] = [
+            updated_app if app.name == updated_app.name else app
+            for app in self._data["apps"]
+        ]
+        return updated_app

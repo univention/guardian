@@ -116,16 +116,22 @@ async def register_app():  # pragma: no cover
     return response
 
 
-@router.patch("/apps/{name}", response_model=AppSingleResponse)
-async def edit_app(app_edit_request: AppEditRequest = Depends()):  # pragma: no cover
+@router.patch("/apps/{name}", response_model=AppSingleResponse, status_code=201)
+async def edit_app(
+    app_edit_request: AppEditRequest = Depends(),
+    app_api: FastAPIAppAPIAdapter = Depends(port_dep(AppAPIPort, FastAPIAppAPIAdapter)),
+    persistence: AppPersistencePort = Depends(port_dep(AppPersistencePort)),
+) -> Dict[str, Any]:  # pragma: no cover
     """
     Update an app.
     """
-    return AppSingleResponse(
-        app=ResponseApp(
-            name="my-app",
-            display_name="My App",
-            resource_url=f"{COMPLETE_URL}/guardian/management/apps/my-app",
-            app_admin=None,
+    response: AppSingleResponse | None = await business_logic.edit_app(
+        api_request=app_edit_request,
+        app_api_port=app_api,
+        persistence_port=persistence,
+    )
+    if response is None:
+        return ORJSONResponse(  # type: ignore
+            status_code=status.HTTP_404_NOT_FOUND, content={"message": "App not found"}
         )
-    ).dict()
+    return response.dict()
