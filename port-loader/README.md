@@ -17,7 +17,7 @@ from port_loader import AsyncAdapterRegistry, AsyncAdapterSettingsProvider, Sett
 
 registry = AsyncAdapterRegistry()
 
-@registry.register_adapter(AsyncAdapterSettingsProvider, set_adapter=True)
+@registry.register_adapter(AsyncAdapterSettingsProvider)
 class MyAsyncAdapterSettingsProvider(AsyncAdapterSettingsProvider):
         async def get_adapter_settings(self, settings_cls: Type[Settings]) -> Settings:
             raise NotImplementedError
@@ -31,7 +31,7 @@ class MyPort:
 class OtherPort:
     ...
 
-@registry.register_adapter(MyPort, set_adapter=True)
+@registry.register_adapter(MyPort)
 class MyAdapter(MyPort):
     def some_function(self, a: int, other_port: OtherPort = inject_port(OtherPort)):
         ...
