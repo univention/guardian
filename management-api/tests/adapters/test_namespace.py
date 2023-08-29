@@ -4,7 +4,11 @@
 
 import pytest
 import pytest_asyncio
-from guardian_management_api.adapters.namespace import SQLNamespacePersistenceAdapter
+from guardian_management_api.adapters.namespace import (
+    FastAPINamespaceAPIAdapter,
+    SQLNamespacePersistenceAdapter,
+)
+from guardian_management_api.constants import COMPLETE_URL
 from guardian_management_api.errors import (
     ObjectExistsError,
     ObjectNotFoundError,
@@ -17,14 +21,174 @@ from guardian_management_api.models.base import (
 )
 from guardian_management_api.models.namespace import (
     Namespace,
+    NamespaceCreateQuery,
+    NamespaceEditQuery,
     NamespaceGetQuery,
     NamespacesGetQuery,
+)
+from guardian_management_api.models.routers.base import PaginationInfo
+from guardian_management_api.models.routers.namespace import (
+    Namespace as ResponseNamespace,
+)
+from guardian_management_api.models.routers.namespace import (
+    NamespaceCreateData,
+    NamespaceCreateRequest,
+    NamespaceEditData,
+    NamespaceEditRequest,
+    NamespaceGetRequest,
+    NamespaceMultipleResponse,
+    NamespacesByAppnameGetRequest,
+    NamespacesGetRequest,
+    NamespaceSingleResponse,
 )
 from guardian_management_api.models.sql_persistence import (
     DBNamespace,
 )
 from guardian_management_api.ports.namespace import NamespacePersistencePort
 from sqlalchemy import select
+
+
+class TestFastAPINamespaceAdapter:
+    @pytest.fixture(autouse=True)
+    def adapter(self):
+        return FastAPINamespaceAPIAdapter()
+
+    @pytest.mark.asyncio
+    async def test_to_namespace_create(self, adapter):
+        app_name = "app-name"
+        api_request = NamespaceCreateRequest(
+            app_name=app_name,
+            data=NamespaceCreateData(
+                display_name="display_name", name="namespace-name"
+            ),
+        )
+        result = await adapter.to_namespace_create(api_request)
+        assert result == NamespaceCreateQuery(
+            name="namespace-name",
+            display_name="display_name",
+            app_name=app_name,
+        )
+
+    @pytest.mark.asyncio
+    async def test_to_api_create_response(self, adapter):
+        namespace = Namespace(
+            name="name", display_name="display_name", app_name="app-name"
+        )
+        result = await adapter.to_api_create_response(namespace)
+        assert result == NamespaceSingleResponse(
+            namespace=ResponseNamespace(
+                name=namespace.name,
+                app_name=namespace.app_name,
+                display_name=namespace.display_name,
+                resource_url=f"{COMPLETE_URL}/namespaces/{namespace.app_name}/{namespace.name}",
+            )
+        )
+
+    @pytest.mark.asyncio
+    async def test_to_namespace_get(self, adapter):
+        app_name = "app-name"
+        api_request = NamespaceGetRequest(
+            app_name=app_name,
+            name="namespace-name",
+        )
+        result = await adapter.to_namespace_get(api_request)
+        assert result == NamespaceGetQuery(
+            name="namespace-name",
+            app_name=app_name,
+        )
+
+    @pytest.mark.asyncio
+    async def test_to_api_get_response(self, adapter):
+        namespace = Namespace(
+            name="name", display_name="display_name", app_name="app-name"
+        )
+        result = await adapter.to_api_get_response(namespace)
+        assert result == NamespaceSingleResponse(
+            namespace=ResponseNamespace(
+                name=namespace.name,
+                app_name=namespace.app_name,
+                display_name=namespace.display_name,
+                resource_url=f"{COMPLETE_URL}/namespaces/{namespace.app_name}/{namespace.name}",
+            )
+        )
+
+    @pytest.mark.asyncio
+    async def test_to_namespaces_get(self, adapter):
+        api_request = NamespacesGetRequest(offset=0, limit=1)
+        result = await adapter.to_namespaces_get(api_request)
+        assert result == NamespacesGetQuery(
+            pagination=PaginationRequest(query_offset=0, query_limit=1)
+        )
+
+    @pytest.mark.asyncio
+    async def test_to_api_namespaces_get_response(self, adapter):
+        namespaces = [
+            Namespace(
+                name=f"name-{i}", display_name="display_name", app_name="app-name"
+            )
+            for i in range(3)
+        ]
+        result = await adapter.to_api_namespaces_get_response(
+            list(namespaces), query_offset=0, query_limit=3, total_count=len(namespaces)
+        )
+        expected_namespaces = [
+            ResponseNamespace(
+                name=namespace.name,
+                app_name=namespace.app_name,
+                display_name=namespace.display_name,
+                resource_url=f"{COMPLETE_URL}/namespaces/{namespace.app_name}/{namespace.name}",
+            )
+            for namespace in namespaces
+        ]
+        assert result == NamespaceMultipleResponse(
+            namespaces=list(expected_namespaces),
+            pagination=PaginationInfo(
+                offset=0,
+                limit=3,
+                total_count=len(namespaces),
+            ),
+        )
+
+    @pytest.mark.asyncio
+    async def test_to_api_edit_response(self, adapter):
+        namespace = Namespace(
+            name="name", display_name="display_name", app_name="app-name"
+        )
+        result = await adapter.to_api_edit_response(namespace)
+        assert result == NamespaceSingleResponse(
+            namespace=ResponseNamespace(
+                name=namespace.name,
+                app_name=namespace.app_name,
+                display_name=namespace.display_name,
+                resource_url=f"{COMPLETE_URL}/namespaces/{namespace.app_name}/{namespace.name}",
+            )
+        )
+
+    @pytest.mark.asyncio
+    async def test_to_namespaces_by_appname_get(self, adapter):
+        api_request = NamespacesByAppnameGetRequest(
+            offset=0, limit=1, app_name="test-app"
+        )
+        result = await adapter.to_namespaces_by_appname_get(api_request)
+        assert result == NamespacesGetQuery(
+            pagination=PaginationRequest(query_offset=0, query_limit=1),
+            app_name="test-app",
+        )
+
+    @pytest.mark.asyncio
+    async def test_to_namespaces_edit(self, adapter):
+        app_name = "app-name"
+        api_request = NamespaceEditRequest(
+            app_name=app_name,
+            name="namespace-name",
+            data=NamespaceEditData(display_name="display_name"),
+        )
+        result = await adapter.to_namespace_edit(api_request)
+        assert result == NamespaceEditQuery(
+            name="namespace-name",
+            display_name="display_name",
+            app_name=app_name,
+        )
 
 
 class TestSQLNamespacePersistenceAdapter:

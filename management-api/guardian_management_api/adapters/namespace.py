@@ -3,16 +3,188 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 from dataclasses import asdict
-from typing import Type
+from typing import List, Optional, Type
 
+from fastapi import HTTPException
 from port_loader import AsyncConfiguredAdapterMixin
+from starlette import status
 
-from ..errors import ObjectNotFoundError, ParentNotFoundError
-from ..models.base import PersistenceGetManyResult
-from ..models.namespace import Namespace, NamespaceGetQuery, NamespacesGetQuery
+from ..constants import COMPLETE_URL
+from ..errors import ObjectExistsError, ObjectNotFoundError, ParentNotFoundError
+from ..models.base import PaginationRequest, PersistenceGetManyResult
+from ..models.namespace import (
+    Namespace,
+    NamespaceCreateQuery,
+    NamespaceEditQuery,
+    NamespaceGetQuery,
+    NamespacesGetQuery,
+)
+from ..models.routers.base import GetByAppRequest, PaginationInfo
+from ..models.routers.namespace import (
+    Namespace as ResponseNamespace,
+)
+from ..models.routers.namespace import (
+    NamespaceCreateRequest,
+    NamespaceEditRequest,
+    NamespaceGetRequest,
+    NamespaceMultipleResponse,
+    NamespacesGetRequest,
+    NamespaceSingleResponse,
+)
 from ..models.sql_persistence import DBApp, DBNamespace, SQLPersistenceAdapterSettings
-from ..ports.namespace import NamespacePersistencePort
+from ..ports.namespace import (
+    NamespaceAPIEditRequestObject,
+    NamespaceAPIPort,
+    NamespacePersistencePort,
+)
 from .sql_persistence import SQLAlchemyMixin
+
+
+class FastAPINamespaceAPIAdapter(
+    NamespaceAPIPort[
+        NamespaceCreateRequest,
+        NamespaceSingleResponse,
+        NamespaceGetRequest,
+        NamespaceSingleResponse,
+        NamespacesGetRequest,
+        NamespaceMultipleResponse,
+        NamespaceAPIEditRequestObject,
+        NamespaceSingleResponse,
+        GetByAppRequest,
+        NamespaceMultipleResponse,
+    ]
+):
+    async def transform_exception(self, exc: Exception) -> Exception:
+        if isinstance(exc, ObjectNotFoundError):
+            return HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"message": "Namespace not found."},
+            )
+        elif isinstance(exc, ParentNotFoundError):
+            return HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"message": "Corresponding App not found."},
+            )
+        elif isinstance(exc, ObjectExistsError):
+            return HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={"message": "Namespace exists already."},
+            )
+        return HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"message": "Internal Server Error"},
+        )
+
+    async def to_namespaces_by_appname_get(
+        self, api_request: GetByAppRequest
+    ) -> NamespacesGetQuery:
+        return NamespacesGetQuery(
+            pagination=PaginationRequest(
+                query_offset=api_request.offset,
+                query_limit=api_request.limit,
+            ),
+            app_name=api_request.app_name,
+        )
+
+    async def to_api_edit_response(
+        self, namespace_result: Namespace
+    ) -> NamespaceSingleResponse:
+        return NamespaceSingleResponse(
+            namespace=ResponseNamespace(
+                name=namespace_result.name,
+                app_name=namespace_result.app_name,
+                display_name=namespace_result.display_name,
+                resource_url=f"{COMPLETE_URL}/namespaces/{namespace_result.app_name}/{namespace_result.name}",
+            )
+        )
+
+    async def to_namespace_edit(
+        self,
+        api_request: NamespaceEditRequest,
+    ) -> NamespaceEditQuery:
+        return NamespaceEditQuery(
+            name=api_request.name,
+            display_name=api_request.data.display_name,
+            app_name=api_request.app_name,
+        )
+
+    class Config:
+        alias = "fastapi"
+
+    async def to_namespace_create(
+        self, api_request: NamespaceCreateRequest
+    ) -> NamespaceCreateQuery:
+        return NamespaceCreateQuery(
+            name=api_request.data.name,
+            display_name=api_request.data.display_name,
+            app_name=api_request.app_name,
+        )
+
+    async def to_api_create_response(
+        self, namespace_result: Namespace
+    ) -> NamespaceSingleResponse:
+        return NamespaceSingleResponse(
+            namespace=ResponseNamespace(
+                name=namespace_result.name,
+                app_name=namespace_result.app_name,
+                display_name=namespace_result.display_name,
+                resource_url=f"{COMPLETE_URL}/namespaces/{namespace_result.app_name}/{namespace_result.name}",
+            )
+        )
+
+    async def to_api_get_response(
+        self, namespace_result: Namespace
+    ) -> NamespaceSingleResponse:
+        return NamespaceSingleResponse(
+            namespace=ResponseNamespace(
+                name=namespace_result.name,
+                app_name=namespace_result.app_name,
+                display_name=namespace_result.display_name,
+                resource_url=f"{COMPLETE_URL}/namespaces/{namespace_result.app_name}/{namespace_result.name}",
+            )
+        )
+
+    async def to_namespace_get(
+        self, api_request: NamespaceGetRequest
+    ) -> NamespaceGetQuery:
+        return NamespaceGetQuery(
+            name=api_request.name,
+            app_name=api_request.app_name,
+        )
+
+    async def to_namespaces_get(
+        self, api_request: NamespacesGetRequest
+    ) -> NamespacesGetQuery:
+        return NamespacesGetQuery(
+            pagination=PaginationRequest(
+                query_offset=api_request.offset,
+                query_limit=api_request.limit,
+            )
+        )
+
+    async def to_api_namespaces_get_response(
+        self,
+        namespaces: List[Namespace],
+        query_offset: int,
+        query_limit: Optional[int],
+        total_count: int,
+    ) -> NamespaceMultipleResponse:
+        return NamespaceMultipleResponse(
+            pagination=PaginationInfo(
+                offset=query_offset,
+                limit=query_limit,
+                total_count=total_count,
+            ),
+            namespaces=[
+                ResponseNamespace(
+                    name=ns.name,
+                    display_name=ns.display_name,
+                    app_name=ns.app_name,
+                    resource_url=f"http://localhost:8001/guardian/management/namespaces/{ns.app_name}/{ns.name}",
+                )
+                for ns in namespaces
+            ],
+        )
 
 
 class SQLNamespacePersistenceAdapter(

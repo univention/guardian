@@ -11,6 +11,7 @@ from .base import (
     NameObjectMixin,
     NamePathMixin,
     PaginationObjectMixin,
+    PaginationRequestMixin,
     ResourceURLObjectMixin,
 )
 
@@ -21,6 +22,14 @@ from .base import (
 
 class NamespaceGetRequest(GuardianBaseModel, AppNamePathMixin, NamePathMixin):
     ...
+
+
+class NamespacesGetRequest(GuardianBaseModel, PaginationRequestMixin):
+    ...
+
+
+class NamespacesByAppnameGetRequest(GuardianBaseModel, PaginationRequestMixin):
+    app_name: str
 
 
 class NamespaceCreateData(GuardianBaseModel, DisplayNameObjectMixin, NameObjectMixin):

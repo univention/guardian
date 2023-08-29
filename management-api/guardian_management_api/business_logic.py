@@ -6,6 +6,7 @@ from dataclasses import asdict
 
 from loguru import logger
 
+from .adapters.namespace import FastAPINamespaceAPIAdapter
 from .models.namespace import Namespace
 from .models.permission import Permission
 from .models.role import Role
@@ -17,12 +18,21 @@ from .models.routers.app import (
     AppsGetRequest,
     AppSingleResponse,
 )
+from .models.routers.base import GetByAppRequest
 from .models.routers.context import (
     ContextCreateRequest,
     ContextEditRequest,
     ContextGetRequest,
     ContextMultipleResponse,
     ContextSingleResponse,
+)
+from .models.routers.namespace import (
+    NamespaceCreateRequest,
+    NamespaceEditRequest,
+    NamespaceGetRequest,
+    NamespaceMultipleResponse,
+    NamespacesGetRequest,
+    NamespaceSingleResponse,
 )
 from .models.routers.role import (
     RoleCreateRequest,
@@ -55,7 +65,9 @@ from .ports.context import (
     ContextPersistencePort,
     ContextsAPIGetRequestObject,
 )
-from .ports.namespace import NamespacePersistencePort
+from .ports.namespace import (
+    NamespacePersistencePort,
+)
 from .ports.permission import (
     PermissionAPICreateRequestObject,
     PermissionAPIEditRequestObject,
@@ -78,6 +90,103 @@ async def create_app(
     app = query.apps[0]
     created_app = await persistence_port.create(app)
     return await app_api_port.to_api_create_response(created_app)
+
+
+async def get_app(
+    api_request: AppGetRequest,
+    app_api_port: AppAPIPort,
+    persistence_port: AppPersistencePort,
+) -> AppSingleResponse:
+    try:
+        query = await app_api_port.to_app_get(api_request)
+        app = await persistence_port.read_one(query)
+        return await app_api_port.to_api_get_response(app)
+    except Exception as exc:
+        raise (await app_api_port.transform_exception(exc)) from exc
+
+
+async def get_apps(
+    api_request: AppsGetRequest,
+    app_api_port: AppAPIPort,
+    persistence_port: AppPersistencePort,
+) -> AppMultipleResponse:
+    query = await app_api_port.to_apps_get(api_request)
+    many_apps = await persistence_port.read_many(query)
+    return await app_api_port.to_api_apps_get_response(
+        apps=list(many_apps.objects),
+        query_offset=query.pagination.query_offset,
+        query_limit=query.pagination.query_limit
+        if query.pagination.query_limit
+        else many_apps.total_count,
+        total_count=many_apps.total_count,
+    )
+
+
+async def create_namespace(
+    api_request: NamespaceCreateRequest,
+    namespace_api_port: FastAPINamespaceAPIAdapter,
+    namespace_persistence_port: NamespacePersistencePort,
+) -> NamespaceSingleResponse:
+    query = await namespace_api_port.to_namespace_create(api_request)
+    try:
+        created_namespace = await namespace_persistence_port.create(query)
+        logger.bind(query=query, created_namespace=created_namespace).debug(
+            "Created Namespace."
+        )
+    except Exception as exc:
+        raise (await namespace_api_port.transform_exception(exc)) from exc
+    return await namespace_api_port.to_api_create_response(created_namespace)
+
+
+async def edit_namespace(
+    api_request: NamespaceEditRequest,
+    namespace_api_port: FastAPINamespaceAPIAdapter,
+    namespace_persistence_port: NamespacePersistencePort,
+):
+    query = await namespace_api_port.to_namespace_edit(api_request)
+    try:
+        updated_namespace = await namespace_persistence_port.update(query)
+        logger.bind(query=query, updated_namespace=updated_namespace).debug(
+            "Updated Namespace."
+        )
+    except Exception as exc:
+        raise (await namespace_api_port.transform_exception(exc)) from exc
+    return await namespace_api_port.to_api_edit_response(updated_namespace)
+
+
+async def get_namespace(
+    api_request: NamespaceGetRequest,
+    namespace_api_port: FastAPINamespaceAPIAdapter,
+    namespace_persistence_port: NamespacePersistencePort,
+):
+    query = await namespace_api_port.to_namespace_get(api_request)
+    try:
+        namespace = await namespace_persistence_port.read_one(query)
+        logger.bind(query=query, namespace=namespace).debug("Retrieved Namespace.")
+    except Exception as exc:
+        raise (await namespace_api_port.transform_exception(exc)) from exc
+    return await namespace_api_port.to_api_get_response(namespace)
+
+
+async def get_namespaces(
+    api_request: NamespacesGetRequest,
+    namespace_api_port: FastAPINamespaceAPIAdapter,
+    namespace_persistence_port: NamespacePersistencePort,
+) -> NamespaceMultipleResponse:
+    query = await namespace_api_port.to_namespaces_get(api_request)
+    try:
+        result = await namespace_persistence_port.read_many(query)
+        logger.bind(query=query, namespaces=result).debug("Retrieved Namespaces.")
+    except Exception as exc:
+        raise (await namespace_api_port.transform_exception(exc)) from exc
+    return await namespace_api_port.to_api_namespaces_get_response(
+        namespaces=list(result.objects),
+        query_offset=query.pagination.query_offset,
+        query_limit=query.pagination.query_limit
+        if query.pagination.query_limit
+        else result.total_count,
+        total_count=result.total_count,
+    )
 
 
 async def register_app(
@@ -111,36 +220,6 @@ async def register_app(
         )
     except Exception as exc:
         raise (await app_api_port.transform_exception(exc)) from exc
-
-
-async def get_app(
-    api_request: AppGetRequest,
-    app_api_port: AppAPIPort,
-    persistence_port: AppPersistencePort,
-) -> AppSingleResponse:
-    try:
-        query = await app_api_port.to_app_get(api_request)
-        app = await persistence_port.read_one(query)
-        return await app_api_port.to_api_get_response(app)
-    except Exception as exc:
-        raise (await app_api_port.transform_exception(exc)) from exc
-
-
-async def get_apps(
-    api_request: AppsGetRequest,
-    app_api_port: AppAPIPort,
-    persistence_port: AppPersistencePort,
-) -> AppMultipleResponse:
-    query = await app_api_port.to_apps_get(api_request)
-    many_apps = await persistence_port.read_many(query)
-    return await app_api_port.to_api_apps_get_response(
-        apps=list(many_apps.objects),
-        query_offset=query.pagination.query_offset,
-        query_limit=query.pagination.query_limit
-        if query.pagination.query_limit
-        else many_apps.total_count,
-        total_count=many_apps.total_count,
-    )
 
 
 async def edit_app(
@@ -416,3 +495,26 @@ async def edit_context(
     except Exception as exc:
         raise (await api_port.transform_exception(exc)) from exc
     return await api_port.to_api_edit_response(updated_context)
+
+
+async def get_namespaces_by_app(
+    api_request: GetByAppRequest,
+    namespace_api_port: FastAPINamespaceAPIAdapter,
+    namespace_persistence_port: NamespacePersistencePort,
+):
+    query = await namespace_api_port.to_namespaces_by_appname_get(api_request)
+    try:
+        result = await namespace_persistence_port.read_many(query)
+        logger.bind(query=query, namespaces=result).debug("Retrieved Namespaces.")
+    except Exception as exc:
+        raise (
+            await namespace_api_port.transform_exception(exc)
+        ) from exc  # pragma: no cover
+    return await namespace_api_port.to_api_namespaces_get_response(
+        namespaces=list(result.objects),
+        query_offset=query.pagination.query_offset,
+        query_limit=query.pagination.query_limit
+        if query.pagination.query_limit
+        else result.total_count,
+        total_count=result.total_count,
+    )
