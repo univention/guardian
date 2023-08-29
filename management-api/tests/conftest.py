@@ -24,7 +24,10 @@ from guardian_management_api.adapters.context import (
     FastAPIContextAPIAdapter,
     SQLContextPersistenceAdapter,
 )
-from guardian_management_api.adapters.namespace import SQLNamespacePersistenceAdapter
+from guardian_management_api.adapters.namespace import (
+    FastAPINamespaceAPIAdapter,
+    SQLNamespacePersistenceAdapter,
+)
 from guardian_management_api.adapters.permission import (
     FastAPIPermissionAPIAdapter,
     PermissionStaticDataAdapter,
@@ -55,7 +58,10 @@ from guardian_management_api.ports.condition import (
     ConditionPersistencePort,
 )
 from guardian_management_api.ports.context import ContextAPIPort, ContextPersistencePort
-from guardian_management_api.ports.namespace import NamespacePersistencePort
+from guardian_management_api.ports.namespace import (
+    NamespaceAPIPort,
+    NamespacePersistencePort,
+)
 from guardian_management_api.ports.permission import (
     PermissionAPIPort,
     PermissionPersistencePort,
@@ -157,6 +163,7 @@ def register_test_adapters(patch_env):
         (PermissionPersistencePort, SQLPermissionPersistenceAdapter),
         (RolePersistencePort, SQLRolePersistenceAdapter),
         (AppAPIPort, FastAPIAppAPIAdapter),
+        (NamespaceAPIPort, FastAPINamespaceAPIAdapter),
         (ConditionAPIPort, FastAPIConditionAPIAdapter),
         (BundleServerPort, BundleServerAdapter),
         (PermissionAPIPort, FastAPIPermissionAPIAdapter),

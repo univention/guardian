@@ -25,3 +25,13 @@ class NamespaceGetQuery:
 class NamespacesGetQuery:
     pagination: PaginationRequest
     app_name: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class NamespaceCreateQuery(Namespace):
+    ...
+
+
+@dataclass(frozen=True)
+class NamespaceEditQuery(Namespace):
+    ...
