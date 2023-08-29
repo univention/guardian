@@ -41,6 +41,17 @@ More information can be found [here](opa/README.md)
 This app contains the components `Guardian Authorization API` and the OPA service in a docker compose app.
 The configuration files can be found in `appcenter-authz`. The App ID is `guardian-authorization-api`.
 
+### Guardian Management API
+
+This app contains the components for `Guardian Management API`.
+The configuration files can be found in `appcenter-management`. The App ID is `guardian-management-api`.
+
+### Guardian Management UI
+
+This is a frontend app that is paired with the Guardian Management UI.
+Currently this is not dockerized or in the app center. Please see the README
+in `management-ui`.
+
 ## Development
 
 The first step is to create a copy of the example env file and adapt it to your environment.

@@ -1,6 +1,27 @@
 import {createRouter, createWebHistory} from 'vue-router';
 import ListView from '@/views/ListView.vue';
 import EditView from '@/views/EditView.vue';
+import TestView from '@/tests/views/TestView.vue';
+import AuthenticationAdapterTestView from '@/tests/views/AuthenticationAdapter.vue';
+
+const testRoutes = (() => {
+  if (import.meta.env.VITE__MANAGEMENT_UI__TESTING__ENABLE_TEST_ROUTES !== '1') {
+    return [];
+  }
+
+  return [
+    {
+      path: '/tests',
+      name: 'testsMain',
+      component: TestView,
+    },
+    {
+      path: '/tests/authentication-adapter',
+      name: 'testsAuthenticationAdapter',
+      component: AuthenticationAdapterTestView,
+    },
+  ];
+})();
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -63,6 +84,7 @@ const router = createRouter({
       component: EditView,
       props: {action: 'edit', objectType: 'context'},
     },
+    ...testRoutes,
   ],
 });
 

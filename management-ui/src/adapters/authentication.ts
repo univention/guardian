@@ -1,10 +1,4 @@
-/*
-import {defineStore} from 'pinia';
-import {ref} from 'vue';
-import Keycloak from 'keycloak-js';
-import {config} from '@/helpers/config';
-import router from '@/router';
-
+import type {AuthenticationPort, AuthenticationSuccess} from '@/ports/authentication';
 
 class NotAuthenticatedError extends Error {
   constructor() {
@@ -15,8 +9,56 @@ class NotAuthenticatedError extends Error {
   }
 }
 
+export const inMemoryAuthenticationSettings = {
+  isAuthenticated: 'inMemoryAuthenticationAdapter.isAuthenticated',
+  username: 'inMemoryAuthenticationAdapter.username',
+};
 
-class Login {
+export class InMemoryAuthenticationAdapter implements AuthenticationPort {
+  authenticated: boolean;
+  username: string;
+
+  private _configuredUsername: string;
+  private _configuredAuthenticated: boolean;
+
+  constructor(username: string, isAuthenticated: boolean) {
+    this._configuredUsername = username;
+    this._configuredAuthenticated = isAuthenticated;
+    this.username = '';
+    this.authenticated = false;
+  }
+
+  authenticate(): Promise<boolean> {
+    this.authenticated = this._configuredAuthenticated;
+    this.username = this._configuredAuthenticated ? this._configuredUsername : '';
+    return new Promise(resolve => {
+      resolve(this.authenticated);
+    });
+  }
+
+  async getValidAuthorizationHeader(minTokenValidity: number = 30): Promise<AuthenticationSuccess> {
+    if (!this.authenticated) {
+      if (!(await this.authenticate())) {
+        throw new NotAuthenticatedError();
+      }
+    }
+
+    return new Promise(resolve => {
+      resolve({Authorization: `test-token-${minTokenValidity}`});
+    });
+  }
+
+  logout(): Promise<boolean> {
+    this.authenticated = false;
+    this.username = '';
+    return new Promise(resolve => {
+      resolve(true);
+    });
+  }
+}
+
+/*
+export default class KeycloakAuthenticationAdapter {
 
   #keycloak;
 
@@ -30,6 +72,8 @@ class Login {
   }
 
   authenticate(): Promise<boolean> {
+    // Todo: if already authenticated, do we want to force it? Maybe just return
+    // yes if authenticated
     const requestedRoute = router.resolve(router.currentRoute.value.path);
     const redirectRoute = requestedRoute.matched.length ? requestedRoute : router.resolve({name: 'list'});
     const authenticate = this.#keycloak.init({
@@ -72,39 +116,12 @@ class Login {
     throw new NotAuthenticatedError();
   }
 
-}
-
-export const useLoginStore = defineStore('login', () => {
-
-  let authenticatePromise: (null | Promise<boolean>) = null;
-  const login = new Login();
-
-  const username = ref();
-  const authenticated = ref(false);
-
-  const authenticate = async function(): Promise<boolean> {
-    if (authenticatePromise === null) {
-      authenticatePromise = login.authenticate();
-    }
-    authenticated.value = await authenticatePromise;
-    username.value = login.username;
-    return authenticated.value;
-  };
-
-  const getValidAuthorizationHeader = async function(minTokenValidity = 30): Promise<({Authorization: string} | Record<string, never>)> {
+  getValidAuthorizationHeader(minTokenValidity = 30): Promise<({Authorization: string} | Record<string, never>)> {
     if (!login.authenticated) {
       await authenticate();
     }
     await login.updateToken(minTokenValidity); // keycloak-js already ensures only one token refresh request runs at a time
     return login.authorizationHeader;
   };
-
-  return {
-    username,
-    authenticate,
-    authenticated,
-    getValidAuthorizationHeader,
-  };
-
-});
+}
 */

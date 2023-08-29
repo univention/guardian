@@ -1,63 +1,41 @@
 <script setup lang="ts">
 import {RouterView} from 'vue-router';
 import {ref, onMounted} from 'vue';
-import {config} from '@/helpers/config';
-// import {useLoginStore} from '@/stores/login';
 import {useErrorStore} from '@/stores/error';
+import {useAdapterStore} from '@/stores/adapter';
+import {useSettingsStore} from '@/stores/settings';
 import {useTranslation} from 'i18next-vue';
 import {UStandbyFullScreen, UConfirmDialog} from '@univention/univention-veb';
 
 const loading = ref(true);
 const errors = useErrorStore();
-
-interface Config {
-  backendURL: string;
-  ssoURI: string;
-  ucsWebTheme: string;
-  searchLimit: number;
-}
-
 const {t} = useTranslation();
 
 onMounted(async () => {
-  if (import.meta.env.PROD || import.meta.env.VITE_USE_REAL_BACKEND === 'true') {
-    const answer = await fetch(`${import.meta.env.BASE_URL}/config.json`, {
-      headers: {
-        Accept: 'application/json',
-      },
-    });
-    try {
-      const json = (await answer.json()) as Config;
-      config.backendURL = json.backendURL;
-      config.ssoURI = json.ssoURI;
-      config.ucsWebTheme = json.ucsWebTheme;
-      config.searchLimit = json.searchLimit;
-    } catch (error) {
+  try {
+    const settingsStore = useSettingsStore();
+    await settingsStore.init();
+
+    const adapterStore = useAdapterStore(settingsStore.config);
+    const isAuthenticated = await adapterStore.authenticationAdapter.authenticate();
+    if (!isAuthenticated) {
       errors.push({
         title: t('ErrorModal.heading'),
-        message: t('App.error.config'),
+        message: t('App.error.loginFailed'),
         unRecoverable: true,
       });
-      loading.value = false;
-      return;
     }
-    /*
-    const loginStore = useLoginStore();
-    if (!loginStore.authenticated) {
-      const success = await loginStore.authenticate();
-      if (!success) {
-        errors.push({
-          title: t('ErrorModal.heading'),
-          message: t('App.error.loginFailed'),
-          unRecoverable: true,
-        });
-        loading.value = false;
-        return;
-      }
-    }
-    */
-    document.documentElement.className = `theme-${config.ucsWebTheme}`;
+  } catch (error) {
+    console.log(error);
+    errors.push({
+      title: t('ErrorModal.heading'),
+      message: t('App.error.config'),
+      unRecoverable: true,
+    });
+    loading.value = false;
+    return;
   }
+
   loading.value = false;
 });
 </script>

@@ -21,7 +21,46 @@ The packages are installed only locally inside the `node_modules` folder.
 
 **NOTE:** If you change git branches and things don't work correctly, try deleting your `node_modules` folder and re-running `yarn install`.
 
+### Environment Variables
+
+As part of the setup for the [main Guardian app](../README.md) you should have created an `.env` file.
+The default already works out of the box.
+
+Be sure to source your `.env` file before running the development server:
+
+```shell
+source ../.env
+```
+
+**NOTE:** All new environment variables need to be prefixed with `VITE` in order to be detected by the Management UI
+
+Here are the variables you can set:
+
+#### Settings Port
+
+The settings port determines where the app's settings will come from.
+Currently the only source is environment variables:
+
+```shell
+export VITE__MANAGEMENT_UI__ADAPTER__SETTINGS_PORT=env
+```
+
+#### Authorization Port
+
+The authorization port determines how the app will authorize the user.
+Currently there is only an in-memory adapter:
+
+```shell
+export VITE__MANAGEMENT_UI__ADAPTER__AUTHENTICATION_PORT=in_memory
+export VITE__IN_MEMORY_AUTHENTICATION_ADAPTER__IS_AUTHENTICATED=1
+export VITE__IN_MEMORY_AUTHENTICATION_ADAPTER__USERNAME=test-admin
+```
+
+You can test being unauthenticated by setting `VITE__IN_MEMORY_AUTHENTICATION_ADAPTER__IS_AUTHENTICATED=0`.
+
 ### Compile and Hot-Reload for Development
+
+Run a hot-loading development server:
 
 ```shell
 yarn dev
