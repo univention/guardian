@@ -9,7 +9,7 @@ App-related models
 from dataclasses import dataclass
 from typing import List, Optional
 
-from .base import PaginatedAPIResponse, PaginationRequest, QueryResponse, ResponseObject
+from .base import PaginatedAPIResponse, PaginationRequest, ResponseObject
 from .role import ResponseRole
 
 
@@ -17,11 +17,6 @@ from .role import ResponseRole
 class App:
     name: str
     display_name: Optional[str] = None
-
-
-@dataclass(frozen=True)
-class AppQueryResponse(QueryResponse):
-    apps: List[App]
 
 
 @dataclass(frozen=True)
