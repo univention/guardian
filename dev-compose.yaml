@@ -50,6 +50,29 @@ services:
       traefik.http.routers.authz.rule: PathPrefix(`/guardian/authorization`)
       traefik.http.routers.authz.service: authz
       traefik.http.services.authz.loadbalancer.server.port: 8000
+  db_provisioning:
+    container_name: db_provisioning
+    image: guardian-management-api:dev
+    entrypoint: alembic
+    command: upgrade head
+    working_dir: /app/management-api
+    user: "1000"
+    build:
+      context: ./
+      dockerfile: management-api/Dockerfile
+      target: dev
+      extra_hosts:
+        - git.knut.univention.de:${GITLAB_IP}
+    volumes:
+      - ./management-api:/app/management-api
+    environment:
+      - GUARDIAN__MANAGEMENT__LOGGING__LEVEL
+      - GUARDIAN__MANAGEMENT__LOGGING__STRUCTURED
+      - GUARDIAN__MANAGEMENT__ADAPTER__SETTINGS_PORT
+      - GUARDIAN__MANAGEMENT__ADAPTER__APP_PERSISTENCE_PORT
+      - GUARDIAN__MANAGEMENT__BASE_URL
+      - SQL_PERSISTENCE_ADAPTER__DIALECT
+      - SQL_PERSISTENCE_ADAPTER__DB_NAME
   management-api:
     container_name: management-guardian-dev
     image: guardian-management-api:dev
@@ -61,6 +84,7 @@ services:
         - git.knut.univention.de:${GITLAB_IP}
     depends_on:
       - proxy
+      - db_provisioning
     networks:
       - proxy-net
     volumes:
@@ -71,6 +95,8 @@ services:
       - GUARDIAN__MANAGEMENT__ADAPTER__SETTINGS_PORT
       - GUARDIAN__MANAGEMENT__ADAPTER__APP_PERSISTENCE_PORT
       - GUARDIAN__MANAGEMENT__BASE_URL
+      - SQL_PERSISTENCE_ADAPTER__DIALECT
+      - SQL_PERSISTENCE_ADAPTER__DB_NAME
     labels:
       traefik.http.routers.management.entrypoints: web
       traefik.http.routers.management.rule: PathPrefix(`/guardian/management`)
