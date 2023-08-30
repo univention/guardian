@@ -13,3 +13,11 @@ class PersistenceError(RuntimeError):
     """For any errors other than object not found."""
 
     ...
+
+
+class ObjectExistsError(RuntimeError):
+    """If the object to be created already exists in the persistence"""
+
+
+class ParentNotFoundError(RuntimeError):
+    """If the parent of the object to be created could not be found."""
