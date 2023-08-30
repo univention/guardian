@@ -30,6 +30,7 @@ class BasePersistencePort(
         Creates the specified object in the persistent storage.
 
         :raises ObjectExistsError: If an object with that identity already exists.
+        :raises ParentNotFoundError: If the parent object of the object to create could not be found.
         :raises PersistenceError: For any other error during interaction with the persistence.
         """
         raise NotImplementedError
@@ -49,7 +50,6 @@ class BasePersistencePort(
         """
         Reads the specified object from the persistent storage.
 
-        :raises ObjectNotFoundError: If the object could not be found.
         :raises PersistenceError: For any other error during interaction with the persistence.
         """
         raise NotImplementedError
