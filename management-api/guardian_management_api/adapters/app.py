@@ -1,8 +1,10 @@
 # Copyright (C) 2023 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
+from dataclasses import asdict
+from typing import Any, Dict, List, Optional, Type
 
-from typing import Any, Dict, List, Optional
+from port_loader import AsyncConfiguredAdapterMixin
 
 from ..constants import COMPLETE_URL
 from ..errors import ObjectNotFoundError
@@ -28,10 +30,12 @@ from ..models.routers.app import (
 )
 from ..models.routers.base import PaginationInfo
 from ..models.routers.role import Role as ResponseRole
+from ..models.sql_persistence import DBApp, SQLPersistenceAdapterSettings
 from ..ports.app import (
     AppAPIPort,
     AppPersistencePort,
 )
+from .sql_persistence import SQLAlchemyMixin
 
 
 class FastAPIAppAPIAdapter(
@@ -236,3 +240,57 @@ class AppStaticDataAdapter(AppPersistencePort):
             for app in self._data["apps"]
         ]
         return updated_app
+
+
+class SQLAppPersistenceAdapter(
+    AsyncConfiguredAdapterMixin, AppPersistencePort, SQLAlchemyMixin
+):
+    @staticmethod
+    def _app_to_db_app(app: App) -> DBApp:
+        return DBApp(name=app.name, display_name=app.display_name)
+
+    @staticmethod
+    def _db_app_to_app(db_app: DBApp) -> App:
+        return App(name=db_app.name, display_name=db_app.display_name)
+
+    class Config:
+        alias = "sql"
+        cached = True
+
+    @classmethod
+    def get_settings_cls(
+        cls,
+    ) -> Type[SQLPersistenceAdapterSettings]:  # pragma: no cover
+        return SQLPersistenceAdapterSettings
+
+    async def configure(self, settings: SQLPersistenceAdapterSettings):
+        self._db_string = SQLAlchemyMixin.create_db_string(**asdict(settings))
+
+    async def create(self, app: App) -> App:
+        db_app = SQLAppPersistenceAdapter._app_to_db_app(app)
+        result = await self._create_object(db_app)
+        return SQLAppPersistenceAdapter._db_app_to_app(result)
+
+    async def read_one(self, query: AppGetQuery) -> App | None:
+        result = await self._get_single_object(DBApp, name=query.name)
+        return SQLAppPersistenceAdapter._db_app_to_app(result) if result else None
+
+    async def read_many(
+        self,
+        query: AppsGetQuery,
+    ) -> PersistenceGetManyResult[App]:
+        total_count = await self._get_num_objects(DBApp)
+        db_apps = await self._get_many_objects(
+            DBApp, query.pagination.query_offset, query.pagination.query_limit
+        )
+        apps = [SQLAppPersistenceAdapter._db_app_to_app(db_app) for db_app in db_apps]
+        return PersistenceGetManyResult(total_count=total_count, objects=apps)
+
+    async def update(self, app: App) -> App:
+        db_app = await self._get_single_object(DBApp, name=app.name)
+        if db_app is None:
+            raise ObjectNotFoundError(
+                f"No app with the name '{app.name}' could be found."
+            )
+        modified = await self._update_object(db_app, display_name=app.display_name)
+        return SQLAppPersistenceAdapter._db_app_to_app(modified)
