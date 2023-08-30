@@ -1,7 +1,7 @@
 import {defineStore} from 'pinia';
 import {ref, type Ref} from 'vue';
 import {authenticationPortSetting} from '@/ports/authentication';
-import {inMemoryAuthenticationSettings} from '@/adapters/authentication';
+import {inMemoryAuthenticationSettings, keycloakAuthenticationSettings} from '@/adapters/authentication';
 import type {SettingsPort} from '@/ports/settings';
 import {EnvSettingsAdapter} from '@/adapters/settings';
 import {InvalidAdapterError} from '@/adapters/errors';
@@ -15,9 +15,16 @@ interface InMemoryAuthenticationConfig {
   username: string;
 }
 
+interface KeycloakAuthenticationConfig {
+  ssoUri: string;
+  realm: string;
+  clientId: string;
+}
+
 interface AuthenticationPortConfig {
   adapter: string;
   inMemoryConfig: InMemoryAuthenticationConfig;
+  keycloakConfig: KeycloakAuthenticationConfig;
 }
 
 export interface SettingsConfig {
@@ -37,6 +44,11 @@ export const useSettingsStore = defineStore('settings', () => {
       inMemoryConfig: {
         isAuthenticated: false,
         username: '',
+      },
+      keycloakConfig: {
+        ssoUri: '',
+        realm: '',
+        clientId: '',
       },
     },
   });
@@ -63,11 +75,22 @@ export const useSettingsStore = defineStore('settings', () => {
 
     // AuthenticationPort settings
     config.value.authenticationPort.adapter = settingsAdapter.getSetting(authenticationPortSetting, '');
+    // InMemory Authentication Adapter settings
     config.value.authenticationPort.inMemoryConfig.isAuthenticated =
       settingsAdapter.getSetting(inMemoryAuthenticationSettings.isAuthenticated) !== '0';
     config.value.authenticationPort.inMemoryConfig.username = settingsAdapter.getSetting(
       inMemoryAuthenticationSettings.username,
       ''
+    );
+    // Keycloak AuthenticationAdapter settings
+    config.value.authenticationPort.keycloakConfig.ssoUri = settingsAdapter.getSetting(
+      keycloakAuthenticationSettings.ssoUri
+    );
+    config.value.authenticationPort.keycloakConfig.realm = settingsAdapter.getSetting(
+      keycloakAuthenticationSettings.realm
+    );
+    config.value.authenticationPort.keycloakConfig.clientId = settingsAdapter.getSetting(
+      keycloakAuthenticationSettings.clientId
     );
 
     initialized.value = true;

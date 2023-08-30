@@ -2,6 +2,7 @@ import {createRouter, createWebHistory} from 'vue-router';
 import ListView from '@/views/ListView.vue';
 import EditView from '@/views/EditView.vue';
 import TestView from '@/tests/views/TestView.vue';
+import SettingsAdapterTestView from '@/tests/views/SettingsAdapter.vue';
 import AuthenticationAdapterTestView from '@/tests/views/AuthenticationAdapter.vue';
 
 const testRoutes = (() => {
@@ -16,6 +17,11 @@ const testRoutes = (() => {
       component: TestView,
     },
     {
+      path: '/tests/settings-adapter',
+      name: 'testsSettingsAdapter',
+      component: SettingsAdapterTestView,
+    },
+    {
       path: '/tests/authentication-adapter',
       name: 'testsAuthenticationAdapter',
       component: AuthenticationAdapterTestView,
@@ -28,6 +34,7 @@ const router = createRouter({
   routes: [
     {
       path: '/',
+      name: 'landing',
       redirect: '/roles',
     },
     {

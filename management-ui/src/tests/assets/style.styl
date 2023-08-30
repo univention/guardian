@@ -1,0 +1,42 @@
+main.testView
+  padding: calc(4 * var(--layout-spacing-unit))
+  margin: 0 auto
+  height: 100vh
+  display: flex
+  flex-direction: column
+  align-items: flex-start
+  gap: var(--layout-spacing-unit)
+
+  label
+    font-weight: bold
+    padding-right: calc(2 * var(--layout-spacing-unit))
+
+  h3
+    margin-top: calc(2 * var(--layout-spacing-unit))
+
+  .error
+    color: var(--font-color-error)
+
+  .uContainer
+    > .uButton
+      margin: calc(2 * var(--layout-spacing-unit)) 0
+
+  .testButtonsWrapper
+    display: flex
+    margin: calc(2 * var(--layout-spacing-unit)) 0
+
+  .testButtons
+    display: flex
+    border: 1px solid var(--font-color-contrast-low)
+    border-radius: var(--button-border-radius)
+    overflow: hidden
+
+    > .uButton
+      text-decoration: none
+      border-radius: 0
+      padding: 0 calc(2 * var(--layout-spacing-unit))
+
+  .testWrapper
+    display: flex
+    align-items: flex-start
+    gap: calc(2 * var(--layout-spacing-unit))

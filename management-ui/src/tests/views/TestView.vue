@@ -11,17 +11,15 @@ onMounted(async () => {
 <template>
   <main v-if="!loading" class="testView">
     <h1><RouterLink :to="{name: 'testsMain'}">Manual Tests</RouterLink></h1>
+
+    <h2>Adapter Tests</h2>
     <ul>
+      <li><RouterLink :to="{name: 'testsSettingsAdapter'}">Settings Adapter Tests</RouterLink></li>
       <li><RouterLink :to="{name: 'testsAuthenticationAdapter'}">Authentication Adapter Tests</RouterLink></li>
     </ul>
   </main>
 </template>
 
 <style lang="stylus">
-main.testView
-  padding: calc(4 * var(--layout-spacing-unit))
-  margin: 0 auto
-  height: 100vh
-  display: flex
-  flex-direction: column
+@require '../assets/style.styl';
 </style>

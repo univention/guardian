@@ -1,4 +1,6 @@
+import Keycloak from 'keycloak-js';
 import type {AuthenticationPort, AuthenticationSuccess} from '@/ports/authentication';
+import router from '@/router';
 
 class NotAuthenticatedError extends Error {
   constructor() {
@@ -57,71 +59,125 @@ export class InMemoryAuthenticationAdapter implements AuthenticationPort {
   }
 }
 
-/*
-export default class KeycloakAuthenticationAdapter {
+export const keycloakAuthenticationSettings = {
+  ssoUri: 'keycloakAuthenticationAdapter.ssoUri',
+  realm: 'keycloakAuthenticationAdapter.realm',
+  clientId: 'keycloakAuthenticationAdapter.clientId',
+};
 
-  #keycloak;
+export class KeycloakAuthenticationAdapter {
+  private _keycloak: Keycloak;
+  private readonly _ssoUri: string;
+  private readonly _realm: string;
+  private readonly _clientId: string;
 
-  constructor() {
-    // https://www.keycloak.org/docs/latest/securing_apps/index.html#_javascript_adapter
-    this.#keycloak = new Keycloak({
-      url: config.ssoURI,
-      realm: 'ucs',
-      clientId: 'ucs-school-ui-users',
+  constructor(ssoUri: string, realm: string, clientId?: string) {
+    this._ssoUri = ssoUri;
+    this._realm = realm;
+    this._clientId = clientId ?? 'guardian-management-ui';
+    this._keycloak = new Keycloak({
+      url: this._ssoUri,
+      realm: this._realm,
+      clientId: this._clientId,
     });
   }
 
-  authenticate(): Promise<boolean> {
-    // Todo: if already authenticated, do we want to force it? Maybe just return
-    // yes if authenticated
-    const requestedRoute = router.resolve(router.currentRoute.value.path);
-    const redirectRoute = requestedRoute.matched.length ? requestedRoute : router.resolve({name: 'list'});
-    const authenticate = this.#keycloak.init({
-      onLoad: 'login-required',
-      checkLoginIframe: false, // This only works if the app is in tne frame-ancestor list in keycloak
-      pkceMethod: 'S256',
-      redirectUri: new URL(redirectRoute.href, window.location.origin).href,
+  async authenticate(): Promise<boolean> {
+    const requestedRoute = router.resolve(router.currentRoute.value.fullPath);
+    const redirectRoute = requestedRoute.matched.length ? requestedRoute : router.resolve({name: 'landing'});
+    const redirectUri = new URL(redirectRoute.href, window.location.origin).href;
+
+    let success = false;
+    try {
+      success = await this._keycloak.init({
+        onLoad: 'login-required',
+        checkLoginIframe: false, // This only works if the app is in the frame-ancestor list in keycloak
+        pkceMethod: 'S256',
+        redirectUri: redirectUri,
+      });
+    } catch (error) {
+      // This most likely means we're already initialized; let's try a login instead
+      console.log(`DEBUG: ${error}`);
+      await this._keycloak.login({redirectUri: redirectUri});
+      success = true;
+    }
+
+    return new Promise(resolve => {
+      resolve(success);
     });
-    authenticate.then(success => {
-      if (success === true) {
-        // Clear oauth related hashtags from vue route
-        router.replace(router.currentRoute.value.path);
-      }
-    });
-    return authenticate;
   }
 
-  updateToken(minTokenValidity = 5): Promise<boolean> {
-    return this.#keycloak.updateToken(minTokenValidity);
+  updateToken(minTokenValidity: number): Promise<boolean> {
+    return this._keycloak.updateToken(minTokenValidity);
   }
 
   get authorizationHeader(): {Authorization: string} {
-    if (this.#keycloak.token) {
-      return {Authorization: `Bearer ${this.#keycloak.token}`};
+    if (this._keycloak.token) {
+      return {Authorization: `Bearer ${this._keycloak.token}`};
     }
+    // If this is called through getValidAuthorizationHeader,
+    // we don't expect this error
     throw new NotAuthenticatedError();
   }
 
-  get authenticated(): (boolean) {
-    if (this.#keycloak.authenticated !== undefined) {
-      return this.#keycloak.authenticated;
+  async getValidAuthorizationHeader(minTokenValidity: number = 30): Promise<AuthenticationSuccess> {
+    if (!this.authenticated) {
+      if (!(await this.authenticate())) {
+        throw new NotAuthenticatedError();
+      }
+    }
+
+    // keycloak-js already ensures only one token refresh request runs at a time
+    await this.updateToken(minTokenValidity);
+    return this.authorizationHeader;
+  }
+
+  async logout(): Promise<boolean> {
+    const requestedRoute = router.resolve(router.currentRoute.value.fullPath);
+    const redirectRoute = requestedRoute.matched.length ? requestedRoute : router.resolve({name: 'landing'});
+    const redirectUri = new URL(redirectRoute.href, window.location.origin).href;
+
+    try {
+      await this._keycloak.logout({redirectUri: redirectUri});
+    } catch (error) {
+      // We are probably already logged out
+      console.log(`DEBUG: ${error}`);
+      return new Promise(resolve => {
+        resolve(false);
+      });
+    }
+
+    return new Promise(resolve => {
+      resolve(true);
+    });
+  }
+
+  get authenticated(): boolean {
+    if (this._keycloak.authenticated !== undefined) {
+      try {
+        return this._keycloak.authenticated;
+      } catch (error) {
+        // Most likely "Please authenticate first"
+        console.log(`DEBUG: ${error}`);
+        return false;
+      }
     }
     return false;
   }
 
-  get username(): (string) {
-    if (this.#keycloak.idTokenParsed !== undefined && this.#keycloak.idTokenParsed['preferred_username'] !== undefined) {
-      return this.#keycloak.idTokenParsed['preferred_username'];
+  get username(): string {
+    if (
+      this._keycloak.idTokenParsed !== undefined &&
+      this._keycloak.idTokenParsed['preferred_username'] !== undefined
+    ) {
+      try {
+        return this._keycloak.idTokenParsed['preferred_username'];
+      } catch (error) {
+        // Most likely "Please authenticate first"
+        console.log(`DEBUG: ${error}`);
+        return '';
+      }
     }
-    throw new NotAuthenticatedError();
+    return '';
   }
-
-  getValidAuthorizationHeader(minTokenValidity = 30): Promise<({Authorization: string} | Record<string, never>)> {
-    if (!login.authenticated) {
-      await authenticate();
-    }
-    await login.updateToken(minTokenValidity); // keycloak-js already ensures only one token refresh request runs at a time
-    return login.authorizationHeader;
-  };
 }
-*/

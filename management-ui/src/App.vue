@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {RouterView} from 'vue-router';
+import {RouterView, useRouter} from 'vue-router';
 import {ref, onMounted} from 'vue';
 import {useErrorStore} from '@/stores/error';
 import {useAdapterStore} from '@/stores/adapter';
@@ -10,6 +10,7 @@ import {UStandbyFullScreen, UConfirmDialog} from '@univention/univention-veb';
 const loading = ref(true);
 const errors = useErrorStore();
 const {t} = useTranslation();
+const router = useRouter();
 
 onMounted(async () => {
   try {
@@ -17,6 +18,10 @@ onMounted(async () => {
     await settingsStore.init();
 
     const adapterStore = useAdapterStore(settingsStore.config);
+    // We need to wait until the routes are loaded;
+    // otherwise, login will always redirect back to '/',
+    // instead of the requested route.
+    await router.isReady();
     const isAuthenticated = await adapterStore.authenticationAdapter.authenticate();
     if (!isAuthenticated) {
       errors.push({
