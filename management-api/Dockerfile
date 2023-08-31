@@ -30,7 +30,7 @@ EXPOSE 8000
 WORKDIR /app
 CMD uvicorn --reload --log-level debug --host 0.0.0.0 --port 8000 guardian_management_api.main:app
 
-RUN pip install --no-cache-dir -U pip wheel && pip install --no-cache-dir poetry && poetry config virtualenvs.create false
+RUN pip install --no-cache-dir -U pip wheel && pip install --no-cache-dir poetry==1.5.1 && poetry config virtualenvs.create false
 COPY management-api management-api
 COPY guardian-lib guardian-lib
 RUN cd management-api && poetry install && cd ..

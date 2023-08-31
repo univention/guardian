@@ -5,6 +5,7 @@
 FROM docker-registry.knut.univention.de/python:3.11-slim as s6_builder
 
 ARG S6_OVERLAY_VERSION="3.1.5.0"
+ARG POETRY_VERSION="1.5.1"
 
 WORKDIR /build
 
@@ -19,7 +20,7 @@ RUN tar -C /_s6 -Jxpf /tmp/s6-overlay-x86_64.tar.xz
 # Calculate Python dependencies
 FROM docker-registry.knut.univention.de/python:3.11-slim as requirements_builder
 WORKDIR /build
-RUN pip install poetry==1.5.1
+RUN pip install poetry==${POETRY_VERSION}
 COPY pyproject.toml poetry.lock ./
 RUN poetry export -f requirements.txt --output requirements.txt --dev --without-hashes
 
@@ -30,7 +31,7 @@ EXPOSE 8000
 WORKDIR /app
 CMD uvicorn --reload --log-level debug --host 0.0.0.0 --port 8000 guardian_authorization_api.main:app
 
-RUN pip install --no-cache-dir -U pip wheel && pip install --no-cache-dir poetry && poetry==1.5.1 config virtualenvs.create false
+RUN pip install --no-cache-dir -U pip wheel && pip install --no-cache-dir poetry==1.5.1 && poetry config virtualenvs.create false
 COPY authorization-api authorization-api
 COPY guardian-lib guardian-lib
 RUN cd authorization-api && poetry install & cd ..
