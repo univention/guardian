@@ -2,27 +2,13 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-"""
-Proposed layout for role ports/models
-"""
-
 from dataclasses import dataclass
-from typing import List
+from typing import Optional
 
-from .base import (
-    NamespacedPersistenceObject,
+from guardian_management_api.models.base import (
     NamespacedResponseObject,
-    PaginatedAPIResponse,
-    QueryResponse,
+    PaginationRequest,
 )
-
-
-class Role(NamespacedPersistenceObject):
-    ...
-
-
-class RoleQuery(QueryResponse):
-    roles: List[Role]
 
 
 class ResponseRole(NamespacedResponseObject):
@@ -31,9 +17,20 @@ class ResponseRole(NamespacedResponseObject):
 
 
 @dataclass(frozen=True)
-class RoleAPIResponse(NamespacedResponseObject):
-    role: ResponseRole
+class Role:
+    app_name: str
+    namespace_name: str
+    name: str
+    display_name: Optional[str] = None
 
 
-class RolesListAPIResponse(PaginatedAPIResponse):
-    roles: List[ResponseRole]
+@dataclass(frozen=True)
+class RoleGetQuery:
+    app_name: str
+    namespace_name: str
+    name: str
+
+
+@dataclass(frozen=True)
+class RolesGetQuery:
+    pagination: PaginationRequest
