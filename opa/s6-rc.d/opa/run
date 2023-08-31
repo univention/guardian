@@ -1,4 +1,4 @@
 #!/command/with-contenv bash
 
 cd $SERVICE_DIR
-exec s6-setuidgid $SERVICE_USER opa run --server --addr 0.0.0.0:8181 -b BaseBundle
+exec s6-setuidgid $SERVICE_USER opa run --disable-telemetry --server --addr 0.0.0.0:8181 -b BaseBundle
