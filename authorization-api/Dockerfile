@@ -34,8 +34,8 @@ CMD uvicorn --reload --log-level debug --host 0.0.0.0 --port 8000 guardian_autho
 RUN pip install --no-cache-dir -U pip wheel && pip install --no-cache-dir poetry==1.5.1 && poetry config virtualenvs.create false
 COPY authorization-api authorization-api
 COPY guardian-lib guardian-lib
-RUN cd authorization-api && poetry install & cd ..
-RUN cd guardian-lib && poetry install && cd ..
+RUN cd authorization-api && poetry install
+RUN cd guardian-lib && poetry install
 
 
 FROM docker-registry.knut.univention.de/python:3.11-slim
