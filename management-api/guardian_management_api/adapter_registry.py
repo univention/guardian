@@ -18,7 +18,21 @@ from guardian_management_api.ports.app import (
     AppPersistencePort,
 )
 
-PORT_CLASSES = (SettingsPort, AppPersistencePort)
+from .ports.condition import ConditionPersistencePort
+from .ports.context import ContextPersistencePort
+from .ports.namespace import NamespacePersistencePort
+from .ports.permission import PermissionPersistencePort
+from .ports.role import RolePersistencePort
+
+PORT_CLASSES = (
+    SettingsPort,
+    AppPersistencePort,
+    ConditionPersistencePort,
+    ContextPersistencePort,
+    NamespacePersistencePort,
+    PermissionPersistencePort,
+    RolePersistencePort,
+)
 
 
 class AdapterSelection(BaseSettings):
