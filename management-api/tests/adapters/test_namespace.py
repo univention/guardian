@@ -1,3 +1,7 @@
+# Copyright (C) 2023 Univention GmbH
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
 import pytest
 import pytest_asyncio
 from guardian_management_api.adapters.namespace import SQLNamespacePersistenceAdapter
