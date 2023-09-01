@@ -276,49 +276,43 @@ A mapping with a single role might look like this:
       {
         "appName": "ucsschool",
         "namespace": "users",
-        "capabilities": [
+        "conditions": [],
+        "relation": "AND",
+        "permissions": [
+          "read_first_name",
+          "read_last_name"
+        ]
+      },
+      {
+        "appName": "ucsschool",
+        "namespace": "users",
+        "conditions": [
           {
-            "conditions": [],
-            "relation": "AND",
-            "permissions": [
-              "read_first_name",
-              "read_last_name"
-            ]
+            "name": "ucsschool_users_target_has_same_school",
+            "parameters": {}
           },
           {
-            "conditions": [
-              {
-                "name": "ucsschool_users_target_has_same_school",
-                "parameters": {},
-              },
-              {
-                "name": "target_has_role",
-                "parameters": {
-                  "role": "ucsschool:users:student"
-                },
-              }
-            ],
-            "relation": "AND",
-            "permissions": [
-              "read_first_name",
-              "write_password",
-              "export"
-            ]
+            "name": "target_has_role",
+            "parameters": {
+              "role": "ucsschool:users:student"
+            }
           }
+        ],
+        "relation": "AND",
+        "permissions": [
+          "read_first_name",
+          "write_password",
+          "export"
         ]
       },
       {
         "namespace": "mail",
         "appName": "OX",
-        "capabilities": [
-          {
-            "conditions": [],
-            "relation": "AND",
-            "permissions": [
-              "edit-spam-filter",
-              "export"
-            ]
-          }
+        "conditions": [],
+        "relation": "AND",
+        "permissions": [
+          "edit-spam-filter",
+          "export"
         ]
       }
     ]
