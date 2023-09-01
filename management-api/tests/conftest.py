@@ -9,11 +9,18 @@ from typing import Optional
 import guardian_lib.adapter_registry as adapter_registry
 import pytest
 import pytest_asyncio
+from guardian_lib.adapters.settings import EnvSettingsAdapter
 from guardian_lib.ports import SettingsPort
 from guardian_management_api.adapters.app import (
-    AppStaticDataAdapter,
     FastAPIAppAPIAdapter,
+    SQLAppPersistenceAdapter,
 )
+from guardian_management_api.adapters.condition import SQLConditionPersistenceAdapter
+from guardian_management_api.adapters.context import SQLContextPersistenceAdapter
+from guardian_management_api.adapters.namespace import SQLNamespacePersistenceAdapter
+from guardian_management_api.adapters.permission import SQLPermissionPersistenceAdapter
+from guardian_management_api.adapters.role import SQLRolePersistenceAdapter
+from guardian_management_api.adapters.sql_persistence import SQLAlchemyMixin
 from guardian_management_api.models.sql_persistence import (
     Base,
     DBApp,
@@ -27,7 +34,12 @@ from guardian_management_api.ports.app import (
     AppAPIPort,
     AppPersistencePort,
 )
-from port_loader import AsyncAdapterRegistry
+from guardian_management_api.ports.condition import ConditionPersistencePort
+from guardian_management_api.ports.context import ContextPersistencePort
+from guardian_management_api.ports.namespace import NamespacePersistencePort
+from guardian_management_api.ports.permission import PermissionPersistencePort
+from guardian_management_api.ports.role import RolePersistencePort
+from port_loader import AsyncAdapterRegistry, AsyncAdapterSettingsProvider
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
@@ -48,55 +60,64 @@ class DummySettingsAdapter(SettingsPort):
         return False
 
 
+@pytest.fixture
+def patch_env(sqlite_db_name):
+    _environ = os.environ.copy()
+    os.environ["GUARDIAN__MANAGEMENT__ADAPTER__APP_PERSISTENCE_PORT"] = "sql"
+    os.environ["GUARDIAN__MANAGEMENT__ADAPTER__CONDITION_PERSISTENCE_PORT"] = "sql"
+    os.environ["GUARDIAN__MANAGEMENT__ADAPTER__CONTEXT_PERSISTENCE_PORT"] = "sql"
+    os.environ["GUARDIAN__MANAGEMENT__ADAPTER__NAMESPACE_PERSISTENCE_PORT"] = "sql"
+    os.environ["GUARDIAN__MANAGEMENT__ADAPTER__PERMISSION_PERSISTENCE_PORT"] = "sql"
+    os.environ["GUARDIAN__MANAGEMENT__ADAPTER__ROLE_PERSISTENCE_PORT"] = "sql"
+    os.environ["GUARDIAN__MANAGEMENT__ADAPTER__SETTINGS_PORT"] = "env"
+    os.environ["GUARDIAN__MANAGEMENT__ADAPTER__APP_API_PORT"] = "APP_API_PORT"
+    os.environ["SQL_PERSISTENCE_ADAPTER__DIALECT"] = "sqlite"
+    os.environ["SQL_PERSISTENCE_ADAPTER__DB_NAME"] = sqlite_db_name
+    yield
+    os.environ.clear()
+    os.environ.update(_environ)
+
+
 @pytest.fixture()
-def register_test_adapters():
+def register_test_adapters(patch_env):
     """Fixture that registers the test adapters.
 
     In this case:
       - In-memory app persistence adapter.
       - Dummy settings adapter.
     """
-    _environ = os.environ.copy()
-    os.environ["GUARDIAN__MANAGEMENT__ADAPTER__APP_PERSISTENCE_PORT"] = "in_memory"
-    os.environ["GUARDIAN__MANAGEMENT__ADAPTER__SETTINGS_PORT"] = "dummy"
-    os.environ["GUARDIAN__MANAGEMENT__ADAPTER__APP_API_PORT"] = "APP_API_PORT"
-    adapter_registry.ADAPTER_REGISTRY.register_port(SettingsPort)
+    for port, adapter in [
+        (SettingsPort, EnvSettingsAdapter),
+        (AppPersistencePort, SQLAppPersistenceAdapter),
+        (ConditionPersistencePort, SQLConditionPersistenceAdapter),
+        (ContextPersistencePort, SQLContextPersistenceAdapter),
+        (NamespacePersistencePort, SQLNamespacePersistenceAdapter),
+        (PermissionPersistencePort, SQLPermissionPersistenceAdapter),
+        (RolePersistencePort, SQLRolePersistenceAdapter),
+        (AppAPIPort, FastAPIAppAPIAdapter),
+    ]:
+        adapter_registry.ADAPTER_REGISTRY.register_port(port)
+        adapter_registry.ADAPTER_REGISTRY.register_adapter(port, adapter_cls=adapter)
+        adapter_registry.ADAPTER_REGISTRY.set_adapter(port, adapter)
     adapter_registry.ADAPTER_REGISTRY.register_adapter(
-        SettingsPort,
-        adapter_cls=DummySettingsAdapter,
+        AsyncAdapterSettingsProvider, adapter_cls=EnvSettingsAdapter
     )
     adapter_registry.ADAPTER_REGISTRY.set_adapter(
-        SettingsPort,
-        DummySettingsAdapter,
-    )
-    adapter_registry.ADAPTER_REGISTRY.register_port(AppPersistencePort)
-    adapter_registry.ADAPTER_REGISTRY.register_adapter(
-        AppPersistencePort,
-        adapter_cls=AppStaticDataAdapter,
-    )
-    adapter_registry.ADAPTER_REGISTRY.set_adapter(
-        AppPersistencePort,
-        AppStaticDataAdapter,
-    )
-    adapter_registry.ADAPTER_REGISTRY.register_port(AppAPIPort)
-    adapter_registry.ADAPTER_REGISTRY.register_adapter(
-        AppAPIPort,
-        adapter_cls=FastAPIAppAPIAdapter,
-    )
-    adapter_registry.ADAPTER_REGISTRY.set_adapter(
-        AppAPIPort,
-        FastAPIAppAPIAdapter,
+        AsyncAdapterSettingsProvider, EnvSettingsAdapter
     )
 
     yield adapter_registry.ADAPTER_REGISTRY
-    os.environ.clear()
-    os.environ.update(_environ)
     adapter_registry.ADAPTER_REGISTRY = AsyncAdapterRegistry()
 
 
 @pytest.fixture
-def sqlite_url(tmpdir):
-    return f"///{tmpdir / 'management.db'}"
+def sqlite_db_name(tmpdir):
+    return f"/{tmpdir / 'management.db'}"
+
+
+@pytest.fixture
+def sqlite_url(sqlite_db_name):
+    return f"//{sqlite_db_name}"
 
 
 @pytest_asyncio.fixture
@@ -104,6 +125,15 @@ async def create_tables(sqlite_url):
     engine = create_async_engine(f"sqlite+aiosqlite:{sqlite_url}")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+
+@pytest.fixture
+def sqlalchemy_mixin(sqlite_url):
+    mixin = SQLAlchemyMixin()
+    mixin._db_string = SQLAlchemyMixin.create_db_string(
+        "sqlite", "", "", sqlite_url, "", ""
+    )
+    return mixin
 
 
 @pytest.fixture

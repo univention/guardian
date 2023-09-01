@@ -17,15 +17,6 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
 
-@pytest.fixture
-def sqlalchemy_mixin(sqlite_url):
-    mixin = SQLAlchemyMixin()
-    mixin._db_string = SQLAlchemyMixin.create_db_string(
-        "sqlite", "", "", sqlite_url, "", ""
-    )
-    return mixin
-
-
 @pytest.mark.asyncio
 async def test_error_guard():
     async def test_func():
