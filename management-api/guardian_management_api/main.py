@@ -14,6 +14,7 @@ from .adapter_registry import configure_registry, initialize_adapters
 from .constants import API_PREFIX
 from .logging import configure_logger
 from .routers.app import router as app_router
+from .routers.capabilities import router as cap_router
 from .routers.condition import router as condition_router
 from .routers.context import router as context_router
 from .routers.custom_endpoint import router as custom_endpoint_router
@@ -21,7 +22,6 @@ from .routers.mapping import router as mapping_router
 from .routers.namespace import router as namespace_router
 from .routers.permission import router as permission_router
 from .routers.role import router as role_router
-from .routers.capabilities import router as cap_router
 
 
 @asynccontextmanager

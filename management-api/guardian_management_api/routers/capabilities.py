@@ -1,10 +1,13 @@
 from enum import StrEnum
 from typing import Optional
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter
 from pydantic import Field
 
-from guardian_management_api.models.routers.base import GuardianBaseModel, NamespacedObjectMixin
+from guardian_management_api.models.routers.base import (
+    GuardianBaseModel,
+    NamespacedObjectMixin,
+)
 
 router = APIRouter(tags=["capability"])
 
@@ -26,7 +29,8 @@ class MappingCondition(GuardianBaseModel, NamespacedObjectMixin):
     namespace_name: str = "namespace"
     name: str = "condition"
     parameters: dict[str, str | bool | int | float] = Field(
-        {"a": 1, "b": True}, description="The preset parameter values for the condition."
+        {"a": 1, "b": True},
+        description="The preset parameter values for the condition.",
     )
 
 
@@ -73,6 +77,7 @@ def get_capability(app_name: str, namespace_name: str, name: str):
 def get_capability(app_name: str, namespace_name: str):
     return ManyCapabilities()
 
+
 @router.get("/capabilities/role/{app_name}/{namespace_name}/{:role_name}")
 def get_capability(app_name: str, namespace_name: str, role_name: str):
     return ManyCapabilities()
@@ -86,7 +91,6 @@ def all_capabilities():
 @router.post("/capabilities/{app_name}/{namespace_name}")
 def create_capability(new_cap: CreateCapability):
     return Capability()
-
 
 
 @router.put("/capabilities/{app_name}/{namespace_name}/{name}")
