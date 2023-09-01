@@ -33,8 +33,20 @@ aiomysql = "^0.2.0"
 "in_memory" = "guardian_management_api.adapters.app:AppStaticDataAdapter"
 "sql" = "guardian_management_api.adapters.app:SQLAppPersistenceAdapter"
 
+[tool.poetry.plugins."guardian_management_api.ConditionPersistencePort"]
+"sql" = "guardian_management_api.adapters.condition:SQLConditionPersistenceAdapter"
+
+[tool.poetry.plugins."guardian_management_api.ContextPersistencePort"]
+"sql" = "guardian_management_api.adapters.context:SQLContextPersistenceAdapter"
+
 [tool.poetry.plugins."guardian_management_api.NamespacePersistencePort"]
 "sql" = "guardian_management_api.adapters.namespace:SQLNamespacePersistenceAdapter"
+
+[tool.poetry.plugins."guardian_management_api.PermissionPersistencePort"]
+"sql" = "guardian_management_api.adapters.permission:SQLPermissionPersistenceAdapter"
+
+[tool.poetry.plugins."guardian_management_api.RolePersistencePort"]
+"sql" = "guardian_management_api.adapters.role:SQLRolePersistenceAdapter"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
