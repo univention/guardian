@@ -48,6 +48,31 @@ class AdapterSelection(BaseSettings):
         alias="AppPersistencePort",
         env="GUARDIAN__MANAGEMENT__ADAPTER__APP_PERSISTENCE_PORT",
     )
+    condition_persistence_port: str = Field(
+        ...,
+        alias="ConditionPersistencePort",
+        env="GUARDIAN__MANAGEMENT__ADAPTER__CONDITION_PERSISTENCE_PORT",
+    )
+    context_persistence_port: str = Field(
+        ...,
+        alias="ContextPersistencePort",
+        env="GUARDIAN__MANAGEMENT__ADAPTER__CONTEXT_PERSISTENCE_PORT",
+    )
+    namespace_persistence_port: str = Field(
+        ...,
+        alias="NamespacePersistencePort",
+        env="GUARDIAN__MANAGEMENT__ADAPTER__NAMESPACE_PERSISTENCE_PORT",
+    )
+    permission_persistence_port: str = Field(
+        ...,
+        alias="PermissionPersistencePort",
+        env="GUARDIAN__MANAGEMENT__ADAPTER__PERMISSION_PERSISTENCE_PORT",
+    )
+    role_persistence_port: str = Field(
+        ...,
+        alias="RolePersistencePort",
+        env="GUARDIAN__MANAGEMENT__ADAPTER__ROLE_PERSISTENCE_PORT",
+    )
 
 
 def configure_registry(adapter_registry: AsyncAdapterRegistry):
