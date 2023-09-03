@@ -49,6 +49,10 @@ class AppAPIPort(
     ],
 ):
     @abstractmethod
+    async def transform_exception(self, exc: Exception) -> Exception:
+        raise NotImplementedError  # pragma: no cover
+
+    @abstractmethod
     async def to_app_create(
         self, api_request: AppAPICreateRequestObject
     ) -> AppCreateQuery:
@@ -65,9 +69,7 @@ class AppAPIPort(
         raise NotImplementedError  # pragma: no cover
 
     @abstractmethod
-    async def to_api_get_response(
-        self, app_result: App | None
-    ) -> AppAPIGetResponseObject | None:
+    async def to_api_get_response(self, app_result: App) -> AppAPIGetResponseObject:
         raise NotImplementedError  # pragma: no cover
 
     @abstractmethod

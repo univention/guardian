@@ -166,10 +166,10 @@ class TestSQLContextPersistenceAdapter:
         self,
         context_sql_adapter: SQLContextPersistenceAdapter,
     ):
-        app = await context_sql_adapter.read_one(
-            ContextGetQuery(app_name="foo", namespace_name="bar", name="context")
-        )
-        assert app is None
+        with pytest.raises(ObjectNotFoundError):
+            await context_sql_adapter.read_one(
+                ContextGetQuery(app_name="foo", namespace_name="bar", name="context")
+            )
 
     @pytest.mark.asyncio
     async def test_read_one_unhandled_error(

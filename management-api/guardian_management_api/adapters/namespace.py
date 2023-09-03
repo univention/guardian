@@ -58,13 +58,14 @@ class SQLNamespacePersistenceAdapter(
             result = await self._create_object(db_ns, session=session)
         return SQLNamespacePersistenceAdapter._db_namespace_to_namespace(result)
 
-    async def read_one(self, query: NamespaceGetQuery) -> Namespace | None:
+    async def read_one(self, query: NamespaceGetQuery) -> Namespace:
         result = await self._get_single_object(DBNamespace, name=query.name)
-        return (
-            SQLNamespacePersistenceAdapter._db_namespace_to_namespace(result)
-            if result
-            else None
-        )
+        if result is None:
+            raise ObjectNotFoundError(
+                f"No namespace with the identifier '{query.app_name}:"
+                f"{query.name}' could be found."
+            )
+        return SQLNamespacePersistenceAdapter._db_namespace_to_namespace(result)
 
     async def read_many(
         self,

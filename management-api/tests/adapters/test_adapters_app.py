@@ -1,9 +1,11 @@
 # Copyright (C) 2023 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
+from typing import cast
 
 import pytest
 import pytest_asyncio
+from fastapi import HTTPException
 from guardian_management_api.adapters.app import (
     AppStaticDataAdapter,
     FastAPIAppAPIAdapter,
@@ -46,6 +48,17 @@ class TestFastAPIAppAdapter:
     @pytest.fixture(autouse=True)
     def adapter(self):
         return FastAPIAppAPIAdapter()
+
+    @pytest.mark.parametrize(
+        "exc,expected",
+        [(ObjectNotFoundError(), 404), (PersistenceError, 500), (ValueError, 500)],
+    )
+    @pytest.mark.asyncio
+    async def test_transform_exception(self, exc, expected, adapter):
+        result: HTTPException = cast(
+            HTTPException, await adapter.transform_exception(exc)
+        )
+        assert result.status_code == expected
 
     @pytest.mark.asyncio
     async def test_to_app_create(self, adapter):
@@ -148,6 +161,11 @@ class TestAppStaticDataAdapter:
         adapter._data["apps"].append(app)
         result = await adapter.read_one(query=AppGetQuery(name=app.name))
         assert result == app
+
+    @pytest.mark.asyncio
+    async def test_read_one_none(self, adapter):
+        with pytest.raises(ObjectNotFoundError):
+            await adapter.read_one(query=AppGetQuery(name="app"))
 
     apps = [
         App(
@@ -259,8 +277,8 @@ class TestSQLAppPersistenceAdapter:
     ):
         async with app_sql_adapter.session() as session:
             await create_app(session)
-        app = await app_sql_adapter.read_one(AppGetQuery(name="other_app"))
-        assert app is None
+        with pytest.raises(ObjectNotFoundError):
+            await app_sql_adapter.read_one(AppGetQuery(name="other_app"))
 
     @pytest.mark.asyncio
     async def test_read_one_unhandled_error(

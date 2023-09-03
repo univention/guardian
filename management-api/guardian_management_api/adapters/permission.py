@@ -79,13 +79,14 @@ class SQLPermissionPersistenceAdapter(
             result = await self._create_object(db_permission, session=session)
         return SQLPermissionPersistenceAdapter._db_permission_to_permission(result)
 
-    async def read_one(self, query: PermissionGetQuery) -> Permission | None:
+    async def read_one(self, query: PermissionGetQuery) -> Permission:
         result = await self._get_single_object(DBPermission, name=query.name)
-        return (
-            SQLPermissionPersistenceAdapter._db_permission_to_permission(result)
-            if result
-            else None
-        )
+        if result is None:
+            raise ObjectNotFoundError(
+                f"No permission with the identifier '{query.app_name}:"
+                f"{query.namespace_name}:{query.name}' could be found."
+            )
+        return SQLPermissionPersistenceAdapter._db_permission_to_permission(result)
 
     async def read_many(
         self,

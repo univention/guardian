@@ -26,10 +26,13 @@ async def get_app(
     api_request: AppGetRequest,
     app_api_port: AppAPIPort,
     persistence_port: AppPersistencePort,
-) -> AppSingleResponse | None:
-    query = await app_api_port.to_app_get(api_request)
-    app = await persistence_port.read_one(query)
-    return await app_api_port.to_api_get_response(app)
+) -> AppSingleResponse:
+    try:
+        query = await app_api_port.to_app_get(api_request)
+        app = await persistence_port.read_one(query)
+        return await app_api_port.to_api_get_response(app)
+    except Exception as exc:
+        raise (await app_api_port.transform_exception(exc)) from exc
 
 
 async def get_apps(

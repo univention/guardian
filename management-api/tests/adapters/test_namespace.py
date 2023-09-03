@@ -125,10 +125,10 @@ class TestSQLNamespacePersistenceAdapter:
         async with namespace_sql_adapter.session() as session:
             app = await create_app(session)
             await create_namespace(session, app_name=app.name)
-        app = await namespace_sql_adapter.read_one(
-            NamespaceGetQuery(app_name=app.name, name="other_namespace")
-        )
-        assert app is None
+        with pytest.raises(ObjectNotFoundError):
+            await namespace_sql_adapter.read_one(
+                NamespaceGetQuery(app_name=app.name, name="other_namespace")
+            )
 
     @pytest.mark.asyncio
     async def test_read_one_unhandled_error(

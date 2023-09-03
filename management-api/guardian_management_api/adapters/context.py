@@ -75,13 +75,14 @@ class SQLContextPersistenceAdapter(
             result = await self._create_object(db_context, session=session)
         return SQLContextPersistenceAdapter._db_context_to_context(result)
 
-    async def read_one(self, query: ContextGetQuery) -> Context | None:
+    async def read_one(self, query: ContextGetQuery) -> Context:
         result = await self._get_single_object(DBContext, name=query.name)
-        return (
-            SQLContextPersistenceAdapter._db_context_to_context(result)
-            if result
-            else None
-        )
+        if result is None:
+            raise ObjectNotFoundError(
+                f"No context with the identifier '{query.app_name}:"
+                f"{query.namespace_name}:{query.name}' could be found."
+            )
+        return SQLContextPersistenceAdapter._db_context_to_context(result)
 
     async def read_many(
         self,
