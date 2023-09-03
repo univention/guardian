@@ -179,10 +179,12 @@ class TestSQLConditionPersistenceAdapter:
         self,
         condition_sql_adapter: SQLConditionPersistenceAdapter,
     ):
-        app = await condition_sql_adapter.read_one(
-            ConditionGetQuery(app_name="foo", namespace_name="bar", name="condition")
-        )
-        assert app is None
+        with pytest.raises(ObjectNotFoundError):
+            await condition_sql_adapter.read_one(
+                ConditionGetQuery(
+                    app_name="foo", namespace_name="bar", name="condition"
+                )
+            )
 
     @pytest.mark.asyncio
     async def test_read_one_unhandled_error(

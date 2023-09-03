@@ -7,7 +7,7 @@ Shared classes for the ports/models implementations
 """
 
 from abc import ABC, abstractmethod
-from typing import Generic, Optional
+from typing import Generic
 
 from guardian_lib.ports import BasePort
 
@@ -46,10 +46,11 @@ class BasePersistencePort(
         raise NotImplementedError
 
     @abstractmethod
-    async def read_one(self, query: PersistenceGetQuery) -> Optional[PersistenceObject]:
+    async def read_one(self, query: PersistenceGetQuery) -> PersistenceObject:
         """
         Reads the specified object from the persistent storage.
 
+        :raises ObjectNotFoundError: If the object could not be found.
         :raises PersistenceError: For any other error during interaction with the persistence.
         """
         raise NotImplementedError

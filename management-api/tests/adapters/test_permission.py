@@ -168,10 +168,12 @@ class TestSQLPermissionPersistenceAdapter:
         self,
         permission_sql_adapter: SQLPermissionPersistenceAdapter,
     ):
-        app = await permission_sql_adapter.read_one(
-            PermissionGetQuery(app_name="foo", namespace_name="bar", name="permission")
-        )
-        assert app is None
+        with pytest.raises(ObjectNotFoundError):
+            await permission_sql_adapter.read_one(
+                PermissionGetQuery(
+                    app_name="foo", namespace_name="bar", name="permission"
+                )
+            )
 
     @pytest.mark.asyncio
     async def test_read_one_unhandled_error(

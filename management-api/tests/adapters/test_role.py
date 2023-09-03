@@ -166,10 +166,10 @@ class TestSQLRolePersistenceAdapter:
         self,
         role_sql_adapter: SQLRolePersistenceAdapter,
     ):
-        app = await role_sql_adapter.read_one(
-            RoleGetQuery(app_name="foo", namespace_name="bar", name="role")
-        )
-        assert app is None
+        with pytest.raises(ObjectNotFoundError):
+            await role_sql_adapter.read_one(
+                RoleGetQuery(app_name="foo", namespace_name="bar", name="role")
+            )
 
     @pytest.mark.asyncio
     async def test_read_one_unhandled_error(

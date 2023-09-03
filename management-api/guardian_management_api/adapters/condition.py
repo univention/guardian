@@ -83,13 +83,14 @@ class SQLConditionPersistenceAdapter(
             result = await self._create_object(db_condition, session=session)
         return SQLConditionPersistenceAdapter._db_condition_to_condition(result)
 
-    async def read_one(self, query: ConditionGetQuery) -> Condition | None:
+    async def read_one(self, query: ConditionGetQuery) -> Condition:
         result = await self._get_single_object(DBCondition, name=query.name)
-        return (
-            SQLConditionPersistenceAdapter._db_condition_to_condition(result)
-            if result
-            else None
-        )
+        if result is None:
+            raise ObjectNotFoundError(
+                f"No permission with the identifier '{query.app_name}:"
+                f"{query.namespace_name}:{query.name}' could be found."
+            )
+        return SQLConditionPersistenceAdapter._db_condition_to_condition(result)
 
     async def read_many(
         self,

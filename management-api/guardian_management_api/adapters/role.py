@@ -73,9 +73,14 @@ class SQLRolePersistenceAdapter(
             result = await self._create_object(db_role, session=session)
         return SQLRolePersistenceAdapter._db_role_to_role(result)
 
-    async def read_one(self, query: RoleGetQuery) -> Role | None:
+    async def read_one(self, query: RoleGetQuery) -> Role:
         result = await self._get_single_object(DBRole, name=query.name)
-        return SQLRolePersistenceAdapter._db_role_to_role(result) if result else None
+        if result is None:
+            raise ObjectNotFoundError(
+                f"No role with the identifier '{query.app_name}:"
+                f"{query.namespace_name}:{query.name}' could be found."
+            )
+        return SQLRolePersistenceAdapter._db_role_to_role(result)
 
     async def read_many(
         self,

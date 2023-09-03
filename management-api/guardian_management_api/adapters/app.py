@@ -4,7 +4,9 @@
 from dataclasses import asdict
 from typing import Any, Dict, List, Optional, Type
 
+from fastapi import HTTPException
 from port_loader import AsyncConfiguredAdapterMixin
+from starlette import status
 
 from ..constants import COMPLETE_URL
 from ..errors import ObjectNotFoundError
@@ -52,6 +54,17 @@ class FastAPIAppAPIAdapter(
 ):
     class Config:
         alias = "fastapi"
+
+    async def transform_exception(self, exc: Exception) -> Exception:
+        if isinstance(exc, ObjectNotFoundError):
+            return HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"message": "App not found."},
+            )
+        return HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"message": "Internal Server Error"},
+        )
 
     async def to_app_create(self, api_request: AppCreateRequest) -> AppCreateQuery:
         return AppCreateQuery(
@@ -122,11 +135,7 @@ class FastAPIAppAPIAdapter(
     async def to_app_get(self, api_request: AppGetRequest) -> AppGetQuery:
         return AppGetQuery(name=api_request.name)
 
-    async def to_api_get_response(
-        self, app_result: App | None
-    ) -> AppSingleResponse | None:
-        if not app_result:
-            return None
+    async def to_api_get_response(self, app_result: App) -> AppSingleResponse:
         return AppSingleResponse(
             app=ResponseApp(
                 name=app_result.name,
@@ -209,8 +218,15 @@ class AppStaticDataAdapter(AppPersistencePort):
     async def read_one(
         self,
         query: AppGetQuery,
-    ) -> App | None:
-        return next((app for app in self._data["apps"] if app.name == query.name), None)
+    ) -> App:
+        result = next(
+            (app for app in self._data["apps"] if app.name == query.name), None
+        )
+        if result is None:
+            raise ObjectNotFoundError(
+                f"No permission with the identifier '{query.name} could be found"
+            )
+        return result
 
     async def read_many(
         self,
@@ -271,9 +287,13 @@ class SQLAppPersistenceAdapter(
         result = await self._create_object(db_app)
         return SQLAppPersistenceAdapter._db_app_to_app(result)
 
-    async def read_one(self, query: AppGetQuery) -> App | None:
+    async def read_one(self, query: AppGetQuery) -> App:
         result = await self._get_single_object(DBApp, name=query.name)
-        return SQLAppPersistenceAdapter._db_app_to_app(result) if result else None
+        if result is None:
+            raise ObjectNotFoundError(
+                f"No permission with the identifier '{query.name} could be found."
+            )
+        return SQLAppPersistenceAdapter._db_app_to_app(result)
 
     async def read_many(
         self,
