@@ -12,7 +12,11 @@ from guardian_management_api.errors import (
     ParentNotFoundError,
     PersistenceError,
 )
-from guardian_management_api.models.sql_persistence import DBApp, DBNamespace
+from guardian_management_api.models.sql_persistence import (
+    DBApp,
+    DBNamespace,
+    DBPermission,
+)
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -190,6 +194,28 @@ class TestSQLAlchemyMixin:
         )
         result = await sqlalchemy_mixin._get_many_objects(DBNamespace, offset, limit)
         assert [obj.name for obj in result] == [obj.name for obj in selected_slice]
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test__get_many_objects_identifiers(
+        self, sqlalchemy_mixin, create_permissions
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            permissions = await create_permissions(session, 5, 5, 5)
+        namespace_name = permissions[0].namespace.name
+        app_name = permissions[0].namespace.app.name
+        permissions_beginning = [
+            perm
+            for perm in permissions
+            if perm.namespace.name == namespace_name
+            and perm.namespace.app.name == app_name
+        ]
+        result = await sqlalchemy_mixin._get_many_objects(
+            DBPermission, 0, None, app_name=app_name, namespace_name=namespace_name
+        )
+        assert [perm.id for perm in result] == [
+            perm.id for perm in permissions_beginning
+        ]
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")
