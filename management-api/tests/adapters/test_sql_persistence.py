@@ -16,6 +16,7 @@ from guardian_management_api.models.sql_persistence import (
     DBApp,
     DBNamespace,
     DBPermission,
+    DBRole,
 )
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -137,7 +138,7 @@ class TestSQLAlchemyMixin:
             await session.commit()
             namespace = await create_namespace(session, app_name=app.name)
         result = await sqlalchemy_mixin._get_single_object(
-            DBNamespace, name="namespace", app_id=app.id
+            DBNamespace, name="namespace", app_name=app.name
         )
         assert result.name == namespace.name
         assert result.display_name == namespace.display_name
@@ -153,7 +154,7 @@ class TestSQLAlchemyMixin:
             app = await create_app(session)
             await create_namespace(session, app_name=app.name)
         result = await sqlalchemy_mixin._get_single_object(
-            DBNamespace, name="namespace2", app_id=app.id
+            DBNamespace, name="namespace2", app_name=app.name
         )
         assert result is None
 
@@ -216,6 +217,36 @@ class TestSQLAlchemyMixin:
         assert [perm.id for perm in result] == [
             perm.id for perm in permissions_beginning
         ]
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test__get_many_objects_identifiers_namespaces(
+        self, sqlalchemy_mixin, create_namespaces
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            namespaces = await create_namespaces(session, 10, 10)
+        app_name = namespaces[0].app.name
+        namespaces_beginning = [ns for ns in namespaces if ns.app.name == app_name]
+        result = await sqlalchemy_mixin._get_many_objects(
+            DBNamespace, 0, None, app_name=app_name
+        )
+        assert [ns.id for ns in result] == [ns.id for ns in namespaces_beginning]
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test__get_many_objects_by_app(self, sqlalchemy_mixin, create_roles):
+        async with sqlalchemy_mixin.session() as session:
+            roles = await create_roles(session, 10, 2, 2)
+        app_name = roles[0].namespace.app.name
+        roles_beginning = [
+            role for role in roles if role.namespace.app.name == app_name
+        ]
+        roles_beginning.sort(key=lambda x: x.name)
+        result = await sqlalchemy_mixin._get_many_objects(
+            DBRole, 0, None, app_name=app_name
+        )
+        result.sort(key=lambda x: x.name)
+        assert [role.id for role in result] == [role.id for role in roles_beginning]
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")

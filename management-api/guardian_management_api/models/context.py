@@ -26,3 +26,5 @@ class ContextGetQuery:
 @dataclass(frozen=True)
 class ContextsGetQuery:
     pagination: PaginationRequest
+    app_name: Optional[str] = None
+    namespace_name: Optional[str] = None

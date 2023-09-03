@@ -26,3 +26,5 @@ class PermissionGetQuery:
 @dataclass(frozen=True)
 class PermissionsGetQuery:
     pagination: PaginationRequest
+    app_name: Optional[str] = None
+    namespace_name: Optional[str] = None

@@ -29,3 +29,5 @@ class ConditionGetQuery:
 @dataclass(frozen=True)
 class ConditionsGetQuery:
     pagination: PaginationRequest
+    app_name: Optional[str] = None
+    namespace_name: Optional[str] = None
