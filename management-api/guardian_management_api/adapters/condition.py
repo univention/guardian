@@ -3,21 +3,165 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 from dataclasses import asdict
-from typing import Type
+from typing import Any, Optional, Tuple, Type, Union
 
+from fastapi import HTTPException
 from port_loader import AsyncConfiguredAdapterMixin
+from starlette import status
 
-from ..errors import ObjectNotFoundError, ParentNotFoundError
-from ..models.base import PersistenceGetManyResult
+from ..constants import COMPLETE_URL
+from ..errors import ObjectExistsError, ObjectNotFoundError, ParentNotFoundError
+from ..models.base import PaginationRequest, PersistenceGetManyResult
 from ..models.condition import Condition, ConditionGetQuery, ConditionsGetQuery
+from ..models.routers.base import (
+    GetAllRequest,
+    GetByAppRequest,
+    GetByNamespaceRequest,
+    GetFullIdentifierRequest,
+    ManagementObjectName,
+    PaginationInfo,
+)
+from ..models.routers.condition import (
+    Condition as ResponseCondition,
+)
+from ..models.routers.condition import (
+    ConditionCreateRequest,
+    ConditionEditRequest,
+    ConditionMultipleResponse,
+    ConditionSingleResponse,
+)
 from ..models.sql_persistence import (
     DBApp,
     DBCondition,
     DBNamespace,
     SQLPersistenceAdapterSettings,
 )
-from ..ports.condition import ConditionPersistencePort
+from ..ports.condition import (
+    ConditionAPIPort,
+    ConditionPersistencePort,
+)
 from .sql_persistence import SQLAlchemyMixin
+
+
+class FastAPIConditionAPIAdapter(
+    ConditionAPIPort[
+        GetFullIdentifierRequest,
+        ConditionSingleResponse,
+        Union[GetAllRequest, GetByAppRequest, GetByNamespaceRequest],
+        ConditionMultipleResponse,
+        ConditionCreateRequest,
+        ConditionEditRequest,
+    ]
+):
+    class Config:
+        alias = "fastapi"
+
+    async def transform_exception(self, exc: Exception) -> Exception:
+        if isinstance(exc, ObjectNotFoundError):
+            return HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"message": "Condition not found."},
+            )
+        if isinstance(exc, ObjectExistsError):
+            return HTTPException(
+                status_code=400,
+                detail={
+                    "message": "Condition with the same identifiers already exists."
+                },
+            )
+        if isinstance(exc, ParentNotFoundError):
+            return HTTPException(
+                status_code=400,
+                detail={"message": "The app and or namespace do not exist."},
+            )
+        return HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"message": "Internal Server Error"},
+        )
+
+    async def to_obj_get_single(
+        self, api_request: GetFullIdentifierRequest
+    ) -> ConditionGetQuery:
+        return ConditionGetQuery(
+            app_name=api_request.app_name,
+            namespace_name=api_request.namespace_name,
+            name=api_request.name,
+        )
+
+    async def to_api_get_single_response(
+        self, obj: Condition
+    ) -> ConditionSingleResponse:
+        return ConditionSingleResponse(
+            condition=ResponseCondition(
+                app_name=ManagementObjectName(obj.app_name),
+                namespace_name=ManagementObjectName(obj.namespace_name),
+                name=ManagementObjectName(obj.name),
+                display_name=obj.display_name,
+                parameter_names=obj.parameters,
+                documentation=obj.documentation,
+                resource_url=f"{COMPLETE_URL}/conditions/{obj.app_name}/{obj.namespace_name}/{obj.name}",
+            )
+        )
+
+    async def to_obj_get_multiple(
+        self, api_request: Union[GetAllRequest, GetByAppRequest, GetByNamespaceRequest]
+    ) -> ConditionsGetQuery:
+        return ConditionsGetQuery(
+            pagination=PaginationRequest(
+                query_offset=api_request.offset, query_limit=api_request.limit
+            ),
+            app_name=getattr(api_request, "app_name", None),
+            namespace_name=getattr(api_request, "namespace_name", None),
+        )
+
+    async def to_api_get_multiple_response(
+        self,
+        objs: list[Condition],
+        query_offset: int,
+        query_limit: Optional[int],
+        total_count: int,
+    ) -> ConditionMultipleResponse:
+        return ConditionMultipleResponse(
+            conditions=[
+                ResponseCondition(
+                    app_name=ManagementObjectName(condition.app_name),
+                    namespace_name=ManagementObjectName(condition.namespace_name),
+                    name=ManagementObjectName(condition.name),
+                    display_name=condition.display_name,
+                    documentation=condition.documentation,
+                    parameter_names=condition.parameters,
+                    resource_url=f"{COMPLETE_URL}/conditions/{condition.app_name}/{condition.namespace_name}/{condition.name}",
+                )
+                for condition in objs
+            ],
+            pagination=PaginationInfo(
+                offset=query_offset,
+                limit=query_limit if query_limit else total_count,
+                total_count=total_count,
+            ),
+        )
+
+    async def to_obj_create(self, api_request: ConditionCreateRequest) -> Condition:
+        return Condition(
+            app_name=api_request.app_name,
+            namespace_name=api_request.namespace_name,
+            name=api_request.data.name,
+            display_name=api_request.data.display_name,
+            documentation=api_request.data.documentation,
+            code=api_request.data.code if api_request.data.code else b"",
+            parameters=api_request.data.parameter_names,
+        )
+
+    async def to_obj_edit(
+        self, api_request: ConditionEditRequest
+    ) -> Tuple[ConditionGetQuery, dict[str, Any]]:
+        query = ConditionGetQuery(
+            app_name=api_request.app_name,
+            namespace_name=api_request.namespace_name,
+            name=api_request.name,
+        )
+        changed_data = api_request.data.dict(exclude_unset=True)
+        return query, changed_data
 
 
 class SQLConditionPersistenceAdapter(

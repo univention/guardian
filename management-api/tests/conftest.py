@@ -15,12 +15,16 @@ from guardian_management_api.adapters.app import (
     FastAPIAppAPIAdapter,
     SQLAppPersistenceAdapter,
 )
-from guardian_management_api.adapters.condition import SQLConditionPersistenceAdapter
+from guardian_management_api.adapters.condition import (
+    FastAPIConditionAPIAdapter,
+    SQLConditionPersistenceAdapter,
+)
 from guardian_management_api.adapters.context import SQLContextPersistenceAdapter
 from guardian_management_api.adapters.namespace import SQLNamespacePersistenceAdapter
 from guardian_management_api.adapters.permission import SQLPermissionPersistenceAdapter
 from guardian_management_api.adapters.role import SQLRolePersistenceAdapter
 from guardian_management_api.adapters.sql_persistence import SQLAlchemyMixin
+from guardian_management_api.main import app
 from guardian_management_api.models.sql_persistence import (
     Base,
     DBApp,
@@ -34,7 +38,10 @@ from guardian_management_api.ports.app import (
     AppAPIPort,
     AppPersistencePort,
 )
-from guardian_management_api.ports.condition import ConditionPersistencePort
+from guardian_management_api.ports.condition import (
+    ConditionAPIPort,
+    ConditionPersistencePort,
+)
 from guardian_management_api.ports.context import ContextPersistencePort
 from guardian_management_api.ports.namespace import NamespacePersistencePort
 from guardian_management_api.ports.permission import PermissionPersistencePort
@@ -42,6 +49,7 @@ from guardian_management_api.ports.role import RolePersistencePort
 from port_loader import AsyncAdapterRegistry, AsyncAdapterSettingsProvider
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from starlette.testclient import TestClient
 
 
 class DummySettingsAdapter(SettingsPort):
@@ -79,6 +87,12 @@ def patch_env(sqlite_db_name):
 
 
 @pytest.fixture()
+@pytest.mark.usefixtures("register_test_adapters")
+def client(register_test_adapters):
+    return TestClient(app)
+
+
+@pytest.fixture()
 def register_test_adapters(patch_env):
     """Fixture that registers the test adapters.
 
@@ -95,6 +109,7 @@ def register_test_adapters(patch_env):
         (PermissionPersistencePort, SQLPermissionPersistenceAdapter),
         (RolePersistencePort, SQLRolePersistenceAdapter),
         (AppAPIPort, FastAPIAppAPIAdapter),
+        (ConditionAPIPort, FastAPIConditionAPIAdapter),
     ]:
         adapter_registry.ADAPTER_REGISTRY.register_port(port)
         adapter_registry.ADAPTER_REGISTRY.register_adapter(port, adapter_cls=adapter)

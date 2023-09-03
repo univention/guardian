@@ -18,7 +18,8 @@ from guardian_management_api.ports.app import (
     AppPersistencePort,
 )
 
-from .ports.condition import ConditionPersistencePort
+from .adapters.condition import FastAPIConditionAPIAdapter
+from .ports.condition import ConditionAPIPort, ConditionPersistencePort
 from .ports.context import ContextPersistencePort
 from .ports.namespace import NamespacePersistencePort
 from .ports.permission import PermissionPersistencePort
@@ -93,9 +94,13 @@ def configure_registry(adapter_registry: AsyncAdapterRegistry):
     adapter_registry.set_adapter(
         AsyncAdapterSettingsProvider, selection[SettingsPort.__name__]
     )
-    adapter_registry.register_port(AppAPIPort)
-    adapter_registry.register_adapter(AppAPIPort, adapter_cls=FastAPIAppAPIAdapter)
-    adapter_registry.set_adapter(AppAPIPort, FastAPIAppAPIAdapter)
+    for port, adapter in [
+        (AppAPIPort, FastAPIAppAPIAdapter),
+        (ConditionAPIPort, FastAPIConditionAPIAdapter),
+    ]:
+        adapter_registry.register_port(port)
+        adapter_registry.register_adapter(port, adapter_cls=adapter)
+        adapter_registry.set_adapter(port, adapter)
 
 
 initialize_adapters = partial(lib_initialize_adapters, port_classes=PORT_CLASSES)

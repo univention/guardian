@@ -80,3 +80,6 @@ omit = [
 env = [
     "GUARDIAN__MANAGEMENT__BASE_URL = http://localhost:8001"
 ]
+markers = [
+    "e2e: marks test that test the routes with full integration"
+]

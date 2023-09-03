@@ -8,7 +8,7 @@ from typing import Optional
 from guardian_management_api.models.base import PaginationRequest
 
 
-@dataclass(frozen=True)
+@dataclass
 class Condition:
     app_name: str
     namespace_name: str

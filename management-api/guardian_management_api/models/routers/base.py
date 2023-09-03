@@ -48,7 +48,9 @@ class PaginationObjectMixin(BaseModel):
 
 
 class RawCodeObjectMixin(BaseModel):
-    code: str | None = Field(None, description="Raw code, as a base64 encoded string.")
+    code: Optional[bytes] = Field(
+        None, description="Raw code, as a base64 encoded string."
+    )
 
 
 class DocumentationObjectMixin(BaseModel):
