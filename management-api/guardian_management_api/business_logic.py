@@ -9,6 +9,16 @@ from .models.routers.app import (
     AppSingleResponse,
 )
 from .ports.app import AppAPIPort, AppPersistencePort
+from .ports.condition import (
+    APICreateRequestObject,
+    APIEditRequestObject,
+    APIGetMultipleRequestObject,
+    APIGetMultipleResponseObject,
+    APIGetSingleRequestObject,
+    APIGetSingleResponseObject,
+    ConditionAPIPort,
+    ConditionPersistencePort,
+)
 
 
 async def create_app(
@@ -50,3 +60,64 @@ async def get_apps(
         else many_apps.total_count,
         total_count=many_apps.total_count,
     )
+
+
+async def get_condition(
+    api_request: APIGetSingleRequestObject,
+    api_port: ConditionAPIPort,
+    persistence_port: ConditionPersistencePort,
+) -> APIGetSingleResponseObject:
+    try:
+        query = await api_port.to_obj_get_single(api_request)
+        condition = await persistence_port.read_one(query)
+        return await api_port.to_api_get_single_response(condition)
+    except Exception as exc:
+        raise (await api_port.transform_exception(exc)) from exc
+
+
+async def get_conditions(
+    api_request: APIGetMultipleRequestObject,
+    api_port: ConditionAPIPort,
+    persistence_port: ConditionPersistencePort,
+) -> APIGetMultipleResponseObject:
+    try:
+        query = await api_port.to_obj_get_multiple(api_request)
+        many_conditions = await persistence_port.read_many(query)
+        return await api_port.to_api_get_multiple_response(
+            list(many_conditions.objects),
+            query.pagination.query_offset,
+            query.pagination.query_limit,
+            many_conditions.total_count,
+        )
+    except Exception as exc:
+        raise (await api_port.transform_exception(exc)) from exc
+
+
+async def create_condition(
+    api_request: APICreateRequestObject,
+    api_port: ConditionAPIPort,
+    persistence_port: ConditionPersistencePort,
+):
+    try:
+        query = await api_port.to_obj_create(api_request)
+        condition = await persistence_port.create(query)
+        return await api_port.to_api_get_single_response(condition)
+    except Exception as exc:
+        raise (await api_port.transform_exception(exc)) from exc
+
+
+async def update_condition(
+    api_request: APIEditRequestObject,
+    api_port: ConditionAPIPort,
+    persistence_port: ConditionPersistencePort,
+):
+    try:
+        query, changed_values = await api_port.to_obj_edit(api_request)
+        old_condition = await persistence_port.read_one(query)
+        for key, value in changed_values.items():
+            setattr(old_condition, key, value)
+        condition = await persistence_port.update(old_condition)
+        return await api_port.to_api_get_single_response(condition)
+
+    except Exception as exc:
+        raise (await api_port.transform_exception(exc)) from exc

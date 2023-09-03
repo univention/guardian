@@ -9,6 +9,7 @@ from guardian_management_api.constants import COMPLETE_URL
 from guardian_management_api.main import app
 
 
+@pytest.mark.e2e
 class TestAppEndpoints:
     @pytest.fixture(autouse=True)
     def client(self):

@@ -1,10 +1,15 @@
 # Copyright (C) 2023 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
+from typing import cast
 
 import pytest
 import pytest_asyncio
-from guardian_management_api.adapters.condition import SQLConditionPersistenceAdapter
+from fastapi import HTTPException
+from guardian_management_api.adapters.condition import (
+    FastAPIConditionAPIAdapter,
+    SQLConditionPersistenceAdapter,
+)
 from guardian_management_api.errors import (
     ObjectExistsError,
     ObjectNotFoundError,
@@ -315,3 +320,20 @@ class TestSQLConditionPersistenceAdapter:
                     code=b"CODE",
                 )
             )
+
+
+class TestFastapiConditionAPIAdapter:
+    @pytest.fixture(autouse=True)
+    def adapter(self):
+        return FastAPIConditionAPIAdapter()
+
+    @pytest.mark.parametrize(
+        "exc,expected",
+        [(ObjectNotFoundError(), 404), (PersistenceError, 500), (ValueError, 500)],
+    )
+    @pytest.mark.asyncio
+    async def test_transform_exception(self, exc, expected, adapter):
+        result: HTTPException = cast(
+            HTTPException, await adapter.transform_exception(exc)
+        )
+        assert result.status_code == expected

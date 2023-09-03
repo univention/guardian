@@ -9,11 +9,15 @@ from guardian_management_api.adapter_registry import (
     configure_registry,
 )
 from guardian_management_api.adapters.app import FastAPIAppAPIAdapter
+from guardian_management_api.adapters.condition import FastAPIConditionAPIAdapter
 from guardian_management_api.ports.app import (
     AppAPIPort,
     AppPersistencePort,
 )
-from guardian_management_api.ports.condition import ConditionPersistencePort
+from guardian_management_api.ports.condition import (
+    ConditionAPIPort,
+    ConditionPersistencePort,
+)
 from guardian_management_api.ports.context import ContextPersistencePort
 from guardian_management_api.ports.namespace import NamespacePersistencePort
 from guardian_management_api.ports.permission import PermissionPersistencePort
@@ -56,6 +60,7 @@ def test_configure_registry(mocker, register_test_adapters):
         mocker.call(RolePersistencePort, "sql"),
         mocker.call(AsyncAdapterSettingsProvider, "env"),
         mocker.call(AppAPIPort, FastAPIAppAPIAdapter),
+        mocker.call(ConditionAPIPort, FastAPIConditionAPIAdapter),
     ]
     assert registry_mock.register_port.call_args_list == [
         mocker.call(SettingsPort),
@@ -66,6 +71,7 @@ def test_configure_registry(mocker, register_test_adapters):
         mocker.call(PermissionPersistencePort),
         mocker.call(RolePersistencePort),
         mocker.call(AppAPIPort),
+        mocker.call(ConditionAPIPort),
     ]
     assert load_from_ep_mock.call_args_list == [
         mocker.call(

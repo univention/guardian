@@ -3,16 +3,15 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 from fastapi import APIRouter, Depends
+from guardian_lib.adapter_registry import port_dep
 
+from .. import business_logic
+from ..adapters.condition import FastAPIConditionAPIAdapter
 from ..models.routers.base import (
     GetAllRequest,
     GetByAppRequest,
     GetByNamespaceRequest,
     GetFullIdentifierRequest,
-    PaginationInfo,
-)
-from ..models.routers.condition import (
-    Condition as ResponseCondition,
 )
 from ..models.routers.condition import (
     ConditionCreateRequest,
@@ -20,6 +19,7 @@ from ..models.routers.condition import (
     ConditionMultipleResponse,
     ConditionSingleResponse,
 )
+from ..ports.condition import ConditionAPIPort, ConditionPersistencePort
 
 router = APIRouter(tags=["condition"])
 
@@ -28,63 +28,57 @@ router = APIRouter(tags=["condition"])
     "/conditions/{app_name}/{namespace_name}/{name}",
     response_model=ConditionSingleResponse,
 )
-async def get_condition(condition_get_request: GetFullIdentifierRequest = Depends()):
+async def get_condition(
+    condition_get_request: GetFullIdentifierRequest = Depends(),
+    api_port: FastAPIConditionAPIAdapter = Depends(
+        port_dep(ConditionAPIPort, FastAPIConditionAPIAdapter)
+    ),
+    persistence_port: ConditionPersistencePort = Depends(
+        port_dep(ConditionPersistencePort)
+    ),
+):
     """
     Returns a condition object identified by `app_name`, `namespace_name` and `name`.
     """
-    return ConditionSingleResponse(
-        condition=ResponseCondition(
-            app_name="my-app",
-            namespace_name="my-namespace",
-            name="my-condition",
-            display_name="My Condition",
-            resource_url="http://fqdn/guardian/management/conditions/my-app/my-namespace/my-condition",
-            documentation="Some dummy condition.",
-            parameter_names=["A", "B", "C"],
-        )
-    ).dict()
+    return await business_logic.get_condition(
+        condition_get_request, api_port, persistence_port
+    )
 
 
 @router.get("/conditions", response_model=ConditionMultipleResponse)
-async def get_all_conditions(condition_get_request: GetAllRequest = Depends()):
+async def get_all_conditions(
+    condition_get_request: GetAllRequest = Depends(),
+    api_port: FastAPIConditionAPIAdapter = Depends(
+        port_dep(ConditionAPIPort, FastAPIConditionAPIAdapter)
+    ),
+    persistence_port: ConditionPersistencePort = Depends(
+        port_dep(ConditionPersistencePort)
+    ),
+):
     """
     Returns a list of all conditions.
     """
-    return ConditionMultipleResponse(
-        conditions=[
-            ResponseCondition(
-                app_name="my-app",
-                namespace_name="my-namespace",
-                name="my-condition",
-                display_name="My Condition",
-                resource_url="http://fqdn/guardian/management/conditions/my-app/my-namespace/my-condition",
-                documentation="Some dummy condition.",
-                parameter_names=["A", "B", "C"],
-            )
-        ],
-        pagination=PaginationInfo(limit=1000, offset=0, total_count=1),
-    ).dict()
+    return await business_logic.get_conditions(
+        condition_get_request, api_port, persistence_port
+    )
 
 
 @router.get("/conditions/{app_name}", response_model=ConditionMultipleResponse)
-async def get_conditions_by_app(condition_get_request: GetByAppRequest = Depends()):
+async def get_conditions_by_app(
+    condition_get_request: GetByAppRequest = Depends(),
+    api_port: FastAPIConditionAPIAdapter = Depends(
+        port_dep(ConditionAPIPort, FastAPIConditionAPIAdapter)
+    ),
+    persistence_port: ConditionPersistencePort = Depends(
+        port_dep(ConditionPersistencePort)
+    ),
+):
     """
     Returns a list of all conditions that belong to `app_name`.
     """
-    return ConditionMultipleResponse(
-        conditions=[
-            ResponseCondition(
-                app_name="my-app",
-                namespace_name="my-namespace",
-                name="my-condition",
-                display_name="My Condition",
-                resource_url="http://fqdn/guardian/management/conditions/my-app/my-namespace/my-condition",
-                documentation="Some dummy condition.",
-                parameter_names=["A", "B", "C"],
-            )
-        ],
-        pagination=PaginationInfo(limit=1000, offset=0, total_count=1),
-    ).dict()
+    return await business_logic.get_conditions(
+        condition_get_request, api_port, persistence_port
+    )
 
 
 @router.get(
@@ -92,64 +86,59 @@ async def get_conditions_by_app(condition_get_request: GetByAppRequest = Depends
 )
 async def get_conditions_by_namespace(
     condition_get_request: GetByNamespaceRequest = Depends(),
+    api_port: FastAPIConditionAPIAdapter = Depends(
+        port_dep(ConditionAPIPort, FastAPIConditionAPIAdapter)
+    ),
+    persistence_port: ConditionPersistencePort = Depends(
+        port_dep(ConditionPersistencePort)
+    ),
 ):
     """
     Returns a list of all conditions that belong to `namespace_name` under `app_name`.
     """
-    return ConditionMultipleResponse(
-        conditions=[
-            ResponseCondition(
-                app_name="my-app",
-                namespace_name="my-namespace",
-                name="my-condition",
-                display_name="My Condition",
-                resource_url="http://fqdn/guardian/management/conditions/my-app/my-namespace/my-condition",
-                documentation="Some dummy condition.",
-                parameter_names=["A", "B", "C"],
-            )
-        ],
-        pagination=PaginationInfo(limit=1000, offset=0, total_count=1),
-    ).dict()
+    return await business_logic.get_conditions(
+        condition_get_request, api_port, persistence_port
+    )
 
 
 @router.post(
-    "/conditions/{app_name}/{namespace_name}", response_model=ConditionSingleResponse
+    "/conditions/{app_name}/{namespace_name}",
+    response_model=ConditionSingleResponse,
+    status_code=201,
 )
 async def create_condition(
     condition_create_request: ConditionCreateRequest = Depends(),
+    api_port: FastAPIConditionAPIAdapter = Depends(
+        port_dep(ConditionAPIPort, FastAPIConditionAPIAdapter)
+    ),
+    persistence_port: ConditionPersistencePort = Depends(
+        port_dep(ConditionPersistencePort)
+    ),
 ):
     """
     Create a condition.
     """
-    return ConditionSingleResponse(
-        condition=ResponseCondition(
-            app_name="my-app",
-            namespace_name="my-namespace",
-            name="my-condition",
-            display_name="My Condition",
-            resource_url="http://fqdn/guardian/management/conditions/my-app/my-namespace/my-condition",
-            documentation="Some dummy condition.",
-            parameter_names=["A", "B", "C"],
-        )
-    ).dict()
+    return await business_logic.create_condition(
+        condition_create_request, api_port, persistence_port
+    )
 
 
 @router.patch(
     "/conditions/{app_name}/{namespace_name}/{name}",
     response_model=ConditionSingleResponse,
 )
-async def edit_condition(condition_edit_request: ConditionEditRequest = Depends()):
+async def edit_condition(
+    condition_edit_request: ConditionEditRequest = Depends(),
+    api_port: FastAPIConditionAPIAdapter = Depends(
+        port_dep(ConditionAPIPort, FastAPIConditionAPIAdapter)
+    ),
+    persistence_port: ConditionPersistencePort = Depends(
+        port_dep(ConditionPersistencePort)
+    ),
+):
     """
     Update a condition.
     """
-    return ConditionSingleResponse(
-        condition=ResponseCondition(
-            app_name="my-app",
-            namespace_name="my-namespace",
-            name="my-condition",
-            display_name="My Condition",
-            resource_url="http://fqdn/guardian/management/conditions/my-app/my-namespace/my-condition",
-            documentation="Some dummy condition.",
-            parameter_names=["A", "B", "C"],
-        )
-    ).dict()
+    return await business_logic.update_condition(
+        condition_edit_request, api_port, persistence_port
+    )
