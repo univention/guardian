@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.sql.functions import count
 
 from ..errors import ObjectExistsError, ParentNotFoundError, PersistenceError
+from ..models.sql_persistence import DBApp, DBNamespace
 
 
 def error_guard(func):
@@ -133,12 +134,27 @@ class SQLAlchemyMixin:
         offset: int,
         limit: Optional[int],
         order_by: str = "name",
+        app_name: Optional[str] = None,
+        namespace_name: Optional[str] = None,
     ) -> list[ORMObj]:
         async with self.session() as session:
             stmt = select(orm_cls).offset(offset).order_by(getattr(orm_cls, order_by))
             if limit:
                 stmt = stmt.limit(limit)
-            return (await session.scalars(stmt)).all()
+            if app_name or namespace_name:
+                stmt = (
+                    stmt.join(DBNamespace)
+                    .join(DBApp)
+                    .where(
+                        getattr(orm_cls, "namespace_id") == DBNamespace.id,
+                        DBNamespace.app_id == DBApp.id,
+                    )
+                )
+            if app_name:
+                stmt = stmt.where(DBApp.name == app_name)
+            if namespace_name:
+                stmt = stmt.where(DBNamespace.name == namespace_name)
+            return list((await session.scalars(stmt)).all())
 
     @error_guard
     @session_wrapper
