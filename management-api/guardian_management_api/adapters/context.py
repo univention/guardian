@@ -90,7 +90,11 @@ class SQLContextPersistenceAdapter(
     ) -> PersistenceGetManyResult[Context]:
         total_count = await self._get_num_objects(DBContext)
         dp_contexts = await self._get_many_objects(
-            DBContext, query.pagination.query_offset, query.pagination.query_limit
+            DBContext,
+            query.pagination.query_offset,
+            query.pagination.query_limit,
+            app_name=query.app_name,
+            namespace_name=query.namespace_name,
         )
         contexts = [
             SQLContextPersistenceAdapter._db_context_to_context(db_context)

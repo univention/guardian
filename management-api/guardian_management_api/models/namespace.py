@@ -24,3 +24,4 @@ class NamespaceGetQuery:
 @dataclass(frozen=True)
 class NamespacesGetQuery:
     pagination: PaginationRequest
+    app_name: Optional[str] = None

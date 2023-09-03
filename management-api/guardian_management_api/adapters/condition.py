@@ -98,7 +98,11 @@ class SQLConditionPersistenceAdapter(
     ) -> PersistenceGetManyResult[Condition]:
         total_count = await self._get_num_objects(DBCondition)
         dp_conditions = await self._get_many_objects(
-            DBCondition, query.pagination.query_offset, query.pagination.query_limit
+            DBCondition,
+            query.pagination.query_offset,
+            query.pagination.query_limit,
+            app_name=query.app_name,
+            namespace_name=query.namespace_name,
         )
         conditions = [
             SQLConditionPersistenceAdapter._db_condition_to_condition(db_condition)
