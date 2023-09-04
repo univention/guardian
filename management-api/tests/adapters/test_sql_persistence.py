@@ -137,7 +137,7 @@ class TestSQLAlchemyMixin:
             await session.commit()
             namespace = await create_namespace(session, app_name=app.name)
         result = await sqlalchemy_mixin._get_single_object(
-            DBNamespace, name="namespace", app_id=app.id
+            DBNamespace, name="namespace", app_name=app.name
         )
         assert result.name == namespace.name
         assert result.display_name == namespace.display_name
@@ -153,7 +153,7 @@ class TestSQLAlchemyMixin:
             app = await create_app(session)
             await create_namespace(session, app_name=app.name)
         result = await sqlalchemy_mixin._get_single_object(
-            DBNamespace, name="namespace2", app_id=app.id
+            DBNamespace, name="namespace2", app_name=app.name
         )
         assert result is None
 

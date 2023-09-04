@@ -61,7 +61,7 @@ class SQLRolePersistenceAdapter(
             )
         db_namespace = await self._get_single_object(
             DBNamespace,
-            app_id=db_app.id,
+            app_name=db_app.name,
             name=role.namespace_name,
         )
         if db_namespace is None:

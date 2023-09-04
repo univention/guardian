@@ -114,11 +114,28 @@ class SQLAlchemyMixin:
 
     @error_guard
     async def _get_single_object(
-        self, orm_cls: Type[ORMObj], **identifiers
+        self,
+        orm_cls: Type[ORMObj],
+        name: str,
+        app_name: Optional[str] = None,
+        namespace_name: Optional[str] = None,
     ) -> Optional[ORMObj]:
-        stmt = select(orm_cls).where(
-            *[getattr(orm_cls, attr) == value for attr, value in identifiers.items()]
-        )
+        stmt = select(orm_cls).where(getattr(orm_cls, "name") == name)
+        if app_name and namespace_name:
+            stmt = (
+                stmt.join(DBNamespace)
+                .join(DBApp)
+                .where(
+                    getattr(orm_cls, "namespace_id") == DBNamespace.id,
+                    DBNamespace.app_id == DBApp.id,
+                    DBApp.name == app_name,
+                    DBNamespace.name == namespace_name,
+                )
+            )
+        elif app_name:
+            stmt = stmt.join(DBApp).where(
+                DBApp.name == app_name, getattr(orm_cls, "app_id") == DBApp.id
+            )
         async with self.session() as session:
             return (await session.execute(stmt)).scalar()
 
@@ -141,19 +158,21 @@ class SQLAlchemyMixin:
             stmt = select(orm_cls).offset(offset).order_by(getattr(orm_cls, order_by))
             if limit:
                 stmt = stmt.limit(limit)
-            if app_name or namespace_name:
+            if app_name and namespace_name:
                 stmt = (
                     stmt.join(DBNamespace)
                     .join(DBApp)
                     .where(
                         getattr(orm_cls, "namespace_id") == DBNamespace.id,
                         DBNamespace.app_id == DBApp.id,
+                        DBApp.name == app_name,
+                        DBNamespace.name == namespace_name,
                     )
                 )
-            if app_name:
-                stmt = stmt.where(DBApp.name == app_name)
-            if namespace_name:
-                stmt = stmt.where(DBNamespace.name == namespace_name)
+            elif app_name:
+                stmt = stmt.join(DBApp).where(
+                    DBApp.name == app_name, getattr(orm_cls, "app_id") == DBApp.id
+                )
             return list((await session.scalars(stmt)).all())
 
     @error_guard
@@ -183,7 +202,7 @@ class SQLAlchemyMixin:
                 )
             else:
                 raise exc  # pragma: no cover
-        return await self._get_single_object(type(obj), id=obj.id)  # type: ignore[attr-defined]
+        return await self._get_single_object(type(obj), name=obj.name)  # type: ignore[attr-defined]
 
     @error_guard
     async def _update_object(self, orm_obj: ORMObj, /, **new_values) -> ORMObj:
