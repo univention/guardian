@@ -69,7 +69,7 @@ class SQLConditionPersistenceAdapter(
             )
         db_namespace = await self._get_single_object(
             DBNamespace,
-            app_id=db_app.id,
+            app_name=db_app.name,
             name=condition.namespace_name,
         )
         if db_namespace is None:
@@ -84,7 +84,12 @@ class SQLConditionPersistenceAdapter(
         return SQLConditionPersistenceAdapter._db_condition_to_condition(result)
 
     async def read_one(self, query: ConditionGetQuery) -> Condition:
-        result = await self._get_single_object(DBCondition, name=query.name)
+        result = await self._get_single_object(
+            DBCondition,
+            name=query.name,
+            app_name=query.app_name,
+            namespace_name=query.namespace_name,
+        )
         if result is None:
             raise ObjectNotFoundError(
                 f"No permission with the identifier '{query.app_name}:"
@@ -111,7 +116,12 @@ class SQLConditionPersistenceAdapter(
         return PersistenceGetManyResult(total_count=total_count, objects=conditions)
 
     async def update(self, condition: Condition) -> Condition:
-        db_condition = await self._get_single_object(DBCondition, name=condition.name)
+        db_condition = await self._get_single_object(
+            DBCondition,
+            name=condition.name,
+            app_name=condition.app_name,
+            namespace_name=condition.namespace_name,
+        )
         if db_condition is None:
             raise ObjectNotFoundError(
                 f"No condition with the identifier '{condition.app_name}:"

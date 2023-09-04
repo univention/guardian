@@ -59,7 +59,9 @@ class SQLNamespacePersistenceAdapter(
         return SQLNamespacePersistenceAdapter._db_namespace_to_namespace(result)
 
     async def read_one(self, query: NamespaceGetQuery) -> Namespace:
-        result = await self._get_single_object(DBNamespace, name=query.name)
+        result = await self._get_single_object(
+            DBNamespace, name=query.name, app_name=query.app_name
+        )
         if result is None:
             raise ObjectNotFoundError(
                 f"No namespace with the identifier '{query.app_name}:"
@@ -85,7 +87,9 @@ class SQLNamespacePersistenceAdapter(
         return PersistenceGetManyResult(total_count=total_count, objects=namespaces)
 
     async def update(self, namespace: Namespace) -> Namespace:
-        db_app = await self._get_single_object(DBNamespace, name=namespace.name)
+        db_app = await self._get_single_object(
+            DBNamespace, name=namespace.name, app_name=namespace.app_name
+        )
         if db_app is None:
             raise ObjectNotFoundError(
                 f"No app with the identifier '{namespace.app_name}:{namespace.name}' could be found."

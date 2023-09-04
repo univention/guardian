@@ -61,7 +61,7 @@ class SQLRolePersistenceAdapter(
             )
         db_namespace = await self._get_single_object(
             DBNamespace,
-            app_id=db_app.id,
+            app_name=db_app.name,
             name=role.namespace_name,
         )
         if db_namespace is None:
@@ -74,7 +74,12 @@ class SQLRolePersistenceAdapter(
         return SQLRolePersistenceAdapter._db_role_to_role(result)
 
     async def read_one(self, query: RoleGetQuery) -> Role:
-        result = await self._get_single_object(DBRole, name=query.name)
+        result = await self._get_single_object(
+            DBRole,
+            name=query.name,
+            app_name=query.app_name,
+            namespace_name=query.namespace_name,
+        )
         if result is None:
             raise ObjectNotFoundError(
                 f"No role with the identifier '{query.app_name}:"
@@ -100,7 +105,12 @@ class SQLRolePersistenceAdapter(
         return PersistenceGetManyResult(total_count=total_count, objects=roles)
 
     async def update(self, role: Role) -> Role:
-        db_role = await self._get_single_object(DBRole, name=role.name)
+        db_role = await self._get_single_object(
+            DBRole,
+            name=role.name,
+            app_name=role.app_name,
+            namespace_name=role.namespace_name,
+        )
         if db_role is None:
             raise ObjectNotFoundError(
                 f"No role with the identifier '{role.app_name}:"

@@ -63,7 +63,7 @@ class SQLPermissionPersistenceAdapter(
             )
         db_namespace = await self._get_single_object(
             DBNamespace,
-            app_id=db_app.id,
+            app_name=db_app.name,
             name=permission.namespace_name,
         )
         if db_namespace is None:
@@ -80,7 +80,12 @@ class SQLPermissionPersistenceAdapter(
         return SQLPermissionPersistenceAdapter._db_permission_to_permission(result)
 
     async def read_one(self, query: PermissionGetQuery) -> Permission:
-        result = await self._get_single_object(DBPermission, name=query.name)
+        result = await self._get_single_object(
+            DBPermission,
+            name=query.name,
+            app_name=query.app_name,
+            namespace_name=query.namespace_name,
+        )
         if result is None:
             raise ObjectNotFoundError(
                 f"No permission with the identifier '{query.app_name}:"
@@ -108,7 +113,10 @@ class SQLPermissionPersistenceAdapter(
 
     async def update(self, permission: Permission) -> Permission:
         db_permission = await self._get_single_object(
-            DBPermission, name=permission.name
+            DBPermission,
+            name=permission.name,
+            app_name=permission.app_name,
+            namespace_name=permission.namespace_name,
         )
         if db_permission is None:
             raise ObjectNotFoundError(

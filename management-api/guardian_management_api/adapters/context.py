@@ -61,7 +61,7 @@ class SQLContextPersistenceAdapter(
             )
         db_namespace = await self._get_single_object(
             DBNamespace,
-            app_id=db_app.id,
+            app_name=db_app.name,
             name=context.namespace_name,
         )
         if db_namespace is None:
@@ -76,7 +76,12 @@ class SQLContextPersistenceAdapter(
         return SQLContextPersistenceAdapter._db_context_to_context(result)
 
     async def read_one(self, query: ContextGetQuery) -> Context:
-        result = await self._get_single_object(DBContext, name=query.name)
+        result = await self._get_single_object(
+            DBContext,
+            name=query.name,
+            app_name=query.app_name,
+            namespace_name=query.namespace_name,
+        )
         if result is None:
             raise ObjectNotFoundError(
                 f"No context with the identifier '{query.app_name}:"
@@ -103,7 +108,12 @@ class SQLContextPersistenceAdapter(
         return PersistenceGetManyResult(total_count=total_count, objects=contexts)
 
     async def update(self, context: Context) -> Context:
-        db_context = await self._get_single_object(DBContext, name=context.name)
+        db_context = await self._get_single_object(
+            DBContext,
+            name=context.name,
+            app_name=context.app_name,
+            namespace_name=context.namespace_name,
+        )
         if db_context is None:
             raise ObjectNotFoundError(
                 f"No context with the identifier '{context.app_name}:"
