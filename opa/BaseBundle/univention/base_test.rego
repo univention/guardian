@@ -1,6 +1,8 @@
 package univention.base_test
 
+import data.univention.base.check_permissions
 import data.univention.base.get_permissions
+import future.keywords.every
 import future.keywords.if
 
 test_get_permissions_happy_case if {
@@ -204,4 +206,76 @@ test_get_permissions_wrong_role if {
 		"target_id": "target_id_1",
 		"permissions": set(),
 	}}
+}
+
+check_permissions_parametrize := [
+	{
+		"input": {},
+		"result": set(),
+	},
+	{
+		"input": {
+			"actor": {
+				"id": "actor_id_1",
+				"roles": {"ucsschool:users:teacher"},
+			},
+			"targets": [{
+				"old": {"id": "target_id_1"},
+				"new": {"id": "target_id_1"},
+			}],
+			"namespaces": {"ucsschool": {"users", "groups"}},
+			"contexts": {},
+			"extra_args": {},
+			"permissions": {{"appName": "ucsschool", "namespace": "users", "permission": "read_first_name"}},
+		},
+		"result": {{"target_id": "target_id_1", "result": true}},
+	},
+	{
+		"input": {
+			"actor": {
+				"id": "actor_id_1",
+				"roles": {"ucsschool:users:teacher"},
+			},
+			"targets": [{
+				"old": {"id": "target_id_1"},
+				"new": {"id": "target_id_1"},
+			}],
+			"namespaces": {"ucsschool": {"users", "groups"}},
+			"contexts": {},
+			"extra_args": {},
+			"permissions": {
+				{"appName": "ucsschool", "namespace": "users", "permission": "read_first_name"},
+				{"appName": "ucsschool", "namespace": "users", "permission": "read_last_name"},
+				{"appName": "ucsschool", "namespace": "users", "permission": "write_password"},
+				{"appName": "ucsschool", "namespace": "users", "permission": "export"},
+			},
+		},
+		"result": {{"target_id": "target_id_1", "result": true}},
+	},
+	{
+		"input": {
+			"actor": {
+				"id": "actor_id_1",
+				"roles": {"ucsschool:users:teacher"},
+			},
+			"targets": [{
+				"old": {"id": "target_id_1"},
+				"new": {"id": "target_id_1"},
+			}],
+			"namespaces": {"ucsschool": {"users", "groups"}},
+			"contexts": {},
+			"extra_args": {},
+			"permissions": {{"appName": "ucsschool", "namespace": "users", "permission": "doesnotexist"}},
+		},
+		"result": {{"target_id": "target_id_1", "result": false}},
+	},
+]
+
+test_check_permissions if {
+	every case in check_permissions_parametrize {
+		inp = case.input
+		result := check_permissions with input as inp
+		print("TEST_DEBUG -- result: ", result)
+		result == case.result
+	}
 }
