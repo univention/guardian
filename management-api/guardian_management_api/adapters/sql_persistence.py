@@ -4,7 +4,7 @@
 
 import sqlite3
 from functools import wraps
-from typing import Optional, Type, TypeVar
+from typing import Optional, Tuple, Type, TypeVar
 
 from sqlalchemy import Engine, event, select
 from sqlalchemy.dialects.sqlite.aiosqlite import AsyncAdapt_aiosqlite_connection
@@ -141,8 +141,43 @@ class SQLAlchemyMixin:
 
     @error_guard
     async def _get_num_objects(self, orm_cls: Type[ORMObj]):
+        """
+        Returns the total number of objects in the database.
+        """
         async with self.session() as session:
             return await session.scalar(select(count(getattr(orm_cls, "id"))))
+
+    def _configure_stmt_for_namespace(
+        self,
+        stmt,
+        orm_cls: Type[ORMObj],
+        app_name: Optional[str],
+        namespace_name: Optional[str],
+    ):
+        if app_name and namespace_name:
+            stmt = (
+                stmt.join(DBNamespace)
+                .join(DBApp)
+                .where(
+                    getattr(orm_cls, "namespace_id") == DBNamespace.id,
+                    DBNamespace.app_id == DBApp.id,
+                    DBApp.name == app_name,
+                    DBNamespace.name == namespace_name,
+                )
+            )
+        elif app_name and issubclass(orm_cls, DBNamespace):
+            stmt = stmt.join(DBApp).where(
+                DBApp.name == app_name, getattr(orm_cls, "app_id") == DBApp.id
+            )
+        elif app_name:
+            stmt = (
+                stmt.join(
+                    DBNamespace, getattr(orm_cls, "namespace_id") == DBNamespace.id
+                )
+                .join(DBApp, DBNamespace.app_id == DBApp.id)
+                .where(DBApp.name == app_name)
+            )
+        return stmt
 
     @error_guard
     async def _get_many_objects(
@@ -153,35 +188,23 @@ class SQLAlchemyMixin:
         order_by: str = "name",
         app_name: Optional[str] = None,
         namespace_name: Optional[str] = None,
-    ) -> list[ORMObj]:
+    ) -> Tuple[list[ORMObj], int]:
         async with self.session() as session:
-            stmt = select(orm_cls).offset(offset).order_by(getattr(orm_cls, order_by))
+            select_stmt = (
+                select(orm_cls).offset(offset).order_by(getattr(orm_cls, order_by))
+            )
+            count_stmt = select(count(getattr(orm_cls, "id")))
             if limit:
-                stmt = stmt.limit(limit)
-            if app_name and namespace_name:
-                stmt = (
-                    stmt.join(DBNamespace)
-                    .join(DBApp)
-                    .where(
-                        getattr(orm_cls, "namespace_id") == DBNamespace.id,
-                        DBNamespace.app_id == DBApp.id,
-                        DBApp.name == app_name,
-                        DBNamespace.name == namespace_name,
-                    )
-                )
-            elif app_name and issubclass(orm_cls, DBNamespace):
-                stmt = stmt.join(DBApp).where(
-                    DBApp.name == app_name, getattr(orm_cls, "app_id") == DBApp.id
-                )
-            elif app_name:
-                stmt = (
-                    stmt.join(
-                        DBNamespace, getattr(orm_cls, "namespace_id") == DBNamespace.id
-                    )
-                    .join(DBApp, DBNamespace.app_id == DBApp.id)
-                    .where(DBApp.name == app_name)
-                )
-            return list((await session.scalars(stmt)).all())
+                select_stmt = select_stmt.limit(limit)
+            select_stmt = self._configure_stmt_for_namespace(
+                select_stmt, orm_cls, app_name, namespace_name
+            )
+            count_stmt = self._configure_stmt_for_namespace(
+                count_stmt, orm_cls, app_name, namespace_name
+            )
+            return list(
+                (await session.scalars(select_stmt)).all()
+            ), await session.scalar(count_stmt)
 
     @error_guard
     @session_wrapper

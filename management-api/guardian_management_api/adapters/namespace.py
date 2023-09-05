@@ -73,8 +73,7 @@ class SQLNamespacePersistenceAdapter(
         self,
         query: NamespacesGetQuery,
     ) -> PersistenceGetManyResult[Namespace]:
-        total_count = await self._get_num_objects(DBNamespace)
-        dp_namespaces = await self._get_many_objects(
+        dp_namespaces, total_count = await self._get_many_objects(
             DBNamespace,
             query.pagination.query_offset,
             query.pagination.query_limit,

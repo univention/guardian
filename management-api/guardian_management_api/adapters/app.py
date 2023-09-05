@@ -299,8 +299,7 @@ class SQLAppPersistenceAdapter(
         self,
         query: AppsGetQuery,
     ) -> PersistenceGetManyResult[App]:
-        total_count = await self._get_num_objects(DBApp)
-        db_apps = await self._get_many_objects(
+        db_apps, total_count = await self._get_many_objects(
             DBApp, query.pagination.query_offset, query.pagination.query_limit
         )
         apps = [SQLAppPersistenceAdapter._db_app_to_app(db_app) for db_app in db_apps]

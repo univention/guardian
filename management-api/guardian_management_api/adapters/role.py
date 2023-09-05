@@ -91,8 +91,7 @@ class SQLRolePersistenceAdapter(
         self,
         query: RolesGetQuery,
     ) -> PersistenceGetManyResult[Role]:
-        total_count = await self._get_num_objects(DBRole)
-        dp_roles = await self._get_many_objects(
+        db_roles, total_count = await self._get_many_objects(
             DBRole,
             query.pagination.query_offset,
             query.pagination.query_limit,
@@ -100,7 +99,7 @@ class SQLRolePersistenceAdapter(
             namespace_name=query.namespace_name,
         )
         roles = [
-            SQLRolePersistenceAdapter._db_role_to_role(db_role) for db_role in dp_roles
+            SQLRolePersistenceAdapter._db_role_to_role(db_role) for db_role in db_roles
         ]
         return PersistenceGetManyResult(total_count=total_count, objects=roles)
 

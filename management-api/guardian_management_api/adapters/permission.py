@@ -97,8 +97,7 @@ class SQLPermissionPersistenceAdapter(
         self,
         query: PermissionsGetQuery,
     ) -> PersistenceGetManyResult[Permission]:
-        total_count = await self._get_num_objects(DBPermission)
-        dp_permissions = await self._get_many_objects(
+        dp_permissions, total_count = await self._get_many_objects(
             DBPermission,
             query.pagination.query_offset,
             query.pagination.query_limit,

@@ -193,8 +193,24 @@ class TestSQLAlchemyMixin:
         selected_slice = (
             namespaces[offset : offset + limit] if limit else namespaces[offset:]
         )
-        result = await sqlalchemy_mixin._get_many_objects(DBNamespace, offset, limit)
+        result, total_count = await sqlalchemy_mixin._get_many_objects(
+            DBNamespace, offset, limit
+        )
         assert [obj.name for obj in result] == [obj.name for obj in selected_slice]
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test__get_many_objects_total_count(self, sqlalchemy_mixin, create_roles):
+        async with sqlalchemy_mixin.session() as session:
+            roles = await create_roles(session, 10, 2, 2)
+        result, total_count = await sqlalchemy_mixin._get_many_objects(
+            DBRole,
+            0,
+            None,
+            app_name=roles[0].namespace.app.name,
+            namespace_name=roles[0].namespace.name,
+        )
+        assert total_count == 10
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")
@@ -211,7 +227,7 @@ class TestSQLAlchemyMixin:
             if perm.namespace.name == namespace_name
             and perm.namespace.app.name == app_name
         ]
-        result = await sqlalchemy_mixin._get_many_objects(
+        result, total_count = await sqlalchemy_mixin._get_many_objects(
             DBPermission, 0, None, app_name=app_name, namespace_name=namespace_name
         )
         assert [perm.id for perm in result] == [
@@ -227,7 +243,7 @@ class TestSQLAlchemyMixin:
             namespaces = await create_namespaces(session, 10, 10)
         app_name = namespaces[0].app.name
         namespaces_beginning = [ns for ns in namespaces if ns.app.name == app_name]
-        result = await sqlalchemy_mixin._get_many_objects(
+        result, total_count = await sqlalchemy_mixin._get_many_objects(
             DBNamespace, 0, None, app_name=app_name
         )
         assert [ns.id for ns in result] == [ns.id for ns in namespaces_beginning]
@@ -242,7 +258,7 @@ class TestSQLAlchemyMixin:
             role for role in roles if role.namespace.app.name == app_name
         ]
         roles_beginning.sort(key=lambda x: x.name)
-        result = await sqlalchemy_mixin._get_many_objects(
+        result, total_count = await sqlalchemy_mixin._get_many_objects(
             DBRole, 0, None, app_name=app_name
         )
         result.sort(key=lambda x: x.name)
