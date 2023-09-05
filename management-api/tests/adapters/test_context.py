@@ -22,19 +22,17 @@ from guardian_management_api.models.context import (
 )
 from guardian_management_api.models.sql_persistence import (
     DBContext,
-    SQLPersistenceAdapterSettings,
 )
+from guardian_management_api.ports.context import ContextPersistencePort
 from sqlalchemy import select
 
 
 class TestSQLContextPersistenceAdapter:
     @pytest_asyncio.fixture
-    async def context_sql_adapter(self, sqlite_url) -> SQLContextPersistenceAdapter:
-        adapter = SQLContextPersistenceAdapter()
-        await adapter.configure(
-            SQLPersistenceAdapterSettings(dialect="sqlite", db_name=sqlite_url)
-        )
-        return adapter
+    async def context_sql_adapter(
+        self, register_test_adapters
+    ) -> SQLContextPersistenceAdapter:
+        return await register_test_adapters.request_port(ContextPersistencePort)
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")

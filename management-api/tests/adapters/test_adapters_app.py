@@ -42,8 +42,8 @@ from guardian_management_api.models.routers.app import (
 from guardian_management_api.models.routers.role import Role as ResponseRole
 from guardian_management_api.models.sql_persistence import (
     DBApp,
-    SQLPersistenceAdapterSettings,
 )
+from guardian_management_api.ports.app import AppPersistencePort
 from sqlalchemy import select
 
 
@@ -272,12 +272,8 @@ class TestAppStaticDataAdapter:
 
 class TestSQLAppPersistenceAdapter:
     @pytest_asyncio.fixture
-    async def app_sql_adapter(self, sqlite_url) -> SQLAppPersistenceAdapter:
-        adapter = SQLAppPersistenceAdapter()
-        await adapter.configure(
-            SQLPersistenceAdapterSettings(dialect="sqlite", db_name=sqlite_url)
-        )
-        return adapter
+    async def app_sql_adapter(self, register_test_adapters) -> SQLAppPersistenceAdapter:
+        return await register_test_adapters.request_port(AppPersistencePort)
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")

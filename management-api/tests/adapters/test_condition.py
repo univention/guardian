@@ -22,19 +22,17 @@ from guardian_management_api.models.condition import (
 )
 from guardian_management_api.models.sql_persistence import (
     DBCondition,
-    SQLPersistenceAdapterSettings,
 )
+from guardian_management_api.ports.condition import ConditionPersistencePort
 from sqlalchemy import select
 
 
 class TestSQLConditionPersistenceAdapter:
     @pytest_asyncio.fixture
-    async def condition_sql_adapter(self, sqlite_url) -> SQLConditionPersistenceAdapter:
-        adapter = SQLConditionPersistenceAdapter()
-        await adapter.configure(
-            SQLPersistenceAdapterSettings(dialect="sqlite", db_name=sqlite_url)
-        )
-        return adapter
+    async def condition_sql_adapter(
+        self, register_test_adapters
+    ) -> SQLConditionPersistenceAdapter:
+        return await register_test_adapters.request_port(ConditionPersistencePort)
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")

@@ -22,19 +22,17 @@ from guardian_management_api.models.namespace import (
 )
 from guardian_management_api.models.sql_persistence import (
     DBNamespace,
-    SQLPersistenceAdapterSettings,
 )
+from guardian_management_api.ports.namespace import NamespacePersistencePort
 from sqlalchemy import select
 
 
 class TestSQLNamespacePersistenceAdapter:
     @pytest_asyncio.fixture
-    async def namespace_sql_adapter(self, sqlite_url) -> SQLNamespacePersistenceAdapter:
-        adapter = SQLNamespacePersistenceAdapter()
-        await adapter.configure(
-            SQLPersistenceAdapterSettings(dialect="sqlite", db_name=sqlite_url)
-        )
-        return adapter
+    async def namespace_sql_adapter(
+        self, register_test_adapters
+    ) -> SQLNamespacePersistenceAdapter:
+        return await register_test_adapters.request_port(NamespacePersistencePort)
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")

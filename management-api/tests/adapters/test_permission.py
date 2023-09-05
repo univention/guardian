@@ -22,21 +22,17 @@ from guardian_management_api.models.permission import (
 )
 from guardian_management_api.models.sql_persistence import (
     DBPermission,
-    SQLPersistenceAdapterSettings,
 )
+from guardian_management_api.ports.permission import PermissionPersistencePort
 from sqlalchemy import select
 
 
 class TestSQLPermissionPersistenceAdapter:
     @pytest_asyncio.fixture
     async def permission_sql_adapter(
-        self, sqlite_url
+        self, register_test_adapters
     ) -> SQLPermissionPersistenceAdapter:
-        adapter = SQLPermissionPersistenceAdapter()
-        await adapter.configure(
-            SQLPersistenceAdapterSettings(dialect="sqlite", db_name=sqlite_url)
-        )
-        return adapter
+        return await register_test_adapters.request_port(PermissionPersistencePort)
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")

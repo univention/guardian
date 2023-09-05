@@ -22,19 +22,17 @@ from guardian_management_api.models.role import (
 )
 from guardian_management_api.models.sql_persistence import (
     DBRole,
-    SQLPersistenceAdapterSettings,
 )
+from guardian_management_api.ports.role import RolePersistencePort
 from sqlalchemy import select
 
 
 class TestSQLRolePersistenceAdapter:
     @pytest_asyncio.fixture
-    async def role_sql_adapter(self, sqlite_url) -> SQLRolePersistenceAdapter:
-        adapter = SQLRolePersistenceAdapter()
-        await adapter.configure(
-            SQLPersistenceAdapterSettings(dialect="sqlite", db_name=sqlite_url)
-        )
-        return adapter
+    async def role_sql_adapter(
+        self, register_test_adapters
+    ) -> SQLRolePersistenceAdapter:
+        return await register_test_adapters.request_port(RolePersistencePort)
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")
