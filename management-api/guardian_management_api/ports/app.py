@@ -74,9 +74,7 @@ class AppAPIPort(
         raise NotImplementedError  # pragma: no cover
 
     @abstractmethod
-    async def to_api_edit_response(
-        self, app_result: App | None
-    ) -> AppAPIEditResponseObject | None:
+    async def to_api_edit_response(self, app_result: App) -> AppAPIEditResponseObject:
         raise NotImplementedError  # pragma: no cover
 
     @abstractmethod

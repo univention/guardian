@@ -86,11 +86,7 @@ class FastAPIAppAPIAdapter(
             ]
         )
 
-    async def to_api_edit_response(
-        self, app_result: App | None
-    ) -> AppSingleResponse | None:
-        if not app_result:
-            return None
+    async def to_api_edit_response(self, app_result: App) -> AppSingleResponse:
         return AppSingleResponse(
             app=ResponseApp(
                 name=app_result.name,
@@ -248,7 +244,7 @@ class AppStaticDataAdapter(AppPersistencePort):
     async def update(
         self,
         updated_app: App,
-    ) -> App:
+    ) -> App:  # pragma: no cover  static data adapter is deprecated
         if not any(app.name == updated_app.name for app in self._data["apps"]):
             raise ObjectNotFoundError("The app could not be found.")
         self._data["apps"] = [

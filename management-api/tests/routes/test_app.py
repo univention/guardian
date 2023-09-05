@@ -178,11 +178,13 @@ class TestAppEndpoints:
             "pagination": {"limit": 1, "offset": 1, "total_count": 2},
         }
 
-    @patch(
-        "guardian_management_api.adapters.app.AppStaticDataAdapter._data",
-        new={"apps": [App(name="test_app2")]},
-    )
-    def test_patch_app(self, client, register_test_adapters):
+    @pytest.mark.usefixtures("create_tables")
+    @pytest.mark.asyncio
+    async def test_patch_app(
+        self, client, register_test_adapters, create_app, sqlalchemy_mixin
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session, "test_app2", display_name=None)
         response = client.patch(
             app.url_path_for("edit_app", name="test_app2"),
             json={"name": "test_app2", "display_name": "expected displayname"},
@@ -207,11 +209,9 @@ class TestAppEndpoints:
             }
         }
 
-    @patch(
-        "guardian_management_api.adapters.app.AppStaticDataAdapter._data",
-        new={"apps": []},
-    )
-    def test_patch_non_existing_app_fails(self, client, register_test_adapters):
+    @pytest.mark.usefixtures("create_tables")
+    @pytest.mark.asyncio
+    async def test_patch_non_existing_app_fails(self, client, register_test_adapters):
         response = client.patch(
             app.url_path_for("edit_app", name="non-existing"),
             json={"name": "non-existing", "display_name": "displayname"},

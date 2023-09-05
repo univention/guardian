@@ -119,13 +119,10 @@ async def edit_app(
     """
     Update an app.
     """
-    response: AppSingleResponse | None = await business_logic.edit_app(
-        api_request=app_edit_request,
-        app_api_port=app_api,
-        persistence_port=persistence,
-    )
-    if response is None:
-        return ORJSONResponse(  # type: ignore
-            status_code=status.HTTP_404_NOT_FOUND, content={"message": "App not found"}
+    return (
+        await business_logic.edit_app(
+            api_request=app_edit_request,
+            app_api_port=app_api,
+            persistence_port=persistence,
         )
-    return response.dict()
+    ).dict()
