@@ -6,6 +6,7 @@ import future.keywords.if
 import future.keywords.in
 
 import data.univention.mapping.roleCapabilityMapping
+import data.univention.utils.evaluate_conditions
 
 # check if a dictionary of app to namespaces contains a given namespace
 # for the given app
@@ -17,18 +18,30 @@ has_namespace(namespaces, app_name, namespace) if {
 	namespace in namespaces[app_name]
 } else = false
 
-# roles: The list of actor roles
+# actor: The acting object
 # roleCapabilityMapping: Dictionary of role names to set of capabilities
 # namespaces: Dictionary of app names to set of namespaces to return the permissions for
 # contexts: The list of contexts provided to the request
 # extra_args: Dictionary of additional arguments to pass to condition evaluation
 # result: Set of permission objects
-_get_permissions(roles, target_object, roleCapabilityMapping, namespaces, contexts, extra_args) := {permission |
-	some role in roles
+_get_permissions(actor, target_object, roleCapabilityMapping, namespaces, contexts, extra_args) := {permission |
+	some role in actor.roles
 	some capability in roleCapabilityMapping[role]
 	app_name := capability.appName
 	namespace := capability.namespace
 	any([is_null(namespaces), has_namespace(namespaces, app_name, namespace)])
+	condition_data := {
+		"actor": actor,
+		"actor_role": role,
+		"target": {
+			"old": target_object.old,
+			"new": target_object.new,
+		},
+		"namespaces": namespaces,
+		"contexts": contexts,
+		"extra_args": extra_args,
+	}
+	evaluate_conditions(capability.relation, capability.conditions, condition_data)
 	some permission_type in capability.permissions
 	permission := {"appName": app_name, "namespace": namespace, "permission": permission_type}
 }
@@ -43,7 +56,7 @@ _get_permissions(roles, target_object, roleCapabilityMapping, namespaces, contex
 get_permissions contains result if {
 	some target_object in input.targets
 	permissions := _get_permissions(
-		input.actor.roles,
+		input.actor,
 		target_object,
 		roleCapabilityMapping,
 		input.namespaces,
@@ -68,7 +81,7 @@ check_permissions contains result if {
 	input.targets
 	some target_object in input.targets
 	permissions := _get_permissions(
-		input.actor.roles,
+		input.actor,
 		target_object,
 		roleCapabilityMapping,
 		input.namespaces,

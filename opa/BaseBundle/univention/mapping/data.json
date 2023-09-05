@@ -34,6 +34,40 @@
         "relation": "AND"
       },
       {
+        "appName": "ucsschool",
+        "conditions": [
+          {
+            "name": "only_if_param_result_true",
+            "parameters": {
+              "result": true
+            }
+          }
+        ],
+        "namespace": "users",
+        "permissions": [
+          "read_first_name",
+          "write_password",
+          "export"
+        ],
+        "relation": "AND"
+      },
+      {
+        "appName": "ucsschool",
+        "conditions": [
+          {
+            "name": "only_if_param_result_true",
+            "parameters": {
+              "result": false
+            }
+          }
+        ],
+        "namespace": "users",
+        "permissions": [
+          "no_one_should_get_this_permission"
+        ],
+        "relation": "AND"
+      },
+      {
         "appName": "OX",
         "conditions": [],
         "namespace": "mail",
