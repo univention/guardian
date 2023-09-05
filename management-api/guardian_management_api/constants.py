@@ -10,3 +10,7 @@ BASE_URL = os.environ.get("GUARDIAN__MANAGEMENT__BASE_URL")
 if not BASE_URL:
     raise RuntimeError("GUARDIAN__MANAGEMENT__BASE_URL is not set")
 COMPLETE_URL = urljoin(BASE_URL, API_PREFIX)
+
+# To accommodate some backends we proactively restrict the length of non text field strings.
+# This affects mostly names and display names.
+STRING_MAX_LENGTH = 256

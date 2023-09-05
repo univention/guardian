@@ -6,6 +6,8 @@ from typing import Optional
 from fastapi import Path, Query
 from pydantic import AnyHttpUrl, BaseModel, ConstrainedStr, Field
 
+from guardian_management_api.constants import STRING_MAX_LENGTH
+
 
 class GuardianBaseModel(BaseModel):
     class Config:
@@ -18,8 +20,9 @@ MANAGEMENT_OBJECT_NAME_REGEX = r"[a-z][a-z0-9\-_]*"
 class ManagementObjectName(ConstrainedStr):
     """Name of an object"""
 
-    pattern = MANAGEMENT_OBJECT_NAME_REGEX
+    regex = MANAGEMENT_OBJECT_NAME_REGEX
     min_length = 1
+    max_length = STRING_MAX_LENGTH
 
 
 class PaginationInfo(GuardianBaseModel):

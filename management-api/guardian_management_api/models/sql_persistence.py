@@ -9,6 +9,8 @@ from guardian_lib.models.settings import SETTINGS_NAME_METADATA
 from sqlalchemy import ForeignKey, LargeBinary, String, Text, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
+from guardian_management_api.constants import STRING_MAX_LENGTH
+
 SQL_DIALECT = "sql_persistence_adapter.dialect"
 SQL_HOST = "sql_persistence_adapter.host"
 SQL_PORT = "sql_persistence_adapter.port"
@@ -35,8 +37,8 @@ class DBApp(Base):
     __tablename__ = "app"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(256), unique=True)
-    display_name: Mapped[Optional[str]] = mapped_column(String(256))
+    name: Mapped[str] = mapped_column(String(STRING_MAX_LENGTH), unique=True)
+    display_name: Mapped[Optional[str]] = mapped_column(String(STRING_MAX_LENGTH))
     namespaces: Mapped[list["DBNamespace"]] = relationship(back_populates="app")
 
 
@@ -46,8 +48,8 @@ class DBNamespace(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     app_id: Mapped[int] = mapped_column(ForeignKey(DBApp.id))
     app: Mapped[DBApp] = relationship(back_populates="namespaces", lazy="joined")
-    name: Mapped[str] = mapped_column(String(256))
-    display_name: Mapped[Optional[str]] = mapped_column(String(256))
+    name: Mapped[str] = mapped_column(String(STRING_MAX_LENGTH))
+    display_name: Mapped[Optional[str]] = mapped_column(String(STRING_MAX_LENGTH))
 
     __table_args__ = (  # type: ignore[var-annotated]
         UniqueConstraint("app_id", "name"),
@@ -60,8 +62,8 @@ class DBPermission(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     namespace_id: Mapped[int] = mapped_column(ForeignKey(DBNamespace.id))
     namespace: Mapped[DBNamespace] = relationship(lazy="joined")
-    name: Mapped[str] = mapped_column(String(256))
-    display_name: Mapped[Optional[str]] = mapped_column(String(256))
+    name: Mapped[str] = mapped_column(String(STRING_MAX_LENGTH))
+    display_name: Mapped[Optional[str]] = mapped_column(String(STRING_MAX_LENGTH))
 
     __table_args__ = (  # type: ignore[var-annotated]
         UniqueConstraint("namespace_id", "name"),
@@ -74,8 +76,8 @@ class DBRole(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     namespace_id: Mapped[int] = mapped_column(ForeignKey(DBNamespace.id))
     namespace: Mapped[DBNamespace] = relationship(lazy="joined")
-    name: Mapped[str] = mapped_column(String(256))
-    display_name: Mapped[Optional[str]] = mapped_column(String(256))
+    name: Mapped[str] = mapped_column(String(STRING_MAX_LENGTH))
+    display_name: Mapped[Optional[str]] = mapped_column(String(STRING_MAX_LENGTH))
 
     __table_args__ = (  # type: ignore[var-annotated]
         UniqueConstraint("namespace_id", "name"),
@@ -88,8 +90,8 @@ class DBContext(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     namespace_id: Mapped[int] = mapped_column(ForeignKey(DBNamespace.id))
     namespace: Mapped[DBNamespace] = relationship(lazy="joined")
-    name: Mapped[str] = mapped_column(String(256))
-    display_name: Mapped[Optional[str]] = mapped_column(String(256))
+    name: Mapped[str] = mapped_column(String(STRING_MAX_LENGTH))
+    display_name: Mapped[Optional[str]] = mapped_column(String(STRING_MAX_LENGTH))
 
     __table_args__ = (  # type: ignore[var-annotated]
         UniqueConstraint("namespace_id", "name"),
@@ -102,8 +104,8 @@ class DBCondition(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     namespace_id: Mapped[int] = mapped_column(ForeignKey(DBNamespace.id))
     namespace: Mapped[DBNamespace] = relationship(lazy="joined")
-    name: Mapped[str] = mapped_column(String(256))
-    display_name: Mapped[Optional[str]] = mapped_column(String(256))
+    name: Mapped[str] = mapped_column(String(STRING_MAX_LENGTH))
+    display_name: Mapped[Optional[str]] = mapped_column(String(STRING_MAX_LENGTH))
     documentation: Mapped[Optional[str]] = mapped_column(Text())
     parameters: Mapped[str] = mapped_column(Text)
     code: Mapped[bytes] = mapped_column(LargeBinary())
