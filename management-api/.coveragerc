@@ -10,7 +10,7 @@ omit=
     */routers/context.py
     */routers/permission.py
     */routers/condition.py
-    */routers/mapping.py
+    */routers/capability.py
     */routers/custom_endpoint.py
     */ports/role.py
     errors.py
