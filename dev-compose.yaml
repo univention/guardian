@@ -18,6 +18,13 @@ services:
     build: opa/
     networks:
       - proxy-net
+    labels:
+      traefik.http.routers.opa.entrypoints: web
+      traefik.http.routers.opa.rule: PathPrefix(`/guardian/opa`)
+      traefik.http.routers.opa.middlewares: opa-stripprefix
+      traefik.http.middlewares.opa-stripprefix.stripprefix.prefixes: /guardian/opa
+      traefik.http.routers.opa.service: opa
+      traefik.http.services.opa.loadbalancer.server.port: 8181
   authorization-api:
     container_name: authz-guardian-dev
     image: guardian-authorization-api:dev
