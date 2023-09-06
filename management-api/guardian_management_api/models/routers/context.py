@@ -3,13 +3,17 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 from guardian_management_api.models.routers.base import (
+    AppNamePathMixin,
     CreateBaseRequest,
     DisplayNameObjectMixin,
     EditBaseRequest,
     GuardianBaseModel,
     NameObjectMixin,
+    NamePathMixin,
     NamespacedObjectMixin,
+    NamespacePathMixin,
     PaginationObjectMixin,
+    PaginationRequestMixin,
     ResourceURLObjectMixin,
 )
 
@@ -32,6 +36,24 @@ class ContextEditData(GuardianBaseModel, DisplayNameObjectMixin):
 
 class ContextEditRequest(EditBaseRequest):
     data: ContextEditData
+
+
+class ContextGetRequest(
+    GuardianBaseModel, AppNamePathMixin, NamespacePathMixin, NamePathMixin
+):
+    ...
+
+
+class ContextsGetRequest(GuardianBaseModel, PaginationRequestMixin):
+    ...
+
+
+class ContextsByAppnameGetRequest(GuardianBaseModel, PaginationRequestMixin):
+    app_name: str
+
+
+class ContextsByNamespaceGetRequest(GuardianBaseModel, PaginationRequestMixin):
+    namespace_name: str
 
 
 #####

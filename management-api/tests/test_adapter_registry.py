@@ -1,8 +1,6 @@
 # Copyright (C) 2023 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
-
-
 from guardian_lib.ports import SettingsPort
 from guardian_management_api.adapter_registry import (
     AdapterSelection,
@@ -13,6 +11,7 @@ from guardian_management_api.adapters.bundle_server import BundleServerAdapter
 from guardian_management_api.adapters.condition import FastAPIConditionAPIAdapter
 from guardian_management_api.adapters.permission import FastAPIPermissionAPIAdapter
 from guardian_management_api.adapters.role import FastAPIRoleAPIAdapter
+from guardian_management_api.adapters.context import FastAPIContextAPIAdapter
 from guardian_management_api.ports.app import (
     AppAPIPort,
     AppPersistencePort,
@@ -22,7 +21,7 @@ from guardian_management_api.ports.condition import (
     ConditionAPIPort,
     ConditionPersistencePort,
 )
-from guardian_management_api.ports.context import ContextPersistencePort
+from guardian_management_api.ports.context import ContextAPIPort, ContextPersistencePort
 from guardian_management_api.ports.namespace import NamespacePersistencePort
 from guardian_management_api.ports.permission import (
     PermissionAPIPort,
@@ -74,6 +73,7 @@ def test_configure_registry(mocker, register_test_adapters):
         mocker.call(ConditionAPIPort, FastAPIConditionAPIAdapter),
         mocker.call(BundleServerPort, BundleServerAdapter),
         mocker.call(RoleAPIPort, FastAPIRoleAPIAdapter),
+        mocker.call(ContextAPIPort, FastAPIContextAPIAdapter),
     ]
     assert registry_mock.register_port.call_args_list == [
         mocker.call(SettingsPort),
@@ -88,6 +88,7 @@ def test_configure_registry(mocker, register_test_adapters):
         mocker.call(ConditionAPIPort),
         mocker.call(BundleServerPort),
         mocker.call(RoleAPIPort),
+        mocker.call(ContextAPIPort),
     ]
     assert load_from_ep_mock.call_args_list == [
         mocker.call(

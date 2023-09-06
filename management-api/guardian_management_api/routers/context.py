@@ -1,9 +1,11 @@
 # Copyright (C) 2023 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
-
 from fastapi import APIRouter, Depends
+from guardian_lib.adapter_registry import port_dep
 
+from .. import business_logic
+from ..adapters.context import FastAPIContextAPIAdapter
 from ..models.routers.base import (
     GetAllRequest,
     GetByAppRequest,
@@ -20,6 +22,7 @@ from ..models.routers.context import (
     ContextMultipleResponse,
     ContextSingleResponse,
 )
+from ..ports.context import ContextAPIPort, ContextPersistencePort
 
 router = APIRouter(tags=["context"])
 
@@ -106,19 +109,24 @@ async def get_contexts_by_namespace(
 @router.post(
     "/contexts/{app_name}/{namespace_name}", response_model=ContextSingleResponse
 )
-async def create_context(context_create_request: ContextCreateRequest = Depends()):
+async def create_context(
+    context_create_request: ContextCreateRequest = Depends(),
+    context_api: FastAPIContextAPIAdapter = Depends(
+        port_dep(ContextAPIPort, FastAPIContextAPIAdapter)
+    ),
+    context_persistence: ContextPersistencePort = Depends(
+        port_dep(ContextPersistencePort)
+    ),
+) -> Dict[str, Any]:
     """
     Create a context.
     """
-    return ContextSingleResponse(
-        context=ResponseContext(
-            app_name="my-app",
-            namespace_name="my-namespace",
-            name="my-context",
-            display_name="My Context",
-            resource_url="http://fqdn/guardian/management/contexts/my-app/my-namespace/my-context",
-        )
-    ).dict()
+    response: ContextSingleResponse = await business_logic.create_context(
+        api_request=context_create_request,
+        api_port=context_api,
+        persistence_port=context_persistence,
+    )
+    return response.dict()
 
 
 @router.patch(

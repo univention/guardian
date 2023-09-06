@@ -4,7 +4,11 @@
 
 import pytest
 import pytest_asyncio
-from guardian_management_api.adapters.context import SQLContextPersistenceAdapter
+from guardian_management_api.adapters.context import (
+    FastAPIContextAPIAdapter,
+    SQLContextPersistenceAdapter,
+)
+from guardian_management_api.constants import COMPLETE_URL
 from guardian_management_api.errors import (
     ObjectExistsError,
     ObjectNotFoundError,
@@ -17,14 +21,65 @@ from guardian_management_api.models.base import (
 )
 from guardian_management_api.models.context import (
     Context,
+    ContextCreateQuery,
     ContextGetQuery,
     ContextsGetQuery,
+)
+from guardian_management_api.models.routers.context import (
+    Context as ResponseContext,
+)
+from guardian_management_api.models.routers.context import (
+    ContextCreateData,
+    ContextCreateRequest,
+    ContextSingleResponse,
 )
 from guardian_management_api.models.sql_persistence import (
     DBContext,
 )
 from guardian_management_api.ports.context import ContextPersistencePort
 from sqlalchemy import select
+
+
+class TestFastAPIContextAdapter:
+    @pytest.fixture(autouse=True)
+    def adapter(self):
+        return FastAPIContextAPIAdapter()
+
+    @pytest.mark.asyncio
+    async def test_to_context_create(self, adapter):
+        app_name = "app-name"
+        namespace_name = "namespace-name"
+        api_request = ContextCreateRequest(
+            app_name=app_name,
+            namespace_name=namespace_name,
+            data=ContextCreateData(display_name="display_name", name="context-name"),
+        )
+        result = await adapter.to_context_create(api_request)
+        assert result == ContextCreateQuery(
+            name="context-name",
+            display_name="display_name",
+            app_name=app_name,
+            namespace_name=namespace_name,
+        )
+
+    @pytest.mark.asyncio
+    async def test_to_api_create_response(self, adapter):
+        context = Context(
+            name="name",
+            display_name="display_name",
+            app_name="app-name",
+            namespace_name="namespace-name",
+        )
+        result = await adapter.to_api_create_response(context)
+        assert result == ContextSingleResponse(
+            context=ResponseContext(
+                name=context.name,
+                app_name=context.app_name,
+                display_name=context.display_name,
+                namespace_name=context.namespace_name,
+                resource_url=f"{COMPLETE_URL}/contexts/{context.app_name}/{context.namespace_name}/{context.name}",
+            )
+        )
 
 
 class TestSQLContextPersistenceAdapter:
