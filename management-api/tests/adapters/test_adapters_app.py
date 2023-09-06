@@ -32,14 +32,12 @@ from guardian_management_api.models.routers.app import (
     App as ResponseApp,
 )
 from guardian_management_api.models.routers.app import (
-    AppAdmin,
     AppCreateRequest,
     AppEditData,
     AppEditRequest,
     AppGetRequest,
     AppSingleResponse,
 )
-from guardian_management_api.models.routers.role import Role as ResponseRole
 from guardian_management_api.models.sql_persistence import (
     DBApp,
 )
@@ -91,17 +89,6 @@ class TestFastAPIAppAdapter:
                 name="name",
                 display_name="display_name",
                 resource_url=f"{COMPLETE_URL}/apps/name",
-                app_admin=AppAdmin(
-                    name="name-admin",
-                    display_name="name Admin",
-                    role=ResponseRole(
-                        resource_url=f"{COMPLETE_URL}/roles/name/app-admin",
-                        app_name="guardian",
-                        namespace_name="name",
-                        name="app-admin",
-                        display_name="name App Admin",
-                    ),
-                ),
             )
         )
 
@@ -125,17 +112,6 @@ class TestFastAPIAppAdapter:
                 name="name",
                 display_name="display_name",
                 resource_url=f"{COMPLETE_URL}/apps/name",
-                app_admin=AppAdmin(
-                    name="name-admin",
-                    display_name="name Admin",
-                    role=ResponseRole(
-                        resource_url=f"{COMPLETE_URL}/roles/name/app-admin",
-                        app_name="guardian",
-                        namespace_name="name",
-                        name="app-admin",
-                        display_name="name App Admin",
-                    ),
-                ),
             )
         )
 
@@ -151,17 +127,6 @@ class TestFastAPIAppAdapter:
                 name="name",
                 display_name="display_name",
                 resource_url=f"{COMPLETE_URL}/apps/name",
-                app_admin=AppAdmin(
-                    name="name-admin",
-                    display_name="name Admin",
-                    role=ResponseRole(
-                        resource_url=f"{COMPLETE_URL}/roles/name/app-admin",
-                        app_name="guardian",
-                        namespace_name="name",
-                        name="app-admin",
-                        display_name="name App Admin",
-                    ),
-                ),
             )
         )
 

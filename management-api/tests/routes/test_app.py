@@ -23,17 +23,6 @@ class TestAppEndpoints:
         assert response.status_code == 200
         assert response.json() == {
             "app": {
-                "app_admin": {
-                    "display_name": "test_app Admin",
-                    "name": "test_app-admin",
-                    "role": {
-                        "app_name": "guardian",
-                        "display_name": "test_app App Admin",
-                        "name": "app-admin",
-                        "namespace_name": "test_app",
-                        "resource_url": f"{COMPLETE_URL}/roles/test_app/app-admin",
-                    },
-                },
                 "display_name": None,
                 "name": "test_app",
                 "resource_url": f"{COMPLETE_URL}/apps/test_app",
@@ -49,17 +38,6 @@ class TestAppEndpoints:
         assert response.status_code == 200
         assert response.json() == {
             "app": {
-                "app_admin": {
-                    "display_name": "test_app Admin",
-                    "name": "test_app-admin",
-                    "role": {
-                        "app_name": "guardian",
-                        "display_name": "test_app App Admin",
-                        "name": "app-admin",
-                        "namespace_name": "test_app",
-                        "resource_url": f"{COMPLETE_URL}/roles/test_app/app-admin",
-                    },
-                },
                 "display_name": "test_app display_name",
                 "name": "test_app",
                 "resource_url": f"{COMPLETE_URL}/apps/test_app",
@@ -78,17 +56,6 @@ class TestAppEndpoints:
         assert response.status_code == 200
         assert response.json() == {
             "app": {
-                "app_admin": {
-                    "display_name": "test_app2 Admin",
-                    "name": "test_app2-admin",
-                    "role": {
-                        "app_name": "guardian",
-                        "display_name": "test_app2 App Admin",
-                        "name": "app-admin",
-                        "namespace_name": "test_app2",
-                        "resource_url": f"{COMPLETE_URL}/roles/test_app2/app-admin",
-                    },
-                },
                 "display_name": None,
                 "name": "test_app2",
                 "resource_url": f"{COMPLETE_URL}/apps/test_app2",
@@ -113,33 +80,11 @@ class TestAppEndpoints:
         assert response.json() == {
             "apps": [
                 {
-                    "app_admin": {
-                        "display_name": f"{apps[0].name} Admin",
-                        "name": f"{apps[0].name}-admin",
-                        "role": {
-                            "app_name": "guardian",
-                            "display_name": f"{apps[0].name} App Admin",
-                            "name": "app-admin",
-                            "namespace_name": apps[0].name,
-                            "resource_url": f"{COMPLETE_URL}/roles/{apps[0].name}/app-admin",
-                        },
-                    },
                     "display_name": apps[0].display_name,
                     "name": apps[0].name,
                     "resource_url": f"{COMPLETE_URL}/apps/{apps[0].name}",
                 },
                 {
-                    "app_admin": {
-                        "display_name": f"{apps[1].name} Admin",
-                        "name": f"{apps[1].name}-admin",
-                        "role": {
-                            "app_name": "guardian",
-                            "display_name": f"{apps[1].name} App Admin",
-                            "name": "app-admin",
-                            "namespace_name": apps[1].name,
-                            "resource_url": f"{COMPLETE_URL}/roles/{apps[1].name}/app-admin",
-                        },
-                    },
                     "display_name": apps[1].display_name,
                     "name": apps[1].name,
                     "resource_url": f"{COMPLETE_URL}/apps/{apps[1].name}",
@@ -160,17 +105,6 @@ class TestAppEndpoints:
         assert response.json() == {
             "apps": [
                 {
-                    "app_admin": {
-                        "display_name": f"{apps[1].name} Admin",
-                        "name": f"{apps[1].name}-admin",
-                        "role": {
-                            "app_name": "guardian",
-                            "display_name": f"{apps[1].name} App Admin",
-                            "name": "app-admin",
-                            "namespace_name": apps[1].name,
-                            "resource_url": f"{COMPLETE_URL}/roles/{apps[1].name}/app-admin",
-                        },
-                    },
                     "display_name": apps[1].display_name,
                     "name": apps[1].name,
                     "resource_url": f"{COMPLETE_URL}/apps/{apps[1].name}",
@@ -193,17 +127,6 @@ class TestAppEndpoints:
         assert response.status_code == 201
         assert response.json() == {
             "app": {
-                "app_admin": {
-                    "display_name": "test_app2 Admin",
-                    "name": "test_app2-admin",
-                    "role": {
-                        "app_name": "guardian",
-                        "display_name": "test_app2 App Admin",
-                        "name": "app-admin",
-                        "namespace_name": "test_app2",
-                        "resource_url": f"{COMPLETE_URL}/roles/test_app2/app-admin",
-                    },
-                },
                 "display_name": "expected displayname",
                 "name": "test_app2",
                 "resource_url": f"{COMPLETE_URL}/apps/test_app2",

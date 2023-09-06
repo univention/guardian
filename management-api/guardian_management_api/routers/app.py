@@ -15,17 +15,17 @@ from ..models.routers.app import (
     App as ResponseApp,
 )
 from ..models.routers.app import (
-    AppAdmin as ResponseAppAdmin,
-)
-from ..models.routers.app import (
+    AppAdmin,
     AppCreateRequest,
+    AppDefaultNamespace,
     AppEditRequest,
     AppGetRequest,
     AppMultipleResponse,
+    AppRegisterResponse,
     AppsGetRequest,
     AppSingleResponse,
 )
-from ..models.routers.role import Role as ResponseRole
+from ..models.routers.base import ManagementObjectName
 from ..ports.app import AppAPIPort, AppPersistencePort
 
 router = APIRouter(tags=["app"])
@@ -82,30 +82,32 @@ async def create_app(
     return response.dict()
 
 
-@router.post("/apps/register", response_model=AppSingleResponse)
+@router.post("/apps/register", response_model=AppRegisterResponse)
 async def register_app():  # pragma: no cover
     """
     Register an app.
 
     This will also create an admin role to administrate the app.
     """
-    response = AppSingleResponse(
+    response = AppRegisterResponse(
         app=ResponseApp(
-            name="my-app",
+            name=ManagementObjectName("my-app"),
             display_name="My App",
             resource_url=f"{COMPLETE_URL}/guardian/management/apps/my-app",
-            app_admin=ResponseAppAdmin(
-                name="my-admin",
-                display_name="My Admin",
-                role=ResponseRole(
-                    app_name="my-app",
-                    name="my-role",
-                    display_name="My Role",
-                    namespace_name="my-namespace",
-                    resource_url=f"{COMPLETE_URL}/roles/my-app/my-namespace/my-role",
-                ),
-            ),
-        )
+        ),
+        admin_role=AppAdmin(
+            app_name=ManagementObjectName("my-app"),
+            namespace_name=ManagementObjectName("default"),
+            name=ManagementObjectName("my-admin"),
+            display_name="My Admin",
+            resource_url=f"{COMPLETE_URL}/roles/my-app/default/my-admin",
+        ),
+        default_namespace=AppDefaultNamespace(
+            app_name=ManagementObjectName("my-app"),
+            name=ManagementObjectName("default"),
+            display_name="My App Default Namespace",
+            resource_url=f"{COMPLETE_URL}/namespaces/my-app/default",
+        ),
     ).dict()
     return response
 

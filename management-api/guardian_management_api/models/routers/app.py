@@ -6,16 +6,17 @@
 from pydantic import Field
 
 from ...models.routers.base import (
+    AppNameObjectMixin,
     DisplayNameObjectMixin,
     GuardianBaseModel,
     ManagementObjectName,
     NameObjectMixin,
     NamePathMixin,
+    NamespacedObjectMixin,
     PaginationObjectMixin,
     PaginationRequestMixin,
     ResourceURLObjectMixin,
 )
-from ...models.routers.role import Role as ResponseRole
 
 #####
 # Requests
@@ -50,20 +51,35 @@ class AppsGetRequest(GuardianBaseModel, PaginationRequestMixin):
 #####
 
 
-class AppAdmin(GuardianBaseModel, DisplayNameObjectMixin, NameObjectMixin):
-    role: ResponseRole = Field(..., description="Role of the app admin.")
+class AppAdmin(
+    GuardianBaseModel,
+    ResourceURLObjectMixin,
+    DisplayNameObjectMixin,
+    NamespacedObjectMixin,
+):
+    ...
+
+
+class AppDefaultNamespace(
+    ResourceURLObjectMixin, DisplayNameObjectMixin, AppNameObjectMixin, NameObjectMixin
+):
+    ...
 
 
 class App(
     GuardianBaseModel, ResourceURLObjectMixin, DisplayNameObjectMixin, NameObjectMixin
 ):
-    app_admin: AppAdmin | None = Field(
-        None, description="App admin role of the created app."
-    )
+    ...
 
 
 class AppSingleResponse(GuardianBaseModel):
     app: App
+
+
+class AppRegisterResponse(GuardianBaseModel):
+    app: App
+    admin_role: AppAdmin
+    default_namespace: AppDefaultNamespace
 
 
 class AppMultipleResponse(GuardianBaseModel, PaginationObjectMixin):
