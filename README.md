@@ -43,12 +43,12 @@ The configuration files can be found in `appcenter-authz`. The App ID is `guardi
 
 ## Development
 
-The first step is to create a copy of the example env file and adapt it to your environment. After that you want
-to make sure that it is sourced in any shell you want to use for local development:
+The first step is to create a copy of the example env file and adapt it to your environment.
 
 ```shell
 cp .env.example .env
 #  Edit .env
+#  If you want to run it outside docker, you need to source it
 source .env
 ```
 
@@ -65,6 +65,10 @@ you get both APIs up and running on port 80, including live reload when editing 
 _Note: docker compose uses the environment variables from `.env` by default._
 _Make sure the contents of it are correct or pass `--env-file .env.example` to_
 _use the default values._
+
+You might need to install the docker compose plugin.
+Either use the [official docker repositories](https://docs.docker.com/compose/install/linux/#install-using-the-repository) to install docker.
+Or [download the plugin manually](https://docs.docker.com/compose/install/linux/#install-the-plugin-manually).
 
 ### Shared dependencies
 

@@ -105,3 +105,34 @@ poetry shell  # Or any other way to activate your virtual env for this project
 poetry install
 pytest -vv --cov=guardian_management_api .
 ```
+
+### Using the cli
+
+This example shows you how to use the adapters on the cli.
+
+First get into the container:
+
+```shell
+docker exec -ti management-guardian-dev /bin/bash
+cd management-api/
+# Optional: install ipython or just use python
+poetry add ipython
+ipython
+# Alternative
+python -m asyncio
+```
+
+I'm using a persistance adapter as an example:
+
+```python
+from guardian_management_api.ports.condition import ConditionPersistencePort
+from guardian_management_api.models.condition import Condition
+from guardian_lib.adapter_registry import ADAPTER_REGISTRY
+from guardian_lib.adapter_registry import port_dep
+
+configure_registry(ADAPTER_REGISTRY)
+await initialize_adapters(ADAPTER_REGISTRY)
+persistance_condition_adapter = await port_dep(ConditionPersistencePort)()
+my_condition = Condition(name="my_condition", app_name="foo", namespace_name="bar", code=b"123")
+await persistance_condition_adapter.create(my_condition)
+```
