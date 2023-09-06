@@ -20,7 +20,10 @@ from guardian_management_api.adapters.condition import (
     FastAPIConditionAPIAdapter,
     SQLConditionPersistenceAdapter,
 )
-from guardian_management_api.adapters.context import SQLContextPersistenceAdapter
+from guardian_management_api.adapters.context import (
+    FastAPIContextAPIAdapter,
+    SQLContextPersistenceAdapter,
+)
 from guardian_management_api.adapters.namespace import SQLNamespacePersistenceAdapter
 from guardian_management_api.adapters.permission import (
     FastAPIPermissionAPIAdapter,
@@ -51,7 +54,7 @@ from guardian_management_api.ports.condition import (
     ConditionAPIPort,
     ConditionPersistencePort,
 )
-from guardian_management_api.ports.context import ContextPersistencePort
+from guardian_management_api.ports.context import ContextAPIPort, ContextPersistencePort
 from guardian_management_api.ports.namespace import NamespacePersistencePort
 from guardian_management_api.ports.permission import (
     PermissionAPIPort,
@@ -158,6 +161,7 @@ def register_test_adapters(patch_env):
         (BundleServerPort, BundleServerAdapter),
         (PermissionAPIPort, FastAPIPermissionAPIAdapter),
         (RoleAPIPort, FastAPIRoleAPIAdapter),
+        (ContextAPIPort, FastAPIContextAPIAdapter),
     ]:
         adapter_registry.ADAPTER_REGISTRY.register_port(port)
         adapter_registry.ADAPTER_REGISTRY.register_adapter(port, adapter_cls=adapter)

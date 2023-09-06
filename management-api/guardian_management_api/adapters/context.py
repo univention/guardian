@@ -3,21 +3,156 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 from dataclasses import asdict
-from typing import Type
+from typing import List, Optional, Type
 
+from fastapi import HTTPException
 from port_loader import AsyncConfiguredAdapterMixin
+from starlette import status
 
-from ..errors import ObjectNotFoundError, ParentNotFoundError
+from ..constants import COMPLETE_URL
+from ..errors import ObjectExistsError, ObjectNotFoundError, ParentNotFoundError
 from ..models.base import PersistenceGetManyResult
-from ..models.context import Context, ContextGetQuery, ContextsGetQuery
+from ..models.context import (
+    Context,
+    ContextCreateQuery,
+    ContextEditQuery,
+    ContextGetQuery,
+    ContextsGetQuery,
+)
+from ..models.routers.base import GetByAppRequest
+from ..models.routers.context import (
+    Context as ResponseContext,
+)
+from ..models.routers.context import (
+    ContextCreateRequest,
+    ContextEditRequest,
+    ContextGetRequest,
+    ContextMultipleResponse,
+    ContextsGetRequest,
+    ContextSingleResponse,
+)
 from ..models.sql_persistence import (
     DBApp,
     DBContext,
     DBNamespace,
     SQLPersistenceAdapterSettings,
 )
-from ..ports.context import ContextPersistencePort
+from ..ports.context import (
+    ContextAPIEditRequestObject,
+    ContextAPIPort,
+    ContextPersistencePort,
+    ContextsAPIGetResponseObject,
+)
 from .sql_persistence import SQLAlchemyMixin
+
+
+class FastAPIContextAPIAdapter(
+    ContextAPIPort[
+        ContextCreateRequest,
+        ContextSingleResponse,
+        ContextGetRequest,
+        ContextSingleResponse,
+        ContextsGetRequest,
+        ContextMultipleResponse,
+        ContextAPIEditRequestObject,
+        ContextSingleResponse,
+        GetByAppRequest,
+        ContextMultipleResponse,
+    ]
+):
+    class Config:
+        alias = "fastapi"
+
+    async def transform_exception(self, exc: Exception) -> Exception:
+        if isinstance(exc, ObjectNotFoundError):
+            return HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"message": "Context not found."},
+            )
+        if isinstance(exc, ParentNotFoundError):
+            return HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"message": "Context not found."},
+            )
+        elif isinstance(exc, ObjectExistsError):
+            return HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={"message": "Context exists already."},
+            )
+        return HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"message": "Internal Server Error"},
+        )
+
+    async def to_contexts_get(
+        self, api_request: ContextsGetRequest
+    ) -> ContextsGetQuery:
+        raise NotImplementedError()
+
+    async def to_contexts_by_appname_get(
+        self, api_request: GetByAppRequest
+    ) -> ContextsGetQuery:
+        raise NotImplementedError()
+
+    async def to_api_edit_response(
+        self, namespace_result: Context
+    ) -> ContextSingleResponse:
+        raise NotImplementedError()
+
+    async def to_context_edit(
+        self,
+        api_request: ContextEditRequest,
+    ) -> ContextEditQuery:
+        raise NotImplementedError()
+
+    async def to_context_create(
+        self, api_request: ContextCreateRequest
+    ) -> ContextCreateQuery:
+        return ContextCreateQuery(
+            name=api_request.data.name,
+            display_name=api_request.data.display_name,
+            app_name=api_request.app_name,
+            namespace_name=api_request.namespace_name,
+        )
+
+    async def to_api_create_response(
+        self, context_result: Context
+    ) -> ContextSingleResponse:
+        return ContextSingleResponse(
+            context=ResponseContext(
+                name=context_result.name,
+                app_name=context_result.app_name,
+                display_name=context_result.display_name,
+                namespace_name=context_result.namespace_name,
+                resource_url=f"{COMPLETE_URL}/contexts/{context_result.app_name}/{context_result.namespace_name}/{context_result.name}",
+            )
+        )
+
+    async def to_api_get_response(
+        self, namespace_result: Context
+    ) -> ContextSingleResponse:
+        raise NotImplementedError()
+
+    async def to_context_get(self, api_request: ContextGetRequest) -> ContextGetQuery:
+        raise NotImplementedError()
+
+    async def to_api_context_get_response(
+        self,
+        namespaces: List[Context],
+        query_offset: int,
+        query_limit: Optional[int],
+        total_count: int,
+    ) -> ContextMultipleResponse:
+        raise NotImplementedError()
+
+    async def to_api_contexts_get_response(
+        self,
+        contexts: List[Context],
+        query_offset: int,
+        query_limit: Optional[int],
+        total_count: int,
+    ) -> ContextsAPIGetResponseObject:
+        raise NotImplementedError()
 
 
 class SQLContextPersistenceAdapter(

@@ -25,6 +25,7 @@ from .models.routers.role import (
     RoleMultipleResponse,
     RoleSingleResponse,
 )
+from .models.routers.context import ContextCreateRequest
 from .ports.app import (
     AppAPICreateRequestObject,
     AppAPIPort,
@@ -41,6 +42,7 @@ from .ports.condition import (
     ConditionAPIPort,
     ConditionPersistencePort,
 )
+from .ports.context import ContextAPIPort, ContextPersistencePort
 from .ports.namespace import NamespacePersistencePort
 from .ports.permission import (
     PermissionAPICreateRequestObject,
@@ -334,3 +336,16 @@ async def edit_role(
         return await role_api_port.to_role_get_response(modified_role)
     except Exception as exc:
         raise (await role_api_port.transform_exception(exc)) from exc
+
+
+async def create_context(
+    api_request: ContextCreateRequest,
+    persistence_port: ContextPersistencePort,
+    api_port: ContextAPIPort,
+):
+    query = await api_port.to_context_create(api_request)
+    try:
+        created_namespace = await persistence_port.create(query)
+    except Exception as exc:
+        raise (await api_port.transform_exception(exc)) from exc
+    return await api_port.to_api_create_response(created_namespace)

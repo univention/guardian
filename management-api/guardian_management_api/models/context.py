@@ -17,6 +17,16 @@ class Context:
 
 
 @dataclass(frozen=True)
+class ContextCreateQuery(Context):
+    ...
+
+
+@dataclass(frozen=True)
+class ContextEditQuery(Context):
+    ...
+
+
+@dataclass(frozen=True)
 class ContextGetQuery:
     app_name: str
     namespace_name: str

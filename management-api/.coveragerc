@@ -7,7 +7,6 @@
 omit=
     */routers/namespace.py
     */routers/role.py
-    */routers/context.py
     */routers/permission.py
     */routers/condition.py
     */routers/capability.py
