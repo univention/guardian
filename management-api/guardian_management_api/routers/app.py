@@ -7,17 +7,12 @@ from typing import Annotated, Any, Dict
 from fastapi import APIRouter, Depends
 from fastapi.params import Body
 from guardian_lib.adapter_registry import port_dep
+from loguru import logger
 
 from .. import business_logic
 from ..adapters.app import FastAPIAppAPIAdapter
-from ..constants import COMPLETE_URL
 from ..models.routers.app import (
-    App as ResponseApp,
-)
-from ..models.routers.app import (
-    AppAdmin,
     AppCreateRequest,
-    AppDefaultNamespace,
     AppEditRequest,
     AppGetRequest,
     AppMultipleResponse,
@@ -25,8 +20,9 @@ from ..models.routers.app import (
     AppsGetRequest,
     AppSingleResponse,
 )
-from ..models.routers.base import ManagementObjectName
 from ..ports.app import AppAPIPort, AppPersistencePort
+from ..ports.namespace import NamespacePersistencePort
+from ..ports.role import RolePersistencePort
 
 router = APIRouter(tags=["app"])
 
@@ -83,33 +79,31 @@ async def create_app(
 
 
 @router.post("/apps/register", response_model=AppRegisterResponse)
-async def register_app():  # pragma: no cover
+async def register_app(
+    request_data: Annotated[AppCreateRequest, Body()],
+    api_port: FastAPIAppAPIAdapter = Depends(
+        port_dep(AppAPIPort, FastAPIAppAPIAdapter)
+    ),
+    app_persistence: AppPersistencePort = Depends(port_dep(AppPersistencePort)),
+    namespace_persistence: NamespacePersistencePort = Depends(
+        port_dep(NamespacePersistencePort)
+    ),
+    role_persistence: RolePersistencePort = Depends(port_dep(RolePersistencePort)),
+):  # pragma: no cover
     """
     Register an app.
 
     This will also create an admin role to administrate the app.
     """
-    response = AppRegisterResponse(
-        app=ResponseApp(
-            name=ManagementObjectName("my-app"),
-            display_name="My App",
-            resource_url=f"{COMPLETE_URL}/guardian/management/apps/my-app",
-        ),
-        admin_role=AppAdmin(
-            app_name=ManagementObjectName("my-app"),
-            namespace_name=ManagementObjectName("default"),
-            name=ManagementObjectName("my-admin"),
-            display_name="My Admin",
-            resource_url=f"{COMPLETE_URL}/roles/my-app/default/my-admin",
-        ),
-        default_namespace=AppDefaultNamespace(
-            app_name=ManagementObjectName("my-app"),
-            name=ManagementObjectName("default"),
-            display_name="My App Default Namespace",
-            resource_url=f"{COMPLETE_URL}/namespaces/my-app/default",
-        ),
-    ).dict()
-    return response
+    logger.bind(request_data=request_data).debug("Register app route.")
+    response: AppRegisterResponse = await business_logic.register_app(
+        request_data,
+        api_port,
+        app_persistence,
+        namespace_persistence,
+        role_persistence,
+    )
+    return response.dict()
 
 
 @router.patch("/apps/{name}", response_model=AppSingleResponse, status_code=201)

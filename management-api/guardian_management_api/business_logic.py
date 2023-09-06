@@ -1,6 +1,10 @@
 # Copyright (C) 2023 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
+from loguru import logger
+
+from .models.namespace import Namespace
+from .models.role import Role
 from .models.routers.app import (
     AppCreateRequest,
     AppEditRequest,
@@ -9,7 +13,12 @@ from .models.routers.app import (
     AppsGetRequest,
     AppSingleResponse,
 )
-from .ports.app import AppAPIPort, AppPersistencePort
+from .ports.app import (
+    AppAPICreateRequestObject,
+    AppAPIPort,
+    AppAPIRegisterResponseObject,
+    AppPersistencePort,
+)
 from .ports.condition import (
     APICreateRequestObject,
     APIEditRequestObject,
@@ -20,6 +29,8 @@ from .ports.condition import (
     ConditionAPIPort,
     ConditionPersistencePort,
 )
+from .ports.namespace import NamespacePersistencePort
+from .ports.role import RolePersistencePort
 
 
 async def create_app(
@@ -31,6 +42,43 @@ async def create_app(
     app = query.apps[0]
     created_app = await persistence_port.create(app)
     return await app_api_port.to_api_create_response(created_app)
+
+
+async def register_app(
+    api_request: AppAPICreateRequestObject,
+    app_api_port: AppAPIPort,
+    app_persistence_port: AppPersistencePort,
+    namespace_persistence_port: NamespacePersistencePort,
+    role_persistence_port: RolePersistencePort,
+) -> AppAPIRegisterResponseObject:
+    try:
+        query = await app_api_port.to_app_create(api_request)
+        local_logger = logger.bind(app_create_query=query)
+        app = await app_persistence_port.create(query.apps[0])
+        local_logger = local_logger.bind(app=app)
+        app_display = app.display_name if app.display_name else app.name
+        default_namespace = await namespace_persistence_port.create(
+            Namespace(
+                app_name=app.name,
+                name="default",
+                display_name=f"Default Namespace for {app_display}",
+            )
+        )
+        local_logger = local_logger.bind(default_namespace=default_namespace)
+        admin_role = await role_persistence_port.create(
+            Role(
+                app_name=app.name,
+                namespace_name=default_namespace.name,
+                name="app-admin",
+                display_name=f"App Administrator for {app_display}",
+            )
+        )
+        local_logger.bind(admin_role=admin_role).debug("App registered.")
+        return await app_api_port.to_api_register_response(
+            app, default_namespace, admin_role
+        )
+    except Exception as exc:
+        raise (await app_api_port.transform_exception(exc)) from exc
 
 
 async def get_app(

@@ -7,6 +7,13 @@ import pytest
 from fastapi.testclient import TestClient
 from guardian_management_api.constants import COMPLETE_URL
 from guardian_management_api.main import app
+from guardian_management_api.models.routers.app import App as ResponseApp
+from guardian_management_api.models.routers.app import (
+    AppAdmin,
+    AppDefaultNamespace,
+    AppRegisterResponse,
+)
+from guardian_management_api.models.routers.base import ManagementObjectName
 
 
 @pytest.mark.e2e
@@ -43,6 +50,50 @@ class TestAppEndpoints:
                 "resource_url": f"{COMPLETE_URL}/apps/test_app",
             }
         }
+
+    @pytest.mark.usefixtures("create_tables")
+    def test_register_app(self, client, register_test_adapters):
+        response = client.post(
+            client.app.url_path_for("register_app"),
+            json={"name": "app1", "display_name": "App 1"},
+        )
+        assert response.status_code == 200
+        assert (
+            response.json()
+            == AppRegisterResponse(
+                app=ResponseApp(
+                    name=ManagementObjectName("app1"),
+                    display_name="App 1",
+                    resource_url=f"{COMPLETE_URL}/guardian/management/apps/app1",
+                ),
+                admin_role=AppAdmin(
+                    app_name=ManagementObjectName("app1"),
+                    namespace_name=ManagementObjectName("default"),
+                    name=ManagementObjectName("app-admin"),
+                    display_name="App Administrator for App 1",
+                    resource_url=f"{COMPLETE_URL}/roles/app1/default/app-admin",
+                ),
+                default_namespace=AppDefaultNamespace(
+                    app_name=ManagementObjectName("app1"),
+                    name=ManagementObjectName("default"),
+                    display_name="Default Namespace for App 1",
+                    resource_url=f"{COMPLETE_URL}/namespaces/app1/default",
+                ),
+            ).dict()
+        )
+
+    @pytest.mark.usefixtures("create_tables")
+    @pytest.mark.asyncio
+    async def test_register_app_exists_error(
+        self, client, register_test_adapters, sqlalchemy_mixin, create_app
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session, name="app1")
+        response = client.post(
+            client.app.url_path_for("register_app"),
+            json={"name": "app1", "display_name": "App 1"},
+        )
+        assert response.status_code == 400
 
     @pytest.mark.usefixtures("create_tables")
     @pytest.mark.asyncio

@@ -28,16 +28,22 @@ from guardian_management_api.models.base import (
     PaginationRequest,
     PersistenceGetManyResult,
 )
+from guardian_management_api.models.namespace import Namespace
+from guardian_management_api.models.role import Role
 from guardian_management_api.models.routers.app import (
     App as ResponseApp,
 )
 from guardian_management_api.models.routers.app import (
+    AppAdmin,
     AppCreateRequest,
+    AppDefaultNamespace,
     AppEditData,
     AppEditRequest,
     AppGetRequest,
+    AppRegisterResponse,
     AppSingleResponse,
 )
+from guardian_management_api.models.routers.base import ManagementObjectName
 from guardian_management_api.models.sql_persistence import (
     DBApp,
 )
@@ -52,7 +58,12 @@ class TestFastAPIAppAdapter:
 
     @pytest.mark.parametrize(
         "exc,expected",
-        [(ObjectNotFoundError(), 404), (PersistenceError, 500), (ValueError, 500)],
+        [
+            (ObjectNotFoundError(), 404),
+            (PersistenceError(), 500),
+            (ValueError, 500),
+            (ObjectExistsError(), 400),
+        ],
     )
     @pytest.mark.asyncio
     async def test_transform_exception(self, exc, expected, adapter):
@@ -90,6 +101,41 @@ class TestFastAPIAppAdapter:
                 display_name="display_name",
                 resource_url=f"{COMPLETE_URL}/apps/name",
             )
+        )
+
+    @pytest.mark.asyncio
+    async def test_to_api_register_response(self, adapter):
+        app = App(name="app", display_name="App")
+        default_namespace = Namespace(
+            app_name="app", name="default", display_name="Default Namespace for App"
+        )
+        admin_role = Role(
+            app_name="app",
+            namespace_name="default",
+            name="admin-role",
+            display_name="App Administrator for App",
+        )
+        assert await adapter.to_api_register_response(
+            app, default_namespace, admin_role
+        ) == AppRegisterResponse(
+            app=ResponseApp(
+                name=ManagementObjectName(app.name),
+                display_name=app.display_name,
+                resource_url=f"{COMPLETE_URL}/guardian/management/apps/{app.name}",
+            ),
+            admin_role=AppAdmin(
+                app_name=ManagementObjectName(admin_role.app_name),
+                namespace_name=ManagementObjectName(admin_role.namespace_name),
+                name=ManagementObjectName(admin_role.name),
+                display_name=admin_role.display_name,
+                resource_url=f"{COMPLETE_URL}/roles/{admin_role.app_name}/{admin_role.namespace_name}/{admin_role.name}",
+            ),
+            default_namespace=AppDefaultNamespace(
+                app_name=ManagementObjectName(default_namespace.app_name),
+                name=ManagementObjectName(default_namespace.name),
+                display_name=default_namespace.display_name,
+                resource_url=f"{COMPLETE_URL}/namespaces/{default_namespace.app_name}/{default_namespace.name}",
+            ),
         )
 
     @pytest.mark.asyncio

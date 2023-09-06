@@ -9,7 +9,7 @@ from port_loader import AsyncConfiguredAdapterMixin
 from starlette import status
 
 from ..constants import COMPLETE_URL
-from ..errors import ObjectNotFoundError
+from ..errors import ObjectExistsError, ObjectNotFoundError
 from ..models.app import (
     App,
     AppCreateQuery,
@@ -18,14 +18,19 @@ from ..models.app import (
     AppsGetQuery,
 )
 from ..models.base import PaginationRequest, PersistenceGetManyResult
+from ..models.namespace import Namespace
+from ..models.role import Role
 from ..models.routers.app import (
     App as ResponseApp,
 )
 from ..models.routers.app import (
+    AppAdmin,
     AppCreateRequest,
+    AppDefaultNamespace,
     AppEditRequest,
     AppGetRequest,
     AppMultipleResponse,
+    AppRegisterResponse,
     AppsGetRequest,
     AppSingleResponse,
 )
@@ -42,6 +47,7 @@ class FastAPIAppAPIAdapter(
     AppAPIPort[
         AppCreateRequest,
         AppSingleResponse,
+        AppRegisterResponse,
         AppGetRequest,
         AppSingleResponse,
         AppsGetRequest,
@@ -58,6 +64,11 @@ class FastAPIAppAPIAdapter(
             return HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail={"message": "App not found."},
+            )
+        if isinstance(exc, ObjectExistsError):
+            return HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={"message": "App with the same name already exists."},
             )
         return HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -100,6 +111,30 @@ class FastAPIAppAPIAdapter(
                 display_name=app_result.display_name,
                 resource_url=f"{COMPLETE_URL}/apps/{app_result.name}",
             )
+        )
+
+    async def to_api_register_response(
+        self, app: App, default_namespace: Namespace, admin_role: Role
+    ) -> AppRegisterResponse:
+        return AppRegisterResponse(
+            app=ResponseApp(
+                name=ManagementObjectName(app.name),
+                display_name=app.display_name,
+                resource_url=f"{COMPLETE_URL}/guardian/management/apps/{app.name}",
+            ),
+            admin_role=AppAdmin(
+                app_name=ManagementObjectName(admin_role.app_name),
+                namespace_name=ManagementObjectName(admin_role.namespace_name),
+                name=ManagementObjectName(admin_role.name),
+                display_name=admin_role.display_name,
+                resource_url=f"{COMPLETE_URL}/roles/{admin_role.app_name}/{admin_role.namespace_name}/{admin_role.name}",
+            ),
+            default_namespace=AppDefaultNamespace(
+                app_name=ManagementObjectName(default_namespace.app_name),
+                name=ManagementObjectName(default_namespace.name),
+                display_name=default_namespace.display_name,
+                resource_url=f"{COMPLETE_URL}/namespaces/{default_namespace.app_name}/{default_namespace.name}",
+            ),
         )
 
     async def to_app_get(self, api_request: AppGetRequest) -> AppGetQuery:

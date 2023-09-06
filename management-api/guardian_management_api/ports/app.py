@@ -18,10 +18,13 @@ from ..models.app import (
     AppGetQuery,
     AppsGetQuery,
 )
+from ..models.namespace import Namespace
+from ..models.role import Role
 from .base import BasePersistencePort
 
 AppAPICreateRequestObject = TypeVar("AppAPICreateRequestObject")
 AppAPICreateResponseObject = TypeVar("AppAPICreateResponseObject")
+AppAPIRegisterResponseObject = TypeVar("AppAPIRegisterResponseObject")
 
 AppAPIGetRequestObject = TypeVar("AppAPIGetRequestObject")
 AppAPIGetResponseObject = TypeVar("AppAPIGetResponseObject")
@@ -45,6 +48,7 @@ class AppAPIPort(
     Generic[
         AppAPICreateRequestObject,
         AppAPICreateResponseObject,
+        AppAPIRegisterResponseObject,
         AppAPIGetRequestObject,
         AppAPIGetResponseObject,
         AppsAPIGetRequestObject,
@@ -67,6 +71,11 @@ class AppAPIPort(
     async def to_api_create_response(
         self, app_result: App
     ) -> AppAPICreateResponseObject:
+        raise NotImplementedError  # pragma: no cover
+
+    async def to_api_register_response(
+        self, app: App, namespace: Namespace, admin_role: Role
+    ) -> AppAPIRegisterResponseObject:
         raise NotImplementedError  # pragma: no cover
 
     @abstractmethod
