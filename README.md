@@ -62,6 +62,10 @@ docker compose -f dev-compose.yaml up
 
 you get both APIs up and running on port 80, including live reload when editing your local files.
 
+_Note: docker compose uses the environment variables from `.env` by default._
+_Make sure the contents of it are correct or pass `--env-file .env.example` to_
+_use the default values._
+
 ### Shared dependencies
 
 The projects in this repository have a couple of dependencies, they have in common. For effective local development
