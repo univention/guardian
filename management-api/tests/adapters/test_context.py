@@ -31,6 +31,7 @@ from guardian_management_api.models.routers.context import (
 from guardian_management_api.models.routers.context import (
     ContextCreateData,
     ContextCreateRequest,
+    ContextGetRequest,
     ContextSingleResponse,
 )
 from guardian_management_api.models.sql_persistence import (
@@ -71,6 +72,40 @@ class TestFastAPIContextAdapter:
             namespace_name="namespace-name",
         )
         result = await adapter.to_api_create_response(context)
+        assert result == ContextSingleResponse(
+            context=ResponseContext(
+                name=context.name,
+                app_name=context.app_name,
+                display_name=context.display_name,
+                namespace_name=context.namespace_name,
+                resource_url=f"{COMPLETE_URL}/contexts/{context.app_name}/{context.namespace_name}/{context.name}",
+            )
+        )
+
+    @pytest.mark.asyncio
+    async def test_to_context_get(self, adapter):
+        app_name = "app-name"
+        api_request = ContextGetRequest(
+            app_name=app_name,
+            name="context-name",
+            namespace_name="namespace-name",
+        )
+        result = await adapter.to_context_get(api_request)
+        assert result == ContextGetQuery(
+            name="context-name",
+            app_name=app_name,
+            namespace_name="namespace-name",
+        )
+
+    @pytest.mark.asyncio
+    async def test_to_api_get_response(self, adapter):
+        context = Context(
+            name="name",
+            display_name="display_name",
+            app_name="app-name",
+            namespace_name="namespace-name",
+        )
+        result = await adapter.to_api_get_response(context)
         assert result == ContextSingleResponse(
             context=ResponseContext(
                 name=context.name,

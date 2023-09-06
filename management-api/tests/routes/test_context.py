@@ -122,3 +122,58 @@ class TestContextEndpoints:
             },
         )
         assert response.status_code == 404, response.json()
+
+    @pytest.mark.asyncio
+    async def test_get_context(
+        self,
+        client,
+        register_test_adapters,
+        create_app,
+        sqlalchemy_mixin,
+        create_namespace,
+        create_context,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session)
+            await create_namespace(session)
+            await create_context(session)
+        response = client.get(
+            app.url_path_for(
+                "get_context",
+                app_name=DEFAULT_TEST_APP,
+                namespace_name=DEFAULT_TEST_NAMESPACE,
+                name=DEFAULT_TEST_CONTEXT,
+            ),
+        )
+        assert response.status_code == 200, response.json()
+        assert response.json() == {
+            "context": {
+                "app_name": DEFAULT_TEST_APP,
+                "namespace_name": DEFAULT_TEST_NAMESPACE,
+                "display_name": "Context",
+                "name": DEFAULT_TEST_CONTEXT,
+                "resource_url": f"http://localhost:8001/guardian/management/contexts/{DEFAULT_TEST_APP}/{DEFAULT_TEST_NAMESPACE}/{DEFAULT_TEST_CONTEXT}",
+            }
+        }
+
+    @pytest.mark.asyncio
+    async def test_get_context_non_existing_raises_404(
+        self,
+        client,
+        register_test_adapters,
+        create_app,
+        sqlalchemy_mixin,
+        create_namespace,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session)
+            await create_namespace(session)
+        response = client.get(
+            app.url_path_for(
+                "get_context",
+                app_name=DEFAULT_TEST_APP,
+                namespace_name=DEFAULT_TEST_NAMESPACE,
+                name=DEFAULT_TEST_CONTEXT,
+            ),
+        )
+        assert response.status_code == 404, response.json()
