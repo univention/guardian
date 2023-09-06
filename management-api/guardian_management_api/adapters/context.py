@@ -129,12 +129,24 @@ class FastAPIContextAPIAdapter(
         )
 
     async def to_api_get_response(
-        self, namespace_result: Context
+        self, context_result: Context
     ) -> ContextSingleResponse:
-        raise NotImplementedError()
+        return ContextSingleResponse(
+            context=ResponseContext(
+                name=context_result.name,
+                app_name=context_result.app_name,
+                display_name=context_result.display_name,
+                namespace_name=context_result.namespace_name,
+                resource_url=f"{COMPLETE_URL}/contexts/{context_result.app_name}/{context_result.namespace_name}/{context_result.name}",
+            )
+        )
 
     async def to_context_get(self, api_request: ContextGetRequest) -> ContextGetQuery:
-        raise NotImplementedError()
+        return ContextGetQuery(
+            name=api_request.name,
+            app_name=api_request.app_name,
+            namespace_name=api_request.namespace_name,
+        )
 
     async def to_api_context_get_response(
         self,

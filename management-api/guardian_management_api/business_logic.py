@@ -26,6 +26,11 @@ from .models.routers.role import (
     RoleSingleResponse,
 )
 from .models.routers.context import ContextCreateRequest
+from .models.routers.context import (
+    ContextCreateRequest,
+    ContextGetRequest,
+    ContextSingleResponse,
+)
 from .ports.app import (
     AppAPICreateRequestObject,
     AppAPIPort,
@@ -349,3 +354,16 @@ async def create_context(
     except Exception as exc:
         raise (await api_port.transform_exception(exc)) from exc
     return await api_port.to_api_create_response(created_namespace)
+
+
+async def get_context(
+    api_request: ContextGetRequest,
+    api_port: ContextAPIPort,
+    persistence_port: ContextPersistencePort,
+) -> ContextSingleResponse:
+    try:
+        query = await api_port.to_context_get(api_request)
+        condition = await persistence_port.read_one(query)
+        return await api_port.to_api_get_response(condition)
+    except Exception as exc:
+        raise (await api_port.transform_exception(exc)) from exc

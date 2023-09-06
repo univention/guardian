@@ -10,7 +10,6 @@ from ..models.routers.base import (
     GetAllRequest,
     GetByAppRequest,
     GetByNamespaceRequest,
-    GetFullIdentifierRequest,
     PaginationInfo,
 )
 from ..models.routers.context import (
@@ -19,6 +18,7 @@ from ..models.routers.context import (
 from ..models.routers.context import (
     ContextCreateRequest,
     ContextEditRequest,
+    ContextGetRequest,
     ContextMultipleResponse,
     ContextSingleResponse,
 )
@@ -30,19 +30,24 @@ router = APIRouter(tags=["context"])
 @router.get(
     "/contexts/{app_name}/{namespace_name}/{name}", response_model=ContextSingleResponse
 )
-async def get_context(context_get_request: GetFullIdentifierRequest = Depends()):
+async def get_context(
+    context_get_request: ContextGetRequest = Depends(),
+    context_api: FastAPIContextAPIAdapter = Depends(
+        port_dep(ContextAPIPort, FastAPIContextAPIAdapter)
+    ),
+    context_persistence: ContextPersistencePort = Depends(
+        port_dep(ContextPersistencePort)
+    ),
+) -> Dict[str, Any]:
     """
     Returns a context object identified by `app_name`, `namespace_name` and `name`.
     """
-    return ContextSingleResponse(
-        context=ResponseContext(
-            app_name="my-app",
-            namespace_name="my-namespace",
-            name="my-context",
-            display_name="My Context",
-            resource_url="http://fqdn/guardian/management/contexts/my-app/my-namespace/my-context",
-        )
-    ).dict()
+    response: ContextSingleResponse = await business_logic.get_context(
+        api_request=context_get_request,
+        api_port=context_api,
+        persistence_port=context_persistence,
+    )
+    return response.dict()
 
 
 @router.get("/contexts", response_model=ContextMultipleResponse)
