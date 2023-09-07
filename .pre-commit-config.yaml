@@ -75,3 +75,17 @@ repos:
       args: [ "-C", "management-api", "--check" ]
     - id: poetry-lock
       args: [ "-C", "guardian-lib", "--check" ]
+
+- repo: https://github.com/anderseknert/pre-commit-opa
+  rev: v1.5.1
+  hooks:
+  - id: opa-fmt
+  - id: opa-check
+    args: ["opa/BaseBundle"]
+  - id: opa-test
+    args: ["opa/BaseBundle"]
+
+- repo: https://github.com/StyraInc/regal
+  rev: v0.8.0
+  hooks:
+    - id: regal-lint-use-path

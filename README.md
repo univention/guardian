@@ -91,6 +91,7 @@ you should make sure that those are met:
 - [pre-commit](https://pre-commit.com/) in version 3.3.3
 - [Docker](https://www.docker.com/) with support of [Multi-stage builds](https://docs.docker.com/build/building/multi-stage/)
 - [OPA](https://www.openpolicyagent.org/) in version 0.53.0
+- [Regal](https://github.com/StyraInc/regal) OPA linter in version 0.8.0
 
 ### Licensing information
 

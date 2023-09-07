@@ -29,6 +29,8 @@ run_pre_commit:
   stage: lint
   needs: []
   extends: .pre-commit
+  variables:
+    PRE_COMMIT_IMAGE: "docker-registry.knut.univention.de/knut/pre-commit-opa"
 
 # No jobs for OPA code were created, since the form and structure of the OPA code is not final yet. TODO
 
