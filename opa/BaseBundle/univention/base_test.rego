@@ -1,5 +1,6 @@
-package univention.base
+package univention.base_test
 
+import data.univention.base.get_permissions
 import future.keywords.if
 
 test_get_permissions_happy_case if {
@@ -17,6 +18,8 @@ test_get_permissions_happy_case if {
 		"extra_args": {},
 	}
 	result = get_permissions with input as inp
+
+	# regal ignore: print-or-trace-call
 	print("TEST_DEBUG -- result: ", result)
 	result == {{
 		"target_id": "target_id_1",
@@ -135,7 +138,10 @@ test_get_permissions_filtering if {
 		"contexts": {},
 		"extra_args": {},
 	}
-	result = get_permissions with input as inp with data.univention.mapping.roleCapabilityMapping as role_capability_mapping
+	result = get_permissions with input as inp
+		with data.univention.mapping.roleCapabilityMapping as role_capability_mapping
+
+	# regal ignore: print-or-trace-call
 	print("TEST_DEBUG -- result: ", result)
 	result == {
 		{
@@ -170,6 +176,8 @@ test_get_permissions_filtering if {
 test_get_permissions_empty_input if {
 	inp = {}
 	result = get_permissions with input as inp
+
+	# regal ignore: print-or-trace-call
 	print("TEST_DEBUG -- result: ", result)
 	result == set()
 }
@@ -189,6 +197,8 @@ test_get_permissions_wrong_role if {
 		"extra_args": {},
 	}
 	result = get_permissions with input as inp
+
+	# regal ignore: print-or-trace-call
 	print("TEST_DEBUG -- result: ", result)
 	result == {{
 		"target_id": "target_id_1",
