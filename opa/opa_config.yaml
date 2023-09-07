@@ -1,0 +1,16 @@
+services:
+  - name: guardian-management
+    url: ${OPA_GUARDIAN_MANAGEMENT_URL}
+bundles:
+  mapping:
+    service: guardian-management
+    resource: ${OPA_DATA_BUNDLE}
+    polling:
+      min_delay_seconds: ${OPA_POLLING_MIN_DELAY}
+      max_delay_seconds: ${OPA_POLLING_MAX_DELAY}
+  policies:
+    service: guardian-management
+    resource: ${OPA_POLICY_BUNDLE}
+    polling:
+      min_delay_seconds: ${OPA_POLLING_MIN_DELAY}
+      max_delay_seconds: ${OPA_POLLING_MAX_DELAY}

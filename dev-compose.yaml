@@ -18,6 +18,12 @@ services:
     build: opa/
     networks:
       - proxy-net
+    environment:
+      - OPA_DATA_BUNDLE
+      - OPA_POLICY_BUNDLE
+      - OPA_GUARDIAN_MANAGEMENT_URL
+      - OPA_POLLING_MIN_DELAY
+      - OPA_POLLING_MAX_DELAY
     labels:
       traefik.http.routers.opa.entrypoints: web
       traefik.http.routers.opa.rule: PathPrefix(`/guardian/opa`)
