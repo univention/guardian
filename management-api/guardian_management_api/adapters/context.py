@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 from dataclasses import asdict
-from typing import List, Optional, Type
+from typing import Any, Dict, List, Optional, Tuple, Type
 
 from fastapi import HTTPException
 from port_loader import AsyncConfiguredAdapterMixin
@@ -15,7 +15,6 @@ from ..models.base import PaginationRequest, PersistenceGetManyResult
 from ..models.context import (
     Context,
     ContextCreateQuery,
-    ContextEditQuery,
     ContextGetQuery,
     ContextsGetQuery,
 )
@@ -38,7 +37,6 @@ from ..models.sql_persistence import (
     SQLPersistenceAdapterSettings,
 )
 from ..ports.context import (
-    ContextAPIEditRequestObject,
     ContextAPIPort,
     ContextPersistencePort,
 )
@@ -53,7 +51,7 @@ class FastAPIContextAPIAdapter(
         ContextSingleResponse,
         ContextsGetRequest,
         ContextMultipleResponse,
-        ContextAPIEditRequestObject,
+        Tuple[ContextGetQuery, Dict[str, Any]],
         ContextSingleResponse,
         GetByAppRequest,
         ContextMultipleResponse,
@@ -99,15 +97,29 @@ class FastAPIContextAPIAdapter(
         raise NotImplementedError()
 
     async def to_api_edit_response(
-        self, namespace_result: Context
+        self, context_result: Context
     ) -> ContextSingleResponse:
-        raise NotImplementedError()
+        return ContextSingleResponse(
+            context=ResponseContext(
+                name=context_result.name,
+                app_name=context_result.app_name,
+                display_name=context_result.display_name,
+                namespace_name=context_result.namespace_name,
+                resource_url=f"{COMPLETE_URL}/contexts/{context_result.app_name}/{context_result.namespace_name}/{context_result.name}",
+            )
+        )
 
     async def to_context_edit(
         self,
         api_request: ContextEditRequest,
-    ) -> ContextEditQuery:
-        raise NotImplementedError()
+    ) -> Tuple[ContextGetQuery, Dict[str, Any]]:
+        query = ContextGetQuery(
+            name=api_request.name,
+            namespace_name=api_request.namespace_name,
+            app_name=api_request.app_name,
+        )
+        changed_data = api_request.data.dict(exclude_unset=True)
+        return query, changed_data
 
     async def to_context_create(
         self, api_request: ContextCreateRequest

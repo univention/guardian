@@ -22,6 +22,7 @@ from guardian_management_api.models.base import (
 from guardian_management_api.models.context import (
     Context,
     ContextCreateQuery,
+    ContextEditQuery,
     ContextGetQuery,
     ContextsGetQuery,
 )
@@ -32,6 +33,8 @@ from guardian_management_api.models.routers.context import (
 from guardian_management_api.models.routers.context import (
     ContextCreateData,
     ContextCreateRequest,
+    ContextEditData,
+    ContextEditRequest,
     ContextGetRequest,
     ContextMultipleResponse,
     ContextsGetRequest,
@@ -158,6 +161,42 @@ class TestFastAPIContextAdapter:
                 limit=3,
                 total_count=len(contexts),
             ),
+        )
+
+    @pytest.mark.asyncio
+    async def test_to_api_edit_response(self, adapter):
+        context = Context(
+            name="name",
+            display_name="display_name",
+            app_name="app-name",
+            namespace_name="namespace-name",
+        )
+        result = await adapter.to_api_edit_response(context)
+        assert result == ContextSingleResponse(
+            context=ResponseContext(
+                name=context.name,
+                app_name=context.app_name,
+                namespace_name=context.namespace_name,
+                display_name=context.display_name,
+                resource_url=f"{COMPLETE_URL}/contexts/{context.app_name}/{context.namespace_name}/{context.name}",
+            )
+        )
+
+    @pytest.mark.asyncio
+    async def test_to_context_edit(self, adapter):
+        app_name = "app-name"
+        api_request = ContextEditRequest(
+            app_name=app_name,
+            name="context-name",
+            namespace_name="namespace-name",
+            data=ContextEditData(display_name="display_name"),
+        )
+        result = await adapter.to_context_edit(api_request)
+        assert result == ContextEditQuery(
+            app_name=app_name,
+            name="context-name",
+            namespace_name="namespace-name",
+            display_name="display_name",
         )
 
 

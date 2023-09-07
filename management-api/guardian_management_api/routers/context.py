@@ -1,6 +1,8 @@
 # Copyright (C) 2023 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
+from typing import Any, Dict
+
 from fastapi import APIRouter, Depends
 from guardian_lib.adapter_registry import port_dep
 
@@ -137,18 +139,25 @@ async def create_context(
 
 
 @router.patch(
-    "/contexts/{app_name}/{namespace_name}/{name}", response_model=ContextSingleResponse
+    "/contexts/{app_name}/{namespace_name}/{name}",
+    response_model=ContextSingleResponse,
+    status_code=201,
 )
-async def edit_context(context_edit_request: ContextEditRequest = Depends()):
+async def edit_context(
+    context_edit_request: ContextEditRequest = Depends(),
+    context_api: FastAPIContextAPIAdapter = Depends(
+        port_dep(ContextAPIPort, FastAPIContextAPIAdapter)
+    ),
+    context_persistence: ContextPersistencePort = Depends(
+        port_dep(ContextPersistencePort)
+    ),
+) -> Dict[str, Any]:
     """
     Update a context.
     """
-    return ContextSingleResponse(
-        context=ResponseContext(
-            app_name="my-app",
-            namespace_name="my-namespace",
-            name="my-context",
-            display_name="My Context",
-            resource_url="http://fqdn/guardian/management/contexts/my-app/my-namespace/my-context",
-        )
-    ).dict()
+    response: ContextSingleResponse = await business_logic.edit_context(
+        api_request=context_edit_request,
+        api_port=context_api,
+        persistence_port=context_persistence,
+    )
+    return response.dict()

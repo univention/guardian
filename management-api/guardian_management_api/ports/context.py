@@ -3,14 +3,13 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 from abc import ABC, abstractmethod
-from typing import Generic, List, Optional, TypeVar
+from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar
 
 from guardian_lib.ports import BasePort
 
 from ..models.context import (
     Context,
     ContextCreateQuery,
-    ContextEditQuery,
     ContextGetQuery,
     ContextsGetQuery,
 )
@@ -75,7 +74,7 @@ class ContextAPIPort(
     @abstractmethod
     async def to_context_edit(
         self, api_request: ContextEditRequest
-    ) -> ContextEditQuery:
+    ) -> Tuple[ContextGetQuery, Dict[str, Any]]:
         raise NotImplementedError  # pragma: no cover
 
     @abstractmethod
