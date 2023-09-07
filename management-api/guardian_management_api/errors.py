@@ -21,3 +21,11 @@ class ObjectExistsError(RuntimeError):
 
 class ParentNotFoundError(RuntimeError):
     """If the parent of the object to be created could not be found."""
+
+
+class BundleGenerationIOError(RuntimeError):
+    """If there are any io problems during the bundle creation"""
+
+
+class BundleBuildError(Exception):
+    """If the subprocess to build the OPA bundle fails"""

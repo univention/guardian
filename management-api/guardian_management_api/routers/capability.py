@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 from fastapi import APIRouter, Depends
+from guardian_lib.adapter_registry import port_dep
 from starlette import status
 
 from guardian_management_api.models.routers.base import (
@@ -22,6 +23,7 @@ from guardian_management_api.models.routers.capability import (
     CapabilitySingleResponse,
     RelationChoices,
 )
+from guardian_management_api.ports.bundle_server import BundleServerPort, BundleType
 
 router = APIRouter(tags=["capability"])
 
@@ -44,6 +46,7 @@ def create_dummy_capability():
                 app_name="app",
                 namespace_name="namespace",
                 name="condition",
+                parameters={},
             )
         ],
         permissions=[
@@ -86,12 +89,24 @@ def get_capabilities_by_role(request_data: GetFullIdentifierRequest = Depends())
 
 
 @router.post("/capabilities/{app_name}/{namespace_name}")
-def create_capability_by_namespace(request_data: CapabilityCreateRequest = Depends()):
+async def create_capability_by_namespace(
+    request_data: CapabilityCreateRequest = Depends(),
+    bundle_server_port: BundleServerPort = Depends(port_dep(BundleServerPort)),
+):
+    await bundle_server_port.schedule_bundle_build(
+        BundleType.data
+    )  # Move to business logic!
     return CapabilitySingleResponse(capability=create_dummy_capability())
 
 
 @router.put("/capabilities/{app_name}/{namespace_name}/{name}")
-def update_capability(request_data: CapabilityEditRequest = Depends()):
+async def update_capability(
+    request_data: CapabilityEditRequest = Depends(),
+    bundle_server_port: BundleServerPort = Depends(port_dep(BundleServerPort)),
+):
+    await bundle_server_port.schedule_bundle_build(
+        BundleType.data
+    )  # Move to business logic!
     return CapabilitySingleResponse(capability=create_dummy_capability())
 
 
@@ -99,5 +114,11 @@ def update_capability(request_data: CapabilityEditRequest = Depends()):
     "/capabilities/{app_name}/{namespace_name}/{name}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-def delete_capability(request_data: GetFullIdentifierRequest = Depends()):
+async def delete_capability(
+    request_data: GetFullIdentifierRequest = Depends(),
+    bundle_server_port: BundleServerPort = Depends(port_dep(BundleServerPort)),
+):
+    await bundle_server_port.schedule_bundle_build(
+        BundleType.data
+    )  # Move to business logic!
     return None

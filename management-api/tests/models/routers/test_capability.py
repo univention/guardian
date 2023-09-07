@@ -4,6 +4,10 @@
 
 import pytest
 from guardian_management_api.models.routers.capability import (
+    CapabilityCreateData,
+    CapabilityPermission,
+    CapabilityRole,
+    RelationChoices,
     check_permissions_in_namespace,
 )
 
@@ -12,7 +16,18 @@ def test_check_permissions_in_namespace_raises():
     values = {
         "app_name": "app",
         "namespace_name": "namespace",
-        "data": {"permissions": [{"app_name": "app", "namespace_name": "ns"}]},
+        "data": CapabilityCreateData(
+            permissions=[
+                CapabilityPermission(
+                    **{"app_name": "app", "namespace_name": "ns", "name": "permission"}
+                )
+            ],
+            conditions=[],
+            relation=RelationChoices.AND,
+            role=CapabilityRole(
+                app_name="app", namespace_name="namespace", name="role"
+            ),
+        ),
     }
     with pytest.raises(
         ValueError,
@@ -26,6 +41,21 @@ def test_check_permissions_in_namespace():
     values = {
         "app_name": "app",
         "namespace_name": "namespace",
-        "data": {"permissions": [{"app_name": "app", "namespace_name": "namespace"}]},
+        "data": CapabilityCreateData(
+            permissions=[
+                CapabilityPermission(
+                    **{
+                        "app_name": "app",
+                        "namespace_name": "namespace",
+                        "name": "permission",
+                    }
+                )
+            ],
+            conditions=[],
+            relation=RelationChoices.AND,
+            role=CapabilityRole(
+                app_name="app", namespace_name="namespace", name="role"
+            ),
+        ),
     }
     assert check_permissions_in_namespace(None, values) == values

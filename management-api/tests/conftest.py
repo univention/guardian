@@ -15,6 +15,7 @@ from guardian_management_api.adapters.app import (
     FastAPIAppAPIAdapter,
     SQLAppPersistenceAdapter,
 )
+from guardian_management_api.adapters.bundle_server import BundleServerAdapter
 from guardian_management_api.adapters.condition import (
     FastAPIConditionAPIAdapter,
     SQLConditionPersistenceAdapter,
@@ -38,6 +39,7 @@ from guardian_management_api.ports.app import (
     AppAPIPort,
     AppPersistencePort,
 )
+from guardian_management_api.ports.bundle_server import BundleServerPort
 from guardian_management_api.ports.condition import (
     ConditionAPIPort,
     ConditionPersistencePort,
@@ -69,7 +71,7 @@ class DummySettingsAdapter(SettingsPort):
 
 
 @pytest.fixture
-def patch_env(sqlite_db_name):
+def patch_env(sqlite_db_name, bundle_server_base_dir):
     _environ = os.environ.copy()
     os.environ["GUARDIAN__MANAGEMENT__ADAPTER__APP_PERSISTENCE_PORT"] = "sql"
     os.environ["GUARDIAN__MANAGEMENT__ADAPTER__CONDITION_PERSISTENCE_PORT"] = "sql"
@@ -81,6 +83,7 @@ def patch_env(sqlite_db_name):
     os.environ["GUARDIAN__MANAGEMENT__ADAPTER__APP_API_PORT"] = "APP_API_PORT"
     os.environ["SQL_PERSISTENCE_ADAPTER__DIALECT"] = "sqlite"
     os.environ["SQL_PERSISTENCE_ADAPTER__DB_NAME"] = sqlite_db_name
+    os.environ["BUNDLE_SERVER_ADAPTER__BASE_DIR"] = bundle_server_base_dir
     yield
     os.environ.clear()
     os.environ.update(_environ)
@@ -110,6 +113,7 @@ def register_test_adapters(patch_env):
         (RolePersistencePort, SQLRolePersistenceAdapter),
         (AppAPIPort, FastAPIAppAPIAdapter),
         (ConditionAPIPort, FastAPIConditionAPIAdapter),
+        (BundleServerPort, BundleServerAdapter),
     ]:
         adapter_registry.ADAPTER_REGISTRY.register_port(port)
         adapter_registry.ADAPTER_REGISTRY.register_adapter(port, adapter_cls=adapter)
@@ -128,6 +132,11 @@ def register_test_adapters(patch_env):
 @pytest.fixture
 def sqlite_db_name(tmpdir):
     return f"/{tmpdir / 'management.db'}"
+
+
+@pytest.fixture
+def bundle_server_base_dir(tmpdir):
+    return f"{tmpdir / 'bundle_server'}"
 
 
 @pytest.fixture

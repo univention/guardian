@@ -2,9 +2,10 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-FROM docker-registry.knut.univention.de/python:3.11-slim as s6_builder
+FROM docker-registry.knut.univention.de/python:3.11-slim as builder
 
 ARG S6_OVERLAY_VERSION="3.1.5.0"
+ARG opa_version=0.53.0
 
 WORKDIR /build
 
@@ -16,6 +17,10 @@ RUN ls /tmp/ && tar -C /_s6 -Jxpf /tmp/s6-overlay-noarch.tar.xz
 ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-x86_64.tar.xz /tmp
 RUN tar -C /_s6 -Jxpf /tmp/s6-overlay-x86_64.tar.xz
 
+# Download Open Policy Agent
+ADD https://github.com/open-policy-agent/opa/releases/download/v${opa_version}/opa_linux_amd64_static /usr/bin/opa
+RUN chmod +x /usr/bin/opa
+
 # Calculate Python dependencies
 FROM docker-registry.knut.univention.de/python:3.11-slim as requirements_builder
 WORKDIR /build
@@ -26,10 +31,18 @@ RUN poetry export -f requirements.txt --output requirements.txt --dev --without-
 # Live edit version for development
 FROM docker-registry.knut.univention.de/python:3.11-slim as dev
 
+ARG service_dir="/guardian_service_dir"
+
 EXPOSE 8000
 WORKDIR /app
 CMD uvicorn --reload --log-level debug --host 0.0.0.0 --port 8000 guardian_management_api.main:app
 
+ENV SERVICE_DIR $service_dir
+
+# Install OPA
+COPY --from=builder /usr/bin/opa /usr/bin/opa
+
+RUN mkdir -p $service_dir
 RUN pip install --no-cache-dir -U pip wheel && pip install --no-cache-dir poetry==1.5.1 && poetry config virtualenvs.create false
 COPY management-api management-api
 COPY guardian-lib guardian-lib
@@ -59,8 +72,11 @@ ENV SERVICE_DIR $service_dir
 RUN adduser --no-create-home $service_user && mkdir -p $service_dir && chown $service_user:$service_user $service_dir
 
 # Install s6
-COPY --from=s6_builder /_s6 /
+COPY --from=builder /_s6 /
 COPY s6-rc.d /etc/s6-overlay/s6-rc.d
+
+# Install OPA
+COPY --from=builder /usr/bin/opa /usr/bin/opa
 
 # Install python requirements
 COPY --from=requirements_builder /build/requirements.txt .

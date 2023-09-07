@@ -63,6 +63,12 @@ cp .env.example .env
 source .env
 ```
 
+The second step is to create the directory for the bind mount in the docker compose file:
+
+```shell
+mkdir management_service_dir
+```
+
 This repository provides a dev-compose.yaml. If the docker environment is started
 via
 
@@ -80,6 +86,10 @@ _use the default values._
 You might need to install the docker compose plugin.
 Either use the [official docker repositories](https://docs.docker.com/compose/install/linux/#install-using-the-repository) to install docker.
 Or [download the plugin manually](https://docs.docker.com/compose/install/linux/#install-the-plugin-manually).
+
+Some of the services are configured to run with the UID 1000 to avoid creating files with root in your local
+folder structure. If your current user does not have the UID 1000, remove the lines from the docker compose file.
+It should work then, but you will have files in your local repo, which are owned by root.
 
 ### Shared dependencies
 

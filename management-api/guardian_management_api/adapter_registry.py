@@ -18,7 +18,9 @@ from guardian_management_api.ports.app import (
     AppPersistencePort,
 )
 
+from .adapters.bundle_server import BundleServerAdapter
 from .adapters.condition import FastAPIConditionAPIAdapter
+from .ports.bundle_server import BundleServerPort
 from .ports.condition import ConditionAPIPort, ConditionPersistencePort
 from .ports.context import ContextPersistencePort
 from .ports.namespace import NamespacePersistencePort
@@ -97,6 +99,7 @@ def configure_registry(adapter_registry: AsyncAdapterRegistry):
     for port, adapter in [
         (AppAPIPort, FastAPIAppAPIAdapter),
         (ConditionAPIPort, FastAPIConditionAPIAdapter),
+        (BundleServerPort, BundleServerAdapter),
     ]:
         adapter_registry.register_port(port)
         adapter_registry.register_adapter(port, adapter_cls=adapter)

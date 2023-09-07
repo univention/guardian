@@ -26,11 +26,9 @@ def check_permissions_in_namespace(cls, values: dict[str, Any]):
     This validator is intended to be used as a root validator on the Create and Edit Request objects.
     """
     namespace = f"{values.get('app_name', '')}:{values.get('namespace_name', '')}"
-    permissions = values.get("data", {}).get("permissions", [])
+    permissions: list[CapabilityPermission] = values["data"].permissions
     for permission in permissions:
-        permission_namespace = (
-            f"{permission.get('app_name', '')}:{permission.get('namespace_name', '')}"
-        )
+        permission_namespace = f"{permission.app_name}:{permission.namespace_name}"
         if permission_namespace != namespace:
             raise ValueError(
                 "The request contains permissions, which are in a different namespace than the "

@@ -72,6 +72,7 @@ services:
         - git.knut.univention.de:${GITLAB_IP}
     volumes:
       - ./management-api:/app/management-api
+      - ./management_service_dir:/guardian_service_dir
     environment:
       - GUARDIAN__MANAGEMENT__LOGGING__LEVEL
       - GUARDIAN__MANAGEMENT__LOGGING__STRUCTURED
@@ -88,6 +89,7 @@ services:
   management-api:
     container_name: management-guardian-dev
     image: guardian-management-api:dev
+    user: "1000"
     build:
       context: ./
       dockerfile: management-api/Dockerfile
@@ -101,6 +103,7 @@ services:
       - proxy-net
     volumes:
       - ./management-api:/app/management-api
+      - ./management_service_dir:/guardian_service_dir
     environment:
       - GUARDIAN__MANAGEMENT__LOGGING__LEVEL
       - GUARDIAN__MANAGEMENT__LOGGING__STRUCTURED

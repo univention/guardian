@@ -8,3 +8,4 @@ __pycache__/
 .env
 dist/
 *.db
+management_service_dir/

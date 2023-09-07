@@ -14,3 +14,6 @@ COMPLETE_URL = urljoin(BASE_URL, API_PREFIX)
 # To accommodate some backends we proactively restrict the length of non text field strings.
 # This affects mostly names and display names.
 STRING_MAX_LENGTH = 256
+
+DEFAULT_BUNDLE_SERVER_BASE_DIR = "/guardian_service_dir/bundle_server"
+BUNDLE_SERVER_DISABLED_SETTING_NAME = "bundle_server.disabled"
