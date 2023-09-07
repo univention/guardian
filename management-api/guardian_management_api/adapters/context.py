@@ -18,7 +18,12 @@ from ..models.context import (
     ContextGetQuery,
     ContextsGetQuery,
 )
-from ..models.routers.base import GetByAppRequest, PaginationInfo, GetAllRequest, GetByNamespaceRequest
+from ..models.routers.base import (
+    GetAllRequest,
+    GetByAppRequest,
+    GetByNamespaceRequest,
+    PaginationInfo,
+)
 from ..models.routers.context import (
     Context as ResponseContext,
 )
@@ -27,7 +32,6 @@ from ..models.routers.context import (
     ContextEditRequest,
     ContextGetRequest,
     ContextMultipleResponse,
-    ContextsGetRequest,
     ContextSingleResponse,
 )
 from ..models.sql_persistence import (
@@ -49,7 +53,7 @@ class FastAPIContextAPIAdapter(
         ContextSingleResponse,
         ContextGetRequest,
         ContextSingleResponse,
-        ContextsGetRequest,
+        Union[GetAllRequest, GetByAppRequest, GetByNamespaceRequest],
         ContextMultipleResponse,
         Tuple[ContextGetQuery, Dict[str, Any]],
         ContextSingleResponse,
@@ -79,18 +83,6 @@ class FastAPIContextAPIAdapter(
             detail={"message": "Internal Server Error"},
         )
 
-    async def to_contexts_get(
-        self, api_request: Union[GetAllRequest, GetByAppRequest, GetByNamespaceRequest]
-    ) -> ContextsGetQuery:
-        return ContextsGetQuery(
-            pagination=PaginationRequest(
-                query_offset=api_request.offset,
-                query_limit=api_request.limit,
-            ),
-            app_name=getattr(api_request, "app_name", None),
-            namespace_name=getattr(api_request, "namespace_name", None),
-        )
-
     async def to_api_edit_response(
         self, context_result: Context
     ) -> ContextSingleResponse:
@@ -115,6 +107,18 @@ class FastAPIContextAPIAdapter(
         )
         changed_data = api_request.data.dict(exclude_unset=True)
         return query, changed_data
+
+    async def to_contexts_get(
+        self, api_request: Union[GetAllRequest, GetByAppRequest, GetByNamespaceRequest]
+    ) -> ContextsGetQuery:
+        return ContextsGetQuery(
+            pagination=PaginationRequest(
+                query_offset=api_request.offset,
+                query_limit=api_request.limit,
+            ),
+            app_name=getattr(api_request, "app_name", None),
+            namespace_name=getattr(api_request, "namespace_name", None),
+        )
 
     async def to_context_create(
         self, api_request: ContextCreateRequest
@@ -158,15 +162,6 @@ class FastAPIContextAPIAdapter(
             app_name=api_request.app_name,
             namespace_name=api_request.namespace_name,
         )
-
-    async def to_api_context_get_response(
-        self,
-        namespaces: List[Context],
-        query_offset: int,
-        query_limit: Optional[int],
-        total_count: int,
-    ) -> ContextMultipleResponse:
-        raise NotImplementedError()
 
     async def to_api_contexts_get_response(
         self,

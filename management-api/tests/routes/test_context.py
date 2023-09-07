@@ -250,6 +250,47 @@ class TestContextEndpoints:
         }
 
     @pytest.mark.asyncio
+    async def test_get_contexts_for_namespace_name(
+        self,
+        client,
+        register_test_adapters,
+        create_app,
+        sqlalchemy_mixin,
+        create_namespace,
+        create_context,
+    ):
+        namespace_name = "namespace2"
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session)
+            await create_namespace(session)
+            await create_namespace(session, name=namespace_name)
+            await create_context(session, name="context1")
+            await create_context(
+                session, name="context2", namespace_name=namespace_name
+            )
+
+        response = client.get(
+            app.url_path_for(
+                "get_contexts_by_namespace",
+                namespace_name=namespace_name,
+                app_name=DEFAULT_TEST_APP,
+            )
+        )
+        assert response.status_code == 200
+        assert response.json() == {
+            "pagination": {"offset": 0, "limit": 1, "total_count": 1},
+            "contexts": [
+                {
+                    "app_name": "app",
+                    "namespace_name": "namespace2",
+                    "name": "context2",
+                    "display_name": "Context",
+                    "resource_url": "http://localhost:8001/guardian/management/contexts/app/namespace2/context2",
+                }
+            ],
+        }
+
+    @pytest.mark.asyncio
     async def test_get_contexts_for_app_name_non_existent_app(
         self,
         client,

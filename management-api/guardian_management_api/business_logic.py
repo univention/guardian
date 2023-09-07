@@ -49,8 +49,11 @@ from .ports.condition import (
     ConditionAPIPort,
     ConditionPersistencePort,
 )
-from .ports.context import ContextAPIPort, ContextPersistencePort, \
-    ContextsAPIGetRequestObject
+from .ports.context import (
+    ContextAPIPort,
+    ContextPersistencePort,
+    ContextsAPIGetRequestObject,
+)
 from .ports.namespace import NamespacePersistencePort
 from .ports.permission import (
     PermissionAPICreateRequestObject,

@@ -11,10 +11,6 @@ from ..adapters.context import FastAPIContextAPIAdapter
 from ..models.routers.base import (
     GetByAppRequest,
     GetByNamespaceRequest,
-    PaginationInfo,
-)
-from ..models.routers.context import (
-    Context as ResponseContext,
 )
 from ..models.routers.context import (
     ContextCreateRequest,
@@ -99,22 +95,22 @@ async def get_contexts_by_app(
 )
 async def get_contexts_by_namespace(
     context_get_request: GetByNamespaceRequest = Depends(),
+    api_port: FastAPIContextAPIAdapter = Depends(
+        port_dep(ContextAPIPort, FastAPIContextAPIAdapter)
+    ),
+    persistence_port: ContextPersistencePort = Depends(
+        port_dep(ContextPersistencePort)
+    ),
 ):
     """
     Returns a list of all contexts that belong to `namespace_name` under `app_name`.
     """
-    return ContextMultipleResponse(
-        contexts=[
-            ResponseContext(
-                app_name="my-app",
-                namespace_name="my-namespace",
-                name="my-context",
-                display_name="My Context",
-                resource_url="http://fqdn/guardian/management/contexts/my-app/my-namespace/my-context",
-            )
-        ],
-        pagination=PaginationInfo(limit=1000, offset=0, total_count=1),
-    ).dict()
+    response: ContextMultipleResponse = await business_logic.get_contexts(
+        api_request=context_get_request,
+        api_port=api_port,
+        persistence_port=persistence_port,
+    )
+    return response.dict()
 
 
 @router.post(
