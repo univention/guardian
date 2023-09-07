@@ -21,8 +21,6 @@ from guardian_management_api.models.base import (
 )
 from guardian_management_api.models.context import (
     Context,
-    ContextCreateQuery,
-    ContextEditQuery,
     ContextGetQuery,
     ContextsGetQuery,
 )
@@ -66,7 +64,7 @@ class TestFastAPIContextAdapter:
             data=ContextCreateData(display_name="display_name", name="context-name"),
         )
         result = await adapter.to_context_create(api_request)
-        assert result == ContextCreateQuery(
+        assert result == Context(
             name="context-name",
             display_name="display_name",
             app_name=app_name,
@@ -128,7 +126,7 @@ class TestFastAPIContextAdapter:
 
     @pytest.mark.asyncio
     async def test_to_contexts_get(self, adapter):
-        api_request = ContextsGetRequest(offset=0, limit=1)
+        api_request = GetAllRequest(offset=0, limit=1)
         result = await adapter.to_contexts_get(api_request)
         assert result == ContextsGetQuery(
             pagination=PaginationRequest(query_offset=0, query_limit=1)
@@ -195,13 +193,13 @@ class TestFastAPIContextAdapter:
             namespace_name="namespace-name",
             data=ContextEditData(display_name="display_name"),
         )
-        result = await adapter.to_context_edit(api_request)
-        assert result == ContextEditQuery(
+        result, data = await adapter.to_context_edit(api_request)
+        assert result == ContextGetQuery(
             app_name=app_name,
             name="context-name",
             namespace_name="namespace-name",
-            display_name="display_name",
         )
+        assert data["display_name"] == "display_name"
 
     @pytest.mark.asyncio
     async def test_to_contexts_by_appname_get(self, adapter):

@@ -17,22 +17,6 @@ class Context:
 
 
 @dataclass(frozen=True)
-class ContextCreateQuery:
-    app_name: str
-    namespace_name: str
-    name: str
-    display_name: Optional[str] = None
-
-
-@dataclass(frozen=True)
-class ContextEditQuery:
-    app_name: str
-    namespace_name: str
-    name: str
-    display_name: Optional[str] = None
-
-
-@dataclass(frozen=True)
 class ContextGetQuery:
     app_name: str
     namespace_name: str
