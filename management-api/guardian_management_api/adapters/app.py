@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 from dataclasses import asdict
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional, Tuple, Type
 
 from fastapi import HTTPException
 from port_loader import AsyncConfiguredAdapterMixin
@@ -13,7 +13,6 @@ from ..errors import ObjectExistsError, ObjectNotFoundError
 from ..models.app import (
     App,
     AppCreateQuery,
-    AppEditQuery,
     AppGetQuery,
     AppsGetQuery,
 )
@@ -85,15 +84,12 @@ class FastAPIAppAPIAdapter(
             ]
         )
 
-    async def to_app_edit(self, api_request: AppEditRequest) -> AppEditQuery:
-        return AppEditQuery(
-            apps=[
-                App(
-                    name=api_request.name,
-                    display_name=api_request.data.display_name,
-                )
-            ]
-        )
+    async def to_app_edit(
+        self, api_request: AppEditRequest
+    ) -> Tuple[AppGetQuery, dict[str, Any]]:
+        query = AppGetQuery(name=api_request.name)
+        changed_data = api_request.data.dict(exclude_unset=True)
+        return query, changed_data
 
     async def to_api_edit_response(self, app_result: App) -> AppSingleResponse:
         return AppSingleResponse(

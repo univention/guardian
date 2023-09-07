@@ -117,9 +117,11 @@ async def edit_app(
     persistence_port: AppPersistencePort,
 ) -> AppSingleResponse:
     try:
-        query = await app_api_port.to_app_edit(api_request)
-        app = query.apps[0]
-        updated_app = await persistence_port.update(app)
+        query, changed_data = await app_api_port.to_app_edit(api_request)
+        old_app = await persistence_port.read_one(query)
+        for key, value in changed_data.items():
+            setattr(old_app, key, value)
+        updated_app = await persistence_port.update(old_app)
         return await app_api_port.to_api_edit_response(updated_app)
     except Exception as exc:
         raise (await app_api_port.transform_exception(exc)) from exc

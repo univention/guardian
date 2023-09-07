@@ -20,7 +20,6 @@ from guardian_management_api.errors import (
 from guardian_management_api.models.app import (
     App,
     AppCreateQuery,
-    AppEditQuery,
     AppGetQuery,
     AppsGetQuery,
 )
@@ -184,15 +183,9 @@ class TestFastAPIAppAdapter:
                 display_name="display_name",
             ),
         )
-        result = await adapter.to_app_edit(api_request)
-        assert result == AppEditQuery(
-            apps=[
-                App(
-                    name="name",
-                    display_name="display_name",
-                )
-            ],
-        )
+        query, changed_data = await adapter.to_app_edit(api_request)
+        assert query == AppGetQuery(name="name")
+        assert changed_data == {"display_name": "display_name"}
 
 
 class TestAppStaticDataAdapter:

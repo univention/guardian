@@ -7,14 +7,13 @@ Proposed layout for the app-related ports
 """
 
 from abc import ABC, abstractmethod
-from typing import Generic, List, Optional, TypeVar
+from typing import Any, Generic, List, Optional, Tuple, TypeVar
 
 from guardian_lib.ports import BasePort
 
 from ..models.app import (
     App,
     AppCreateQuery,
-    AppEditQuery,
     AppGetQuery,
     AppsGetQuery,
 )
@@ -79,7 +78,9 @@ class AppAPIPort(
         raise NotImplementedError  # pragma: no cover
 
     @abstractmethod
-    async def to_app_edit(self, api_request: AppAPIEditRequestObject) -> AppEditQuery:
+    async def to_app_edit(
+        self, api_request: AppAPIEditRequestObject
+    ) -> Tuple[AppGetQuery, dict[str, Any]]:
         raise NotImplementedError  # pragma: no cover
 
     @abstractmethod

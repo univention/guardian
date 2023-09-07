@@ -25,11 +25,6 @@ class AppCreateQuery:
 
 
 @dataclass(frozen=True)
-class AppEditQuery:
-    apps: List[App]
-
-
-@dataclass(frozen=True)
 class AppGetQuery:
     name: str
 
