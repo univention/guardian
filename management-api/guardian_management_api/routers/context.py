@@ -7,7 +7,6 @@ from guardian_lib.adapter_registry import port_dep
 from .. import business_logic
 from ..adapters.context import FastAPIContextAPIAdapter
 from ..models.routers.base import (
-    GetAllRequest,
     GetByAppRequest,
     GetByNamespaceRequest,
     PaginationInfo,
@@ -20,6 +19,7 @@ from ..models.routers.context import (
     ContextEditRequest,
     ContextGetRequest,
     ContextMultipleResponse,
+    ContextsGetRequest,
     ContextSingleResponse,
 )
 from ..ports.context import ContextAPIPort, ContextPersistencePort
@@ -51,22 +51,24 @@ async def get_context(
 
 
 @router.get("/contexts", response_model=ContextMultipleResponse)
-async def get_all_contexts(context_get_request: GetAllRequest = Depends()):
+async def get_all_contexts(
+    context_get_request: ContextsGetRequest = Depends(),
+    api_port: FastAPIContextAPIAdapter = Depends(
+        port_dep(ContextAPIPort, FastAPIContextAPIAdapter)
+    ),
+    persistence_port: ContextPersistencePort = Depends(
+        port_dep(ContextPersistencePort)
+    ),
+) -> Dict[str, Any]:
     """
     Returns a list of all contexts.
     """
-    return ContextMultipleResponse(
-        contexts=[
-            ResponseContext(
-                app_name="my-app",
-                namespace_name="my-namespace",
-                name="my-context",
-                display_name="My Context",
-                resource_url="http://fqdn/guardian/management/contexts/my-app/my-namespace/my-context",
-            )
-        ],
-        pagination=PaginationInfo(limit=1000, offset=0, total_count=1),
-    ).dict()
+    response: ContextMultipleResponse = await business_logic.get_contexts(
+        api_request=context_get_request,
+        api_port=api_port,
+        persistence_port=persistence_port,
+    )
+    return response.dict()
 
 
 @router.get("/contexts/{app_name}", response_model=ContextMultipleResponse)

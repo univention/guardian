@@ -29,6 +29,8 @@ from .models.routers.context import ContextCreateRequest
 from .models.routers.context import (
     ContextCreateRequest,
     ContextGetRequest,
+    ContextMultipleResponse,
+    ContextsGetRequest,
     ContextSingleResponse,
 )
 from .ports.app import (
@@ -365,5 +367,23 @@ async def get_context(
         query = await api_port.to_context_get(api_request)
         condition = await persistence_port.read_one(query)
         return await api_port.to_api_get_response(condition)
+    except Exception as exc:
+        raise (await api_port.transform_exception(exc)) from exc
+
+
+async def get_contexts(
+    api_request: ContextsGetRequest,
+    api_port: ContextAPIPort,
+    persistence_port: ContextPersistencePort,
+) -> ContextMultipleResponse:
+    try:
+        query = await api_port.to_contexts_get(api_request)
+        contexts = await persistence_port.read_many(query)
+        return await api_port.to_api_contexts_get_response(
+            list(contexts.objects),
+            query.pagination.query_offset,
+            query.pagination.query_limit,
+            contexts.total_count,
+        )
     except Exception as exc:
         raise (await api_port.transform_exception(exc)) from exc

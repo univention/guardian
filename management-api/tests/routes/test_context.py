@@ -177,3 +177,41 @@ class TestContextEndpoints:
             ),
         )
         assert response.status_code == 404, response.json()
+
+    @pytest.mark.asyncio
+    async def test_get_all_contexts(
+        self,
+        client,
+        register_test_adapters,
+        create_app,
+        sqlalchemy_mixin,
+        create_namespace,
+        create_context,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session)
+            await create_namespace(session)
+            await create_context(session, name="context1")
+            await create_context(session, name="context2")
+
+        response = client.get(app.url_path_for("get_all_contexts"))
+        assert response.status_code == 200
+        assert response.json() == {
+            "pagination": {"offset": 0, "limit": 2, "total_count": 2},
+            "contexts": [
+                {
+                    "app_name": "app",
+                    "namespace_name": "namespace",
+                    "name": "context1",
+                    "display_name": "Context",
+                    "resource_url": "http://localhost:8001/guardian/management/contexts/app/namespace/context1",
+                },
+                {
+                    "app_name": "app",
+                    "namespace_name": "namespace",
+                    "name": "context2",
+                    "display_name": "Context",
+                    "resource_url": "http://localhost:8001/guardian/management/contexts/app/namespace/context2",
+                },
+            ],
+        }
