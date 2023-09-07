@@ -26,7 +26,7 @@ from guardian_management_api.models.context import (
     ContextGetQuery,
     ContextsGetQuery,
 )
-from guardian_management_api.models.routers.base import PaginationInfo
+from guardian_management_api.models.routers.base import GetByAppRequest, PaginationInfo
 from guardian_management_api.models.routers.context import (
     Context as ResponseContext,
 )
@@ -197,6 +197,15 @@ class TestFastAPIContextAdapter:
             name="context-name",
             namespace_name="namespace-name",
             display_name="display_name",
+        )
+
+    @pytest.mark.asyncio
+    async def test_to_contexts_by_appname_get(self, adapter):
+        api_request = GetByAppRequest(offset=0, limit=1, app_name="test-app")
+        result = await adapter.to_contexts_get(api_request)
+        assert result == ContextsGetQuery(
+            pagination=PaginationRequest(query_offset=0, query_limit=1),
+            app_name="test-app",
         )
 
 

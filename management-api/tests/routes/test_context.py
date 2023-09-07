@@ -217,6 +217,61 @@ class TestContextEndpoints:
         }
 
     @pytest.mark.asyncio
+    async def test_get_contexts_for_app_name(
+        self,
+        client,
+        register_test_adapters,
+        create_app,
+        sqlalchemy_mixin,
+        create_namespace,
+        create_context,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session)
+            await create_app(session, name="app2")
+            await create_namespace(session)
+            await create_namespace(session, app_name="app2")
+            await create_context(session, name="context1")
+            await create_context(session, name="context2", app_name="app2")
+
+        response = client.get(app.url_path_for("get_contexts_by_app", app_name="app2"))
+        assert response.status_code == 200
+        assert response.json() == {
+            "pagination": {"offset": 0, "limit": 1, "total_count": 1},
+            "contexts": [
+                {
+                    "app_name": "app2",
+                    "namespace_name": "namespace",
+                    "name": "context2",
+                    "display_name": "Context",
+                    "resource_url": "http://localhost:8001/guardian/management/contexts/app2/namespace/context2",
+                }
+            ],
+        }
+
+    @pytest.mark.asyncio
+    async def test_get_contexts_for_app_name_non_existent_app(
+        self,
+        client,
+        register_test_adapters,
+        create_app,
+        sqlalchemy_mixin,
+        create_namespace,
+        create_context,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session)
+            await create_namespace(session)
+            await create_context(session, name="context1")
+
+        response = client.get(app.url_path_for("get_contexts_by_app", app_name="app2"))
+        assert response.status_code == 200
+        assert response.json() == {
+            "pagination": {"offset": 0, "limit": 0, "total_count": 0},
+            "contexts": [],
+        }
+
+    @pytest.mark.asyncio
     async def test_patch_context(
         self,
         client,

@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 from dataclasses import asdict
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 from fastapi import HTTPException
 from port_loader import AsyncConfiguredAdapterMixin
@@ -18,7 +18,7 @@ from ..models.context import (
     ContextGetQuery,
     ContextsGetQuery,
 )
-from ..models.routers.base import GetByAppRequest, PaginationInfo
+from ..models.routers.base import GetByAppRequest, PaginationInfo, GetAllRequest, GetByNamespaceRequest
 from ..models.routers.context import (
     Context as ResponseContext,
 )
@@ -53,8 +53,6 @@ class FastAPIContextAPIAdapter(
         ContextMultipleResponse,
         Tuple[ContextGetQuery, Dict[str, Any]],
         ContextSingleResponse,
-        GetByAppRequest,
-        ContextMultipleResponse,
     ]
 ):
     class Config:
@@ -82,19 +80,16 @@ class FastAPIContextAPIAdapter(
         )
 
     async def to_contexts_get(
-        self, api_request: ContextsGetRequest
+        self, api_request: Union[GetAllRequest, GetByAppRequest, GetByNamespaceRequest]
     ) -> ContextsGetQuery:
         return ContextsGetQuery(
             pagination=PaginationRequest(
                 query_offset=api_request.offset,
                 query_limit=api_request.limit,
-            )
+            ),
+            app_name=getattr(api_request, "app_name", None),
+            namespace_name=getattr(api_request, "namespace_name", None),
         )
-
-    async def to_contexts_by_appname_get(
-        self, api_request: GetByAppRequest
-    ) -> ContextsGetQuery:
-        raise NotImplementedError()
 
     async def to_api_edit_response(
         self, context_result: Context
