@@ -11,6 +11,8 @@ from guardian_authorization_api.adapters.policies import OPAAdapter
 from guardian_authorization_api.errors import PolicyUpstreamError
 from guardian_authorization_api.models.policies import (
     CheckPermissionsQuery,
+    CheckPermissionsResult,
+    CheckResult,
     GetPermissionsQuery,
     Namespace,
     OPAAdapterSettings,
@@ -60,10 +62,33 @@ def get_permissions_query(get_actor_object, get_target_object) -> Callable:
         return GetPermissionsQuery(
             actor=get_actor_object(),
             targets=[get_target_object()],
+            namespaces=[Namespace(app_name="app", name="namespace")],
             include_general_permissions=include_general_permissions,
         )
 
     return _get_permissions_query
+
+
+@pytest.fixture
+def check_permissions_query(get_actor_object, get_target_object) -> Callable:
+    def _check_permissions_query(include_general_permissions: bool = False):
+        return CheckPermissionsQuery(
+            actor=get_actor_object(),
+            targets=[get_target_object()],
+            namespaces=[Namespace(app_name="app", name="namespace")],
+            target_permissions=[
+                Permission(
+                    app_name="app", namespace_name="namespace", name="permission"
+                )
+            ],
+            general_permissions=[
+                Permission(
+                    app_name="app", namespace_name="namespace", name="permission2"
+                )
+            ],
+        )
+
+    return _check_permissions_query
 
 
 class TestOPAAdapter:
@@ -163,6 +188,62 @@ class TestOPAAdapter:
         ):
             await port_instance.get_permissions(get_permissions_query())
 
+    @pytest.mark.asyncio
+    async def test_check_permissions(
+        self,
+        mocker,
+        port_instance,
+        check_permissions_query,
+        get_actor_object,
+    ):
+        check_policy_return_value = [
+            {
+                "target_id": "target",
+                "result": True,
+            },
+            # mock also the response for the empty target
+            {
+                "target_id": "",
+                "result": True,
+            },
+        ]
+        query = check_permissions_query()
+        opa_client_mock = mocker.AsyncMock()
+        opa_client_mock.check_policy.return_value = check_policy_return_value
+        port_instance._opa_client = opa_client_mock
+        result = await port_instance.check_permissions(query)
+        assert result == CheckPermissionsResult(
+            target_permissions=[
+                CheckResult(target_id="target", actor_has_permissions=True)
+            ],
+            actor_has_general_permissions=True,
+        )
+
+    @pytest.mark.asyncio
+    async def test_check_permission_upstream_error(
+        self, port_instance, check_permissions_query, mocker
+    ):
+        opa_client_mock = mocker.MagicMock()
+        opa_client_mock.check_policy = mocker.AsyncMock(side_effect=RuntimeError)
+        port_instance._opa_client = opa_client_mock
+        with pytest.raises(
+            PolicyUpstreamError, match="Upstream error while checking permissions."
+        ):
+            await port_instance.check_permissions(check_permissions_query())
+
+    @pytest.mark.asyncio
+    async def test_check_permission_faulty_data(
+        self, port_instance, check_permissions_query, mocker
+    ):
+        opa_client_mock = mocker.MagicMock()
+        opa_client_mock.check_policy = mocker.AsyncMock(return_value=[{}])
+        port_instance._opa_client = opa_client_mock
+        with pytest.raises(
+            PolicyUpstreamError,
+            match="Upstream returned faulty data for check_permissions.",
+        ):
+            await port_instance.check_permissions(check_permissions_query())
+
 
 def opa_adapter_integrated():
     return os.environ.get("OPA_ADAPTER__URL") is None
@@ -186,7 +267,7 @@ async def opa_adapter(
 
 @pytest.mark.skipif(
     opa_adapter_integrated(),
-    reason="Cannot run integration tests for UDM adapter without config",
+    reason="Cannot run integration tests for OPA adapter without config",
 )
 @pytest.mark.integration
 class TestOPAAdapterIntegration:
@@ -197,7 +278,15 @@ class TestOPAAdapterIntegration:
     ):
         query = GetPermissionsQuery(
             actor=PolicyObject(
-                id="actor", roles=["ucsschool:users:teacher"], attributes={}
+                id="actor",
+                roles=[
+                    {
+                        "app_name": "ucsschool",
+                        "namespace_name": "users",
+                        "name": "teacher",
+                    }
+                ],
+                attributes={},
             ),
             targets=[
                 Target(
@@ -238,3 +327,45 @@ class TestOPAAdapterIntegration:
                 app_name="ucsschool", namespace_name="users", name="write_password"
             ),
         }.issubset(result.general_permissions)
+
+    @pytest.mark.asyncio
+    async def test_check_permissions(
+        self,
+        opa_adapter: OPAAdapter,
+    ):
+        query = CheckPermissionsQuery(
+            actor=PolicyObject(
+                id="actor",
+                roles=[
+                    {
+                        "app_name": "ucsschool",
+                        "namespace_name": "users",
+                        "name": "teacher",
+                    }
+                ],
+                attributes={},
+            ),
+            targets=[
+                Target(
+                    old_target=PolicyObject(id="target", roles=[], attributes={}),
+                    new_target=PolicyObject(id="target", roles=[], attributes={}),
+                ),
+            ],
+            namespaces=[Namespace(app_name="ucsschool", name="users")],
+            target_permissions=[
+                Permission(app_name="ucsschool", namespace_name="users", name="export"),
+            ],
+            general_permissions=[
+                Permission(app_name="ucsschool", namespace_name="users", name="export"),
+            ],
+            contexts=None,
+            extra_args=None,
+        )
+        result = await opa_adapter.check_permissions(query=query)
+        assert result
+        assert result == CheckPermissionsResult(
+            target_permissions=[
+                CheckResult(target_id="target", actor_has_permissions=True)
+            ],
+            actor_has_general_permissions=True,
+        )
