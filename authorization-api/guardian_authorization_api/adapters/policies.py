@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-from typing import Any, Optional, Type
+from typing import Any, Dict, Optional, Type
 
 from opa_client.client import OPAClient
 from port_loader import AsyncConfiguredAdapterMixin
@@ -58,12 +58,26 @@ class OPAAdapter(PolicyPort, AsyncConfiguredAdapterMixin):
         raise NotImplementedError  # pragma: no cover
 
     async def get_permissions(self, query: GetPermissionsQuery) -> GetPermissionsResult:
-        targets = [] if query.targets is None else query.targets
-        namespaces = [] if query.namespaces is None else query.namespaces
+        targets = (
+            []
+            if query.targets is None
+            else [
+                {"old": target.old_target, "new": target.new_target}
+                for target in query.targets
+            ]
+        )
+        namespaces: Dict[str, list[str]] = {}
+        if query.namespaces:
+            for namespace in query.namespaces:
+                if namespace.app_name not in namespaces:
+                    namespaces[namespace.app_name] = []
+                namespaces[namespace.app_name].append(namespace.name)
         contexts = [] if query.contexts is None else query.contexts
         extra_args = {} if query.extra_args is None else query.extra_args
         if query.include_general_permissions:
-            targets = list(targets) + [EMPTY_TARGET]
+            targets = list(targets) + [
+                {"old": EMPTY_TARGET.old_target, "new": EMPTY_TARGET.new_target}
+            ]
         try:
             opa_response = await self.opa_client.check_policy(
                 self.OPA_GET_PERMISSIONS_POLICY,
@@ -84,7 +98,14 @@ class OPAAdapter(PolicyPort, AsyncConfiguredAdapterMixin):
         try:
             for result in opa_response:
                 target_id = result["target_id"]
-                permissions = [Permission(**perm) for perm in result.get("permissions")]
+                permissions = [
+                    Permission(
+                        app_name=perm["appName"],
+                        namespace_name=perm["namespace"],
+                        name=perm["permission"],
+                    )
+                    for perm in result.get("permissions")
+                ]
                 if target_id == "":
                     general_permissions = permissions
                 else:
