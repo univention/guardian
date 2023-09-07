@@ -14,7 +14,6 @@ from ..errors import ObjectExistsError, ObjectNotFoundError, ParentNotFoundError
 from ..models.base import PaginationRequest, PersistenceGetManyResult
 from ..models.context import (
     Context,
-    ContextCreateQuery,
     ContextGetQuery,
     ContextsGetQuery,
 )
@@ -120,10 +119,8 @@ class FastAPIContextAPIAdapter(
             namespace_name=getattr(api_request, "namespace_name", None),
         )
 
-    async def to_context_create(
-        self, api_request: ContextCreateRequest
-    ) -> ContextCreateQuery:
-        return ContextCreateQuery(
+    async def to_context_create(self, api_request: ContextCreateRequest) -> Context:
+        return Context(
             name=api_request.data.name,
             display_name=api_request.data.display_name,
             app_name=api_request.app_name,

@@ -9,7 +9,6 @@ from guardian_lib.ports import BasePort
 
 from ..models.context import (
     Context,
-    ContextCreateQuery,
     ContextGetQuery,
     ContextsGetQuery,
 )
@@ -56,7 +55,7 @@ class ContextAPIPort(
     @abstractmethod
     async def to_context_create(
         self, api_request: ContextAPICreateRequestObject
-    ) -> ContextCreateQuery:
+    ) -> Context:
         raise NotImplementedError  # pragma: no cover
 
     @abstractmethod
