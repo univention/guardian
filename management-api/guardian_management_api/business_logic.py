@@ -28,6 +28,7 @@ from .models.routers.role import (
 from .models.routers.context import ContextCreateRequest
 from .models.routers.context import (
     ContextCreateRequest,
+    ContextEditRequest,
     ContextGetRequest,
     ContextMultipleResponse,
     ContextsGetRequest,
@@ -387,3 +388,19 @@ async def get_contexts(
         )
     except Exception as exc:
         raise (await api_port.transform_exception(exc)) from exc
+
+
+async def edit_context(
+    api_request: ContextEditRequest,
+    api_port: ContextAPIPort,
+    persistence_port: ContextPersistencePort,
+):
+    try:
+        query, changed_values = await api_port.to_context_edit(api_request)
+        obj = await persistence_port.read_one(query)
+        for key, value in changed_values.items():
+            setattr(obj, key, value)
+        updated_context = await persistence_port.update(obj)
+    except Exception as exc:
+        raise (await api_port.transform_exception(exc)) from exc
+    return await api_port.to_api_edit_response(updated_context)

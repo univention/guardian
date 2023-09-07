@@ -215,3 +215,105 @@ class TestContextEndpoints:
                 },
             ],
         }
+
+    @pytest.mark.asyncio
+    async def test_patch_context(
+        self,
+        client,
+        register_test_adapters,
+        create_app,
+        sqlalchemy_mixin,
+        create_namespace,
+        create_context,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session)
+            await create_namespace(session)
+            await create_context(session)
+
+        changed_display_name = "changed_display_name"
+        response = client.patch(
+            app.url_path_for(
+                "edit_context",
+                app_name=DEFAULT_TEST_APP,
+                namespace_name=DEFAULT_TEST_NAMESPACE,
+                name=DEFAULT_TEST_CONTEXT,
+            ),
+            json={"display_name": changed_display_name},
+        )
+        assert response.status_code == 201, response.json()
+        assert response.json() == {
+            "context": {
+                "app_name": DEFAULT_TEST_APP,
+                "namespace_name": DEFAULT_TEST_NAMESPACE,
+                "name": DEFAULT_TEST_CONTEXT,
+                "display_name": changed_display_name,
+                "resource_url": f"{COMPLETE_URL}/contexts/{DEFAULT_TEST_APP}/"
+                f"{DEFAULT_TEST_NAMESPACE}/{DEFAULT_TEST_CONTEXT}",
+            }
+        }
+
+    @pytest.mark.asyncio
+    async def test_patch_context_non_existing_context(
+        self,
+        client,
+        register_test_adapters,
+        create_app,
+        sqlalchemy_mixin,
+        create_namespace,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session)
+            await create_namespace(session)
+
+        changed_display_name = "changed_display_name"
+        response = client.patch(
+            app.url_path_for(
+                "edit_context",
+                app_name=DEFAULT_TEST_APP,
+                namespace_name=DEFAULT_TEST_NAMESPACE,
+                name=DEFAULT_TEST_CONTEXT,
+            ),
+            json={"display_name": changed_display_name},
+        )
+        assert response.status_code == 404, response.json()
+
+    @pytest.mark.asyncio
+    async def test_patch_context_non_existing_app(
+        self,
+        client,
+        register_test_adapters,
+    ):
+        changed_display_name = "changed_display_name"
+        response = client.patch(
+            app.url_path_for(
+                "edit_context",
+                app_name=DEFAULT_TEST_APP,
+                namespace_name=DEFAULT_TEST_NAMESPACE,
+                name=DEFAULT_TEST_CONTEXT,
+            ),
+            json={"display_name": changed_display_name},
+        )
+        assert response.status_code == 404, response.json()
+
+    @pytest.mark.asyncio
+    async def test_patch_context_non_existing_namespace(
+        self,
+        client,
+        register_test_adapters,
+        create_app,
+        sqlalchemy_mixin,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session)
+        changed_display_name = "changed_display_name"
+        response = client.patch(
+            app.url_path_for(
+                "edit_context",
+                app_name=DEFAULT_TEST_APP,
+                namespace_name=DEFAULT_TEST_NAMESPACE,
+                name=DEFAULT_TEST_CONTEXT,
+            ),
+            json={"display_name": changed_display_name},
+        )
+        assert response.status_code == 404, response.json()
