@@ -12,7 +12,7 @@ import data.univention.mapping.roleCapabilityMapping
 # input.contexts: The list of contexts provided to the request
 # input.extra_args: Dictionary of additional arguments to pass to condition evaluation
 # result: Set of dictionaries with target_id (string) and permissions (set of strings).
-permissions contains result if {
+get_permissions contains result if {
 	some target_object in input.targets
 	permissions := {permission |
 		some role in input.actor.roles

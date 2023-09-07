@@ -2,7 +2,7 @@ package univention.base
 
 import future.keywords.if
 
-test_permissions_happy_case if {
+test_get_permissions_happy_case if {
 	inp = {
 		"actor": {
 			"id": "actor_id_1",
@@ -16,7 +16,7 @@ test_permissions_happy_case if {
 		"contexts": {},
 		"extra_args": {},
 	}
-	result = permissions with input as inp
+	result = get_permissions with input as inp
 	print("TEST_DEBUG -- result: ", result)
 	result == {{
 		"target_id": "target_id_1",
@@ -29,7 +29,7 @@ test_permissions_happy_case if {
 	}}
 }
 
-test_permissions_filtering if {
+test_get_permissions_filtering if {
 	role_capability_mapping = {
 		"ucsschool:users:teacher": [
 			{
@@ -135,7 +135,7 @@ test_permissions_filtering if {
 		"contexts": {},
 		"extra_args": {},
 	}
-	result = permissions with input as inp with data.univention.mapping.roleCapabilityMapping as role_capability_mapping
+	result = get_permissions with input as inp with data.univention.mapping.roleCapabilityMapping as role_capability_mapping
 	print("TEST_DEBUG -- result: ", result)
 	result == {
 		{
@@ -167,14 +167,14 @@ test_permissions_filtering if {
 	}
 }
 
-test_permissions_empty_input if {
+test_get_permissions_empty_input if {
 	inp = {}
-	result = permissions with input as inp
+	result = get_permissions with input as inp
 	print("TEST_DEBUG -- result: ", result)
 	result == set()
 }
 
-test_permissions_wrong_role if {
+test_get_permissions_wrong_role if {
 	inp = {
 		"actor": {
 			"id": "actor_id_1",
@@ -188,7 +188,7 @@ test_permissions_wrong_role if {
 		"contexts": {},
 		"extra_args": {},
 	}
-	result = permissions with input as inp
+	result = get_permissions with input as inp
 	print("TEST_DEBUG -- result: ", result)
 	result == {{
 		"target_id": "target_id_1",
