@@ -2,13 +2,17 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
+import os
 from typing import Callable, Optional
 
 import pytest
+import pytest_asyncio
 from guardian_authorization_api.adapters.policies import OPAAdapter
 from guardian_authorization_api.errors import PolicyUpstreamError
 from guardian_authorization_api.models.policies import (
+    CheckPermissionsQuery,
     GetPermissionsQuery,
+    Namespace,
     OPAAdapterSettings,
     Permission,
     PolicyObject,
@@ -90,9 +94,9 @@ class TestOPAAdapter:
                 "target_id": "target",
                 "permissions": [
                     {
-                        "app_name": "app",
-                        "namespace_name": "namespace",
-                        "name": "permission",
+                        "appName": "app",
+                        "namespace": "namespace",
+                        "permission": "permission",
                     }
                 ],
             },
@@ -103,9 +107,9 @@ class TestOPAAdapter:
                     "target_id": "",
                     "permissions": [
                         {
-                            "app_name": "app",
-                            "namespace_name": "namespace",
-                            "name": "permission2",
+                            "appName": "app",
+                            "namespace": "namespace",
+                            "permission": "permission2",
                         }
                     ],
                 }
@@ -158,3 +162,79 @@ class TestOPAAdapter:
             match="Upstream returned faulty data for get_permissions.",
         ):
             await port_instance.get_permissions(get_permissions_query())
+
+
+def opa_adapter_integrated():
+    return os.environ.get("OPA_ADAPTER__URL") is None
+
+
+@pytest.fixture()
+def opa_adapter_settings():
+    opa_url: str = os.environ.get("OPA_ADAPTER__URL", "http://localhost:8181")
+    return OPAAdapterSettings(opa_url=opa_url)
+
+
+@pytest_asyncio.fixture
+async def opa_adapter(
+    opa_adapter_settings: OPAAdapterSettings,
+) -> OPAAdapter:
+    adapter = OPAAdapter()
+
+    await adapter.configure(opa_adapter_settings)
+    return adapter
+
+
+@pytest.mark.skipif(
+    opa_adapter_integrated(),
+    reason="Cannot run integration tests for UDM adapter without config",
+)
+@pytest.mark.integration
+class TestOPAAdapterIntegration:
+    @pytest.mark.asyncio
+    async def test_get_permissions(
+        self,
+        opa_adapter: OPAAdapter,
+    ):
+        query = GetPermissionsQuery(
+            actor=PolicyObject(
+                id="actor", roles=["ucsschool:users:teacher"], attributes={}
+            ),
+            targets=[
+                Target(
+                    old_target=PolicyObject(id="target", roles=[], attributes={}),
+                    new_target=PolicyObject(id="target", roles=[], attributes={}),
+                )
+            ],
+            namespaces=[Namespace(app_name="ucsschool", name="users")],
+            contexts=None,
+            extra_args=None,
+            include_general_permissions=True,
+        )
+        result = await opa_adapter.get_permissions(query=query)
+        assert result
+        assert result.target_permissions
+        assert {
+            Permission(app_name="ucsschool", namespace_name="users", name="export"),
+            Permission(
+                app_name="ucsschool", namespace_name="users", name="read_first_name"
+            ),
+            Permission(
+                app_name="ucsschool", namespace_name="users", name="read_last_name"
+            ),
+            Permission(
+                app_name="ucsschool", namespace_name="users", name="write_password"
+            ),
+        }.issubset(result.target_permissions[0].permissions)
+        assert result.general_permissions
+        assert {
+            Permission(app_name="ucsschool", namespace_name="users", name="export"),
+            Permission(
+                app_name="ucsschool", namespace_name="users", name="read_first_name"
+            ),
+            Permission(
+                app_name="ucsschool", namespace_name="users", name="read_last_name"
+            ),
+            Permission(
+                app_name="ucsschool", namespace_name="users", name="write_password"
+            ),
+        }.issubset(result.general_permissions)
