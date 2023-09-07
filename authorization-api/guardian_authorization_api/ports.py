@@ -19,6 +19,9 @@ from .models.policies import (
 GetPermissionsAPIResponseObject = TypeVar("GetPermissionsAPIResponseObject")
 GetPermissionsAPIRequestObject = TypeVar("GetPermissionsAPIRequestObject")
 
+CheckPermissionsAPIResponseObject = TypeVar("CheckPermissionsAPIResponseObject")
+CheckPermissionsAPIRequestObject = TypeVar("CheckPermissionsAPIRequestObject")
+
 
 class PersistencePort(BasePort, ABC):
     """
@@ -105,3 +108,25 @@ class GetPermissionsAPIPort(
         self, permissions_result: GetPermissionsResult
     ) -> GetPermissionsAPIResponseObject:
         raise NotImplementedError  # pragma: no cover
+
+
+class CheckPermissionsAPIPort(
+    BasePort,
+    ABC,
+    Generic[CheckPermissionsAPIRequestObject, CheckPermissionsAPIResponseObject],
+):
+    @abstractmethod
+    async def transform_exception(self, exc: Exception) -> Exception:
+        ...  # pragma: no cover
+
+    @abstractmethod
+    async def to_policy_query(
+        self, api_request: CheckPermissionsAPIRequestObject
+    ) -> CheckPermissionsQuery:
+        ...  # pragma: no cover
+
+    @abstractmethod
+    async def to_api_response(
+        self, actor_id, check_result: CheckPermissionsResult
+    ) -> CheckPermissionsAPIResponseObject:
+        ...  # pragma: no cover

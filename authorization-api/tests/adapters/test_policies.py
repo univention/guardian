@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 import os
-from typing import Callable, Optional
+from typing import Callable
 
 import pytest
 import pytest_asyncio
@@ -21,20 +21,9 @@ from guardian_authorization_api.models.policies import (
     Target,
     TargetPermissions,
 )
-
-
-@pytest.fixture
-def get_policy_object() -> Callable:
-    def _get_policy_object(
-        identifier: str,
-        roles: Optional[list[str]] = None,
-        attributes: Optional[dict] = None,
-    ):
-        roles = [] if roles is None else roles
-        attributes = {} if attributes is None else attributes
-        return PolicyObject(id=identifier, roles=roles, attributes=attributes)
-
-    return _get_policy_object
+from guardian_authorization_api.models.policies import (
+    Role as PolicyRole,
+)
 
 
 @pytest.fixture
@@ -227,7 +216,8 @@ class TestOPAAdapter:
         opa_client_mock.check_policy = mocker.AsyncMock(side_effect=RuntimeError)
         port_instance._opa_client = opa_client_mock
         with pytest.raises(
-            PolicyUpstreamError, match="Upstream error while checking permissions."
+            PolicyUpstreamError,
+            match="Upstream error while checking targeted permissions.",
         ):
             await port_instance.check_permissions(check_permissions_query())
 
@@ -337,11 +327,9 @@ class TestOPAAdapterIntegration:
             actor=PolicyObject(
                 id="actor",
                 roles=[
-                    {
-                        "app_name": "ucsschool",
-                        "namespace_name": "users",
-                        "name": "teacher",
-                    }
+                    PolicyRole(
+                        app_name="ucsschool", namespace_name="users", name="teacher"
+                    )
                 ],
                 attributes={},
             ),

@@ -5,15 +5,22 @@
 from typing import Callable
 
 import pytest
-from guardian_authorization_api.adapters.api import FastAPIGetPermissionsAPIAdapter
-from guardian_authorization_api.models.policies import (
-    Context as PoliciesContext,
+from guardian_authorization_api.adapters.api import (
+    FastAPIAdapterUtils,
+    FastAPICheckPermissionsAPIAdapter,
+    FastAPIGetPermissionsAPIAdapter,
 )
 from guardian_authorization_api.models.policies import (
+    CheckPermissionsQuery,
+    CheckPermissionsResult,
+    CheckResult,
     GetPermissionsQuery,
     GetPermissionsResult,
     PolicyObject,
     TargetPermissions,
+)
+from guardian_authorization_api.models.policies import (
+    Context as PoliciesContext,
 )
 from guardian_authorization_api.models.policies import Namespace as PoliciesNamespace
 from guardian_authorization_api.models.policies import Permission as PoliciesPermission
@@ -24,6 +31,8 @@ from guardian_authorization_api.models.routes import (
     AppName,
     AuthzObject,
     AuthzObjectIdentifier,
+    AuthzPermissionsCheckPostRequest,
+    AuthzPermissionsCheckPostResponse,
     AuthzPermissionsPostRequest,
     AuthzPermissionsPostResponse,
     Context,
@@ -32,11 +41,14 @@ from guardian_authorization_api.models.routes import (
     NamespaceMinimal,
     NamespaceName,
     Permission,
+    PermissionCheckResult,
     PermissionName,
     PermissionResult,
     Role,
     Target,
 )
+
+from ..conftest import get_authz_permissions_check_request_dict
 
 
 @pytest.fixture
@@ -57,6 +69,117 @@ def get_route_object() -> Callable[[], AuthzObject]:
     return _get_route_object
 
 
+class TestFastAPICheckPermissionsAPIAdapter:
+    @pytest.fixture
+    def adapter_instance(self):
+        return FastAPICheckPermissionsAPIAdapter()
+
+    @pytest.mark.asyncio
+    async def test_to_api_response(self, adapter_instance):
+        permissions_check_result = CheckPermissionsResult(
+            [CheckResult(target_id="id1", actor_has_permissions=True)],
+            actor_has_general_permissions=True,
+        )
+
+        result = await adapter_instance.to_api_response(
+            AuthzObjectIdentifier("id2"), permissions_check_result
+        )
+
+        assert result == AuthzPermissionsCheckPostResponse(
+            actor_id=AuthzObjectIdentifier("id2"),
+            permissions_check_results=[
+                PermissionCheckResult(
+                    target_id=AuthzObjectIdentifier("id1"), actor_has_permissions=True
+                )
+            ],
+            actor_has_all_permissions=True,
+            actor_has_all_general_permissions=True,
+        )
+
+    @pytest.mark.asyncio
+    async def test_to_policy_query(self, adapter_instance):
+        data = get_authz_permissions_check_request_dict()
+        permissions_check_result = AuthzPermissionsCheckPostRequest.parse_obj(data)
+
+        query = await adapter_instance.to_policy_query(permissions_check_result)
+
+        assert query == CheckPermissionsQuery(
+            actor=PolicyObject(
+                id=data["actor"]["id"],
+                roles=[
+                    PoliciesRole(
+                        app_name=AppName(role["app_name"]),
+                        namespace_name=NamespaceName(role["namespace_name"]),
+                        name=AuthzObjectIdentifier(role["name"]),
+                    )
+                    for role in data["actor"]["roles"]
+                ],
+                attributes=data["actor"]["attributes"],
+            ),
+            targets=[
+                PoliciesTarget(
+                    old_target=PolicyObject(
+                        id=target["old_target"]["id"],
+                        roles=[
+                            PoliciesRole(
+                                app_name=AppName(role["app_name"]),
+                                namespace_name=NamespaceName(role["namespace_name"]),
+                                name=AuthzObjectIdentifier(role["name"]),
+                            )
+                            for role in target["old_target"]["roles"]
+                        ],
+                        attributes=target["old_target"]["attributes"],
+                    ),
+                    new_target=PolicyObject(
+                        id=target["new_target"]["id"],
+                        roles=[
+                            PoliciesRole(
+                                app_name=AppName(role["app_name"]),
+                                namespace_name=NamespaceName(role["namespace_name"]),
+                                name=AuthzObjectIdentifier(role["name"]),
+                            )
+                            for role in target["new_target"]["roles"]
+                        ],
+                        attributes=target["new_target"]["attributes"],
+                    ),
+                )
+                for target in data["targets"]
+            ],
+            namespaces=[
+                PoliciesNamespace(
+                    app_name=AppName(namespace["app_name"]),
+                    name=NamespaceName(namespace["name"]),
+                )
+                for namespace in data["namespaces"]
+            ],
+            target_permissions=[
+                PoliciesPermission(
+                    app_name=AppName(permission["app_name"]),
+                    namespace_name=NamespaceName(permission["namespace_name"]),
+                    name=PermissionName(permission["name"]),
+                )
+                for permission in data["permissions_to_check"]
+            ],
+            general_permissions=[
+                PoliciesPermission(
+                    app_name=AppName(permission["app_name"]),
+                    namespace_name=NamespaceName(permission["namespace_name"]),
+                    name=PermissionName(permission["name"]),
+                )
+                for permission in data["general_permissions_to_check"]
+            ],
+            contexts=[
+                PoliciesContext(
+                    app_name=AppName(context["app_name"]),
+                    namespace_name=NamespaceName(context["namespace_name"]),
+                    name=PermissionName(context["name"]),
+                )
+                for context in data["contexts"]
+            ],
+            extra_args=data["extra_request_data"],
+        )
+
+
 class TestFastAPIGetPermissionsAPIAdapter:
     @pytest.fixture
     def adapter_instance(self):
@@ -64,7 +187,7 @@ class TestFastAPIGetPermissionsAPIAdapter:
 
     def test_to_policy_object(self, get_route_object):
         obj = get_route_object()
-        result = FastAPIGetPermissionsAPIAdapter._to_policy_object(obj)
+        result = FastAPIAdapterUtils.authz_to_policy_object(obj)
         assert result == PolicyObject(
             id="id",
             roles=[
@@ -87,7 +210,7 @@ class TestFastAPIGetPermissionsAPIAdapter:
             attributes={"a": "b"},
         )
         target = Target(old_target=old, new_target=new)
-        result = FastAPIGetPermissionsAPIAdapter._to_policy_target(target)
+        result = FastAPIAdapterUtils.api_target_to_policy_target(target)
         if has_new:
             assert result.new_target == expected_policy_obj
         else:
@@ -101,7 +224,7 @@ class TestFastAPIGetPermissionsAPIAdapter:
         input_ns = NamespaceMinimal(
             app_name=AppName("app"), name=NamespaceName("namespace")
         )
-        result = FastAPIGetPermissionsAPIAdapter._to_policy_namespace(input_ns)
+        result = FastAPIAdapterUtils.api_namespace_to_policy_namespace(input_ns)
         assert result == PoliciesNamespace(app_name="app", name="namespace")
 
     def test_to_policy_context(self):
@@ -111,7 +234,7 @@ class TestFastAPIGetPermissionsAPIAdapter:
             name=ContextName("context"),
             display_name=ContextDisplayName("ctx"),
         )
-        result = FastAPIGetPermissionsAPIAdapter._to_policy_context(input_ctx)
+        result = FastAPIAdapterUtils.api_context_to_policy_context(input_ctx)
         assert result == PoliciesContext(
             app_name="app", namespace_name="namespace", name="context"
         )

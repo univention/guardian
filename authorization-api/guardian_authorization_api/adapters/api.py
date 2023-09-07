@@ -1,36 +1,64 @@
 # Copyright (C) 2023 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
+import typing
+from typing import Optional
 
-from ..models.policies import Context as PoliciesContext
+from fastapi import HTTPException
+
+from ..errors import ObjectNotFoundError, PersistenceError, PolicyUpstreamError
 from ..models.policies import (
+    CheckPermissionsQuery,
+    CheckPermissionsResult,
     GetPermissionsQuery,
     GetPermissionsResult,
     PolicyObject,
 )
+from ..models.policies import Context as PoliciesContext
 from ..models.policies import Namespace as PoliciesNamespace
+from ..models.policies import Permission as PoliciesPermission
 from ..models.policies import Role as PoliciesRole
 from ..models.policies import Target as PoliciesTarget
 from ..models.routes import (
     AppName,
     AuthzObject,
     AuthzObjectIdentifier,
+    AuthzPermissionsCheckPostRequest,
+    AuthzPermissionsCheckPostResponse,
     AuthzPermissionsPostRequest,
     AuthzPermissionsPostResponse,
     Context,
     NamespaceMinimal,
     NamespaceName,
     Permission,
+    PermissionCheckResult,
     PermissionName,
     PermissionResult,
     Target,
 )
-from ..ports import GetPermissionsAPIPort
+from ..ports import CheckPermissionsAPIPort, GetPermissionsAPIPort
 
 
-class FastAPIGetPermissionsAPIAdapter(GetPermissionsAPIPort):
+class TransformExceptionMixin:
+    logger: typing.Any
+
+    async def transform_exception(self, exc: Exception) -> Exception:
+        self.logger.exception(exc)
+        if isinstance(exc, PolicyUpstreamError):
+            return HTTPException(status_code=500, detail={"message": str(exc)})
+        elif isinstance(exc, PersistenceError):
+            return HTTPException(status_code=500, detail={"message": str(exc)})
+        elif isinstance(exc, ObjectNotFoundError):
+            return HTTPException(status_code=404, detail={"message": str(exc)})
+        else:
+            return HTTPException(
+                status_code=500, detail={"message": "Internal server error."}
+            )
+
+
+class FastAPIAdapterUtils:
     @staticmethod
-    def _to_policy_object(obj: AuthzObject) -> PolicyObject:
+    def authz_to_policy_object(obj: AuthzObject) -> PolicyObject:
         roles = [
             PoliciesRole(
                 app_name=role.app_name,
@@ -46,14 +74,14 @@ class FastAPIGetPermissionsAPIAdapter(GetPermissionsAPIPort):
         )
 
     @staticmethod
-    def _to_policy_target(target: Target) -> PoliciesTarget:
+    def api_target_to_policy_target(target: Target) -> PoliciesTarget:
         old_target = (
-            FastAPIGetPermissionsAPIAdapter._to_policy_object(target.old_target)
+            FastAPIAdapterUtils.authz_to_policy_object(target.old_target)
             if target.old_target
             else None
         )
         new_target = (
-            FastAPIGetPermissionsAPIAdapter._to_policy_object(target.new_target)
+            FastAPIAdapterUtils.authz_to_policy_object(target.new_target)
             if target.new_target
             else None
         )
@@ -63,40 +91,73 @@ class FastAPIGetPermissionsAPIAdapter(GetPermissionsAPIPort):
         )
 
     @staticmethod
-    def _to_policy_namespace(namespace: NamespaceMinimal) -> PoliciesNamespace:
+    def api_targets_to_policy_targets(
+        targets: Optional[list[Target]],
+    ) -> list[PoliciesTarget]:
+        return (
+            [
+                FastAPIAdapterUtils.api_target_to_policy_target(target)
+                for target in targets
+            ]
+            if targets
+            else []
+        )
+
+    @staticmethod
+    def api_contexts_to_policy_contexts(
+        contexts: Optional[list[Context]],
+    ) -> list[PoliciesContext]:
+        return (
+            [
+                FastAPIAdapterUtils.api_context_to_policy_context(context)
+                for context in contexts
+            ]
+            if contexts
+            else []
+        )
+
+    @staticmethod
+    def api_namespaces_to_policy_namespaces(
+        namespaces: Optional[list[NamespaceMinimal]],
+    ) -> list[PoliciesNamespace]:
+        return (
+            [
+                FastAPIAdapterUtils.api_namespace_to_policy_namespace(namespace)
+                for namespace in namespaces
+            ]
+            if namespaces
+            else []
+        )
+
+    @staticmethod
+    def api_namespace_to_policy_namespace(
+        namespace: NamespaceMinimal,
+    ) -> PoliciesNamespace:
         return PoliciesNamespace(app_name=namespace.app_name, name=namespace.name)
 
     @staticmethod
-    def _to_policy_context(context: Context) -> PoliciesContext:
+    def api_context_to_policy_context(context: Context) -> PoliciesContext:
         return PoliciesContext(
             app_name=context.app_name,
             namespace_name=context.namespace_name,
             name=context.name,
         )
 
+
+class FastAPIGetPermissionsAPIAdapter(GetPermissionsAPIPort):
     async def to_policy_query(
         self, api_request: AuthzPermissionsPostRequest
     ) -> GetPermissionsQuery:
-        targets = (
-            [self._to_policy_target(target) for target in api_request.targets]
-            if api_request.targets
-            else []
+        targets = FastAPIAdapterUtils.api_targets_to_policy_targets(api_request.targets)
+        namespaces = FastAPIAdapterUtils.api_namespaces_to_policy_namespaces(
+            api_request.namespaces
         )
-        namespaces = (
-            [
-                self._to_policy_namespace(namespace)
-                for namespace in api_request.namespaces
-            ]
-            if api_request.namespaces
-            else []
+        contexts = FastAPIAdapterUtils.api_contexts_to_policy_contexts(
+            api_request.contexts
         )
-        contexts = (
-            [self._to_policy_context(context) for context in api_request.contexts]
-            if api_request.contexts
-            else []
-        )
+
         return GetPermissionsQuery(
-            actor=self._to_policy_object(api_request.actor),
+            actor=FastAPIAdapterUtils.authz_to_policy_object(api_request.actor),
             targets=targets,
             namespaces=namespaces,
             contexts=contexts,
@@ -137,4 +198,81 @@ class FastAPIGetPermissionsAPIAdapter(GetPermissionsAPIPort):
             actor_id=AuthzObjectIdentifier(permissions_result.actor.id),
             target_permissions=target_permissions,
             general_permissions=general_permissions,
+        )
+
+
+class FastAPICheckPermissionsAPIAdapter(
+    TransformExceptionMixin, CheckPermissionsAPIPort
+):
+    async def to_api_response(
+        self, actor_id: AuthzObjectIdentifier, check_result: CheckPermissionsResult
+    ) -> AuthzPermissionsCheckPostResponse:
+        permissions_check_results = [
+            PermissionCheckResult(
+                target_id=AuthzObjectIdentifier(check_result.target_id),
+                actor_has_permissions=check_result.actor_has_permissions,
+            )
+            for check_result in check_result.target_permissions
+        ]
+        actor_has_all_permissions = (
+            all(
+                [
+                    check_result.actor_has_permissions
+                    for check_result in check_result.target_permissions
+                ]
+            )
+            if check_result.target_permissions
+            else False
+        )
+
+        return AuthzPermissionsCheckPostResponse(
+            actor_id=actor_id,
+            permissions_check_results=permissions_check_results,
+            actor_has_all_permissions=actor_has_all_permissions,
+            actor_has_all_general_permissions=check_result.actor_has_general_permissions,
+        )
+
+    async def to_policy_query(
+        self, api_request: AuthzPermissionsCheckPostRequest
+    ) -> CheckPermissionsQuery:
+        actor = PolicyObject(
+            id=api_request.actor.id,
+            roles=[
+                PoliciesRole(role.app_name, role.namespace_name, role.name)
+                for role in api_request.actor.roles
+            ],
+            attributes=api_request.actor.attributes,
+        )
+
+        targets = FastAPIAdapterUtils.api_targets_to_policy_targets(api_request.targets)
+        contexts = FastAPIAdapterUtils.api_contexts_to_policy_contexts(
+            api_request.contexts
+        )
+
+        namespaces = FastAPIAdapterUtils.api_namespaces_to_policy_namespaces(
+            api_request.namespaces
+        )
+
+        return CheckPermissionsQuery(
+            actor=actor,
+            contexts=contexts,
+            targets=targets,
+            namespaces=namespaces,
+            target_permissions=[
+                PoliciesPermission(
+                    app_name=permission.app_name,
+                    namespace_name=permission.namespace_name,
+                    name=permission.name,
+                )
+                for permission in api_request.permissions_to_check
+            ],
+            general_permissions=[
+                PoliciesPermission(
+                    app_name=permission.app_name,
+                    namespace_name=permission.namespace_name,
+                    name=permission.name,
+                )
+                for permission in api_request.general_permissions_to_check
+            ],
+            extra_args=api_request.extra_request_data,
         )

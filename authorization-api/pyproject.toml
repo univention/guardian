@@ -37,6 +37,8 @@ pytest = "^7.3.1"
 pytest-cov = "^4.1.0"
 pytest-mock = "^3.10.0"
 pytest-asyncio = "^0.21.0"
+Faker = "^19.6.1"
+httpx = "^0.24.1"
 
 
 [[tool.poetry.source]]
@@ -57,7 +59,8 @@ priority = "primary"
 
 [tool.pytest.ini_options]
 markers = [
-    "integration: marks test as requiring services outside of the guardian"
+    "integration: marks test as requiring services outside of the guardian",
+    "e2e: marked test is relying on services outside the authzorization-api (e.g.: opa)",
 ]
 
 [build-system]

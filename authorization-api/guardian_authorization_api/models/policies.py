@@ -107,7 +107,7 @@ class CheckPermissionsQuery:
     actor: PolicyObject
     targets: Optional[list[Target]] = None
     namespaces: Optional[list[Namespace]] = None
-    target_permissions: Optional[set[Permission]] = None
-    general_permissions: Optional[set[Permission]] = None
-    contexts: Optional[set[Context]] = None
+    target_permissions: Optional[list[Permission]] = None
+    general_permissions: Optional[list[Permission]] = None
+    contexts: Optional[list[Context]] = None
     extra_args: Optional[dict[str, Any]] = None

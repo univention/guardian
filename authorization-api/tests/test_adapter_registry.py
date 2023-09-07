@@ -9,8 +9,12 @@ from guardian_authorization_api.adapter_registry import (
     AdapterSelection,
     configure_registry,
 )
-from guardian_authorization_api.adapters.api import FastAPIGetPermissionsAPIAdapter
+from guardian_authorization_api.adapters.api import (
+    FastAPICheckPermissionsAPIAdapter,
+    FastAPIGetPermissionsAPIAdapter,
+)
 from guardian_authorization_api.ports import (
+    CheckPermissionsAPIPort,
     GetPermissionsAPIPort,
     PersistencePort,
     PolicyPort,
@@ -66,12 +70,14 @@ def test_configure_registry(mocker, apply_adapter_selection_env):
         mocker.call(PolicyPort, "POLICY_PORT"),
         mocker.call(AsyncAdapterSettingsProvider, "SETTINGS_PORT"),
         mocker.call(GetPermissionsAPIPort, FastAPIGetPermissionsAPIAdapter),
+        mocker.call(CheckPermissionsAPIPort, FastAPICheckPermissionsAPIAdapter),
     ]
     assert registry_mock.register_port.call_args_list == [
         mocker.call(SettingsPort),
         mocker.call(PersistencePort),
         mocker.call(PolicyPort),
         mocker.call(GetPermissionsAPIPort),
+        mocker.call(CheckPermissionsAPIPort),
     ]
     assert load_from_ep_mock.call_args_list == [
         mocker.call(
