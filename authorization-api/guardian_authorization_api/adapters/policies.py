@@ -2,7 +2,9 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-from typing import Any, Dict, Optional, Type
+from collections import defaultdict
+from dataclasses import asdict
+from typing import Any, Optional, Type
 
 from opa_client.client import OPAClient
 from port_loader import AsyncConfiguredAdapterMixin
@@ -11,8 +13,10 @@ from guardian_authorization_api.errors import PolicyUpstreamError
 from guardian_authorization_api.models.policies import (
     CheckPermissionsQuery,
     CheckPermissionsResult,
+    CheckResult,
     GetPermissionsQuery,
     GetPermissionsResult,
+    Namespace,
     OPAAdapterSettings,
     Permission,
     Policy,
@@ -30,6 +34,7 @@ EMPTY_TARGET = Target(
 
 class OPAAdapter(PolicyPort, AsyncConfiguredAdapterMixin):
     OPA_GET_PERMISSIONS_POLICY = "/v1/data/univention/base/get_permissions"
+    OPA_CHECK_PERMISSIONS_POLICY = "/v1/data/univention/base/check_permissions"
 
     class Config:
         is_cached = True
@@ -52,12 +57,18 @@ class OPAAdapter(PolicyPort, AsyncConfiguredAdapterMixin):
             self._opa_client = OPAClient(self._opa_url)
         return self._opa_client
 
+    def _process_namespaces(
+        self, query_namespaces: Optional[list[Namespace]]
+    ) -> dict[str, list[str]]:
+        namespaces: dict[str, list[str]] = defaultdict(list)
+        _query_namespaces: list[Namespace] = query_namespaces or []
+        for namespace in _query_namespaces:
+            namespaces[namespace.app_name].append(namespace.name)
+        return namespaces
+
     async def check_permissions(
         self, query: CheckPermissionsQuery
     ) -> CheckPermissionsResult:
-        raise NotImplementedError  # pragma: no cover
-
-    async def get_permissions(self, query: GetPermissionsQuery) -> GetPermissionsResult:
         targets = (
             []
             if query.targets is None
@@ -66,23 +77,94 @@ class OPAAdapter(PolicyPort, AsyncConfiguredAdapterMixin):
                 for target in query.targets
             ]
         )
-        namespaces: Dict[str, list[str]] = {}
-        if query.namespaces:
-            for namespace in query.namespaces:
-                if namespace.app_name not in namespaces:
-                    namespaces[namespace.app_name] = []
-                namespaces[namespace.app_name].append(namespace.name)
+        targets.append({"old": EMPTY_TARGET.old_target, "new": EMPTY_TARGET.new_target})
+        namespaces: dict[str, list[str]] = self._process_namespaces(
+            query_namespaces=query.namespaces
+        )
         contexts = [] if query.contexts is None else query.contexts
         extra_args = {} if query.extra_args is None else query.extra_args
+        try:
+            opa_response = await self.opa_client.check_policy(
+                self.OPA_CHECK_PERMISSIONS_POLICY,
+                data={
+                    "actor": query.actor,
+                    "targets": targets,
+                    "namespaces": namespaces,
+                    "contexts": contexts,
+                    "extra_args": extra_args,
+                },
+            )
+        except Exception as exc:
+            raise PolicyUpstreamError(
+                "Upstream error while checking permissions."
+            ) from exc
+        target_permissions = []
+        actor_has_general_permissions = False
+        try:
+            for result in opa_response:
+                if result["target_id"] == "":
+                    actor_has_general_permissions = result["result"]
+                    continue
+                target_permissions.append(
+                    CheckResult(
+                        target_id=result["target_id"],
+                        actor_has_permissions=result["result"],
+                    )
+                )
+            return CheckPermissionsResult(
+                target_permissions=target_permissions,
+                actor_has_general_permissions=actor_has_general_permissions,
+            )
+        except Exception as exc:
+            raise PolicyUpstreamError(
+                "Upstream returned faulty data for check_permissions."
+            ) from exc
+
+    def _format_roles(self, roles: list[dict[str, str]]) -> list[str]:
+        return [
+            f"{role['app_name']}:{role['namespace_name']}:{role['name']}"
+            for role in roles
+        ]
+
+    async def get_permissions(self, query: GetPermissionsQuery) -> GetPermissionsResult:
+        targets: list[dict[str, dict | None]] = (
+            []
+            if query.targets is None
+            else [
+                {
+                    "old": asdict(target.old_target) if target.old_target else None,
+                    "new": asdict(target.new_target) if target.new_target else None,
+                }
+                for target in query.targets
+            ]
+        )
+        namespaces: dict[str, list[str]] = self._process_namespaces(
+            query_namespaces=query.namespaces
+        )
+        contexts = [] if query.contexts is None else query.contexts
+        extra_args = {} if query.extra_args is None else query.extra_args
+        actor = asdict(query.actor)
+        actor["roles"] = self._format_roles(actor["roles"])
+        for target in targets:
+            for key in ["old", "new"]:
+                if target[key]:
+                    target[key]["roles"] = self._format_roles(target[key]["roles"])  # type: ignore
         if query.include_general_permissions:
             targets = list(targets) + [
-                {"old": EMPTY_TARGET.old_target, "new": EMPTY_TARGET.new_target}
+                {
+                    "old": asdict(EMPTY_TARGET.old_target)
+                    if EMPTY_TARGET.old_target
+                    else None,
+                    "new": asdict(EMPTY_TARGET.new_target)
+                    if EMPTY_TARGET.new_target
+                    else None,
+                }
             ]
         try:
             opa_response = await self.opa_client.check_policy(
                 self.OPA_GET_PERMISSIONS_POLICY,
                 data=dict(
-                    actor=query.actor,
+                    actor=actor,
                     targets=targets,
                     namespaces=namespaces,
                     contexts=contexts,
@@ -96,15 +178,15 @@ class OPAAdapter(PolicyPort, AsyncConfiguredAdapterMixin):
         target_permissions = []
         general_permissions = None
         try:
-            for result in opa_response:
-                target_id = result["target_id"]
+            for response in opa_response:
+                target_id = response["target_id"]
                 permissions = [
                     Permission(
                         app_name=perm["appName"],
                         namespace_name=perm["namespace"],
                         name=perm["permission"],
                     )
-                    for perm in result.get("permissions")
+                    for perm in response.get("permissions")
                 ]
                 if target_id == "":
                     general_permissions = permissions
