@@ -11,7 +11,7 @@ from starlette import status
 
 from ..constants import COMPLETE_URL
 from ..errors import ObjectExistsError, ObjectNotFoundError, ParentNotFoundError
-from ..models.base import PersistenceGetManyResult
+from ..models.base import PaginationRequest, PersistenceGetManyResult
 from ..models.context import (
     Context,
     ContextCreateQuery,
@@ -19,7 +19,7 @@ from ..models.context import (
     ContextGetQuery,
     ContextsGetQuery,
 )
-from ..models.routers.base import GetByAppRequest
+from ..models.routers.base import GetByAppRequest, PaginationInfo
 from ..models.routers.context import (
     Context as ResponseContext,
 )
@@ -41,7 +41,6 @@ from ..ports.context import (
     ContextAPIEditRequestObject,
     ContextAPIPort,
     ContextPersistencePort,
-    ContextsAPIGetResponseObject,
 )
 from .sql_persistence import SQLAlchemyMixin
 
@@ -87,7 +86,12 @@ class FastAPIContextAPIAdapter(
     async def to_contexts_get(
         self, api_request: ContextsGetRequest
     ) -> ContextsGetQuery:
-        raise NotImplementedError()
+        return ContextsGetQuery(
+            pagination=PaginationRequest(
+                query_offset=api_request.offset,
+                query_limit=api_request.limit,
+            )
+        )
 
     async def to_contexts_by_appname_get(
         self, api_request: GetByAppRequest
@@ -163,8 +167,24 @@ class FastAPIContextAPIAdapter(
         query_offset: int,
         query_limit: Optional[int],
         total_count: int,
-    ) -> ContextsAPIGetResponseObject:
-        raise NotImplementedError()
+    ) -> ContextMultipleResponse:
+        return ContextMultipleResponse(
+            pagination=PaginationInfo(
+                offset=query_offset,
+                limit=query_limit if query_limit else total_count,  # todo?
+                total_count=total_count,
+            ),
+            contexts=[
+                ResponseContext(
+                    name=context.name,
+                    display_name=context.display_name,
+                    app_name=context.app_name,
+                    namespace_name=context.namespace_name,
+                    resource_url=f"http://localhost:8001/guardian/management/contexts/{context.app_name}/{context.namespace_name}/{context.name}",
+                )
+                for context in contexts
+            ],
+        )
 
 
 class SQLContextPersistenceAdapter(

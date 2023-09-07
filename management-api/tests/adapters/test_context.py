@@ -25,6 +25,7 @@ from guardian_management_api.models.context import (
     ContextGetQuery,
     ContextsGetQuery,
 )
+from guardian_management_api.models.routers.base import PaginationInfo
 from guardian_management_api.models.routers.context import (
     Context as ResponseContext,
 )
@@ -32,6 +33,8 @@ from guardian_management_api.models.routers.context import (
     ContextCreateData,
     ContextCreateRequest,
     ContextGetRequest,
+    ContextMultipleResponse,
+    ContextsGetRequest,
     ContextSingleResponse,
 )
 from guardian_management_api.models.sql_persistence import (
@@ -114,6 +117,47 @@ class TestFastAPIContextAdapter:
                 namespace_name=context.namespace_name,
                 resource_url=f"{COMPLETE_URL}/contexts/{context.app_name}/{context.namespace_name}/{context.name}",
             )
+        )
+
+    @pytest.mark.asyncio
+    async def test_to_contexts_get(self, adapter):
+        api_request = ContextsGetRequest(offset=0, limit=1)
+        result = await adapter.to_contexts_get(api_request)
+        assert result == ContextsGetQuery(
+            pagination=PaginationRequest(query_offset=0, query_limit=1)
+        )
+
+    @pytest.mark.asyncio
+    async def test_to_api_contexts_get_response(self, adapter):
+        contexts = [
+            Context(
+                name=f"name-{i}",
+                display_name="display_name",
+                app_name="app-name",
+                namespace_name="namespace-name",
+            )
+            for i in range(3)
+        ]
+        result = await adapter.to_api_contexts_get_response(
+            list(contexts), query_offset=0, query_limit=3, total_count=len(contexts)
+        )
+        expected_contexts = [
+            ResponseContext(
+                name=context.name,
+                app_name=context.app_name,
+                namespace_name=context.namespace_name,
+                display_name=context.display_name,
+                resource_url=f"{COMPLETE_URL}/contexts/{context.app_name}/{context.namespace_name}/{context.name}",
+            )
+            for context in contexts
+        ]
+        assert result == ContextMultipleResponse(
+            contexts=list(expected_contexts),
+            pagination=PaginationInfo(
+                offset=0,
+                limit=3,
+                total_count=len(contexts),
+            ),
         )
 
 
