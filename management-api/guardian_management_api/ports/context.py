@@ -13,8 +13,7 @@ from ..models.context import (
     ContextGetQuery,
     ContextsGetQuery,
 )
-from ..models.routers.base import GetByAppRequest
-from ..models.routers.context import ContextEditRequest, ContextsGetRequest
+from ..models.routers.context import ContextEditRequest
 from .base import BasePersistencePort
 
 ContextAPICreateRequestObject = TypeVar("ContextAPICreateRequestObject")
@@ -28,9 +27,6 @@ ContextsAPIGetResponseObject = TypeVar("ContextsAPIGetResponseObject")
 
 ContextAPIEditRequestObject = TypeVar("ContextAPIEditRequestObject")
 ContextAPIEditResponseObject = TypeVar("ContextAPIEditResponseObject")
-
-ContextsByAppnameAPIGetRequestObject = TypeVar("ContextsByAppnameAPIGetRequestObject")
-ContextsByAppnameAPIGetResponseObject = TypeVar("ContextsByAppnameAPIGetResponseObject")
 
 ###############################################################################
 #                                                                             #
@@ -51,8 +47,6 @@ class ContextAPIPort(
         ContextsAPIGetResponseObject,
         ContextAPIEditRequestObject,
         ContextAPIEditResponseObject,
-        ContextsByAppnameAPIGetRequestObject,
-        ContextsByAppnameAPIGetResponseObject,
     ],
 ):
     @abstractmethod
@@ -97,7 +91,7 @@ class ContextAPIPort(
 
     @abstractmethod
     async def to_contexts_get(
-        self, api_request: ContextsGetRequest
+        self, api_request: ContextsAPIGetResponseObject
     ) -> ContextsGetQuery:
         raise NotImplementedError  # pragma: no cover
 
@@ -109,12 +103,6 @@ class ContextAPIPort(
         query_limit: Optional[int],
         total_count: int,
     ) -> ContextsAPIGetResponseObject:
-        raise NotImplementedError  # pragma: no cover
-
-    @abstractmethod
-    async def to_contexts_by_appname_get(
-        self, api_request: GetByAppRequest
-    ) -> ContextsGetQuery:
         raise NotImplementedError  # pragma: no cover
 
 

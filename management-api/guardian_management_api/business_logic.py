@@ -31,7 +31,6 @@ from .models.routers.context import (
     ContextEditRequest,
     ContextGetRequest,
     ContextMultipleResponse,
-    ContextsGetRequest,
     ContextSingleResponse,
 )
 from .ports.app import (
@@ -50,7 +49,8 @@ from .ports.condition import (
     ConditionAPIPort,
     ConditionPersistencePort,
 )
-from .ports.context import ContextAPIPort, ContextPersistencePort
+from .ports.context import ContextAPIPort, ContextPersistencePort, \
+    ContextsAPIGetRequestObject
 from .ports.namespace import NamespacePersistencePort
 from .ports.permission import (
     PermissionAPICreateRequestObject,
@@ -373,7 +373,7 @@ async def get_context(
 
 
 async def get_contexts(
-    api_request: ContextsGetRequest,
+    api_request: ContextsAPIGetRequestObject,
     api_port: ContextAPIPort,
     persistence_port: ContextPersistencePort,
 ) -> ContextMultipleResponse:
