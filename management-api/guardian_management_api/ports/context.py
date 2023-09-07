@@ -91,7 +91,7 @@ class ContextAPIPort(
 
     @abstractmethod
     async def to_contexts_get(
-        self, api_request: ContextsAPIGetResponseObject
+        self, api_request: ContextsAPIGetRequestObject
     ) -> ContextsGetQuery:
         raise NotImplementedError  # pragma: no cover
 

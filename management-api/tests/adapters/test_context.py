@@ -26,7 +26,12 @@ from guardian_management_api.models.context import (
     ContextGetQuery,
     ContextsGetQuery,
 )
-from guardian_management_api.models.routers.base import GetByAppRequest, PaginationInfo
+from guardian_management_api.models.routers.base import (
+    GetAllRequest,
+    GetByAppRequest,
+    GetByNamespaceRequest,
+    PaginationInfo,
+)
 from guardian_management_api.models.routers.context import (
     Context as ResponseContext,
 )
@@ -37,7 +42,6 @@ from guardian_management_api.models.routers.context import (
     ContextEditRequest,
     ContextGetRequest,
     ContextMultipleResponse,
-    ContextsGetRequest,
     ContextSingleResponse,
 )
 from guardian_management_api.models.sql_persistence import (
@@ -205,6 +209,18 @@ class TestFastAPIContextAdapter:
         result = await adapter.to_contexts_get(api_request)
         assert result == ContextsGetQuery(
             pagination=PaginationRequest(query_offset=0, query_limit=1),
+            app_name="test-app",
+        )
+
+    @pytest.mark.asyncio
+    async def test_to_contexts_by_namespace_get(self, adapter):
+        api_request = GetByNamespaceRequest(
+            offset=0, limit=1, namespace_name="test-namespace", app_name="test-app"
+        )
+        result = await adapter.to_contexts_get(api_request)
+        assert result == ContextsGetQuery(
+            pagination=PaginationRequest(query_offset=0, query_limit=1),
+            namespace_name="test-namespace",
             app_name="test-app",
         )
 
