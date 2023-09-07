@@ -88,7 +88,10 @@ check_permissions contains result if {
 		input.contexts,
 		input.extra_args,
 	)
-	has_all_permissions := object.subset(permissions, {permission | some permission in input.permissions})
+	has_all_permissions := all([
+		is_null(input.permissions) == false,
+		object.subset(permissions, {permission | some permission in input.permissions}),
+	])
 
 	result := {
 		"target_id": target_object.old.id,

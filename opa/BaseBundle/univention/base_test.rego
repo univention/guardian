@@ -255,6 +255,23 @@ check_permissions_parametrize := [
 			"namespaces": {"ucsschool": {"users", "groups"}},
 			"contexts": {},
 			"extra_args": {},
+			"permissions": null,
+		},
+		"result": {{"target_id": "target_id_1", "result": false}},
+	},
+	{
+		"input": {
+			"actor": {
+				"id": "actor_id_1",
+				"roles": {"ucsschool:users:teacher"},
+			},
+			"targets": [{
+				"old": {"id": "target_id_1"},
+				"new": {"id": "target_id_1"},
+			}],
+			"namespaces": {"ucsschool": {"users", "groups"}},
+			"contexts": {},
+			"extra_args": {},
 			"permissions": {{"appName": "ucsschool", "namespace": "users", "permission": "read_first_name"}},
 		},
 		"result": {{"target_id": "target_id_1", "result": true}},

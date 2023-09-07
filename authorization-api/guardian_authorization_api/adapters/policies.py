@@ -20,15 +20,15 @@ from guardian_authorization_api.models.policies import (
     OPAAdapterSettings,
     Permission,
     Policy,
-    PolicyObject,
-    Target,
     TargetPermissions,
 )
 from guardian_authorization_api.ports import PolicyPort
 
-EMPTY_TARGET = Target(
-    old_target=PolicyObject(id="", attributes={}, roles=[]),
-    new_target=PolicyObject(id="", attributes={}, roles=[]),
+from ..models.opa import OPAPermission, OPAPolicyObject, OPATarget
+
+EMPTY_TARGET = OPATarget(
+    old_target=OPAPolicyObject(id="", attributes={}, roles=[]),
+    new_target=OPAPolicyObject(id="", attributes={}, roles=[]),
 )
 
 
@@ -73,42 +73,98 @@ class OPAAdapter(PolicyPort, AsyncConfiguredAdapterMixin):
             []
             if query.targets is None
             else [
-                {"old": target.old_target, "new": target.new_target}
+                {
+                    "old": OPAPolicyObject.from_policy_object(target.old_target)
+                    if target.old_target
+                    else None,
+                    "new": OPAPolicyObject.from_policy_object(target.new_target)
+                    if target.new_target
+                    else None,
+                }
                 for target in query.targets
             ]
         )
-        targets.append({"old": EMPTY_TARGET.old_target, "new": EMPTY_TARGET.new_target})
         namespaces: dict[str, list[str]] = self._process_namespaces(
             query_namespaces=query.namespaces
         )
         contexts = [] if query.contexts is None else query.contexts
         extra_args = {} if query.extra_args is None else query.extra_args
-        try:
-            opa_response = await self.opa_client.check_policy(
-                self.OPA_CHECK_PERMISSIONS_POLICY,
-                data={
-                    "actor": query.actor,
+        actor = OPAPolicyObject.from_policy_object(query.actor)
+
+        # targeted permissions
+        opa_response_targeted_permissions = []
+        if query.target_permissions:
+            targeted_permissions = [
+                OPAPermission(
+                    appName=permission.app_name,
+                    namespace=permission.namespace_name,
+                    permission=permission.name,
+                )
+                for permission in query.target_permissions
+            ]
+            try:
+                data = {
+                    "actor": actor,
                     "targets": targets,
+                    "permissions": targeted_permissions,
                     "namespaces": namespaces,
                     "contexts": contexts,
                     "extra_args": extra_args,
-                },
+                }
+                opa_response_targeted_permissions = await self.opa_client.check_policy(
+                    self.OPA_CHECK_PERMISSIONS_POLICY, data=data
+                )
+            except Exception as exc:
+                raise PolicyUpstreamError(
+                    "Upstream error while checking targeted permissions."
+                ) from exc
+
+        # general permissions
+        opa_response_general_permissions = []
+        if query.general_permissions:
+            targets.append(
+                {"old": EMPTY_TARGET.old_target, "new": EMPTY_TARGET.new_target}
             )
-        except Exception as exc:
-            raise PolicyUpstreamError(
-                "Upstream error while checking permissions."
-            ) from exc
+            general_permissions = [
+                OPAPermission(
+                    appName=permission.app_name,
+                    namespace=permission.namespace_name,
+                    permission=permission.name,
+                )
+                for permission in query.general_permissions
+            ]
+            try:
+                data = {
+                    "actor": actor,
+                    "targets": targets,
+                    "permissions": general_permissions,
+                    "namespaces": namespaces,
+                    "contexts": contexts,
+                    "extra_args": extra_args,
+                }
+                opa_response_general_permissions = await self.opa_client.check_policy(
+                    self.OPA_CHECK_PERMISSIONS_POLICY, data=data
+                )
+            except Exception as exc:
+                raise PolicyUpstreamError(
+                    "Upstream error while checking general permissions."
+                ) from exc
+
         target_permissions = []
         actor_has_general_permissions = False
         try:
-            for result in opa_response:
-                if result["target_id"] == "":
-                    actor_has_general_permissions = result["result"]
+            for response in opa_response_general_permissions:
+                if response["target_id"] == "":
+                    actor_has_general_permissions = response["result"]
+                    continue
+
+            for response in opa_response_targeted_permissions:
+                if response["target_id"] == "":
                     continue
                 target_permissions.append(
                     CheckResult(
-                        target_id=result["target_id"],
-                        actor_has_permissions=result["result"],
+                        target_id=response["target_id"],
+                        actor_has_permissions=response["result"],
                     )
                 )
             return CheckPermissionsResult(

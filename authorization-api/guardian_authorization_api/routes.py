@@ -6,7 +6,10 @@ from fastapi import APIRouter, Depends
 from guardian_lib.adapter_registry import port_dep
 
 from . import business_logic
-from .adapters.api import FastAPIGetPermissionsAPIAdapter, GetPermissionsAPIPort
+from .adapters.api import (
+    FastAPICheckPermissionsAPIAdapter,
+    FastAPIGetPermissionsAPIAdapter,
+)
 from .models.routes import (
     AuthzCustomEndpointPostRequest,
     AuthzCustomEndpointPostResponse,
@@ -17,7 +20,7 @@ from .models.routes import (
     AuthzPermissionsPostRequest,
     AuthzPermissionsPostResponse,
 )
-from .ports import PolicyPort
+from .ports import CheckPermissionsAPIPort, GetPermissionsAPIPort, PolicyPort
 
 router = APIRouter()
 
@@ -59,18 +62,28 @@ async def get_permissions_with_lookup(  # pragma: no-cover
 @router.post("/permissions/check")
 async def check_permissions(  # pragma: no-cover
     permissions_check_request: AuthzPermissionsCheckPostRequest,
+    check_permission_api: CheckPermissionsAPIPort = Depends(
+        port_dep(CheckPermissionsAPIPort, FastAPICheckPermissionsAPIAdapter)
+    ),
+    policy_port: PolicyPort = Depends(port_dep(PolicyPort)),
 ) -> AuthzPermissionsCheckPostResponse:
     """
-    Retrieve a yes/no answer to whether an actor has all specified permissions.
-    May optionally include targets.
+    Retrieve a yes/no answer to whether an actor has the specified permissions.
+
+    Permissions passed via targeted_permissions_to_check are tested with respect
+    to the provided targets.
+
+    For permissions passed via general_permissions_to_check the targets are ignored.
+
     Actor and target objects must be supplied in their entirety.
+
+    With actor_has_all_general_permissions and actor_has_all_targeted_permissions the response
+    includes a separate answer for both permission types.
     """
-    # Example only; not implemented
-    # Remove the pragma: no-cover when this is implemented
-    return AuthzPermissionsCheckPostResponse(
-        actor_id=permissions_check_request.actor.id,
-        permissions_check_results=[],
-        actor_has_all_permissions=False,
+    return await business_logic.check_permissions(
+        permissions_check_request=permissions_check_request,
+        check_permissions_api_port=check_permission_api,
+        policy_port=policy_port,
     )
 
 
@@ -88,7 +101,8 @@ async def check_permissions_with_lookup(  # pragma: no-cover
     return AuthzPermissionsCheckPostResponse(
         actor_id=permissions_check_with_lookup_request.actor.id,
         permissions_check_results=[],
-        actor_has_all_permissions=False,
+        actor_has_all_targeted_permissions=False,
+        actor_has_all_general_permissions=False,
     )
 
 

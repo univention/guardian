@@ -104,7 +104,6 @@ class Context(GuardianBaseModel):
     app_name: AppName
     namespace_name: NamespaceName
     name: ContextName
-    display_name: ContextDisplayName
 
 
 class AuthzPermissionsPostRequest(GuardianBaseModel):
@@ -130,7 +129,8 @@ class AuthzPermissionsCheckPostRequest(GuardianBaseModel):
     actor: Actor
     targets: Optional[list[Target]]
     contexts: Optional[list[Context]]
-    permissions_to_check: list[Permission]
+    targeted_permissions_to_check: list[Permission]
+    general_permissions_to_check: list[Permission]
     extra_request_data: dict[str, Any]
 
 
@@ -139,7 +139,8 @@ class AuthzPermissionsCheckLookupPostRequest(GuardianBaseModel):
     actor: ActorLookup
     targets: Optional[list[TargetLookup]]
     contexts: Optional[list[Context]]
-    permissions_to_check: list[Permission]
+    targeted_permissions_to_check: list[Permission]
+    general_permissions_to_check: list[Permission]
     extra_request_data: dict[str, Any]
 
 
@@ -176,7 +177,8 @@ class AuthzPermissionsPostResponse(GuardianBaseModel):
 class AuthzPermissionsCheckPostResponse(GuardianBaseModel):
     actor_id: AuthzObjectIdentifier
     permissions_check_results: list[PermissionCheckResult]
-    actor_has_all_permissions: bool
+    actor_has_all_general_permissions: bool
+    actor_has_all_targeted_permissions: bool
 
 
 class AuthzCustomEndpointPostResponse(GuardianBaseModel):
