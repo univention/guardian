@@ -233,7 +233,8 @@ class SQLAlchemyMixin:
                 )
             else:
                 raise exc  # pragma: no cover
-        return await self._get_single_object(type(obj), name=obj.name)  # type: ignore[attr-defined]
+        await session.refresh(obj)
+        return obj
 
     @error_guard
     async def _update_object(self, orm_obj: ORMObj, /, **new_values) -> ORMObj:
