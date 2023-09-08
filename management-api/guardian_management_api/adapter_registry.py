@@ -25,6 +25,7 @@ from guardian_management_api.ports.app import (
 from .adapters.bundle_server import BundleServerAdapter
 from .adapters.condition import FastAPIConditionAPIAdapter
 from .ports.bundle_server import BundleServerPort
+from .ports.capability import CapabilityPersistencePort
 from .ports.condition import ConditionAPIPort, ConditionPersistencePort
 from .ports.context import ContextAPIPort, ContextPersistencePort
 from .ports.namespace import NamespaceAPIPort, NamespacePersistencePort
@@ -42,6 +43,7 @@ PORT_CLASSES = (
     NamespacePersistencePort,
     PermissionPersistencePort,
     RolePersistencePort,
+    CapabilityPersistencePort,
 )
 
 
@@ -82,6 +84,11 @@ class AdapterSelection(BaseSettings):
         ...,
         alias="RolePersistencePort",
         env="GUARDIAN__MANAGEMENT__ADAPTER__ROLE_PERSISTENCE_PORT",
+    )
+    capability_persistence_port: str = Field(
+        ...,
+        alias="CapabilityPersistencePort",
+        env="GUARDIAN__MANAGEMENT__ADAPTER__CAPABILITY_PERSISTENCE_PORT",
     )
 
 

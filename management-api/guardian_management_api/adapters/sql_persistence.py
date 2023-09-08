@@ -203,7 +203,7 @@ class SQLAlchemyMixin:
                 count_stmt, orm_cls, app_name, namespace_name
             )
             return list(
-                (await session.scalars(select_stmt)).all()
+                (await session.scalars(select_stmt)).unique().all()
             ), await session.scalar(count_stmt)
 
     @error_guard
@@ -244,3 +244,10 @@ class SQLAlchemyMixin:
             async with session.begin():
                 session.add(orm_obj)
         return orm_obj
+
+    @error_guard
+    @session_wrapper
+    async def _delete_obj(self, obj: ORMObj, session: AsyncSession) -> None:
+        async with session.begin():
+            await session.delete(obj)
+        return None

@@ -8,7 +8,7 @@ from typing import List, Optional
 from .base import PaginatedAPIResponse, PaginationRequest, ResponseObject
 
 
-@dataclass(frozen=True)
+@dataclass
 class Role:
     app_name: str
     namespace_name: str
