@@ -127,6 +127,7 @@ I'm using a persistance adapter as an example:
 ```python
 from guardian_management_api.ports.condition import ConditionPersistencePort
 from guardian_management_api.models.condition import Condition
+from guardian_management_api.adapter_registry import configure_registry, initialize_adapters
 from guardian_lib.adapter_registry import ADAPTER_REGISTRY
 from guardian_lib.adapter_registry import port_dep
 
