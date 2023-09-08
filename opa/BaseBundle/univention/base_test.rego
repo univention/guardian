@@ -34,6 +34,35 @@ test_get_permissions_happy_case if {
 	}}
 }
 
+test_get_permissions_null_namespaces if {
+	inp = {
+		"actor": {
+			"id": "actor_id_1",
+			"roles": {"ucsschool:users:teacher"},
+		},
+		"targets": [{
+			"old": {"id": "target_id_1"},
+			"new": {"id": "target_id_1"},
+		}],
+		"namespaces": null,
+		"contexts": null,
+		"extra_args": {},
+	}
+	result = get_permissions with input as inp
+	print("TEST_DEBUG -- result: ", result)
+	result == {{
+		"target_id": "target_id_1",
+		"permissions": {
+			{"appName": "OX", "namespace": "mail", "permission": "edit-spam-filter"},
+			{"appName": "OX", "namespace": "mail", "permission": "export"},
+			{"appName": "ucsschool", "namespace": "users", "permission": "export"},
+			{"appName": "ucsschool", "namespace": "users", "permission": "read_first_name"},
+			{"appName": "ucsschool", "namespace": "users", "permission": "read_last_name"},
+			{"appName": "ucsschool", "namespace": "users", "permission": "write_password"},
+		},
+	}}
+}
+
 test_get_permissions_filtering if {
 	role_capability_mapping = {
 		"ucsschool:users:teacher": [
@@ -134,7 +163,7 @@ test_get_permissions_filtering if {
 				"new": {"id": "target_id_2"},
 			},
 		],
-		#  The namespaces was choosen to show that we can return multiple apps and namespaces
+		#  The namespaces were chosen to show that we can return multiple apps and namespaces
 		#  while still filtering apps (radius) and namespaces (namespace exams from app ucsschool)
 		"namespaces": {"ucsschool": {"users", "groups"}, "OX": {"mail"}},
 		"contexts": {},
@@ -224,6 +253,23 @@ check_permissions_parametrize := [
 				"new": {"id": "target_id_1"},
 			}],
 			"namespaces": {"ucsschool": {"users", "groups"}},
+			"contexts": {},
+			"extra_args": {},
+			"permissions": {{"appName": "ucsschool", "namespace": "users", "permission": "read_first_name"}},
+		},
+		"result": {{"target_id": "target_id_1", "result": true}},
+	},
+	{
+		"input": {
+			"actor": {
+				"id": "actor_id_1",
+				"roles": {"ucsschool:users:teacher"},
+			},
+			"targets": [{
+				"old": {"id": "target_id_1"},
+				"new": {"id": "target_id_1"},
+			}],
+			"namespaces": null,
 			"contexts": {},
 			"extra_args": {},
 			"permissions": {{"appName": "ucsschool", "namespace": "users", "permission": "read_first_name"}},

@@ -7,6 +7,16 @@ import future.keywords.in
 
 import data.univention.mapping.roleCapabilityMapping
 
+# check if a dictionary of app to namespaces contains a given namespace
+# for the given app
+# namespaces: Dictionary of app names to set of namespaces
+# appName: The app name to check
+# namespace: The namespace to check
+# result: Boolean indicating whether the namespace is contained in the set of namespaces
+has_namespace(namespaces, appName, namespace) if {
+	namespace in namespaces[appName]
+} else = false if true
+
 # roles: The list of actor roles
 # roleCapabilityMapping: Dictionary of role names to set of capabilities
 # namespaces: Dictionary of app names to set of namespaces to return the permissions for
@@ -15,14 +25,13 @@ import data.univention.mapping.roleCapabilityMapping
 # result: Set of permission objects
 _get_permissions(roles, target_object, roleCapabilityMapping, namespaces, contexts, extra_args) := permissions if {
 	permissions := {permission |
-		some role in input.actor.roles
+		some role in roles
 		some capability in roleCapabilityMapping[role]
-		some app_name, namespaces in input.namespaces
-		capability.appName == app_name
-		some namespace in namespaces
-		capability.namespace == namespace
-		some permision_type in capability.permissions
-		permission := {"appName": app_name, "namespace": namespace, "permission": permision_type}
+		appName := capability.appName
+		namespace := capability.namespace
+		any([is_null(namespaces), has_namespace(namespaces, appName, namespace)])
+		some permission_type in capability.permissions
+		permission := {"appName": appName, "namespace": namespace, "permission": permission_type}
 	}
 }
 
