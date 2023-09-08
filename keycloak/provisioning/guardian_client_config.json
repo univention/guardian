@@ -1,0 +1,91 @@
+{
+  "access": {
+    "configure": true,
+    "manage": true,
+    "view": true
+  },
+  "adminUrl": "",
+  "alwaysDisplayInConsole": false,
+  "attributes": {
+    "acr.loa.map": "{}",
+    "backchannel.logout.revoke.offline.tokens": "false",
+    "backchannel.logout.session.required": "false",
+    "client_credentials.use_refresh_token": "false",
+    "display.on.consent.screen": "false",
+    "oauth2.device.authorization.grant.enabled": "false",
+    "oidc.ciba.grant.enabled": "false",
+    "pkce.code.challenge.method": "S256",
+    "require.pushed.authorization.requests": "false",
+    "tls.client.certificate.bound.access.tokens": "false",
+    "token.response.type.bearer.lower-case": "false",
+    "use.refresh.tokens": "true"
+  },
+  "authenticationFlowBindingOverrides": {},
+  "baseUrl": "",
+  "bearerOnly": false,
+  "clientAuthenticatorType": "client-secret",
+  "clientId": "guardian",
+  "consentRequired": false,
+  "defaultClientScopes": [
+    "web-origins",
+    "acr",
+    "profile",
+    "roles",
+    "email"
+  ],
+  "description": "",
+  "directAccessGrantsEnabled": false,
+  "enabled": true,
+  "frontchannelLogout": false,
+  "fullScopeAllowed": true,
+  "implicitFlowEnabled": false,
+  "name": "",
+  "nodeReRegistrationTimeout": -1,
+  "notBefore": 0,
+  "optionalClientScopes": [
+    "address",
+    "phone",
+    "offline_access",
+    "microprofile-jwt"
+  ],
+  "protocol": "openid-connect",
+  "protocolMappers": [
+    {
+      "config": {
+        "access.token.claim": "true",
+        "access.tokenResponse.claim": "false",
+        "claim.name": "client_id",
+        "claim.value": "guardian",
+        "id.token.claim": "true",
+        "jsonType.label": "String",
+        "userinfo.token.claim": "true"
+      },
+      "consentRequired": false,
+      "name": "client_id",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-hardcoded-claim-mapper"
+    },
+    {
+      "config": {
+        "access.token.claim": "true",
+        "id.token.claim": "false",
+        "included.client.audience": "guardian"
+      },
+      "consentRequired": false,
+      "name": "guardian",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-audience-mapper"
+    }
+  ],
+  "publicClient": true,
+  "redirectUris": [
+    "http://localhost/guardian/authorization/docs/oauth2-redirect"
+  ],
+  "rootUrl": "",
+  "serviceAccountsEnabled": false,
+  "standardFlowEnabled": true,
+  "surrogateAuthRequired": false,
+  "webOrigins": [
+    "http://localhost"
+  ]
+}

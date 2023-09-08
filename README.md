@@ -79,6 +79,29 @@ You might need to install the docker compose plugin.
 Either use the [official docker repositories](https://docs.docker.com/compose/install/linux/#install-using-the-repository) to install docker.
 Or [download the plugin manually](https://docs.docker.com/compose/install/linux/#install-the-plugin-manually).
 
+You can now access the following services:
+
+- [authorization-api](http://localhost/guardian/authorization/docs/)
+- [management-api](http://localhost/guardian/management/docs/)
+
+Secondary services for integration:
+
+- [keycloak](http://traefik.localhost/guardian/keycloak/)
+
+### Authentication
+
+You can choose between multiple authentication providers. Set them in `GUARDIAN__AUTHZ__ADAPTER__AUTHENTICATION_PORT`.
+
+- `fast_api_always_authorized`
+- `fast_api_never_authorized`
+- `fast_api_oauth`
+
+If you choose `fast_api_oauth` the local keycloak started in the compose file will be used.
+The username is `dev:univention`. The admin credentials for keycloak are `admin:admin`.
+
+You can use your own keycloak by changing `OAUTH_ADAPTER__WELL_KNOWN_URL`.
+You might need to change `SSL_CERT_FILE` and provide a cert file.
+
 ### Shared dependencies
 
 The projects in this repository have a couple of dependencies, they have in common. For effective local development

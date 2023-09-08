@@ -2,34 +2,23 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
+import asyncio
 import os
 from typing import Callable, Optional
 from unittest.mock import AsyncMock
 
-import guardian_lib.adapter_registry as adapter_registry
 import pytest
 import pytest_asyncio
 import requests
 from faker import Faker
-from guardian_authorization_api.adapters.api import (
-    FastAPICheckPermissionsAPIAdapter,
-    FastAPIGetPermissionsAPIAdapter,
-)
-from guardian_authorization_api.adapters.persistence import UDMPersistenceAdapter
-from guardian_authorization_api.adapters.policies import OPAAdapter
 from guardian_authorization_api.logging import configure_logger
 from guardian_authorization_api.main import app
 from guardian_authorization_api.models.policies import PolicyObject
-from guardian_authorization_api.ports import (
-    CheckPermissionsAPIPort,
-    GetPermissionsAPIPort,
-    PersistencePort,
-    PolicyPort,
+from guardian_lib.adapters.authentication import (
+    FastAPIAlwaysAuthorizedAdapter,
+    FastAPINeverAuthorizedAdapter,
 )
-from guardian_lib.adapters.settings import EnvSettingsAdapter
-from guardian_lib.ports import SettingsPort
 from opa_client import client as opa_client
-from port_loader import AsyncAdapterRegistry, AsyncAdapterSettingsProvider
 from starlette.testclient import TestClient
 
 fake = Faker()
@@ -40,45 +29,29 @@ async def setup_logging():
     await configure_logger()
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def patch_env():
     _environ = os.environ.copy()
     os.environ["GUARDIAN__AUTHZ__ADAPTER__SETTINGS_PORT"] = "env"
     os.environ["GUARDIAN__AUTHZ__ADAPTER__PERSISTENCE_PORT"] = "udm_data"
     os.environ["GUARDIAN__AUTHZ__ADAPTER__POLICY_PORT"] = "opa"
     os.environ["OPA_ADAPTER__URL"] = "http://opa:8181"
+    os.environ["UDM_DATA_ADAPTER__URL"] = "http://localhost"
+    os.environ["UDM_DATA_ADAPTER__USERNAME"] = "Administrator"
+    os.environ["UDM_DATA_ADAPTER__PASSWORD"] = "univention"
+    os.environ[
+        "GUARDIAN__AUTHZ__ADAPTER__AUTHENTICATION_PORT"
+    ] = "fast_api_always_authorized"
+    os.environ["OAUTH_ADAPTER__WELL_KNOWN_URL"] = "/dev/zero"
     yield
     os.environ.clear()
     os.environ.update(_environ)
 
 
-@pytest.fixture()
-@pytest.mark.usefixtures("register_test_adapters")
-def client(register_test_adapters):
-    return TestClient(app)
-
-
-@pytest.fixture()
-def register_test_adapters(patch_env):
-    for port, adapter in [
-        (SettingsPort, EnvSettingsAdapter),
-        (CheckPermissionsAPIPort, FastAPICheckPermissionsAPIAdapter),
-        (GetPermissionsAPIPort, FastAPIGetPermissionsAPIAdapter),
-        (PolicyPort, OPAAdapter),
-        (PersistencePort, UDMPersistenceAdapter),
-    ]:
-        adapter_registry.ADAPTER_REGISTRY.register_port(port)
-        adapter_registry.ADAPTER_REGISTRY.register_adapter(port, adapter_cls=adapter)
-        adapter_registry.ADAPTER_REGISTRY.set_adapter(port, adapter)
-    adapter_registry.ADAPTER_REGISTRY.register_adapter(
-        AsyncAdapterSettingsProvider, adapter_cls=EnvSettingsAdapter
-    )
-    adapter_registry.ADAPTER_REGISTRY.set_adapter(
-        AsyncAdapterSettingsProvider, EnvSettingsAdapter
-    )
-
-    yield adapter_registry.ADAPTER_REGISTRY
-    adapter_registry.ADAPTER_REGISTRY = AsyncAdapterRegistry()
+@pytest_asyncio.fixture(scope="session")
+async def client(patch_env):
+    with TestClient(app) as client:
+        yield client
 
 
 @pytest.fixture()
@@ -204,3 +177,22 @@ def opa_is_running():
     except requests.exceptions.ConnectionError:
         return False
     return response.status_code == 200
+
+
+@pytest.fixture(scope="session")
+def event_loop():
+    """Overrides pytest default function scoped event loop"""
+    policy = asyncio.get_event_loop_policy()
+    loop = policy.new_event_loop()
+    yield loop
+    loop.close()
+
+
+@pytest.fixture(scope="function")
+def error401(monkeypatch):
+    monkeypatch.setattr(
+        FastAPIAlwaysAuthorizedAdapter,
+        "__call__",
+        FastAPINeverAuthorizedAdapter.__call__,
+    )
+    yield

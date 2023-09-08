@@ -139,3 +139,7 @@ class SettingsPort(BasePort, AsyncAdapterSettingsProvider, ABC):
         default value was specified
         """
         raise NotImplementedError  # pragma: no cover
+
+
+class AuthenticationPort(BasePort):
+    pass

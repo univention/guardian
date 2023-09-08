@@ -19,7 +19,7 @@ from guardian_authorization_api.ports import (
     PersistencePort,
     PolicyPort,
 )
-from guardian_lib.ports import SettingsPort
+from guardian_lib.ports import AuthenticationPort, SettingsPort
 from port_loader import AsyncAdapterSettingsProvider
 
 
@@ -29,6 +29,7 @@ def adapter_selection_env():
         "GUARDIAN__AUTHZ__ADAPTER__SETTINGS_PORT": "SETTINGS_PORT",
         "GUARDIAN__AUTHZ__ADAPTER__PERSISTENCE_PORT": "PERSISTENCE_PORT",
         "GUARDIAN__AUTHZ__ADAPTER__POLICY_PORT": "POLICY_PORT",
+        "GUARDIAN__AUTHZ__ADAPTER__AUTHENTICATION_PORT": "AUTHENTICATION_PORT",
     }
 
 
@@ -48,6 +49,7 @@ def test_adapter_selection_loading(adapter_selection_env, apply_adapter_selectio
         "GUARDIAN__AUTHZ__ADAPTER__SETTINGS_PORT": "SETTINGS_PORT",
         "GUARDIAN__AUTHZ__ADAPTER__PERSISTENCE_PORT": "PERSISTENCE_PORT",
         "GUARDIAN__AUTHZ__ADAPTER__POLICY_PORT": "POLICY_PORT",
+        "GUARDIAN__AUTHZ__ADAPTER__AUTHENTICATION_PORT": "AUTHENTICATION_PORT",
     }
     assert adapter_selection_env == expected_env
     adapter_selection = AdapterSelection()
@@ -68,6 +70,7 @@ def test_configure_registry(mocker, apply_adapter_selection_env):
         mocker.call(SettingsPort, "SETTINGS_PORT"),
         mocker.call(PersistencePort, "PERSISTENCE_PORT"),
         mocker.call(PolicyPort, "POLICY_PORT"),
+        mocker.call(AuthenticationPort, "AUTHENTICATION_PORT"),
         mocker.call(AsyncAdapterSettingsProvider, "SETTINGS_PORT"),
         mocker.call(GetPermissionsAPIPort, FastAPIGetPermissionsAPIAdapter),
         mocker.call(CheckPermissionsAPIPort, FastAPICheckPermissionsAPIAdapter),
@@ -76,6 +79,7 @@ def test_configure_registry(mocker, apply_adapter_selection_env):
         mocker.call(SettingsPort),
         mocker.call(PersistencePort),
         mocker.call(PolicyPort),
+        mocker.call(AuthenticationPort),
         mocker.call(GetPermissionsAPIPort),
         mocker.call(CheckPermissionsAPIPort),
     ]
@@ -87,6 +91,11 @@ def test_configure_registry(mocker, apply_adapter_selection_env):
             registry_mock, PersistencePort, "guardian_authorization_api.PersistencePort"
         ),
         mocker.call(registry_mock, PolicyPort, "guardian_authorization_api.PolicyPort"),
+        mocker.call(
+            registry_mock,
+            AuthenticationPort,
+            "guardian_authorization_api.AuthenticationPort",
+        ),
         mocker.call(
             registry_mock,
             AsyncAdapterSettingsProvider,

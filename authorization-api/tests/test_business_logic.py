@@ -18,7 +18,11 @@ async def test_get_permissions(mocker):
     api_port_mock.to_api_response.return_value = 4
     policy_mock = mocker.AsyncMock()
     policy_mock.get_permissions.return_value = 3
-    result = await get_permissions(1, api_port_mock, policy_mock)
+    result = await get_permissions(
+        1,
+        api_port_mock,
+        policy_mock,
+    )
     api_port_mock.to_policy_query.assert_called_once_with(1)
     api_port_mock.to_api_response.assert_called_once_with(3)
     policy_mock.get_permissions.assert_called_once_with(2)

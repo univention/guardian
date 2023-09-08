@@ -1,19 +1,17 @@
+# Copyright (C) 2023 Univention GmbH
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
 from unittest.mock import AsyncMock
 
 import guardian_authorization_api.business_logic
 import pytest
-from fastapi.testclient import TestClient
 from guardian_authorization_api.errors import ObjectNotFoundError, PersistenceError
-from guardian_authorization_api.main import app
 
 from ..conftest import get_authz_permissions_check_request_dict, opa_is_running
 
 
 class TestPermissionsCheckUnittest:
-    @pytest.fixture(autouse=True)
-    def client(self):
-        return TestClient(app)
-
     @pytest.fixture()
     def opa_check_permissions_mock(self):
         old_method = (
@@ -29,7 +27,7 @@ class TestPermissionsCheckUnittest:
 
     @pytest.mark.asyncio
     async def test_permissions_check_udm_errors(
-        self, client, register_test_adapters, opa_check_permissions_mock
+        self, client, opa_check_permissions_mock
     ):
         # FIXME move to with-lookup endpoint test file when implemented
         error_msg = "Test object not found error."
@@ -54,9 +52,7 @@ class TestPermissionsCheckUnittest:
         assert response.json() == {"detail": {"message": "Internal server error."}}
 
     @pytest.mark.asyncio
-    async def test_permissions_check_opa_errors(
-        self, client, register_test_adapters, opa_async_mock
-    ):
+    async def test_permissions_check_opa_errors(self, client, opa_async_mock):
         opa_async_mock.return_value = 1
         data = get_authz_permissions_check_request_dict()
         response = client.post(client.app.url_path_for("check_permissions"), json=data)
@@ -83,9 +79,7 @@ class TestPermissionsCheckUnittest:
         }
 
     @pytest.mark.asyncio
-    async def test_permissions_check_minimal(
-        self, client, register_test_adapters, opa_async_mock
-    ):
+    async def test_permissions_check_minimal(self, client, opa_async_mock):
         data = {
             "actor": {
                 "id": "1",
@@ -130,7 +124,6 @@ class TestPermissionsCheckUnittest:
     async def test_permissions_check_full(
         self,
         client,
-        register_test_adapters,
         opa_async_mock,
     ):
         data = get_authz_permissions_check_request_dict()
@@ -157,14 +150,8 @@ class TestPermissionsCheckUnittest:
 @pytest.mark.skipif(not opa_is_running(), reason="Needs a running OPA instance.")
 @pytest.mark.in_container_test
 class TestPermissionsCheck:
-    @pytest.fixture(autouse=True)
-    def client(self):
-        return TestClient(app)
-
     @pytest.mark.asyncio
-    async def test_permission_check_randomized_data(
-        self, client, register_test_adapters
-    ):
+    async def test_permission_check_randomized_data(self, client):
         data = get_authz_permissions_check_request_dict(n_permissions=10, n_targets=10)
 
         response = client.post(client.app.url_path_for("check_permissions"), json=data)
@@ -198,7 +185,7 @@ class TestPermissionsCheck:
         }
 
     @pytest.mark.asyncio
-    async def test_permission_check_basic(self, client, register_test_adapters):
+    async def test_permission_check_basic(self, client):
         """
         - Actor has one role: ucsschool:users:teacher
         - According to the role-capability-mapping,
@@ -240,9 +227,7 @@ class TestPermissionsCheck:
         }
 
     @pytest.mark.asyncio
-    async def test_permission_check_general_permissions(
-        self, client, register_test_adapters
-    ):
+    async def test_permission_check_general_permissions(self, client):
         data = get_authz_permissions_check_request_dict(n_actor_roles=1, n_targets=1)
 
         data["namespaces"] = [
@@ -290,7 +275,7 @@ class TestPermissionsCheck:
         }
 
     @pytest.mark.asyncio
-    async def test_permission_check_conditions(self, client, register_test_adapters):
+    async def test_permission_check_conditions(self, client):
         data = get_authz_permissions_check_request_dict(n_actor_roles=1, n_targets=1)
 
         data["namespaces"] = [{"app_name": "ucsschool", "name": "users"}]

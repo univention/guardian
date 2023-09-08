@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
+
 from fastapi import APIRouter, Depends
 from guardian_lib.adapter_registry import port_dep
 
@@ -38,7 +39,9 @@ async def get_permissions(
     Actor and target objects must be supplied in their entirety.
     """
     return await business_logic.get_permissions(
-        permissions_fetch_request, get_permission_api, policy_port
+        permissions_fetch_request,
+        get_permission_api,
+        policy_port,
     )
 
 

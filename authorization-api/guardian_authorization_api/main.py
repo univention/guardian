@@ -4,10 +4,10 @@
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.responses import ORJSONResponse
 from guardian_lib.adapter_registry import ADAPTER_REGISTRY
-from guardian_lib.ports import SettingsPort
+from guardian_lib.ports import AuthenticationPort, SettingsPort
 from loguru import logger
 
 from .adapter_registry import configure_registry, initialize_adapters
@@ -25,6 +25,10 @@ async def lifespan(fastapi_app: FastAPI):
         f"Starting Guardian Authorization API with working dir '{os.getcwd()}'."
     )
     await initialize_adapters(ADAPTER_REGISTRY)
+    auth_adapter = await ADAPTER_REGISTRY.request_port(AuthenticationPort)
+    fastapi_app.include_router(
+        router, prefix=API_PREFIX, dependencies=[Depends(auth_adapter)]
+    )
     yield
 
 
@@ -35,5 +39,10 @@ app = FastAPI(
     openapi_url=f"{API_PREFIX}/openapi.json",
     docs_url=f"{API_PREFIX}/docs",
     default_response_class=ORJSONResponse,
+    swagger_ui_oauth2_redirect_url=f"{API_PREFIX}/docs/oauth2-redirect",
+    swagger_ui_init_oauth={
+        "usePkceWithAuthorizationCodeGrant": True,
+        "clientId": "guardian",
+        "scope": "openid",
+    },
 )
-app.include_router(router, prefix=API_PREFIX)
