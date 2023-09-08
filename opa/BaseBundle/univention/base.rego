@@ -10,12 +10,12 @@ import data.univention.mapping.roleCapabilityMapping
 # check if a dictionary of app to namespaces contains a given namespace
 # for the given app
 # namespaces: Dictionary of app names to set of namespaces
-# appName: The app name to check
+# app_name: The app name to check
 # namespace: The namespace to check
 # result: Boolean indicating whether the namespace is contained in the set of namespaces
-has_namespace(namespaces, appName, namespace) if {
-	namespace in namespaces[appName]
-} else = false if true
+has_namespace(namespaces, app_name, namespace) if {
+	namespace in namespaces[app_name]
+} else = false
 
 # roles: The list of actor roles
 # roleCapabilityMapping: Dictionary of role names to set of capabilities
@@ -23,16 +23,14 @@ has_namespace(namespaces, appName, namespace) if {
 # contexts: The list of contexts provided to the request
 # extra_args: Dictionary of additional arguments to pass to condition evaluation
 # result: Set of permission objects
-_get_permissions(roles, target_object, roleCapabilityMapping, namespaces, contexts, extra_args) := permissions if {
-	permissions := {permission |
-		some role in roles
-		some capability in roleCapabilityMapping[role]
-		appName := capability.appName
-		namespace := capability.namespace
-		any([is_null(namespaces), has_namespace(namespaces, appName, namespace)])
-		some permission_type in capability.permissions
-		permission := {"appName": appName, "namespace": namespace, "permission": permission_type}
-	}
+_get_permissions(roles, target_object, roleCapabilityMapping, namespaces, contexts, extra_args) := {permission |
+	some role in roles
+	some capability in roleCapabilityMapping[role]
+	app_name := capability.appName
+	namespace := capability.namespace
+	any([is_null(namespaces), has_namespace(namespaces, app_name, namespace)])
+	some permission_type in capability.permissions
+	permission := {"appName": app_name, "namespace": namespace, "permission": permission_type}
 }
 
 # input.actor: The acting object
@@ -44,7 +42,14 @@ _get_permissions(roles, target_object, roleCapabilityMapping, namespaces, contex
 # regal ignore:avoid-get-and-list-prefix
 get_permissions contains result if {
 	some target_object in input.targets
-	permissions := _get_permissions(input.actor.roles, target_object, roleCapabilityMapping, input.namespaces, input.contexts, input.extra_args)
+	permissions := _get_permissions(
+		input.actor.roles,
+		target_object,
+		roleCapabilityMapping,
+		input.namespaces,
+		input.contexts,
+		input.extra_args,
+	)
 
 	result := {
 		"target_id": target_object.old.id,
@@ -62,7 +67,14 @@ get_permissions contains result if {
 check_permissions contains result if {
 	input.targets
 	some target_object in input.targets
-	permissions := _get_permissions(input.actor.roles, target_object, roleCapabilityMapping, input.namespaces, input.contexts, input.extra_args)
+	permissions := _get_permissions(
+		input.actor.roles,
+		target_object,
+		roleCapabilityMapping,
+		input.namespaces,
+		input.contexts,
+		input.extra_args,
+	)
 	has_all_permissions := object.subset(permissions, {permission | some permission in input.permissions})
 
 	result := {

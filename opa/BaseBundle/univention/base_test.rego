@@ -49,6 +49,8 @@ test_get_permissions_null_namespaces if {
 		"extra_args": {},
 	}
 	result = get_permissions with input as inp
+
+	# regal ignore: print-or-trace-call
 	print("TEST_DEBUG -- result: ", result)
 	result == {{
 		"target_id": "target_id_1",
@@ -321,6 +323,8 @@ test_check_permissions if {
 	every case in check_permissions_parametrize {
 		inp = case.input
 		result := check_permissions with input as inp
+
+		# regal ignore: print-or-trace-call
 		print("TEST_DEBUG -- result: ", result)
 		result == case.result
 	}
