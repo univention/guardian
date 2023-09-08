@@ -16,6 +16,7 @@ from guardian_management_api.adapters.app import (
     SQLAppPersistenceAdapter,
 )
 from guardian_management_api.adapters.bundle_server import BundleServerAdapter
+from guardian_management_api.adapters.capability import SQLCapabilityPersistenceAdapter
 from guardian_management_api.adapters.condition import (
     FastAPIConditionAPIAdapter,
     SQLConditionPersistenceAdapter,
@@ -39,9 +40,12 @@ from guardian_management_api.adapters.role import (
 )
 from guardian_management_api.adapters.sql_persistence import SQLAlchemyMixin
 from guardian_management_api.main import app
+from guardian_management_api.models.capability import CapabilityConditionRelation
 from guardian_management_api.models.sql_persistence import (
     Base,
     DBApp,
+    DBCapability,
+    DBCapabilityCondition,
     DBCondition,
     DBContext,
     DBNamespace,
@@ -53,6 +57,7 @@ from guardian_management_api.ports.app import (
     AppPersistencePort,
 )
 from guardian_management_api.ports.bundle_server import BundleServerPort
+from guardian_management_api.ports.capability import CapabilityPersistencePort
 from guardian_management_api.ports.condition import (
     ConditionAPIPort,
     ConditionPersistencePort,
@@ -101,6 +106,7 @@ def patch_env(sqlite_db_name, bundle_server_base_dir):
     os.environ["GUARDIAN__MANAGEMENT__ADAPTER__NAMESPACE_PERSISTENCE_PORT"] = "sql"
     os.environ["GUARDIAN__MANAGEMENT__ADAPTER__PERMISSION_PERSISTENCE_PORT"] = "sql"
     os.environ["GUARDIAN__MANAGEMENT__ADAPTER__ROLE_PERSISTENCE_PORT"] = "sql"
+    os.environ["GUARDIAN__MANAGEMENT__ADAPTER__CAPABILITY_PERSISTENCE_PORT"] = "sql"
     os.environ["GUARDIAN__MANAGEMENT__ADAPTER__SETTINGS_PORT"] = "env"
     os.environ["GUARDIAN__MANAGEMENT__ADAPTER__APP_API_PORT"] = "APP_API_PORT"
     os.environ["SQL_PERSISTENCE_ADAPTER__DIALECT"] = "sqlite"
@@ -161,6 +167,7 @@ def register_test_adapters(patch_env):
         (ContextPersistencePort, SQLContextPersistenceAdapter),
         (NamespacePersistencePort, SQLNamespacePersistenceAdapter),
         (PermissionPersistencePort, SQLPermissionPersistenceAdapter),
+        (CapabilityPersistencePort, SQLCapabilityPersistenceAdapter),
         (RolePersistencePort, SQLRolePersistenceAdapter),
         (AppAPIPort, FastAPIAppAPIAdapter),
         (NamespaceAPIPort, FastAPINamespaceAPIAdapter),
@@ -550,3 +557,57 @@ def create_conditions(create_namespaces):
         return conditions
 
     return _create_conditions
+
+
+@pytest.fixture
+def create_capabilities(
+    create_role, create_permission, create_condition, create_namespaces
+):
+    async def _create_capabilities(
+        session: AsyncSession,
+        capabilities_per_role: int,
+        num_roles: int = 1,
+    ) -> list[DBCapability]:
+        db_namespace = (await create_namespaces(session, 1))[0]
+        db_app = db_namespace.app
+        db_roles = [
+            await create_role(session, db_app.name, db_namespace.name, f"role_{i:09d}")
+            for i in range(num_roles)
+        ]
+        caps = []
+        for db_role in db_roles:
+            db_permission = await create_permission(
+                session,
+                db_app.name,
+                db_namespace.name,
+                f"cap_permission_{db_role.name}",
+            )
+            db_condition = await create_condition(
+                session,
+                app_name=db_app.name,
+                namespace_name=db_namespace.name,
+                name=f"cap_condition_{db_role.name}",
+            )
+            caps.extend(
+                [
+                    DBCapability(
+                        namespace_id=db_namespace.id,
+                        role_id=db_role.id,
+                        name=f"capability_{i:09d}_{db_role.name}",
+                        relation=CapabilityConditionRelation.AND,
+                        permissions={db_permission},
+                        conditions={
+                            DBCapabilityCondition(
+                                condition_id=db_condition.id, kwargs={"A": True}
+                            )
+                        },
+                    )
+                    for i in range(capabilities_per_role)
+                ]
+            )
+        async with session.begin():
+            [session.add(cap) for cap in caps]
+        [await session.refresh(cap) for cap in caps]
+        return caps
+
+    return _create_capabilities

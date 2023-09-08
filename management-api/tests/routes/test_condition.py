@@ -1,3 +1,7 @@
+# Copyright (C) 2023 Univention GmbH
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
 from dataclasses import asdict
 from urllib.parse import urljoin
 

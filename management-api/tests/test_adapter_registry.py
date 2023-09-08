@@ -18,6 +18,7 @@ from guardian_management_api.ports.app import (
     AppPersistencePort,
 )
 from guardian_management_api.ports.bundle_server import BundleServerPort
+from guardian_management_api.ports.capability import CapabilityPersistencePort
 from guardian_management_api.ports.condition import (
     ConditionAPIPort,
     ConditionPersistencePort,
@@ -53,6 +54,7 @@ def test_adapter_selection_loading(patch_env):
     assert adapter_selection.namespace_persistence_port == "sql"
     assert adapter_selection.permission_persistence_port == "sql"
     assert adapter_selection.role_persistence_port == "sql"
+    assert adapter_selection.capability_persistence_port == "sql"
 
 
 def test_configure_registry(mocker, register_test_adapters):
@@ -71,6 +73,7 @@ def test_configure_registry(mocker, register_test_adapters):
         mocker.call(NamespacePersistencePort, "sql"),
         mocker.call(PermissionPersistencePort, "sql"),
         mocker.call(RolePersistencePort, "sql"),
+        mocker.call(CapabilityPersistencePort, "sql"),
         mocker.call(AsyncAdapterSettingsProvider, "env"),
         mocker.call(AppAPIPort, FastAPIAppAPIAdapter),
         mocker.call(PermissionAPIPort, FastAPIPermissionAPIAdapter),
@@ -88,6 +91,7 @@ def test_configure_registry(mocker, register_test_adapters):
         mocker.call(NamespacePersistencePort),
         mocker.call(PermissionPersistencePort),
         mocker.call(RolePersistencePort),
+        mocker.call(CapabilityPersistencePort),
         mocker.call(AppAPIPort),
         mocker.call(PermissionAPIPort),
         mocker.call(ConditionAPIPort),
@@ -129,6 +133,11 @@ def test_configure_registry(mocker, register_test_adapters):
             registry_mock,
             RolePersistencePort,
             "guardian_management_api.RolePersistencePort",
+        ),
+        mocker.call(
+            registry_mock,
+            CapabilityPersistencePort,
+            "guardian_management_api.CapabilityPersistencePort",
         ),
         mocker.call(
             registry_mock,
