@@ -139,3 +139,14 @@ class SettingsPort(BasePort, AsyncAdapterSettingsProvider, ABC):
         default value was specified
         """
         raise NotImplementedError  # pragma: no cover
+
+
+class AuthenticationPort(BasePort):
+    @abstractmethod
+    async def check_authorization(self) -> bool:
+        """
+        Checks if the caller has authorization.
+
+        :return: True if caller is authorized
+        """
+        raise NotImplementedError  # pragma: no cover
