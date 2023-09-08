@@ -8,7 +8,7 @@ class AlwaysAuthorizedAdapter(AuthenticationPort):
         is_cached = True
         alias = "always_authorized"
 
-    async def check_authorization(self):
+    async def authorized(self):
         return True
 
 
@@ -19,5 +19,5 @@ class NeverAuthorizedAdapter(AuthenticationPort):
         is_cached = True
         alias = "never_authorized"
 
-    async def check_authorization(self):
+    async def authorized(self):
         return False

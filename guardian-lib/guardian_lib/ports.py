@@ -143,7 +143,7 @@ class SettingsPort(BasePort, AsyncAdapterSettingsProvider, ABC):
 
 class AuthenticationPort(BasePort):
     @abstractmethod
-    async def check_authorization(self) -> bool:
+    async def authorized(self) -> bool:
         """
         Checks if the caller has authorization.
 
