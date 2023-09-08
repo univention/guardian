@@ -63,21 +63,13 @@ cp .env.example .env
 source .env
 ```
 
-The second step is to create the directory for the bind mount in the docker compose file:
+Start the dev environment:
 
 ```shell
-mkdir management_service_dir
+./dev-run
 ```
 
-This repository provides a dev-compose.yaml. If the docker environment is started
-via
-
-```shell
-docker compose -f dev-compose.yaml build  # This should only be necessary once and if the docker files change
-docker compose -f dev-compose.yaml up
-```
-
-you get both APIs up and running on port 80, including live reload when editing your local files.
+You get both APIs up and running on port 80, including live reload when editing your local files.
 
 _Note: docker compose uses the environment variables from `.env` by default._
 _Make sure the contents of it are correct or pass `--env-file .env.example` to_
@@ -86,10 +78,6 @@ _use the default values._
 You might need to install the docker compose plugin.
 Either use the [official docker repositories](https://docs.docker.com/compose/install/linux/#install-using-the-repository) to install docker.
 Or [download the plugin manually](https://docs.docker.com/compose/install/linux/#install-the-plugin-manually).
-
-Some of the services are configured to run with the UID 1000 to avoid creating files with root in your local
-folder structure. If your current user does not have the UID 1000, remove the lines from the docker compose file.
-It should work then, but you will have files in your local repo, which are owned by root.
 
 ### Shared dependencies
 

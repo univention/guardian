@@ -68,8 +68,8 @@ services:
     image: guardian-management-api:dev
     entrypoint: alembic
     command: upgrade head
+    user: ${USER_ID:-1000}
     working_dir: /app/management-api
-    user: "1000"
     build:
       context: ./
       dockerfile: management-api/Dockerfile
@@ -78,7 +78,9 @@ services:
         - git.knut.univention.de:${GITLAB_IP}
     volumes:
       - ./management-api:/app/management-api
-      - ./management_service_dir:/guardian_service_dir
+      - type: bind
+        source: ./management_service_dir
+        target: /guardian_service_dir
     environment:
       - GUARDIAN__MANAGEMENT__LOGGING__LEVEL
       - GUARDIAN__MANAGEMENT__LOGGING__STRUCTURED
@@ -95,7 +97,7 @@ services:
   management-api:
     container_name: management-guardian-dev
     image: guardian-management-api:dev
-    user: "1000"
+    user: ${USER_ID:-1000}
     build:
       context: ./
       dockerfile: management-api/Dockerfile
@@ -109,7 +111,9 @@ services:
       - proxy-net
     volumes:
       - ./management-api:/app/management-api
-      - ./management_service_dir:/guardian_service_dir
+      - type: bind
+        source: ./management_service_dir
+        target: /guardian_service_dir
     environment:
       - GUARDIAN__MANAGEMENT__LOGGING__LEVEL
       - GUARDIAN__MANAGEMENT__LOGGING__STRUCTURED
