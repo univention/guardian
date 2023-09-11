@@ -8,13 +8,17 @@ from typing import Any, Optional
 from pydantic import Field, root_validator
 
 from guardian_management_api.models.routers.base import (
+    AppNamePathMixin,
     CreateBaseRequest,
     DisplayNameObjectMixin,
     EditBaseRequest,
     GuardianBaseModel,
     ManagementObjectName,
+    NamePathMixin,
     NamespacedObjectMixin,
+    NamespacePathMixin,
     PaginationObjectMixin,
+    PaginationRequestMixin,
     ResourceURLObjectMixin,
 )
 
@@ -42,16 +46,16 @@ def check_permissions_in_namespace(cls, values: dict[str, Any]):
 #####
 
 
-class CapabilityRole(NamespacedObjectMixin):
+class CapabilityRole(GuardianBaseModel, NamespacedObjectMixin):
     ...
 
 
-class CapabilityPermission(NamespacedObjectMixin):
+class CapabilityPermission(GuardianBaseModel, NamespacedObjectMixin):
     ...
 
 
-class CapabilityCondition(NamespacedObjectMixin):
-    parameters: dict[str, str | bool | int | float] = Field(
+class CapabilityCondition(GuardianBaseModel, NamespacedObjectMixin):
+    parameters: dict[str, bool | float | int | str] = Field(
         ..., description="The preset parameter values for the condition."
     )
 
@@ -109,6 +113,16 @@ class CapabilityEditRequest(EditBaseRequest):
     _check_permissions_in_namespace = root_validator(allow_reuse=True, pre=True)(
         check_permissions_in_namespace
     )
+
+
+class CapabilitiesGetByRoleRequest(
+    GuardianBaseModel,
+    NamePathMixin,
+    NamespacePathMixin,
+    AppNamePathMixin,
+    PaginationRequestMixin,
+):
+    ...
 
 
 #####

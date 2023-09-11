@@ -79,3 +79,11 @@ PersistenceGetManyQuery = TypeVar("PersistenceGetManyQuery")
 class PersistenceGetManyResult(Generic[PersistenceObject]):
     objects: Iterable[PersistenceObject]
     total_count: int
+
+
+APIGetSingleRequestObject = TypeVar("APIGetSingleRequestObject")
+APIGetSingleResponseObject = TypeVar("APIGetSingleResponseObject")
+APIGetMultipleRequestObject = TypeVar("APIGetMultipleRequestObject")
+APIGetMultipleResponseObject = TypeVar("APIGetMultipleResponseObject")
+APICreateRequestObject = TypeVar("APICreateRequestObject")
+APIEditRequestObject = TypeVar("APIEditRequestObject")

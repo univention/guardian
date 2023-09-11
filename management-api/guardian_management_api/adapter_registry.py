@@ -23,9 +23,10 @@ from guardian_management_api.ports.app import (
 )
 
 from .adapters.bundle_server import BundleServerAdapter
+from .adapters.capability import FastAPICapabilityAPIAdapter
 from .adapters.condition import FastAPIConditionAPIAdapter
 from .ports.bundle_server import BundleServerPort
-from .ports.capability import CapabilityPersistencePort
+from .ports.capability import CapabilityAPIPort, CapabilityPersistencePort
 from .ports.condition import ConditionAPIPort, ConditionPersistencePort
 from .ports.context import ContextAPIPort, ContextPersistencePort
 from .ports.namespace import NamespaceAPIPort, NamespacePersistencePort
@@ -114,6 +115,7 @@ def configure_registry(adapter_registry: AsyncAdapterRegistry):
         (AppAPIPort, FastAPIAppAPIAdapter),
         (PermissionAPIPort, FastAPIPermissionAPIAdapter),
         (ConditionAPIPort, FastAPIConditionAPIAdapter),
+        (CapabilityAPIPort, FastAPICapabilityAPIAdapter),
         (BundleServerPort, BundleServerAdapter),
         (RoleAPIPort, FastAPIRoleAPIAdapter),
         (ContextAPIPort, FastAPIContextAPIAdapter),

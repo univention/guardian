@@ -6,108 +6,115 @@ from fastapi import APIRouter, Depends
 from guardian_lib.adapter_registry import port_dep
 from starlette import status
 
+from guardian_management_api import business_logic
+from guardian_management_api.adapters.capability import FastAPICapabilityAPIAdapter
 from guardian_management_api.models.routers.base import (
     GetAllRequest,
     GetByNamespaceRequest,
     GetFullIdentifierRequest,
-    PaginationInfo,
 )
 from guardian_management_api.models.routers.capability import (
-    Capability,
-    CapabilityCondition,
+    CapabilitiesGetByRoleRequest,
     CapabilityCreateRequest,
     CapabilityEditRequest,
-    CapabilityMultipleResponse,
-    CapabilityPermission,
-    CapabilityRole,
-    CapabilitySingleResponse,
-    RelationChoices,
 )
-from guardian_management_api.ports.bundle_server import BundleServerPort, BundleType
+from guardian_management_api.ports.bundle_server import BundleServerPort
+from guardian_management_api.ports.capability import (
+    CapabilityAPIPort,
+    CapabilityPersistencePort,
+)
 
 router = APIRouter(tags=["capability"])
 
 
-def create_dummy_capability():
-    return Capability(
-        app_name="app",
-        namespace_name="namespace",
-        name="capability",
-        display_name="Capability",
-        resource_url="https://fqdn/capabilities/app_name/namespace_name/capability",
-        role=CapabilityRole(
-            app_name="app",
-            namespace_name="namespace",
-            name="role",
-        ),
-        relation=RelationChoices.AND,
-        conditions=[
-            CapabilityCondition(
-                app_name="app",
-                namespace_name="namespace",
-                name="condition",
-                parameters={},
-            )
-        ],
-        permissions=[
-            CapabilityPermission(
-                app_name="app",
-                namespace_name="namespace",
-                name="capability",
-            )
-        ],
-    )
-
-
 @router.get("/capabilities/{app_name}/{namespace_name}/{name}")
-def get_capability(request_data: GetFullIdentifierRequest = Depends()):
-    return CapabilitySingleResponse(capability=create_dummy_capability())
+async def get_capability(
+    request_data: GetFullIdentifierRequest = Depends(),
+    api_port: FastAPICapabilityAPIAdapter = Depends(
+        port_dep(CapabilityAPIPort, FastAPICapabilityAPIAdapter)
+    ),
+    persistence_port: CapabilityPersistencePort = Depends(
+        port_dep(CapabilityPersistencePort)
+    ),
+):
+    return await business_logic.get_capability(request_data, api_port, persistence_port)
 
 
 @router.get("/capabilities/{app_name}/{namespace_name}")
-def get_capability_by_namespace(request_data: GetByNamespaceRequest = Depends()):
-    return CapabilityMultipleResponse(
-        capabilities=[create_dummy_capability()],
-        pagination=PaginationInfo(offset=0, limit=1, total_count=1),
+async def get_capabilities_by_namespace(
+    request_data: GetByNamespaceRequest = Depends(),
+    api_port: FastAPICapabilityAPIAdapter = Depends(
+        port_dep(CapabilityAPIPort, FastAPICapabilityAPIAdapter)
+    ),
+    persistence_port: CapabilityPersistencePort = Depends(
+        port_dep(CapabilityPersistencePort)
+    ),
+):
+    return await business_logic.get_capabilities(
+        request_data, api_port, persistence_port
     )
 
 
 @router.get("/capabilities")
-def get_all_capabilities(request_data: GetAllRequest = Depends()):
-    return CapabilityMultipleResponse(
-        capabilities=[create_dummy_capability()],
-        pagination=PaginationInfo(offset=0, limit=1, total_count=1),
+async def get_all_capabilities(
+    request_data: GetAllRequest = Depends(),
+    api_port: FastAPICapabilityAPIAdapter = Depends(
+        port_dep(CapabilityAPIPort, FastAPICapabilityAPIAdapter)
+    ),
+    persistence_port: CapabilityPersistencePort = Depends(
+        port_dep(CapabilityPersistencePort)
+    ),
+):
+    return await business_logic.get_capabilities(
+        request_data, api_port, persistence_port
     )
 
 
 @router.get("/roles/{app_name}/{namespace_name}/{name}/capabilities")
-def get_capabilities_by_role(request_data: GetFullIdentifierRequest = Depends()):
-    return CapabilityMultipleResponse(
-        capabilities=[create_dummy_capability()],
-        pagination=PaginationInfo(offset=0, limit=1, total_count=1),
+async def get_capabilities_by_role(
+    request_data: CapabilitiesGetByRoleRequest = Depends(),
+    api_port: FastAPICapabilityAPIAdapter = Depends(
+        port_dep(CapabilityAPIPort, FastAPICapabilityAPIAdapter)
+    ),
+    persistence_port: CapabilityPersistencePort = Depends(
+        port_dep(CapabilityPersistencePort)
+    ),
+):
+    return await business_logic.get_capabilities(
+        request_data, api_port, persistence_port
     )
 
 
 @router.post("/capabilities/{app_name}/{namespace_name}")
-async def create_capability_by_namespace(
+async def create_capability(
     request_data: CapabilityCreateRequest = Depends(),
+    api_port: FastAPICapabilityAPIAdapter = Depends(
+        port_dep(CapabilityAPIPort, FastAPICapabilityAPIAdapter)
+    ),
+    persistence_port: CapabilityPersistencePort = Depends(
+        port_dep(CapabilityPersistencePort)
+    ),
     bundle_server_port: BundleServerPort = Depends(port_dep(BundleServerPort)),
 ):
-    await bundle_server_port.schedule_bundle_build(
-        BundleType.data
-    )  # Move to business logic!
-    return CapabilitySingleResponse(capability=create_dummy_capability())
+    return await business_logic.create_capability(
+        request_data, api_port, bundle_server_port, persistence_port
+    )
 
 
 @router.put("/capabilities/{app_name}/{namespace_name}/{name}")
 async def update_capability(
     request_data: CapabilityEditRequest = Depends(),
+    api_port: FastAPICapabilityAPIAdapter = Depends(
+        port_dep(CapabilityAPIPort, FastAPICapabilityAPIAdapter)
+    ),
+    persistence_port: CapabilityPersistencePort = Depends(
+        port_dep(CapabilityPersistencePort)
+    ),
     bundle_server_port: BundleServerPort = Depends(port_dep(BundleServerPort)),
 ):
-    await bundle_server_port.schedule_bundle_build(
-        BundleType.data
-    )  # Move to business logic!
-    return CapabilitySingleResponse(capability=create_dummy_capability())
+    return await business_logic.update_capability(
+        request_data, api_port, bundle_server_port, persistence_port
+    )
 
 
 @router.delete(
@@ -116,9 +123,14 @@ async def update_capability(
 )
 async def delete_capability(
     request_data: GetFullIdentifierRequest = Depends(),
+    api_port: FastAPICapabilityAPIAdapter = Depends(
+        port_dep(CapabilityAPIPort, FastAPICapabilityAPIAdapter)
+    ),
+    persistence_port: CapabilityPersistencePort = Depends(
+        port_dep(CapabilityPersistencePort)
+    ),
     bundle_server_port: BundleServerPort = Depends(port_dep(BundleServerPort)),
 ):
-    await bundle_server_port.schedule_bundle_build(
-        BundleType.data
-    )  # Move to business logic!
-    return None
+    return await business_logic.delete_capability(
+        request_data, api_port, bundle_server_port, persistence_port
+    )

@@ -5,7 +5,10 @@ from copy import deepcopy
 
 import pytest
 import pytest_asyncio
-from guardian_management_api.adapters.capability import SQLCapabilityPersistenceAdapter
+from guardian_management_api.adapters.capability import (
+    FastAPICapabilityAPIAdapter,
+    SQLCapabilityPersistenceAdapter,
+)
 from guardian_management_api.adapters.permission import SQLPermissionPersistenceAdapter
 from guardian_management_api.errors import ObjectNotFoundError, ParentNotFoundError
 from guardian_management_api.models.base import PaginationRequest
@@ -393,3 +396,14 @@ class TestSQLCapabilityPersistenceAdapter:
     ):
         with pytest.raises(RuntimeError, match="Unknown query type."):
             await adapter.read_many(True)
+
+
+class TestFastAPICapabilityAPIAdapter:
+    @pytest.fixture
+    def adapter(self):
+        return FastAPICapabilityAPIAdapter()
+
+    @pytest.mark.asyncio
+    async def test_to_obj_get_multiple_wrong_request_type(self, adapter):
+        with pytest.raises(RuntimeError, match="Wrong request type."):
+            await adapter.to_obj_get_multiple(True)

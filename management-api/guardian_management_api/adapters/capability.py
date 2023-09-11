@@ -1,33 +1,63 @@
 # Copyright (C) 2023 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
-
+import uuid
 from dataclasses import asdict
-from typing import Tuple, Type, Union
+from typing import Optional, Tuple, Type, Union
 
+from fastapi import HTTPException
 from port_loader import AsyncConfiguredAdapterMixin
 from sqlalchemy import select, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.functions import count
+from starlette import status
 
 from guardian_management_api.adapters.sql_persistence import (
     SQLAlchemyMixin,
     error_guard,
 )
-from guardian_management_api.errors import ObjectNotFoundError, ParentNotFoundError
+from guardian_management_api.constants import COMPLETE_URL
+from guardian_management_api.errors import (
+    ObjectExistsError,
+    ObjectNotFoundError,
+    ParentNotFoundError,
+)
 from guardian_management_api.models.base import (
+    PaginationRequest,
     PersistenceGetManyResult,
 )
 from guardian_management_api.models.capability import (
     CapabilitiesByRoleQuery,
     CapabilitiesGetQuery,
     Capability,
+    CapabilityConditionRelation,
     CapabilityGetQuery,
     ParametrizedCondition,
 )
 from guardian_management_api.models.condition import Condition
 from guardian_management_api.models.permission import Permission
 from guardian_management_api.models.role import Role
+from guardian_management_api.models.routers.base import (
+    GetAllRequest,
+    GetByNamespaceRequest,
+    GetFullIdentifierRequest,
+    ManagementObjectName,
+    PaginationInfo,
+)
+from guardian_management_api.models.routers.capability import (
+    CapabilitiesGetByRoleRequest,
+    CapabilityCondition,
+    CapabilityCreateRequest,
+    CapabilityEditRequest,
+    CapabilityMultipleResponse,
+    CapabilityPermission,
+    CapabilityRole,
+    CapabilitySingleResponse,
+    RelationChoices,
+)
+from guardian_management_api.models.routers.capability import (
+    Capability as ResponseCapability,
+)
 from guardian_management_api.models.sql_persistence import (
     DBApp,
     DBCapability,
@@ -38,7 +68,10 @@ from guardian_management_api.models.sql_persistence import (
     DBRole,
     SQLPersistenceAdapterSettings,
 )
-from guardian_management_api.ports.capability import CapabilityPersistencePort
+from guardian_management_api.ports.capability import (
+    CapabilityAPIPort,
+    CapabilityPersistencePort,
+)
 
 
 class SQLCapabilityPersistenceAdapter(
@@ -280,3 +313,226 @@ class SQLCapabilityPersistenceAdapter(
             for db_cap in db_conditions
         ]
         return PersistenceGetManyResult(total_count=total_count, objects=capabilities)
+
+
+class FastAPICapabilityAPIAdapter(
+    CapabilityAPIPort[
+        GetFullIdentifierRequest,
+        CapabilitySingleResponse,
+        Union[GetAllRequest, GetByNamespaceRequest, CapabilitiesGetByRoleRequest],
+        CapabilityMultipleResponse,
+        CapabilityCreateRequest,
+        CapabilityEditRequest,
+    ]
+):
+    @staticmethod
+    def _cap_to_response_cap(obj: Capability):
+        permissions = [
+            CapabilityPermission(
+                app_name=ManagementObjectName(perm.app_name),
+                namespace_name=ManagementObjectName(perm.namespace_name),
+                name=ManagementObjectName(perm.name),
+            )
+            for perm in obj.permissions
+        ]
+        conditions = [
+            CapabilityCondition(
+                app_name=ManagementObjectName(cond.app_name),
+                namespace_name=ManagementObjectName(cond.namespace_name),
+                name=ManagementObjectName(cond.name),
+                parameters=cond.parameters,
+            )
+            for cond in obj.conditions
+        ]
+        return ResponseCapability(
+            app_name=ManagementObjectName(obj.app_name),
+            namespace_name=ManagementObjectName(obj.namespace_name),
+            name=ManagementObjectName(obj.name),
+            display_name=obj.display_name,
+            relation=RelationChoices.AND
+            if obj.relation == CapabilityConditionRelation.AND
+            else RelationChoices.OR,
+            role=CapabilityRole(
+                app_name=ManagementObjectName(obj.role.app_name),
+                namespace_name=ManagementObjectName(obj.role.namespace_name),
+                name=ManagementObjectName(obj.role.name),
+            ),
+            resource_url=f"{COMPLETE_URL}/capabilities/{obj.app_name}/{obj.namespace_name}/{obj.name}",
+            permissions=permissions,
+            conditions=conditions,
+        )
+
+    async def transform_exception(self, exc: Exception):
+        if isinstance(exc, ObjectNotFoundError) and exc.object_type is Capability:
+            return HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"message": "Capability not found."},
+            )
+        if isinstance(exc, ObjectNotFoundError) and exc.object_type is Role:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "message": "The role specified for the capability could not be found."
+                },
+            )
+        if isinstance(exc, ObjectNotFoundError) and exc.object_type is Condition:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "message": "One or more conditions specified for the capability do not exist."
+                },
+            )
+        if isinstance(exc, ObjectNotFoundError) and exc.object_type is Permission:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "message": "One or more permissions specified for the capability do not exist."
+                },
+            )
+        if isinstance(exc, ObjectExistsError):
+            return HTTPException(
+                status_code=400,
+                detail={
+                    "message": "Capability with the same identifiers already exists."
+                },
+            )
+        if isinstance(exc, ParentNotFoundError):
+            return HTTPException(
+                status_code=400,
+                detail={"message": "The app and or namespace does not exist."},
+            )
+        return HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"message": "Internal Server Error"},
+        )
+
+    async def to_obj_get_single(
+        self, api_request: GetFullIdentifierRequest
+    ) -> CapabilityGetQuery:
+        return CapabilityGetQuery(
+            app_name=api_request.app_name,
+            namespace_name=api_request.namespace_name,
+            name=api_request.name,
+        )
+
+    async def to_api_get_single_response(
+        self, obj: Capability
+    ) -> CapabilitySingleResponse:
+        return CapabilitySingleResponse(
+            capability=FastAPICapabilityAPIAdapter._cap_to_response_cap(obj)
+        )
+
+    async def to_obj_get_multiple(
+        self,
+        api_request: Union[
+            GetAllRequest, GetByNamespaceRequest, CapabilitiesGetByRoleRequest
+        ],
+    ) -> CapabilitiesGetQuery | CapabilitiesByRoleQuery:
+        if type(api_request) not in (
+            GetAllRequest,
+            GetByNamespaceRequest,
+            CapabilitiesGetByRoleRequest,
+        ):
+            raise RuntimeError("Wrong request type.")
+        pagination = PaginationRequest(
+            query_limit=api_request.limit, query_offset=api_request.offset
+        )
+        if isinstance(api_request, CapabilitiesGetByRoleRequest):
+            return CapabilitiesByRoleQuery(
+                pagination=pagination,
+                app_name=api_request.app_name,
+                namespace_name=api_request.namespace_name,
+                role_name=api_request.name,
+            )
+        elif isinstance(api_request, GetByNamespaceRequest):
+            return CapabilitiesGetQuery(
+                pagination=pagination,
+                app_name=api_request.app_name,
+                namespace_name=api_request.namespace_name,
+            )
+        else:
+            return CapabilitiesGetQuery(pagination=pagination)
+
+    async def to_api_get_multiple_response(
+        self,
+        objs: list[Capability],
+        query_offset: int,
+        query_limit: Optional[int],
+        total_count: int,
+    ) -> CapabilityMultipleResponse:
+        return CapabilityMultipleResponse(
+            capabilities=[
+                FastAPICapabilityAPIAdapter._cap_to_response_cap(cap) for cap in objs
+            ],
+            pagination=PaginationInfo(
+                total_count=total_count,
+                offset=query_offset,
+                limit=query_limit if query_limit else len(objs),
+            ),
+        )
+
+    async def to_obj_create(self, api_request: CapabilityCreateRequest) -> Capability:
+        return Capability(
+            app_name=api_request.app_name,
+            namespace_name=api_request.namespace_name,
+            name=api_request.data.name if api_request.data.name else str(uuid.uuid4()),
+            display_name=api_request.data.display_name,
+            relation=CapabilityConditionRelation.AND
+            if api_request.data.relation == RelationChoices.AND
+            else CapabilityConditionRelation.OR,
+            role=Role(
+                app_name=api_request.data.role.app_name,
+                namespace_name=api_request.data.role.namespace_name,
+                name=api_request.data.role.name,
+            ),
+            permissions=[
+                Permission(
+                    app_name=perm.app_name,
+                    namespace_name=perm.namespace_name,
+                    name=perm.name,
+                )
+                for perm in api_request.data.permissions
+            ],
+            conditions=[
+                ParametrizedCondition(
+                    app_name=cond.app_name,
+                    namespace_name=cond.namespace_name,
+                    name=cond.name,
+                    parameters=cond.parameters,
+                )
+                for cond in api_request.data.conditions
+            ],
+        )
+
+    async def to_obj_edit(self, api_request: CapabilityEditRequest) -> Capability:
+        return Capability(
+            app_name=api_request.app_name,
+            namespace_name=api_request.namespace_name,
+            name=api_request.name,
+            display_name=api_request.data.display_name,
+            relation=CapabilityConditionRelation.AND
+            if api_request.data.relation == RelationChoices.AND
+            else CapabilityConditionRelation.OR,
+            role=Role(
+                app_name=api_request.data.role.app_name,
+                namespace_name=api_request.data.role.namespace_name,
+                name=api_request.data.role.name,
+            ),
+            permissions=[
+                Permission(
+                    app_name=perm.app_name,
+                    namespace_name=perm.namespace_name,
+                    name=perm.name,
+                )
+                for perm in api_request.data.permissions
+            ],
+            conditions=[
+                ParametrizedCondition(
+                    app_name=cond.app_name,
+                    namespace_name=cond.namespace_name,
+                    name=cond.name,
+                    parameters=cond.parameters,
+                )
+                for cond in api_request.data.conditions
+            ],
+        )

@@ -50,6 +50,8 @@ from .ports.app import (
     AppAPIRegisterResponseObject,
     AppPersistencePort,
 )
+from .ports.bundle_server import BundleServerPort, BundleType
+from .ports.capability import CapabilityAPIPort, CapabilityPersistencePort
 from .ports.condition import (
     APICreateRequestObject,
     APIEditRequestObject,
@@ -518,3 +520,79 @@ async def get_namespaces_by_app(
         else result.total_count,
         total_count=result.total_count,
     )
+
+
+async def get_capability(
+    api_request: APIGetSingleRequestObject,
+    api_port: CapabilityAPIPort,
+    persistence_port: CapabilityPersistencePort,
+):
+    try:
+        query = await api_port.to_obj_get_single(api_request)
+        capability = await persistence_port.read_one(query)
+        return await api_port.to_api_get_single_response(capability)
+    except Exception as exc:
+        raise (await api_port.transform_exception(exc)) from exc
+
+
+async def get_capabilities(
+    api_request: APIGetMultipleRequestObject,
+    api_port: CapabilityAPIPort,
+    persistence_port: CapabilityPersistencePort,
+) -> APIGetMultipleResponseObject:
+    try:
+        query = await api_port.to_obj_get_multiple(api_request)
+        many_capabilities = await persistence_port.read_many(query)
+        return await api_port.to_api_get_multiple_response(
+            list(many_capabilities.objects),
+            query.pagination.query_offset,
+            query.pagination.query_limit,
+            many_capabilities.total_count,
+        )
+    except Exception as exc:
+        raise (await api_port.transform_exception(exc)) from exc
+
+
+async def create_capability(
+    api_request: APICreateRequestObject,
+    api_port: CapabilityAPIPort,
+    bundle_server_port: BundleServerPort,
+    persistence_port: CapabilityPersistencePort,
+):
+    try:
+        query = await api_port.to_obj_create(api_request)
+        capability = await persistence_port.create(query)
+        await bundle_server_port.schedule_bundle_build(BundleType.data)
+        return await api_port.to_api_get_single_response(capability)
+    except Exception as exc:
+        raise (await api_port.transform_exception(exc)) from exc
+
+
+async def update_capability(
+    api_request: APIEditRequestObject,
+    api_port: CapabilityAPIPort,
+    bundle_server_port: BundleServerPort,
+    persistence_port: CapabilityPersistencePort,
+):
+    try:
+        edited_capability = await api_port.to_obj_edit(api_request)
+        capability = await persistence_port.update(edited_capability)
+        await bundle_server_port.schedule_bundle_build(BundleType.data)
+        return await api_port.to_api_get_single_response(capability)
+    except Exception as exc:
+        raise (await api_port.transform_exception(exc)) from exc
+
+
+async def delete_capability(
+    api_request: APIEditRequestObject,
+    api_port: CapabilityAPIPort,
+    bundle_server_port: BundleServerPort,
+    persistence_port: CapabilityPersistencePort,
+):
+    try:
+        query = await api_port.to_obj_get_single(api_request)
+        await persistence_port.delete(query)
+        await bundle_server_port.schedule_bundle_build(BundleType.data)
+        return None
+    except Exception as exc:
+        raise (await api_port.transform_exception(exc)) from exc
