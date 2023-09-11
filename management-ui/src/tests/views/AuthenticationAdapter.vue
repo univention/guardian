@@ -270,11 +270,11 @@ onMounted(async () => {
         <h3>Login/Logout:</h3>
         <table class="testValues">
           <tr>
-            <td><label>username:</label></td>
+            <td><label class="testLabel">username:</label></td>
             <td>{{ currentAdapter?.adapter.username }}</td>
           </tr>
           <tr>
-            <td><label>isAuthenticated:</label></td>
+            <td><label class="testLabel">isAuthenticated:</label></td>
             <td>{{ currentAdapter?.adapter.authenticated }}</td>
           </tr>
         </table>
@@ -335,8 +335,6 @@ onMounted(async () => {
 </template>
 
 <style lang="stylus">
-@require '../assets/style.styl';
-
 main.testView
   .token
     word-wrap: anywhere

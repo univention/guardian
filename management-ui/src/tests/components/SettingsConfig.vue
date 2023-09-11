@@ -14,7 +14,7 @@ export default {
   <table class="config-display-table">
     <tr v-for="(item, key) in configObj" :key="key">
       <td>
-        <label>{{ key }}:</label>
+        <label class="testLabel">{{ key }}:</label>
       </td>
       <td v-if="typeof item === 'object'">
         <SettingsConfig :configObj="item" />

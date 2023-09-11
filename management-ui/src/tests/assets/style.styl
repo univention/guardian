@@ -7,10 +7,6 @@ main.testView
   align-items: flex-start
   gap: var(--layout-spacing-unit)
 
-  label
-    font-weight: bold
-    padding-right: calc(2 * var(--layout-spacing-unit))
-
   h3
     margin-top: calc(2 * var(--layout-spacing-unit))
 
@@ -20,6 +16,9 @@ main.testView
   .uContainer
     > .uButton
       margin: calc(2 * var(--layout-spacing-unit)) 0
+
+  .testView__uGrid
+    margin-top: calc(4 * var(--layout-spacing-unit))
 
   .testButtonsWrapper
     display: flex
@@ -35,6 +34,10 @@ main.testView
       text-decoration: none
       border-radius: 0
       padding: 0 calc(2 * var(--layout-spacing-unit))
+
+  .testLabel
+    font-weight: bold
+    padding-right: calc(2 * var(--layout-spacing-unit))
 
   .testWrapper
     display: flex

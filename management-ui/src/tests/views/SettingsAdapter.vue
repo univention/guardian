@@ -31,7 +31,3 @@ onMounted(async () => {
     </div>
   </main>
 </template>
-
-<style lang="stylus">
-@require '../assets/style.styl';
-</style>

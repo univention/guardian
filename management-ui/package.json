@@ -20,6 +20,7 @@
     "keycloak-js": "22.0.1",
     "pinia": "^2.1.3",
     "stylus": "^0.59.0",
+    "uuid": "^9.0.1",
     "vue": "^3.3.4",
     "vue-router": "^4.2.2"
   },
@@ -29,6 +30,7 @@
     "@tsconfig/node18": "^2.0.1",
     "@types/jsdom": "^21.1.1",
     "@types/node": "^18.16.17",
+    "@types/uuid": "^9.0.4",
     "@vitejs/plugin-vue": "^4.2.3",
     "@vue/eslint-config-prettier": "^7.1.0",
     "@vue/eslint-config-typescript": "^11.0.3",

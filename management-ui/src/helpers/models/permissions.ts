@@ -1,3 +1,18 @@
+import type {PaginationResponseData} from '@/helpers/models/pagination';
+
+export interface PermissionResponseData {
+  app_name: string;
+  namespace_name: string;
+  name: string;
+  display_name: string;
+  resource_url: string;
+}
+
+export interface PermissionsResponse {
+  pagination: PaginationResponseData;
+  permissions: PermissionResponseData[];
+}
+
 export interface Permission {
   appName: string;
   namespaceName: string;

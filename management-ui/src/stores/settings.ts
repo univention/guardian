@@ -3,6 +3,7 @@ import {ref, type Ref} from 'vue';
 import {authenticationPortSetting} from '@/ports/authentication';
 import {dataPortSetting} from '@/ports/data';
 import {inMemoryAuthenticationSettings, keycloakAuthenticationSettings} from '@/adapters/authentication';
+import {inMemoryDataSettings} from '@/adapters/data';
 import type {SettingsPort} from '@/ports/settings';
 import {EnvSettingsAdapter} from '@/adapters/settings';
 import {InvalidAdapterError} from '@/adapters/errors';
