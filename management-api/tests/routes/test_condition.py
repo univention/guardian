@@ -205,9 +205,9 @@ class TestConditionEndpoints:
                 "code": condition_to_create.code.decode(),
             },
         )
-        assert result.status_code == 400, result.json()
+        assert result.status_code == 404, result.json()
         assert result.json() == {
-            "detail": {"message": "The app and or namespace do not exist."}
+            "detail": {"message": "The app of the object to be created does not exist."}
         }, result.json()
 
     @pytest.mark.asyncio

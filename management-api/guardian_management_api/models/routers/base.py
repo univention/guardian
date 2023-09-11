@@ -119,7 +119,7 @@ class NamespacedObjectMixin(BaseModel):
 
 class AppNamePathMixin(BaseModel):
     """
-    Mixin for request models, that dds an app name path parameter.
+    Mixin for request models, that adds an app name path parameter.
     """
 
     app_name: str = Path(

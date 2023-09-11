@@ -5,12 +5,13 @@
 from dataclasses import asdict
 from typing import Any, Optional, Tuple, Type, Union
 
-from fastapi import HTTPException
 from port_loader import AsyncConfiguredAdapterMixin
-from starlette import status
 
 from ..constants import COMPLETE_URL
-from ..errors import ObjectExistsError, ObjectNotFoundError, ParentNotFoundError
+from ..errors import (
+    ObjectNotFoundError,
+    ParentNotFoundError,
+)
 from ..models.base import PaginationRequest, PersistenceGetManyResult
 from ..models.condition import Condition, ConditionGetQuery, ConditionsGetQuery
 from ..models.routers.base import (
@@ -40,10 +41,16 @@ from ..ports.condition import (
     ConditionAPIPort,
     ConditionPersistencePort,
 )
+from .fastapi_utils import TransformExceptionMixin
 from .sql_persistence import SQLAlchemyMixin
 
 
+class TransformConditionExceptionMixin(TransformExceptionMixin):
+    ...
+
+
 class FastAPIConditionAPIAdapter(
+    TransformConditionExceptionMixin,
     ConditionAPIPort[
         GetFullIdentifierRequest,
         ConditionSingleResponse,
@@ -51,33 +58,10 @@ class FastAPIConditionAPIAdapter(
         ConditionMultipleResponse,
         ConditionCreateRequest,
         ConditionEditRequest,
-    ]
+    ],
 ):
     class Config:
         alias = "fastapi"
-
-    async def transform_exception(self, exc: Exception) -> Exception:
-        if isinstance(exc, ObjectNotFoundError):
-            return HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail={"message": "Condition not found."},
-            )
-        if isinstance(exc, ObjectExistsError):
-            return HTTPException(
-                status_code=400,
-                detail={
-                    "message": "Condition with the same identifiers already exists."
-                },
-            )
-        if isinstance(exc, ParentNotFoundError):
-            return HTTPException(
-                status_code=400,
-                detail={"message": "The app and or namespace do not exist."},
-            )
-        return HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"message": "Internal Server Error"},
-        )
 
     async def to_obj_get_single(
         self, api_request: GetFullIdentifierRequest

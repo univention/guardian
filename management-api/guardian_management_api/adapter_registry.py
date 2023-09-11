@@ -13,6 +13,7 @@ from port_loader import (
 from pydantic import BaseSettings, Field
 
 from guardian_management_api.adapters.app import FastAPIAppAPIAdapter
+from guardian_management_api.adapters.permission import FastAPIPermissionAPIAdapter
 from guardian_management_api.ports.app import (
     AppAPIPort,
     AppPersistencePort,
@@ -24,7 +25,7 @@ from .ports.bundle_server import BundleServerPort
 from .ports.condition import ConditionAPIPort, ConditionPersistencePort
 from .ports.context import ContextPersistencePort
 from .ports.namespace import NamespacePersistencePort
-from .ports.permission import PermissionPersistencePort
+from .ports.permission import PermissionAPIPort, PermissionPersistencePort
 from .ports.role import RolePersistencePort
 
 PORT_CLASSES = (
@@ -98,6 +99,7 @@ def configure_registry(adapter_registry: AsyncAdapterRegistry):
     )
     for port, adapter in [
         (AppAPIPort, FastAPIAppAPIAdapter),
+        (PermissionAPIPort, FastAPIPermissionAPIAdapter),
         (ConditionAPIPort, FastAPIConditionAPIAdapter),
         (BundleServerPort, BundleServerAdapter),
     ]:

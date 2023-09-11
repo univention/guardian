@@ -1,9 +1,12 @@
 # Copyright (C) 2023 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
+from dataclasses import asdict
+
 from loguru import logger
 
 from .models.namespace import Namespace
+from .models.permission import Permission
 from .models.role import Role
 from .models.routers.app import (
     AppCreateRequest,
@@ -30,6 +33,16 @@ from .ports.condition import (
     ConditionPersistencePort,
 )
 from .ports.namespace import NamespacePersistencePort
+from .ports.permission import (
+    PermissionAPICreateRequestObject,
+    PermissionAPIEditRequestObject,
+    PermissionAPIGetMultipleRequestObject,
+    PermissionAPIGetMultipleResponseObject,
+    PermissionAPIGetSingleRequestObject,
+    PermissionAPIGetSingleResponseObject,
+    PermissionAPIPort,
+    PermissionPersistencePort,
+)
 from .ports.role import RolePersistencePort
 
 
@@ -184,5 +197,69 @@ async def update_condition(
         condition = await persistence_port.update(old_condition)
         return await api_port.to_api_get_single_response(condition)
 
+    except Exception as exc:
+        raise (await api_port.transform_exception(exc)) from exc
+
+
+async def create_permission(
+    api_request: PermissionAPICreateRequestObject,
+    api_port: PermissionAPIPort,
+    persistence_port: PermissionPersistencePort,
+) -> PermissionAPIGetSingleResponseObject:
+    try:
+        query = await api_port.to_obj_create(api_request)
+        permission = query.permissions[0]
+        created_permission = await persistence_port.create(permission)
+        return await api_port.to_api_get_single_response(created_permission)
+    except Exception as exc:
+        raise (await api_port.transform_exception(exc)) from exc
+
+
+async def get_permission(
+    api_request: PermissionAPIGetSingleRequestObject,
+    api_port: PermissionAPIPort,
+    persistence_port: PermissionPersistencePort,
+) -> PermissionAPIGetSingleResponseObject:
+    try:
+        query = await api_port.to_obj_get_single(api_request)
+        permission = await persistence_port.read_one(query)
+        return await api_port.to_api_get_single_response(permission)
+    except Exception as exc:
+        raise (await api_port.transform_exception(exc)) from exc
+
+
+async def get_permissions(
+    api_request: PermissionAPIGetMultipleRequestObject,
+    api_port: PermissionAPIPort,
+    persistence_port: PermissionPersistencePort,
+) -> PermissionAPIGetMultipleResponseObject:
+    try:
+        query = await api_port.to_obj_get_multiple(api_request)
+        many_permissions = await persistence_port.read_many(query)
+        return await api_port.to_api_get_multiple_response(
+            objs=list(many_permissions.objects),
+            query_offset=query.pagination.query_offset,
+            query_limit=query.pagination.query_limit
+            if query.pagination.query_limit
+            else many_permissions.total_count,
+            total_count=many_permissions.total_count,
+        )
+    except Exception as exc:
+        raise (await api_port.transform_exception(exc)) from exc
+
+
+async def edit_permission(
+    api_request: PermissionAPIEditRequestObject,
+    api_port: PermissionAPIPort,
+    persistence_port: PermissionPersistencePort,
+) -> PermissionAPIGetSingleResponseObject:
+    try:
+        query, changed_values = await api_port.to_obj_edit(api_request)
+        old_permission = await persistence_port.read_one(query)
+        vals = asdict(old_permission)
+        vals.update(changed_values)
+        new_permission = Permission(**vals)
+        update_permission = await persistence_port.update(new_permission)
+        return await api_port.to_api_get_single_response(update_permission)
     except Exception as exc:
         raise (await api_port.transform_exception(exc)) from exc

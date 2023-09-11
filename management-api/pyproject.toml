@@ -45,6 +45,7 @@ aioshutil = "^1.3"
 "sql" = "guardian_management_api.adapters.namespace:SQLNamespacePersistenceAdapter"
 
 [tool.poetry.plugins."guardian_management_api.PermissionPersistencePort"]
+"in_memory" = "guardian_management_api.adapters.permission:PermissionStaticDataAdapter"
 "sql" = "guardian_management_api.adapters.permission:SQLPermissionPersistenceAdapter"
 
 [tool.poetry.plugins."guardian_management_api.RolePersistencePort"]

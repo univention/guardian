@@ -2,20 +2,34 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-from guardian_management_api.models.routers.base import (
+from .base import (
+    AppNamePathMixin,
     CreateBaseRequest,
     DisplayNameObjectMixin,
     EditBaseRequest,
     GuardianBaseModel,
     NameObjectMixin,
+    NamePathMixin,
     NamespacedObjectMixin,
+    NamespacePathMixin,
     PaginationObjectMixin,
+    PaginationRequestMixin,
     ResourceURLObjectMixin,
 )
 
 #####
 # Requests
 #####
+
+
+class PermissionGetRequest(
+    GuardianBaseModel, AppNamePathMixin, NamespacePathMixin, NamePathMixin
+):
+    ...
+
+
+class PermissionsGetRequest(GuardianBaseModel, PaginationRequestMixin):
+    ...
 
 
 class PermissionCreateData(GuardianBaseModel, DisplayNameObjectMixin, NameObjectMixin):
@@ -39,7 +53,7 @@ class PermissionEditRequest(EditBaseRequest):
 #####
 
 
-class Permission(
+class FastAPIPermission(
     GuardianBaseModel,
     ResourceURLObjectMixin,
     DisplayNameObjectMixin,
@@ -49,8 +63,8 @@ class Permission(
 
 
 class PermissionSingleResponse(GuardianBaseModel):
-    permission: Permission
+    permission: FastAPIPermission
 
 
 class PermissionMultipleResponse(GuardianBaseModel, PaginationObjectMixin):
-    permissions: list[Permission]
+    permissions: list[FastAPIPermission]
