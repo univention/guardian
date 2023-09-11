@@ -2,4 +2,4 @@
 
 mkdir -p management_service_dir/
 docker compose -f dev-compose.yaml build
-USER_ID=$(shell id --user) exec docker compose -f dev-compose.yaml up
+USER_ID=$(id --user) GITLAB_IP=$(getent -i ahostsv4 git.knut.univention.de | head -n 1 | cut -d ' ' -f 1) exec docker compose -f dev-compose.yaml up
