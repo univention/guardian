@@ -22,3 +22,6 @@ async def test_get_permissions(mocker):
     api_port_mock.to_api_response.assert_called_once_with(3)
     policy_mock.get_permissions.assert_called_once_with(2)
     assert result == 4
+
+@pytest.mark.asyncio
+async def test_get_permissions_with_lookup():

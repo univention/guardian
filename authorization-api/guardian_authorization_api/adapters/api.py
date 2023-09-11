@@ -2,7 +2,9 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-from ..models.policies import Context as PoliciesContext
+from ..models.policies import (
+    Context as PoliciesContext,
+)
 from ..models.policies import (
     GetPermissionsQuery,
     GetPermissionsResult,
@@ -97,6 +99,41 @@ class FastAPIGetPermissionsAPIAdapter(GetPermissionsAPIPort):
         )
         return GetPermissionsQuery(
             actor=self._to_policy_object(api_request.actor),
+            targets=targets,
+            namespaces=namespaces,
+            contexts=contexts,
+            extra_args=api_request.extra_request_data,
+            include_general_permissions=api_request.include_general_permissions,
+        )
+
+    async def to_policy_query_with_lookup(
+        self, api_request: AuthzPermissionsPostRequest, actor, targets
+    ) -> GetPermissionsQuery:
+        def _funky_to_policy_object(obj):
+            new_target = (
+                FastAPIGetPermissionsAPIAdapter._to_policy_object(obj.new_target)
+                if api_request.targets[0].new_target
+                else None
+            )
+            old_target_id = obj.old_target.id
+            return old_target_id, new_target
+
+        namespaces = (
+            [
+                self._to_policy_namespace(namespace)
+                for namespace in api_request.namespaces
+            ]
+            if api_request.namespaces
+            else []
+        )
+        contexts = (
+            [self._to_policy_context(context) for context in api_request.contexts]
+            if api_request.contexts
+            else []
+        )
+        breakpoint()
+        return GetPermissionsQuery(
+            actor=self._to_policy_object(actor),
             targets=targets,
             namespaces=namespaces,
             contexts=contexts,

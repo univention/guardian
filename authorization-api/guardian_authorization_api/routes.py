@@ -17,7 +17,7 @@ from .models.routes import (
     AuthzPermissionsPostRequest,
     AuthzPermissionsPostResponse,
 )
-from .ports import PolicyPort
+from .ports import PolicyPort, PersistencePort
 
 router = APIRouter()
 
@@ -40,19 +40,20 @@ async def get_permissions(
 
 
 @router.post("/permissions/with-lookup")
-async def get_permissions_with_lookup(  # pragma: no-cover
+async def get_permissions_with_lookup(
     permissions_with_lookup_request: AuthzPermissionsLookupPostRequest,
+    get_permission_api: FastAPIGetPermissionsAPIAdapter = Depends(
+        port_dep(GetPermissionsAPIPort, FastAPIGetPermissionsAPIAdapter)
+    ),
+    policy_port: PolicyPort = Depends(port_dep(PolicyPort)),
+    persistence_port: PersistencePort = Depends(port_dep(PersistencePort)),
 ) -> AuthzPermissionsPostResponse:
     """
     Retrieve a list of permissions for an actor, with optional targets.
     Actor and target objects can be looked up by Guardian using an identifier.
     """
-    # Example only; not implemented
-    # Remove the pragma: no-cover when this is implemented
-    return AuthzPermissionsPostResponse(
-        actor_id=permissions_with_lookup_request.actor.id,
-        general_permissions=[],
-        target_permissions=[],
+    return await business_logic.get_permissions_with_lookup(
+        permissions_with_lookup_request, get_permission_api, policy_port, persistence_port
     )
 
 

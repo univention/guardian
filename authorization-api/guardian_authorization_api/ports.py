@@ -101,6 +101,12 @@ class GetPermissionsAPIPort(
         raise NotImplementedError  # pragma: no cover
 
     @abstractmethod
+    async def to_policy_query_with_lookup(
+        self, api_request: GetPermissionsAPIRequestObject, actor, targets # todo
+    ) -> GetPermissionsQuery:
+        raise NotImplementedError  # pragma: no cover
+
+    @abstractmethod
     async def to_api_response(
         self, permissions_result: GetPermissionsResult
     ) -> GetPermissionsAPIResponseObject:

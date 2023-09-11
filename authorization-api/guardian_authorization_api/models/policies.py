@@ -7,6 +7,8 @@ from typing import Any, Optional
 
 from guardian_lib.models.settings import SETTINGS_NAME_METADATA
 
+from guardian_authorization_api.models.routes import ActorLookup  # todo
+
 OPA_URL_SETTING_NAME = "opa_adapter.url"
 
 
@@ -62,6 +64,11 @@ class PolicyObject:
 
 
 @dataclass(frozen=True)
+class PolicyLookupObject:
+    id: str
+
+
+@dataclass(frozen=True)
 class Target:
     old_target: Optional[PolicyObject]
     new_target: Optional[PolicyObject]
@@ -110,3 +117,4 @@ class CheckPermissionsQuery:
     general_permissions: Optional[set[Permission]] = None
     context: Optional[set[Context]] = None
     extra_args: Optional[dict[str, Any]] = None
+
