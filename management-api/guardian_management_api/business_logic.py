@@ -357,6 +357,9 @@ async def create_context(
     query = await api_port.to_context_create(api_request)
     try:
         created_namespace = await persistence_port.create(query)
+        logger.bind(query=query, created_namespace=created_namespace).debug(
+            "Context created."
+        )
     except Exception as exc:
         raise (await api_port.transform_exception(exc)) from exc
     return await api_port.to_api_create_response(created_namespace)
@@ -369,8 +372,9 @@ async def get_context(
 ) -> ContextSingleResponse:
     try:
         query = await api_port.to_context_get(api_request)
-        condition = await persistence_port.read_one(query)
-        return await api_port.to_api_get_response(condition)
+        context = await persistence_port.read_one(query)
+        logger.bind(query=query, context=context).debug("Retrieved context.")
+        return await api_port.to_api_get_response(context)
     except Exception as exc:
         raise (await api_port.transform_exception(exc)) from exc
 
@@ -383,6 +387,7 @@ async def get_contexts(
     try:
         query = await api_port.to_contexts_get(api_request)
         contexts = await persistence_port.read_many(query)
+        logger.bind(query=query, contexts=contexts).debug("Retrieved contexts.")
         return await api_port.to_api_contexts_get_response(
             list(contexts.objects),
             query.pagination.query_offset,
@@ -404,6 +409,9 @@ async def edit_context(
         for key, value in changed_values.items():
             setattr(obj, key, value)
         updated_context = await persistence_port.update(obj)
+        logger.bind(query=query, updated_context=updated_context).debug(
+            "Updated context."
+        )
     except Exception as exc:
         raise (await api_port.transform_exception(exc)) from exc
     return await api_port.to_api_edit_response(updated_context)
