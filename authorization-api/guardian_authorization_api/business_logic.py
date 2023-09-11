@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
+from guardian_lib.authorization import check_authorization
+
 from guardian_authorization_api.ports import (
     GetPermissionsAPIPort,
     GetPermissionsAPIRequestObject,
@@ -10,6 +12,7 @@ from guardian_authorization_api.ports import (
 )
 
 
+@check_authorization
 async def get_permissions(
     api_request: GetPermissionsAPIRequestObject,
     get_permission_api_port: GetPermissionsAPIPort,

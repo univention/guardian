@@ -4,6 +4,7 @@
 
 from fastapi import APIRouter, Depends
 from guardian_lib.adapter_registry import port_dep
+from guardian_lib.ports import AuthenticationPort
 
 from . import business_logic
 from .adapters.api import FastAPIGetPermissionsAPIAdapter, GetPermissionsAPIPort
@@ -29,13 +30,17 @@ async def get_permissions(
         port_dep(GetPermissionsAPIPort, FastAPIGetPermissionsAPIAdapter)
     ),
     policy_port: PolicyPort = Depends(port_dep(PolicyPort)),
+    authentication_adapter: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
 ) -> AuthzPermissionsPostResponse:
     """
     Retrieve a list of permissions for an actor, with optional targets.
     Actor and target objects must be supplied in their entirety.
     """
     return await business_logic.get_permissions(
-        permissions_fetch_request, get_permission_api, policy_port
+        permissions_fetch_request,
+        get_permission_api,
+        policy_port,
+        authentication_adapter=authentication_adapter,
     )
 
 

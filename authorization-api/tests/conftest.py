@@ -2,10 +2,26 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-import pytest_asyncio
-from guardian_authorization_api.logging import configure_logger
+import os
+
+import pytest
+from guardian_authorization_api.main import app
+from starlette.testclient import TestClient
 
 
-@pytest_asyncio.fixture(autouse=True)
-async def setup_logging():
-    await configure_logger()
+@pytest.fixture
+def patch_env():
+    _environ = os.environ.copy()
+    os.environ["GUARDIAN__AUTHZ__ADAPTER__PERSISTENCE_PORT"] = "static_data"
+    os.environ["GUARDIAN__AUTHZ__ADAPTER__POLICY_PORT"] = "opa"
+    os.environ["GUARDIAN__AUTHZ__ADAPTER__AUTHENTICATION_PORT"] = "never_authorized"
+    os.environ["GUARDIAN__AUTHZ__ADAPTER__SETTINGS_PORT"] = "env"
+    yield
+    os.environ.clear()
+    os.environ.update(_environ)
+
+
+@pytest.fixture()
+def client(patch_env):
+    with TestClient(app) as client:
+        yield client
