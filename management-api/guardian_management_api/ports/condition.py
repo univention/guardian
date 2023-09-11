@@ -3,10 +3,18 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 from abc import ABC, abstractmethod
-from typing import Any, Generic, Optional, Tuple, TypeVar
+from typing import Any, Generic, Optional, Tuple
 
 from guardian_lib.ports import BasePort
 
+from ..models.base import (
+    APICreateRequestObject,
+    APIEditRequestObject,
+    APIGetMultipleRequestObject,
+    APIGetMultipleResponseObject,
+    APIGetSingleRequestObject,
+    APIGetSingleResponseObject,
+)
 from ..models.condition import Condition, ConditionGetQuery, ConditionsGetQuery
 from .base import BasePersistencePort
 
@@ -15,14 +23,6 @@ class ConditionPersistencePort(
     BasePersistencePort[Condition, ConditionGetQuery, ConditionsGetQuery], ABC
 ):
     ...
-
-
-APIGetSingleRequestObject = TypeVar("APIGetSingleRequestObject")
-APIGetSingleResponseObject = TypeVar("APIGetSingleResponseObject")
-APIGetMultipleRequestObject = TypeVar("APIGetMultipleRequestObject")
-APIGetMultipleResponseObject = TypeVar("APIGetMultipleResponseObject")
-APICreateRequestObject = TypeVar("APICreateRequestObject")
-APIEditRequestObject = TypeVar("APIEditRequestObject")
 
 
 class ConditionAPIPort(

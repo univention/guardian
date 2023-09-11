@@ -8,7 +8,6 @@ omit=
     */routers/role.py
     */routers/permission.py
     */routers/condition.py
-    */routers/capability.py
     */routers/custom_endpoint.py
     */ports/role.py
     errors.py

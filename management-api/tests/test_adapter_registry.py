@@ -8,6 +8,7 @@ from guardian_management_api.adapter_registry import (
 )
 from guardian_management_api.adapters.app import FastAPIAppAPIAdapter
 from guardian_management_api.adapters.bundle_server import BundleServerAdapter
+from guardian_management_api.adapters.capability import FastAPICapabilityAPIAdapter
 from guardian_management_api.adapters.condition import FastAPIConditionAPIAdapter
 from guardian_management_api.adapters.context import FastAPIContextAPIAdapter
 from guardian_management_api.adapters.namespace import FastAPINamespaceAPIAdapter
@@ -18,7 +19,10 @@ from guardian_management_api.ports.app import (
     AppPersistencePort,
 )
 from guardian_management_api.ports.bundle_server import BundleServerPort
-from guardian_management_api.ports.capability import CapabilityPersistencePort
+from guardian_management_api.ports.capability import (
+    CapabilityAPIPort,
+    CapabilityPersistencePort,
+)
 from guardian_management_api.ports.condition import (
     ConditionAPIPort,
     ConditionPersistencePort,
@@ -78,6 +82,7 @@ def test_configure_registry(mocker, register_test_adapters):
         mocker.call(AppAPIPort, FastAPIAppAPIAdapter),
         mocker.call(PermissionAPIPort, FastAPIPermissionAPIAdapter),
         mocker.call(ConditionAPIPort, FastAPIConditionAPIAdapter),
+        mocker.call(CapabilityAPIPort, FastAPICapabilityAPIAdapter),
         mocker.call(BundleServerPort, BundleServerAdapter),
         mocker.call(RoleAPIPort, FastAPIRoleAPIAdapter),
         mocker.call(ContextAPIPort, FastAPIContextAPIAdapter),
@@ -95,6 +100,7 @@ def test_configure_registry(mocker, register_test_adapters):
         mocker.call(AppAPIPort),
         mocker.call(PermissionAPIPort),
         mocker.call(ConditionAPIPort),
+        mocker.call(CapabilityAPIPort),
         mocker.call(BundleServerPort),
         mocker.call(RoleAPIPort),
         mocker.call(ContextAPIPort),

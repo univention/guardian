@@ -16,7 +16,10 @@ from guardian_management_api.adapters.app import (
     SQLAppPersistenceAdapter,
 )
 from guardian_management_api.adapters.bundle_server import BundleServerAdapter
-from guardian_management_api.adapters.capability import SQLCapabilityPersistenceAdapter
+from guardian_management_api.adapters.capability import (
+    FastAPICapabilityAPIAdapter,
+    SQLCapabilityPersistenceAdapter,
+)
 from guardian_management_api.adapters.condition import (
     FastAPIConditionAPIAdapter,
     SQLConditionPersistenceAdapter,
@@ -39,7 +42,7 @@ from guardian_management_api.adapters.role import (
     SQLRolePersistenceAdapter,
 )
 from guardian_management_api.adapters.sql_persistence import SQLAlchemyMixin
-from guardian_management_api.main import app
+from guardian_management_api.main import app, mount_routers
 from guardian_management_api.models.capability import CapabilityConditionRelation
 from guardian_management_api.models.sql_persistence import (
     Base,
@@ -57,7 +60,10 @@ from guardian_management_api.ports.app import (
     AppPersistencePort,
 )
 from guardian_management_api.ports.bundle_server import BundleServerPort
-from guardian_management_api.ports.capability import CapabilityPersistencePort
+from guardian_management_api.ports.capability import (
+    CapabilityAPIPort,
+    CapabilityPersistencePort,
+)
 from guardian_management_api.ports.condition import (
     ConditionAPIPort,
     ConditionPersistencePort,
@@ -120,6 +126,7 @@ def patch_env(sqlite_db_name, bundle_server_base_dir):
 @pytest.fixture()
 @pytest.mark.usefixtures("register_test_adapters")
 def client(register_test_adapters):
+    mount_routers(app)
     return TestClient(app)
 
 
@@ -174,6 +181,7 @@ def register_test_adapters(patch_env):
         (ConditionAPIPort, FastAPIConditionAPIAdapter),
         (BundleServerPort, BundleServerAdapter),
         (PermissionAPIPort, FastAPIPermissionAPIAdapter),
+        (CapabilityAPIPort, FastAPICapabilityAPIAdapter),
         (RoleAPIPort, FastAPIRoleAPIAdapter),
         (ContextAPIPort, FastAPIContextAPIAdapter),
     ]:
