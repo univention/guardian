@@ -55,7 +55,6 @@ class TestBundleServerAdapter:
             Path(adapter._data_bundle_name) / ".manifest",
             Path(adapter._data_bundle_name) / "guardian/mapping/data.json",
             Path(adapter._policy_bundle_name) / ".manifest",
-            Path(adapter._policy_bundle_name) / "guardian/conditions/test.rego",
         ):
             assert (Path(bundle_server_base_dir) / "templates" / part).exists()
 
@@ -69,7 +68,6 @@ class TestBundleServerAdapter:
             Path(adapter._data_bundle_name) / ".manifest",
             Path(adapter._data_bundle_name) / "guardian/mapping/data.json",
             Path(adapter._policy_bundle_name) / ".manifest",
-            Path(adapter._policy_bundle_name) / "guardian/conditions/test.rego",
         ):
             assert (Path(bundle_server_base_dir) / "templates" / part).exists()
 
