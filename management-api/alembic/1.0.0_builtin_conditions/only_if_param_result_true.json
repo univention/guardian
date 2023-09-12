@@ -1,0 +1,5 @@
+{
+  "display_name": "Only If Parameter Result True",
+  "documentation": "This condition is for testing purposes only and returns true if the result parameter is true.",
+  "parameters": "result"
+}
