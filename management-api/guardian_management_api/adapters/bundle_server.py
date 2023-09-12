@@ -16,33 +16,6 @@ from guardian_management_api.ports.bundle_server import BundleServerPort, Bundle
 
 BUNDLE_SERVER_ADAPTER_BASE_DIR = "bundle_server_adapter.base_dir"
 
-DUMMY_CONDITION = """
-package guardian.conditions
-
-import future.keywords.every
-import future.keywords.if
-import future.keywords.in
-
-# CONDITION DATA
-# This is the data that is passed to the condition
-# condition_data = {
-#         "actor": {},
-#         "target": {
-#              "old": {},
-#              "new": {},
-#         },
-#         "namespaces": {},
-#         "contexts": set(),
-#         "extra_args": {},
-#         "parameters": {},
-# }
-
-# This condition evaluates to true only if the parameter "result" is true
-condition("only_if_param_result_true", parameters, condition_data) if {
-	parameters.result == true
-} else = false if true
-"""
-
 DUMMY_MAPPING_JSON = {
     "roleCapabilityMapping": {
         "ucsschool:users:teacher": [
@@ -171,10 +144,6 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
                 str(data_bundle_dir / "guardian" / "mapping" / "data.json"), "wb"
             ) as file:
                 await file.write(orjson.dumps(DUMMY_MAPPING_JSON))
-            async with aiofiles.open(
-                str(policy_bundle_dir / "guardian" / "conditions" / "test.rego"), "w"
-            ) as file:
-                await file.write(DUMMY_CONDITION)
         except Exception:
             raise BundleGenerationIOError("Template could not be generated.")
 
