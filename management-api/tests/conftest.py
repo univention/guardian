@@ -27,7 +27,10 @@ from guardian_management_api.adapters.permission import (
     PermissionStaticDataAdapter,
     SQLPermissionPersistenceAdapter,
 )
-from guardian_management_api.adapters.role import SQLRolePersistenceAdapter
+from guardian_management_api.adapters.role import (
+    FastAPIRoleAPIAdapter,
+    SQLRolePersistenceAdapter,
+)
 from guardian_management_api.adapters.sql_persistence import SQLAlchemyMixin
 from guardian_management_api.main import app
 from guardian_management_api.models.sql_persistence import (
@@ -54,7 +57,10 @@ from guardian_management_api.ports.permission import (
     PermissionAPIPort,
     PermissionPersistencePort,
 )
-from guardian_management_api.ports.role import RolePersistencePort
+from guardian_management_api.ports.role import (
+    RoleAPIPort,
+    RolePersistencePort,
+)
 from port_loader import AsyncAdapterRegistry, AsyncAdapterSettingsProvider
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -151,6 +157,7 @@ def register_test_adapters(patch_env):
         (ConditionAPIPort, FastAPIConditionAPIAdapter),
         (BundleServerPort, BundleServerAdapter),
         (PermissionAPIPort, FastAPIPermissionAPIAdapter),
+        (RoleAPIPort, FastAPIRoleAPIAdapter),
     ]:
         adapter_registry.ADAPTER_REGISTRY.register_port(port)
         adapter_registry.ADAPTER_REGISTRY.register_adapter(port, adapter_cls=adapter)

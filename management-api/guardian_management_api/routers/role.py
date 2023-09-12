@@ -2,24 +2,25 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-from fastapi import APIRouter, Depends
+from typing import Any, Dict
 
-from ..models.routers.base import (
-    GetAllRequest,
-    GetByAppRequest,
-    GetByNamespaceRequest,
-    GetFullIdentifierRequest,
-    PaginationInfo,
-)
-from ..models.routers.role import (
-    Role as ResponseRole,
-)
+from fastapi import APIRouter, Depends
+from guardian_lib.adapter_registry import port_dep
+
+from guardian_management_api import business_logic
+
+from ..adapters.role import FastAPIRoleAPIAdapter
 from ..models.routers.role import (
     RoleCreateRequest,
     RoleEditRequest,
+    RoleGetAllRequest,
+    RoleGetByAppRequest,
+    RoleGetByNamespaceRequest,
+    RoleGetFullIdentifierRequest,
     RoleMultipleResponse,
     RoleSingleResponse,
 )
+from ..ports.role import RoleAPIPort, RolePersistencePort
 
 router = APIRouter(tags=["role"])
 
@@ -27,107 +28,121 @@ router = APIRouter(tags=["role"])
 @router.get(
     "/roles/{app_name}/{namespace_name}/{name}", response_model=RoleSingleResponse
 )
-async def get_role(role_get_request: GetFullIdentifierRequest = Depends()):
+async def get_role(
+    role_get_request: RoleGetFullIdentifierRequest = Depends(),
+    management_role_api: RoleAPIPort = Depends(
+        port_dep(RoleAPIPort, FastAPIRoleAPIAdapter)
+    ),
+    persistence: RolePersistencePort = Depends(port_dep(RolePersistencePort)),
+) -> Dict[str, Any]:
     """
     Returns a role object identified by `app_name`, `namespace_name` and `name`.
     """
-    return RoleSingleResponse(
-        role=ResponseRole(
-            app_name="my-app",
-            namespace_name="my-namespace",
-            name="my-role",
-            display_name="My Role",
-            resource_url="http://fqdn/guardian/management/roles/my-app/my-namespace/my-role",
-        )
-    ).dict()
+    response: RoleSingleResponse = await business_logic.get_role(
+        api_request=role_get_request,
+        role_api_port=management_role_api,
+        persistence_port=persistence,
+    )
+
+    return response.dict()
 
 
 @router.get("/roles", response_model=RoleMultipleResponse)
-async def get_all_roles(role_get_request: GetAllRequest = Depends()):
+async def get_all_roles(
+    role_get_request: RoleGetAllRequest = Depends(),
+    management_role_api: RoleAPIPort = Depends(
+        port_dep(RoleAPIPort, FastAPIRoleAPIAdapter)
+    ),
+    persistence: RolePersistencePort = Depends(port_dep(RolePersistencePort)),
+) -> Dict[str, Any]:
     """
     Returns a list of all roles.
     """
-    return RoleMultipleResponse(
-        roles=[
-            ResponseRole(
-                app_name="my-app",
-                namespace_name="my-namespace",
-                name="my-role",
-                display_name="My Role",
-                resource_url="http://fqdn/guardian/management/roles/my-app/my-namespace/my-role",
-            )
-        ],
-        pagination=PaginationInfo(limit=1000, offset=0, total_count=1),
-    ).dict()
+    response: RoleMultipleResponse = await business_logic.get_roles(
+        api_request=role_get_request,
+        role_api_port=management_role_api,
+        persistence_port=persistence,
+    )
+
+    return response.dict()
 
 
 @router.get("/roles/{app_name}", response_model=RoleMultipleResponse)
-async def get_roles_by_app(role_get_request: GetByAppRequest = Depends()):
+async def get_roles_by_app(
+    role_get_request: RoleGetByAppRequest = Depends(),
+    management_role_api: RoleAPIPort = Depends(
+        port_dep(RoleAPIPort, FastAPIRoleAPIAdapter)
+    ),
+    persistence: RolePersistencePort = Depends(port_dep(RolePersistencePort)),
+) -> Dict[str, Any]:
     """
     Returns a list of all roles that belong to `app_name`.
     """
-    return RoleMultipleResponse(
-        roles=[
-            ResponseRole(
-                app_name="my-app",
-                namespace_name="my-namespace",
-                name="my-role",
-                display_name="My Role",
-                resource_url="http://fqdn/guardian/management/roles/my-app/my-namespace/my-role",
-            )
-        ],
-        pagination=PaginationInfo(limit=1000, offset=0, total_count=1),
-    ).dict()
+    response: RoleMultipleResponse = await business_logic.get_roles(
+        api_request=role_get_request,
+        role_api_port=management_role_api,
+        persistence_port=persistence,
+    )
+
+    return response.dict()
 
 
 @router.get("/roles/{app_name}/{namespace_name}", response_model=RoleMultipleResponse)
-async def get_roles_by_namespace(role_get_request: GetByNamespaceRequest = Depends()):
+async def get_roles_by_namespace(
+    role_get_request: RoleGetByNamespaceRequest = Depends(),
+    management_role_api: RoleAPIPort = Depends(
+        port_dep(RoleAPIPort, FastAPIRoleAPIAdapter)
+    ),
+    persistence: RolePersistencePort = Depends(port_dep(RolePersistencePort)),
+) -> Dict[str, Any]:
     """
     Returns a list of all roles that belong to `namespace_name` under `app_name`.
     """
-    return RoleMultipleResponse(
-        roles=[
-            ResponseRole(
-                app_name="my-app",
-                namespace_name="my-namespace",
-                name="my-role",
-                display_name="My Role",
-                resource_url="http://fqdn/guardian/management/roles/my-app/my-namespace/my-role",
-            )
-        ],
-        pagination=PaginationInfo(limit=1000, offset=0, total_count=1),
-    ).dict()
+    response: RoleMultipleResponse = await business_logic.get_roles(
+        api_request=role_get_request,
+        role_api_port=management_role_api,
+        persistence_port=persistence,
+    )
+
+    return response.dict()
 
 
 @router.post("/roles/{app_name}/{namespace_name}", response_model=RoleSingleResponse)
-async def create_role(role_create_request: RoleCreateRequest = Depends()):
+async def create_role(
+    role_create_request: RoleCreateRequest = Depends(),
+    management_role_api: RoleAPIPort = Depends(
+        port_dep(RoleAPIPort, FastAPIRoleAPIAdapter)
+    ),
+    persistence: RolePersistencePort = Depends(port_dep(RolePersistencePort)),
+) -> Dict[str, Any]:
     """
     Create a role.
     """
-    return RoleSingleResponse(
-        role=ResponseRole(
-            app_name="my-app",
-            namespace_name="my-namespace",
-            name="my-role",
-            display_name="My Role",
-            resource_url="http://fqdn/guardian/management/roles/my-app/my-namespace/my-role",
-        )
-    ).dict()
+    response: RoleSingleResponse = await business_logic.create_role(
+        api_request=role_create_request,
+        role_api_port=management_role_api,
+        persistence_port=persistence,
+    )
+    return response.dict()
 
 
 @router.patch(
     "/roles/{app_name}/{namespace_name}/{name}", response_model=RoleSingleResponse
 )
-async def edit_role(role_edit_request: RoleEditRequest = Depends()):
+async def edit_role(
+    role_edit_request: RoleEditRequest = Depends(),
+    management_role_api: RoleAPIPort = Depends(
+        port_dep(RoleAPIPort, FastAPIRoleAPIAdapter)
+    ),
+    persistence: RolePersistencePort = Depends(port_dep(RolePersistencePort)),
+) -> Dict[str, Any]:
     """
     Update a role.
     """
-    return RoleSingleResponse(
-        role=ResponseRole(
-            app_name="my-app",
-            namespace_name="my-namespace",
-            name="my-role",
-            display_name="My Role",
-            resource_url="http://fqdn/guardian/management/roles/my-app/my-namespace/my-role",
-        )
-    ).dict()
+    response: RoleSingleResponse = await business_logic.edit_role(
+        api_request=role_edit_request,
+        role_api_port=management_role_api,
+        persistence_port=persistence,
+    )
+
+    return response.dict()
