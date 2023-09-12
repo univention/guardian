@@ -142,11 +142,4 @@ class SettingsPort(BasePort, AsyncAdapterSettingsProvider, ABC):
 
 
 class AuthenticationPort(BasePort):
-    @abstractmethod
-    async def authorized(self) -> bool:
-        """
-        Checks if the caller has authorization.
-
-        :return: True if caller is authorized
-        """
-        raise NotImplementedError  # pragma: no cover
+    pass
