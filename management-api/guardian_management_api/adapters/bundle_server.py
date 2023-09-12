@@ -6,6 +6,7 @@ from typing import Type
 
 import aiofiles.os
 import aioshutil
+import loguru
 import orjson
 from guardian_lib.models.settings import SETTINGS_NAME_METADATA
 from port_loader import AsyncConfiguredAdapterMixin
@@ -147,6 +148,20 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
         except Exception:
             raise BundleGenerationIOError("Template could not be generated.")
 
+    async def _prepare_build_directory(
+        self, base_dir: Path, bundle_name: str, logger: "loguru.Logger"
+    ):
+        """
+        Cleans up the build directory and copies over the template.
+        """
+        try:
+            await aioshutil.rmtree(base_dir / "build" / bundle_name)
+        except FileNotFoundError:
+            logger.debug("build directory was not found. No need for cleanup")
+        await aioshutil.copytree(
+            base_dir / "templates" / bundle_name, base_dir / "build" / bundle_name
+        )
+
     async def _build_bundle(self, bundle_type: BundleType):
         if bundle_type == BundleType.data:
             bundle_name = self._data_bundle_name
@@ -161,13 +176,7 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
         )
         local_logger.debug("Generating bundle.")
         base_dir = Path(self._base_dir)
-        try:
-            await aioshutil.rmtree(base_dir / "build" / bundle_name)
-        except FileNotFoundError:
-            local_logger.debug("build directory was not found. No need for cleanup")
-        await aioshutil.copytree(
-            base_dir / "templates" / bundle_name, base_dir / "build" / bundle_name
-        )
+        await self._prepare_build_directory(base_dir, bundle_name, local_logger)
         build_cmd = (
             f"opa build -b {base_dir / 'build' / bundle_name} -o "
             f"{base_dir / 'bundles' / bundle_name}.tar.gz"

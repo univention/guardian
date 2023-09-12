@@ -80,23 +80,21 @@ class TestBundleServerAdapter:
 
     @pytest.mark.parametrize("bundle_type", [BundleType.data, BundleType.policies])
     @pytest.mark.asyncio
-    async def test__build_bundle(
+    async def test__prepare_build_dir(
         self, adapter: BundleServerAdapter, mocker, bundle_server_base_dir, bundle_type
     ):
         rmtree_mock = mocker.AsyncMock()
         copytree_mock = mocker.AsyncMock()
-        process_mock = mocker.AsyncMock()
-        subprocess_mock = mocker.AsyncMock(return_value=process_mock)
-        process_mock.returncode = 0
         mocker.patch("aioshutil.rmtree", rmtree_mock)
         mocker.patch("aioshutil.copytree", copytree_mock)
-        mocker.patch("asyncio.create_subprocess_shell", subprocess_mock)
         subpath = (
             adapter._data_bundle_name
             if bundle_type == BundleType.data
             else adapter._policy_bundle_name
         )
-        await adapter._build_bundle(bundle_type)
+        await adapter._prepare_build_directory(
+            Path(bundle_server_base_dir), subpath, mocker.Mock()
+        )
         assert rmtree_mock.call_args_list == [
             call(Path(bundle_server_base_dir) / "build" / subpath)
         ]
@@ -106,6 +104,24 @@ class TestBundleServerAdapter:
                 Path(bundle_server_base_dir) / "build" / subpath,
             )
         ]
+
+    @pytest.mark.parametrize("bundle_type", [BundleType.data, BundleType.policies])
+    @pytest.mark.asyncio
+    async def test__build_bundle(
+        self, adapter: BundleServerAdapter, mocker, bundle_server_base_dir, bundle_type
+    ):
+        process_mock = mocker.AsyncMock()
+        subprocess_mock = mocker.AsyncMock(return_value=process_mock)
+        process_mock.returncode = 0
+        mocker.patch("asyncio.create_subprocess_shell", subprocess_mock)
+        prepare_build_dir_mock = mocker.AsyncMock()
+        adapter._prepare_build_directory = prepare_build_dir_mock
+        subpath = (
+            adapter._data_bundle_name
+            if bundle_type == BundleType.data
+            else adapter._policy_bundle_name
+        )
+        await adapter._build_bundle(bundle_type)
         build_cmd = (
             f"opa build -b {Path(bundle_server_base_dir) / 'build' / subpath} -o "
             f"{Path(bundle_server_base_dir) / 'bundles' / subpath}.tar.gz"
@@ -114,30 +130,25 @@ class TestBundleServerAdapter:
         process_mock.communicate.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test__build_bundle_build_dir_not_found(
+    async def test__prepare_build_directory_build_dir_not_found(
         self, adapter: BundleServerAdapter, mocker, bundle_server_base_dir
     ):
         rmtree_mock = mocker.AsyncMock(side_effect=FileNotFoundError)
         copytree_mock = mocker.AsyncMock()
-        process_mock = mocker.AsyncMock()
-        subprocess_mock = mocker.AsyncMock(return_value=process_mock)
-        process_mock.returncode = 0
         mocker.patch("aioshutil.rmtree", rmtree_mock)
         mocker.patch("aioshutil.copytree", copytree_mock)
-        mocker.patch("asyncio.create_subprocess_shell", subprocess_mock)
-        await adapter._build_bundle(BundleType.data)
+        await adapter._prepare_build_directory(
+            Path(bundle_server_base_dir), adapter._data_bundle_name, mocker.MagicMock()
+        )
 
     @pytest.mark.asyncio
     async def test__build_bundle_build_error(
         self, adapter: BundleServerAdapter, mocker, bundle_server_base_dir
     ):
-        rmtree_mock = mocker.AsyncMock()
-        copytree_mock = mocker.AsyncMock()
+        adapter._prepare_build_directory = mocker.AsyncMock()
         process_mock = mocker.AsyncMock()
         subprocess_mock = mocker.AsyncMock(return_value=process_mock)
         process_mock.returncode = 1
-        mocker.patch("aioshutil.rmtree", rmtree_mock)
-        mocker.patch("aioshutil.copytree", copytree_mock)
         mocker.patch("asyncio.create_subprocess_shell", subprocess_mock)
         with pytest.raises(BundleBuildError):
             await adapter._build_bundle(BundleType.data)
