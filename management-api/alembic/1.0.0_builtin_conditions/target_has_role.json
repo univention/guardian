@@ -1,0 +1,5 @@
+{
+  "display_name": "Only if target has role",
+  "documentation": "True if the target has the specified role",
+  "parameters": "role"
+}
