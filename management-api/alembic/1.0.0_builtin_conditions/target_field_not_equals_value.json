@@ -1,0 +1,5 @@
+{
+  "display_name": "Only if target field not equals value",
+  "documentation": "True if the value of the target's specified field doesn't match the specified value.",
+  "parameters": "field,value"
+}
