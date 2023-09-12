@@ -1,0 +1,5 @@
+{
+  "display_name": "Only if actor does note have role",
+  "documentation": "True if the actor does not have the specified role",
+  "parameters": "role"
+}
