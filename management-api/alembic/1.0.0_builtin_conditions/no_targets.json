@@ -1,0 +1,5 @@
+{
+  "display_name": "Only if target is empty",
+  "documentation": "True if the target (old and new) is the empty target (id=='', empty object, or null). This condition can be used to model general permission.",
+  "parameters": ""
+}
