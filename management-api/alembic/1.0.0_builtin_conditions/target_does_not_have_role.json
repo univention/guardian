@@ -1,0 +1,5 @@
+{
+  "display_name": "Only if target does note have role",
+  "documentation": "True if the target does not have the specified role",
+  "parameters": "role"
+}
