@@ -4,7 +4,7 @@ import future.keywords.every
 import future.keywords.if
 import future.keywords.in
 
-import data.univention.conditions.condition
+import data.guardian.conditions.condition
 
 evaluate_conditions("AND", conditions, condition_data) if {
 	every c in conditions {

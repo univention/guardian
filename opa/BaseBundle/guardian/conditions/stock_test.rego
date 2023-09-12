@@ -1,6 +1,6 @@
 package univention.stock_test
 
-import data.univention.conditions.condition
+import data.guardian.conditions.condition
 import future.keywords.every
 import future.keywords.if
 

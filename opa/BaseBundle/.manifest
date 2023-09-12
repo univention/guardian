@@ -1,7 +1,8 @@
 {
   "revision": "0.0.1",
   "roots": [
-    "univention"
+    "univention",
+    "guardian"
   ]
 }
 
