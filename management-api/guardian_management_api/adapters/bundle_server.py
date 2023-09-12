@@ -1,4 +1,5 @@
 import asyncio
+import base64
 from asyncio import Lock, Queue, QueueEmpty, QueueFull
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -13,7 +14,12 @@ from port_loader import AsyncConfiguredAdapterMixin
 
 from guardian_management_api.constants import DEFAULT_BUNDLE_SERVER_BASE_DIR
 from guardian_management_api.errors import BundleBuildError, BundleGenerationIOError
+from guardian_management_api.models.base import (
+    PaginationRequest,
+)
+from guardian_management_api.models.condition import ConditionsGetQuery
 from guardian_management_api.ports.bundle_server import BundleServerPort, BundleType
+from guardian_management_api.ports.condition import ConditionPersistencePort
 
 BUNDLE_SERVER_ADAPTER_BASE_DIR = "bundle_server_adapter.base_dir"
 
@@ -162,7 +168,39 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
             base_dir / "templates" / bundle_name, base_dir / "build" / bundle_name
         )
 
-    async def _build_bundle(self, bundle_type: BundleType):
+    async def _dump_conditions(
+        self, persistence: ConditionPersistencePort, bundle_build_dir: Path
+    ):
+        """
+        Writes all conditions to rego files in the build directory.
+
+        If the Bundle Server does not get replaced by some external service:
+        - Implement paginated iteration
+
+        """
+        try:
+            get_many_result = await persistence.read_many(
+                ConditionsGetQuery(
+                    pagination=PaginationRequest(query_offset=0, query_limit=None)
+                )
+            )
+            for condition in get_many_result.objects:
+                async with aiofiles.open(
+                    bundle_build_dir / "guardian/conditions" / f"{condition.name}.rego",
+                    "wb",
+                ) as file:
+                    await file.write(base64.b64decode(condition.code))
+        except Exception as exc:
+            raise BundleGenerationIOError(
+                "An error occurred while writing the conditions to files."
+            ) from exc
+
+    async def _generate_mapping(self):
+        pass  # pragma: no cover
+
+    async def _build_bundle(
+        self, bundle_type: BundleType, cond_persistence_port: ConditionPersistencePort
+    ):
         if bundle_type == BundleType.data:
             bundle_name = self._data_bundle_name
         elif bundle_type == BundleType.policies:
@@ -177,6 +215,12 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
         local_logger.debug("Generating bundle.")
         base_dir = Path(self._base_dir)
         await self._prepare_build_directory(base_dir, bundle_name, local_logger)
+        if bundle_type == BundleType.data:
+            await self._generate_mapping()
+        elif bundle_type == BundleType.policies:
+            await self._dump_conditions(
+                cond_persistence_port, base_dir / "build" / bundle_name
+            )
         build_cmd = (
             f"opa build -b {base_dir / 'build' / bundle_name} -o "
             f"{base_dir / 'bundles' / bundle_name}.tar.gz"
@@ -188,17 +232,17 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
         if build_proc.returncode != 0:
             raise BundleBuildError("Error during build of OPA bundles.")
 
-    async def generate_bundles(self):
+    async def generate_bundles(self, cond_persistence_port: ConditionPersistencePort):
         async with self._build_lock:
             try:
                 self._data_bundle_queue.get_nowait()
-                await self._build_bundle(BundleType.data)
+                await self._build_bundle(BundleType.data, cond_persistence_port)
                 self._data_bundle_queue.task_done()
             except QueueEmpty:
                 self.logger.debug("No data bundle scheduled for generation.")
             try:
                 self._policies_bundle_queue.get_nowait()
-                await self._build_bundle(BundleType.policies)
+                await self._build_bundle(BundleType.policies, cond_persistence_port)
                 self._policies_bundle_queue.task_done()
             except QueueEmpty:
                 self.logger.debug("No policy bundle scheduled for generation.")
