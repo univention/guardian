@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from guardian_lib.adapter_registry import port_dep
 from guardian_lib.ports import AuthenticationPort
 
@@ -20,7 +20,17 @@ from .models.routes import (
 )
 from .ports import PolicyPort
 
-router = APIRouter()
+
+async def authenticate():
+    authentication_adapter = await port_dep(AuthenticationPort)()
+    if not await authentication_adapter.authorized():
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not Authorized",
+        )
+
+
+router = APIRouter(dependencies=[Depends(authenticate)])
 
 
 @router.post("/permissions")
@@ -30,7 +40,6 @@ async def get_permissions(
         port_dep(GetPermissionsAPIPort, FastAPIGetPermissionsAPIAdapter)
     ),
     policy_port: PolicyPort = Depends(port_dep(PolicyPort)),
-    authentication_adapter: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
 ) -> AuthzPermissionsPostResponse:
     """
     Retrieve a list of permissions for an actor, with optional targets.
@@ -40,7 +49,6 @@ async def get_permissions(
         permissions_fetch_request,
         get_permission_api,
         policy_port,
-        authentication_adapter=authentication_adapter,
     )
 
 
