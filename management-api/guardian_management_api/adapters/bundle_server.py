@@ -178,7 +178,15 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
         except Exception:
             raise BundleGenerationIOError("Template could not be generated.")
 
-    async def _build_bundle(self, bundle_name: str):
+    async def _build_bundle(self, bundle_type: BundleType):
+        if bundle_type == BundleType.data:
+            bundle_name = self._data_bundle_name
+        elif bundle_type == BundleType.policies:
+            bundle_name = self._policy_bundle_name
+        else:
+            raise RuntimeError(
+                f"Unknown bundle type: {bundle_type}"
+            )  # pragma: no cover
         local_logger = self.logger.bind(
             bundle_name=bundle_name, base_dir=self._base_dir
         )
@@ -206,13 +214,13 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
         async with self._build_lock:
             try:
                 self._data_bundle_queue.get_nowait()
-                await self._build_bundle(self._data_bundle_name)
+                await self._build_bundle(BundleType.data)
                 self._data_bundle_queue.task_done()
             except QueueEmpty:
                 self.logger.debug("No data bundle scheduled for generation.")
             try:
                 self._policies_bundle_queue.get_nowait()
-                await self._build_bundle(self._policy_bundle_name)
+                await self._build_bundle(BundleType.policies)
                 self._policies_bundle_queue.task_done()
             except QueueEmpty:
                 self.logger.debug("No policy bundle scheduled for generation.")

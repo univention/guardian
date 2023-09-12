@@ -80,9 +80,10 @@ class TestBundleServerAdapter:
         with pytest.raises(BundleGenerationIOError):
             await adapter.generate_templates()
 
+    @pytest.mark.parametrize("bundle_type", [BundleType.data, BundleType.policies])
     @pytest.mark.asyncio
     async def test__build_bundle(
-        self, adapter: BundleServerAdapter, mocker, bundle_server_base_dir
+        self, adapter: BundleServerAdapter, mocker, bundle_server_base_dir, bundle_type
     ):
         rmtree_mock = mocker.AsyncMock()
         copytree_mock = mocker.AsyncMock()
@@ -92,19 +93,24 @@ class TestBundleServerAdapter:
         mocker.patch("aioshutil.rmtree", rmtree_mock)
         mocker.patch("aioshutil.copytree", copytree_mock)
         mocker.patch("asyncio.create_subprocess_shell", subprocess_mock)
-        await adapter._build_bundle(adapter._data_bundle_name)
+        subpath = (
+            adapter._data_bundle_name
+            if bundle_type == BundleType.data
+            else adapter._policy_bundle_name
+        )
+        await adapter._build_bundle(bundle_type)
         assert rmtree_mock.call_args_list == [
-            call(Path(bundle_server_base_dir) / "build" / adapter._data_bundle_name)
+            call(Path(bundle_server_base_dir) / "build" / subpath)
         ]
         assert copytree_mock.call_args_list == [
             call(
-                Path(bundle_server_base_dir) / "templates" / adapter._data_bundle_name,
-                Path(bundle_server_base_dir) / "build" / adapter._data_bundle_name,
+                Path(bundle_server_base_dir) / "templates" / subpath,
+                Path(bundle_server_base_dir) / "build" / subpath,
             )
         ]
         build_cmd = (
-            f"opa build -b {Path(bundle_server_base_dir) / 'build' / adapter._data_bundle_name} -o "
-            f"{Path(bundle_server_base_dir) / 'bundles' / adapter._data_bundle_name}.tar.gz"
+            f"opa build -b {Path(bundle_server_base_dir) / 'build' / subpath} -o "
+            f"{Path(bundle_server_base_dir) / 'bundles' / subpath}.tar.gz"
         )
         assert subprocess_mock.call_args_list == [call(build_cmd)]
         process_mock.communicate.assert_called_once()
@@ -121,7 +127,7 @@ class TestBundleServerAdapter:
         mocker.patch("aioshutil.rmtree", rmtree_mock)
         mocker.patch("aioshutil.copytree", copytree_mock)
         mocker.patch("asyncio.create_subprocess_shell", subprocess_mock)
-        await adapter._build_bundle(adapter._data_bundle_name)
+        await adapter._build_bundle(BundleType.data)
 
     @pytest.mark.asyncio
     async def test__build_bundle_build_error(
@@ -136,7 +142,7 @@ class TestBundleServerAdapter:
         mocker.patch("aioshutil.copytree", copytree_mock)
         mocker.patch("asyncio.create_subprocess_shell", subprocess_mock)
         with pytest.raises(BundleBuildError):
-            await adapter._build_bundle(adapter._data_bundle_name)
+            await adapter._build_bundle(BundleType.data)
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
@@ -165,8 +171,8 @@ class TestBundleServerAdapter:
         await adapter.schedule_bundle_build(BundleType.policies)
         await adapter.generate_bundles()
         assert build_bundle_mock.call_args_list == [
-            call(adapter._data_bundle_name),
-            call(adapter._policy_bundle_name),
+            call(BundleType.data),
+            call(BundleType.policies),
         ]
 
     @pytest.mark.asyncio
