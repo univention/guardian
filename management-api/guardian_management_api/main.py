@@ -18,6 +18,7 @@ from .adapter_registry import configure_registry, initialize_adapters
 from .constants import API_PREFIX, BUNDLE_SERVER_DISABLED_SETTING_NAME
 from .logging import configure_logger
 from .ports.bundle_server import BundleServerPort, BundleType
+from .ports.condition import ConditionPersistencePort
 from .routers.app import router as app_router
 from .routers.capability import router as capability_router
 from .routers.condition import router as condition_router
@@ -45,10 +46,13 @@ def mount_bundle_server(fastapi_app: FastAPI, bundle_dir: Path):
     )
 
 
-async def rebuild_bundle(bundle_server_port: BundleServerPort):  # pragma: no cover
+async def rebuild_bundle(
+    bundle_server_port: BundleServerPort,
+    condition_persistence_port: ConditionPersistencePort,
+):  # pragma: no cover
     while True:
         try:
-            await bundle_server_port.generate_bundles()
+            await bundle_server_port.generate_bundles(condition_persistence_port)
         except Exception:
             logging.exception("Exception during bundle rebuild")
         await asyncio.sleep(bundle_server_port.get_check_interval())
@@ -72,12 +76,17 @@ async def lifespan(fastapi_app: FastAPI):
         bundle_server_port: BundleServerPort = await ADAPTER_REGISTRY.request_port(
             BundleServerPort
         )
+        cond_persistence_port = await ADAPTER_REGISTRY.request_port(
+            ConditionPersistencePort
+        )
         bundle_dir = await bundle_server_port.prepare_directories()
         mount_bundle_server(fastapi_app, bundle_dir)
         await bundle_server_port.generate_templates()
         await bundle_server_port.schedule_bundle_build(BundleType.data)
         await bundle_server_port.schedule_bundle_build(BundleType.policies)
-        rebuild_bundle_task = asyncio.create_task(rebuild_bundle(bundle_server_port))
+        rebuild_bundle_task = asyncio.create_task(
+            rebuild_bundle(bundle_server_port, cond_persistence_port)
+        )
     yield
     if rebuild_bundle_task is not None:
         rebuild_bundle_task.cancel()

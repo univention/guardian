@@ -137,3 +137,15 @@ persistance_condition_adapter = await port_dep(ConditionPersistencePort)()
 my_condition = Condition(name="my_condition", app_name="foo", namespace_name="bar", code=b"123")
 await persistance_condition_adapter.create(my_condition)
 ```
+
+## Notes for future documentation
+
+### Bundle Server
+
+The bundle server runs asynchronously to the API and generates the policy and data bundles for OPA.
+It is important to note, that if a client to the API ingests faulty rego code, the bundle generation
+will fail. As a consequence the last successfully built bundle before the faulty code was ingested, is served.
+
+There is no direct feedback to whoever calls the API. In the future we might want to include something
+like a healthcheck or similar. For now though the only way to identify a problem with the bundle build is to
+observe the logs.
