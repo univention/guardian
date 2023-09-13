@@ -70,7 +70,7 @@ class FastAPIContextAPIAdapter(
         if isinstance(exc, ParentNotFoundError):
             return HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail={"message": "Context not found."},
+                detail={"message": "Corresponding App or Namespace not found."},
             )
         elif isinstance(exc, ObjectExistsError):
             return HTTPException(
