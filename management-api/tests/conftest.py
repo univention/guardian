@@ -4,6 +4,7 @@
 
 import os
 from base64 import b64encode
+from pathlib import Path
 from typing import Optional
 
 import guardian_lib.adapter_registry as adapter_registry
@@ -118,6 +119,9 @@ def patch_env(sqlite_db_name, bundle_server_base_dir):
     os.environ["SQL_PERSISTENCE_ADAPTER__DIALECT"] = "sqlite"
     os.environ["SQL_PERSISTENCE_ADAPTER__DB_NAME"] = sqlite_db_name
     os.environ["BUNDLE_SERVER_ADAPTER__BASE_DIR"] = bundle_server_base_dir
+    os.environ["BUNDLE_SERVER_ADAPTER__POLICY_BUNDLE_TEMPLATE_SRC"] = str(
+        Path(__file__).parents[1] / "rego_policy_bundle_template"
+    )
     yield
     os.environ.clear()
     os.environ.update(_environ)

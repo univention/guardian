@@ -79,6 +79,12 @@ class BundleServerAdapterSettings:
         default="GuardianPolicyBundle",
         metadata={SETTINGS_NAME_METADATA: "bundle_server_adapter.policy_bundle_name"},
     )
+    policy_bundle_template_src: str = field(
+        default="/app/management-api/rego_policy_bundle_template",
+        metadata={
+            SETTINGS_NAME_METADATA: "bundle_server_adapter.policy_bundle_template_src"
+        },
+    )
 
 
 class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
@@ -90,6 +96,9 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
         self._check_interval_time = 5.0
         self._data_bundle_name = "GuardianDataBundle"
         self._policy_bundle_name = "GuardianPolicyBundle"
+        self._policy_bundle_template_src = (
+            "/app/management-api/rego_policy_bundle_template"
+        )
         self._base_dir = DEFAULT_BUNDLE_SERVER_BASE_DIR
         self._data_bundle_queue = Queue(1)
         self._build_lock = Lock()
@@ -103,6 +112,7 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
         self._check_interval_time = float(settings.check_interval)
         self._data_bundle_name = settings.data_bundle_name
         self._base_dir = settings.base_dir
+        self._policy_bundle_template_src = settings.policy_bundle_template_src
 
     def get_check_interval(self) -> float:  # pragma: no cover
         return self._check_interval_time
@@ -124,7 +134,6 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
 
     async def generate_templates(self):
         data_bundle_manifest = {"roots": ["guardian/mapping"]}
-        policy_bundle_manifest = {"roots": ["guardian/conditions"]}
         try:
             data_bundle_dir = (
                 Path(self._base_dir) / "templates" / self._data_bundle_name
@@ -133,20 +142,16 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
                 Path(self._base_dir) / "templates" / self._policy_bundle_name
             )
             try:
-                await aiofiles.os.makedirs(
-                    str(data_bundle_dir / "guardian" / "mapping")
-                )
-                await aiofiles.os.makedirs(
-                    str(policy_bundle_dir / "guardian" / "conditions")
-                )
-            except FileExistsError:
+                await aioshutil.rmtree(policy_bundle_dir)
+                await aioshutil.rmtree(data_bundle_dir)
+            except FileNotFoundError:
                 pass
+            await aiofiles.os.makedirs(str(data_bundle_dir / "guardian" / "mapping"))
+            await aioshutil.copytree(
+                self._policy_bundle_template_src, policy_bundle_dir
+            )
             async with aiofiles.open(str(data_bundle_dir / ".manifest"), "wb") as file:
                 await file.write(orjson.dumps(data_bundle_manifest))
-            async with aiofiles.open(
-                str(policy_bundle_dir / ".manifest"), "wb"
-            ) as file:
-                await file.write(orjson.dumps(policy_bundle_manifest))
             async with aiofiles.open(
                 str(data_bundle_dir / "guardian" / "mapping" / "data.json"), "wb"
             ) as file:

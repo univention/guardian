@@ -81,11 +81,11 @@ repos:
   hooks:
   - id: opa-fmt
   - id: opa-check
-    args: ["opa/BaseBundle"]
+    args: ["management-api/rego_policy_bundle_template"]
   - id: opa-check
     args: [ "management-api/alembic/1.0.0_builtin_conditions", "--ignore=\"*.json\"" ]
   - id: opa-test
-    args: ["opa/BaseBundle"]
+    args: ["management-api/rego_policy_bundle_template"]
   - id: opa-test
     args: [ "management-api/alembic/1.0.0_builtin_conditions", "--ignore=\"*.json\"" ]
 

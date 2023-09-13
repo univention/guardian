@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from unittest.mock import call
 
@@ -47,9 +48,13 @@ class TestBundleServerAdapter:
             await adapter.prepare_directories()
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures("patch_env")
     async def test_generate_templates(
         self, adapter: BundleServerAdapter, bundle_server_base_dir
     ):
+        adapter._policy_bundle_template_src = os.environ[
+            "BUNDLE_SERVER_ADAPTER__POLICY_BUNDLE_TEMPLATE_SRC"
+        ]
         await adapter.generate_templates()
         for part in (
             Path(adapter._data_bundle_name) / ".manifest",
@@ -59,9 +64,13 @@ class TestBundleServerAdapter:
             assert (Path(bundle_server_base_dir) / "templates" / part).exists()
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures("patch_env")
     async def test_generate_templates_exists(
         self, adapter: BundleServerAdapter, bundle_server_base_dir
     ):
+        adapter._policy_bundle_template_src = os.environ[
+            "BUNDLE_SERVER_ADAPTER__POLICY_BUNDLE_TEMPLATE_SRC"
+        ]
         await adapter.generate_templates()
         await adapter.generate_templates()
         for part in (
@@ -72,9 +81,13 @@ class TestBundleServerAdapter:
             assert (Path(bundle_server_base_dir) / "templates" / part).exists()
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures("patch_env")
     async def test_generate_error(self, adapter: BundleServerAdapter, mocker):
         mock = mocker.MagicMock(side_effect=RuntimeError)
         mocker.patch("aiofiles.open", mock)
+        adapter._policy_bundle_template_src = os.environ[
+            "BUNDLE_SERVER_ADAPTER__POLICY_BUNDLE_TEMPLATE_SRC"
+        ]
         with pytest.raises(BundleGenerationIOError):
             await adapter.generate_templates()
 
