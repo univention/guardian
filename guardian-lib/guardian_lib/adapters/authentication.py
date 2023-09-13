@@ -1,4 +1,3 @@
-import ssl
 from typing import Type
 
 import jwt
@@ -51,25 +50,14 @@ class FastAPIOAuth2(
         timeout = 10
         self.oauth_settings = requests.get(
             settings.well_known_url,
-            verify=settings.well_known_url_secure,
             timeout=timeout,
         ).json()
-        if settings.well_known_url_secure:
-            ctx = None
-        else:
-            ctx = self.__get_insecure_ssl_context()
         self.jwks_client = jwt.PyJWKClient(
-            self.oauth_settings["jwks_uri"], ssl_context=ctx, timeout=timeout
+            self.oauth_settings["jwks_uri"], timeout=timeout
         )
         authorizationUrl = self.oauth_settings["authorization_endpoint"]
         tokenUrl = self.oauth_settings["token_endpoint"]
         super().__init__(authorizationUrl=authorizationUrl, tokenUrl=tokenUrl)
-
-    def __get_insecure_ssl_context(self) -> ssl.SSLContext:
-        ctx = ssl.create_default_context()
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl.CERT_NONE
-        return ctx
 
     @classmethod
     def get_settings_cls(cls) -> Type[FastAPIOAuth2AdapterSettings]:
@@ -88,7 +76,7 @@ class FastAPIOAuth2(
                     "require": ["exp", "iss", "aud", "sub", "client_id", "iat", "jti"]
                 },
             )
-        except jwt.exceptions.DecodeError:
+        except jwt.exceptions.InvalidTokenError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Not Authorized",
