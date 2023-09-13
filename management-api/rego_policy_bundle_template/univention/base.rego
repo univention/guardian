@@ -5,7 +5,7 @@ import future.keywords.every
 import future.keywords.if
 import future.keywords.in
 
-import data.univention.mapping.roleCapabilityMapping
+import data.guardian.mapping.roleCapabilityMapping
 import data.univention.utils.evaluate_conditions
 
 # check if a dictionary of app to namespaces contains a given namespace
