@@ -5,7 +5,13 @@
 services:
   proxy:
     image: traefik:v2.10
-    command: --providers.docker --entryPoints.web.address=:80
+    hostname: traefik
+    command:
+     - --providers.docker
+     - --entryPoints.web.address=:80
+     - --log.level=DEBUG
+     - --log.filePath=/logs/traefik.log
+     - --accesslog.fields.names.StartUTC=drop
     networks:
       - proxy-net
     ports:
@@ -53,6 +59,7 @@ services:
       - GUARDIAN__AUTHZ__ADAPTER__SETTINGS_PORT
       - GUARDIAN__AUTHZ__ADAPTER__PERSISTENCE_PORT
       - GUARDIAN__AUTHZ__ADAPTER__POLICY_PORT
+      - GUARDIAN__AUTHZ__ADAPTER__AUTHENTICATION_PORT
       - GUARDIAN__AUTHZ__API_PREFIX
       - UDM_DATA_ADAPTER__USERNAME
       - UDM_DATA_ADAPTER__PASSWORD
@@ -91,7 +98,6 @@ services:
       - GUARDIAN__MANAGEMENT__ADAPTER__NAMESPACE_PERSISTENCE_PORT
       - GUARDIAN__MANAGEMENT__ADAPTER__PERMISSION_PERSISTENCE_PORT
       - GUARDIAN__MANAGEMENT__ADAPTER__ROLE_PERSISTENCE_PORT
-      - GUARDIAN__MANAGEMENT__ADAPTER__CAPABILITY_PERSISTENCE_PORT
       - GUARDIAN__MANAGEMENT__BASE_URL
       - SQL_PERSISTENCE_ADAPTER__DIALECT
       - SQL_PERSISTENCE_ADAPTER__DB_NAME
@@ -125,7 +131,6 @@ services:
       - GUARDIAN__MANAGEMENT__ADAPTER__NAMESPACE_PERSISTENCE_PORT
       - GUARDIAN__MANAGEMENT__ADAPTER__PERMISSION_PERSISTENCE_PORT
       - GUARDIAN__MANAGEMENT__ADAPTER__ROLE_PERSISTENCE_PORT
-      - GUARDIAN__MANAGEMENT__ADAPTER__CAPABILITY_PERSISTENCE_PORT
       - GUARDIAN__MANAGEMENT__BASE_URL
       - SQL_PERSISTENCE_ADAPTER__DIALECT
       - SQL_PERSISTENCE_ADAPTER__DB_NAME
@@ -134,6 +139,40 @@ services:
       traefik.http.routers.management.rule: PathPrefix(`/guardian/management`)
       traefik.http.routers.management.service: management
       traefik.http.services.management.loadbalancer.server.port: 8000
+  keycloak:
+    container_name: keycloak-guardian-dev
+    image: keycloak-guardian:dev
+    build:
+      context: ./
+      dockerfile: keycloak/Dockerfile
+    user: "1000"
+    ports:
+      - "8080:8080"
+    command: start --optimized
+    # depends_on:
+    #   - management-api
+    networks:
+      - proxy-net
+    labels:
+      traefik.http.routers.keycloak.entrypoints: web
+      traefik.http.routers.keycloak.rule: PathPrefix(`/guardian/keycloak`)
+      traefik.http.routers.keycloak.service: keycloak
+      traefik.http.services.keycloak.loadbalancer.server.port: 8080
+      traefik.http.middlewares.schemeheader.headers.customrequestheaders.X-Forwarded-Proto: http
+      traefik.http.routers.keycloak.middlewares: schemeheader
+  keycloak-provisioning:
+    container_name: keycloak-provisioning-dev
+    image: keycloak-guardian-provisioning:dev
+    user: "1000"
+    build:
+      context: ./
+      dockerfile: keycloak/provisioning/Dockerfile
+    depends_on:
+      - proxy
+      - keycloak
+
+    networks:
+      - proxy-net
 networks:
   proxy-net:
     name: proxy-net
