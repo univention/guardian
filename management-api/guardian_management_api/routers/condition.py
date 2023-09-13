@@ -19,6 +19,7 @@ from ..models.routers.condition import (
     ConditionMultipleResponse,
     ConditionSingleResponse,
 )
+from ..ports.bundle_server import BundleServerPort
 from ..ports.condition import ConditionAPIPort, ConditionPersistencePort
 
 router = APIRouter(tags=["condition"])
@@ -114,12 +115,13 @@ async def create_condition(
     persistence_port: ConditionPersistencePort = Depends(
         port_dep(ConditionPersistencePort)
     ),
+    bundle_server_port: BundleServerPort = Depends(port_dep(BundleServerPort)),
 ):
     """
     Create a condition.
     """
     return await business_logic.create_condition(
-        condition_create_request, api_port, persistence_port
+        condition_create_request, api_port, bundle_server_port, persistence_port
     )
 
 
@@ -135,10 +137,11 @@ async def edit_condition(
     persistence_port: ConditionPersistencePort = Depends(
         port_dep(ConditionPersistencePort)
     ),
+    bundle_server_port: BundleServerPort = Depends(port_dep(BundleServerPort)),
 ):
     """
     Update a condition.
     """
     return await business_logic.update_condition(
-        condition_edit_request, api_port, persistence_port
+        condition_edit_request, api_port, bundle_server_port, persistence_port
     )
