@@ -274,11 +274,13 @@ async def get_conditions(
 async def create_condition(
     api_request: APICreateRequestObject,
     api_port: ConditionAPIPort,
+    bundle_server_port: BundleServerPort,
     persistence_port: ConditionPersistencePort,
 ):
     try:
         query = await api_port.to_obj_create(api_request)
         condition = await persistence_port.create(query)
+        await bundle_server_port.schedule_bundle_build(BundleType.policies)
         return await api_port.to_api_get_single_response(condition)
     except Exception as exc:
         raise (await api_port.transform_exception(exc)) from exc
@@ -287,6 +289,7 @@ async def create_condition(
 async def update_condition(
     api_request: APIEditRequestObject,
     api_port: ConditionAPIPort,
+    bundle_server_port: BundleServerPort,
     persistence_port: ConditionPersistencePort,
 ):
     try:
@@ -295,6 +298,7 @@ async def update_condition(
         for key, value in changed_values.items():
             setattr(old_condition, key, value)
         condition = await persistence_port.update(old_condition)
+        await bundle_server_port.schedule_bundle_build(BundleType.policies)
         return await api_port.to_api_get_single_response(condition)
 
     except Exception as exc:
