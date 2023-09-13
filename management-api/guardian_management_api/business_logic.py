@@ -1,9 +1,8 @@
 # Copyright (C) 2023 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
-from dataclasses import asdict
 
-from loguru import logger
+from dataclasses import asdict
 
 from .models.namespace import Namespace
 from .models.permission import Permission
@@ -15,6 +14,16 @@ from .models.routers.app import (
     AppMultipleResponse,
     AppsGetRequest,
     AppSingleResponse,
+)
+from .models.routers.role import (
+    RoleCreateRequest,
+    RoleEditRequest,
+    RoleGetAllRequest,
+    RoleGetByAppRequest,
+    RoleGetByNamespaceRequest,
+    RoleGetFullIdentifierRequest,
+    RoleMultipleResponse,
+    RoleSingleResponse,
 )
 from .ports.app import (
     AppAPICreateRequestObject,
@@ -43,7 +52,7 @@ from .ports.permission import (
     PermissionAPIPort,
     PermissionPersistencePort,
 )
-from .ports.role import RolePersistencePort
+from .ports.role import RoleAPIPort, RolePersistencePort
 
 
 async def create_app(
@@ -66,9 +75,7 @@ async def register_app(
 ) -> AppAPIRegisterResponseObject:
     try:
         query = await app_api_port.to_app_create(api_request)
-        local_logger = logger.bind(app_create_query=query)
         app = await app_persistence_port.create(query.apps[0])
-        local_logger = local_logger.bind(app=app)
         app_display = app.display_name if app.display_name else app.name
         default_namespace = await namespace_persistence_port.create(
             Namespace(
@@ -77,7 +84,6 @@ async def register_app(
                 display_name=f"Default Namespace for {app_display}",
             )
         )
-        local_logger = local_logger.bind(default_namespace=default_namespace)
         admin_role = await role_persistence_port.create(
             Role(
                 app_name=app.name,
@@ -86,7 +92,6 @@ async def register_app(
                 display_name=f"App Administrator for {app_display}",
             )
         )
-        local_logger.bind(admin_role=admin_role).debug("App registered.")
         return await app_api_port.to_api_register_response(
             app, default_namespace, admin_role
         )
@@ -263,3 +268,69 @@ async def edit_permission(
         return await api_port.to_api_get_single_response(update_permission)
     except Exception as exc:
         raise (await api_port.transform_exception(exc)) from exc
+
+
+##############
+# Role Logic #
+##############
+
+
+async def get_role(
+    api_request: RoleGetFullIdentifierRequest,
+    role_api_port: RoleAPIPort,
+    persistence_port: RolePersistencePort,
+) -> RoleSingleResponse:
+    try:
+        query = await role_api_port.to_role_get(api_request)
+        role = await persistence_port.read_one(query)
+        return await role_api_port.to_role_get_response(role)
+    except Exception as exc:
+        raise (await role_api_port.transform_exception(exc)) from exc
+
+
+async def get_roles(
+    api_request: RoleGetAllRequest | RoleGetByAppRequest | RoleGetByNamespaceRequest,
+    role_api_port: RoleAPIPort,
+    persistence_port: RolePersistencePort,
+) -> RoleMultipleResponse:
+    try:
+        query = await role_api_port.to_roles_get(api_request)
+        many_roles = await persistence_port.read_many(query)
+        return await role_api_port.to_roles_get_response(
+            roles=list(many_roles.objects),
+            query_offset=query.pagination.query_offset,
+            query_limit=query.pagination.query_limit
+            if query.pagination.query_limit
+            else many_roles.total_count,
+            total_count=many_roles.total_count,
+        )
+    except Exception as exc:
+        raise (await role_api_port.transform_exception(exc)) from exc
+
+
+async def create_role(
+    api_request: RoleCreateRequest,
+    role_api_port: RoleAPIPort,
+    persistence_port: RolePersistencePort,
+) -> RoleSingleResponse:
+    query = await role_api_port.to_role_create(api_request)
+    role = query.roles[0]
+    created_role = await persistence_port.create(role)
+    return await role_api_port.to_role_create_response(created_role)
+
+
+async def edit_role(
+    api_request: RoleEditRequest,
+    role_api_port: RoleAPIPort,
+    persistence_port: RolePersistencePort,
+) -> RoleSingleResponse:
+    try:
+        query = await role_api_port.to_role_get(api_request)
+        role = await persistence_port.read_one(query)
+        role = await role_api_port.to_role_edit(
+            old_role=role, display_name=api_request.data.display_name
+        )
+        modified_role = await persistence_port.update(role)
+        return await role_api_port.to_role_get_response(modified_role)
+    except Exception as exc:
+        raise (await role_api_port.transform_exception(exc)) from exc

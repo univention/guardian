@@ -3,21 +3,162 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 from dataclasses import asdict
-from typing import Type
+from typing import Optional, Type, Union
 
+from fastapi import HTTPException
 from port_loader import AsyncConfiguredAdapterMixin
+from starlette import status
 
+from ..constants import COMPLETE_URL
 from ..errors import ObjectNotFoundError, ParentNotFoundError
-from ..models.base import PersistenceGetManyResult
-from ..models.role import Role, RoleGetQuery, RolesGetQuery
+from ..models.base import PaginationRequest, PersistenceGetManyResult
+from ..models.role import (
+    Role,
+    RoleCreateQuery,
+    RoleGetQuery,
+    RolesGetQuery,
+)
+from ..models.routers.base import PaginationInfo
+from ..models.routers.role import (
+    Role as ResponseRole,
+)
+from ..models.routers.role import (
+    RoleCreateRequest,
+    RoleGetAllRequest,
+    RoleGetByAppRequest,
+    RoleGetByNamespaceRequest,
+    RoleGetFullIdentifierRequest,
+    RoleMultipleResponse,
+    RoleSingleResponse,
+)
 from ..models.sql_persistence import (
     DBApp,
     DBNamespace,
     DBRole,
     SQLPersistenceAdapterSettings,
 )
-from ..ports.role import RolePersistencePort
+from ..ports.role import (
+    RoleAPIPort,
+    RolePersistencePort,
+)
 from .sql_persistence import SQLAlchemyMixin
+
+
+class FastAPIRoleAPIAdapter(
+    RoleAPIPort[
+        RoleCreateRequest,
+        RoleSingleResponse,
+        RoleGetFullIdentifierRequest,
+        RoleSingleResponse,
+        Union[RoleGetAllRequest, RoleGetByAppRequest, RoleGetByNamespaceRequest],
+        RoleMultipleResponse,
+    ]
+):
+    class Config:
+        alias = "fastapi"
+
+    async def transform_exception(self, exc: Exception) -> Exception:
+        if isinstance(exc, ObjectNotFoundError):
+            return HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"message": "App not found."},
+            )
+        return HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"message": "Internal Server Error"},
+        )
+
+    async def to_role_create(self, api_request: RoleCreateRequest) -> RoleCreateQuery:
+        return RoleCreateQuery(
+            roles=[
+                Role(
+                    app_name=api_request.app_name,
+                    namespace_name=api_request.namespace_name,
+                    name=api_request.data.name,
+                    display_name=api_request.data.display_name,
+                )
+            ]
+        )
+
+    async def to_role_create_response(self, role_result: Role) -> RoleSingleResponse:
+        return RoleSingleResponse(
+            role=ResponseRole(
+                app_name=role_result.app_name,
+                namespace_name=role_result.namespace_name,
+                name=role_result.name,
+                display_name=role_result.display_name
+                if role_result.display_name
+                else "",
+                resource_url=f"{COMPLETE_URL}/roles/{role_result.app_name}/{role_result.namespace_name}/{role_result.name}",
+            )
+        )
+
+    async def to_role_get(
+        self, api_request: RoleGetFullIdentifierRequest
+    ) -> RoleGetQuery:
+        return RoleGetQuery(
+            app_name=api_request.app_name,
+            namespace_name=api_request.namespace_name,
+            name=api_request.name,
+        )
+
+    async def to_role_get_response(self, role_result: Role) -> RoleSingleResponse:
+        return RoleSingleResponse(
+            role=ResponseRole(
+                app_name=role_result.app_name,
+                namespace_name=role_result.namespace_name,
+                name=role_result.name,
+                display_name=role_result.display_name,
+                resource_url=f"{COMPLETE_URL}/roles/{role_result.app_name}/{role_result.namespace_name}/{role_result.name}",
+            )
+        )
+
+    async def to_roles_get(
+        self,
+        api_request: Union[
+            RoleGetAllRequest, RoleGetByAppRequest, RoleGetByNamespaceRequest
+        ],
+    ) -> RolesGetQuery:
+        return RolesGetQuery(
+            app_name=getattr(api_request, "app_name", None),
+            namespace_name=getattr(api_request, "namespace_name", None),
+            pagination=PaginationRequest(
+                query_offset=api_request.offset, query_limit=api_request.limit
+            ),
+        )
+
+    async def to_roles_get_response(
+        self,
+        roles: list[Role],
+        query_offset: int,
+        query_limit: Optional[int],
+        total_count: int,
+    ) -> RoleMultipleResponse:
+        return RoleMultipleResponse(
+            pagination=PaginationInfo(
+                offset=query_offset,
+                limit=query_limit,
+                total_count=total_count,
+            ),
+            roles=[
+                ResponseRole(
+                    app_name=role.app_name,
+                    namespace_name=role.namespace_name,
+                    name=role.name,
+                    display_name=role.display_name,
+                    resource_url=f"{COMPLETE_URL}/roles/{role.app_name}/{role.namespace_name}/{role.name}",
+                )
+                for role in roles
+            ],
+        )
+
+    async def to_role_edit(self, old_role: Role, display_name: Optional[str]) -> Role:
+        return Role(
+            app_name=old_role.app_name,
+            namespace_name=old_role.namespace_name,
+            name=old_role.name,
+            display_name=display_name,
+        )
 
 
 class SQLRolePersistenceAdapter(
