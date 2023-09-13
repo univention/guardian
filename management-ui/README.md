@@ -84,6 +84,16 @@ If you want to test against a keycloak instance, you can use an existing [RAM en
    export VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__CLIENT_ID=guardian-management-ui-dev
    ```
 
+### Data Port
+
+The data port pulls data from the API or a locally-generated in-memory store.
+
+Currently, there is only the `in-memory` adapter:
+
+```shell
+export VITE__MANAGEMENT_UI__ADAPTER__DATA_PORT=in_memory
+```
+
 ### Compile and Hot-Reload for Development
 
 Run a hot-loading development server:

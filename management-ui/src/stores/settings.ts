@@ -1,6 +1,7 @@
 import {defineStore} from 'pinia';
 import {ref, type Ref} from 'vue';
 import {authenticationPortSetting} from '@/ports/authentication';
+import {dataPortSetting} from '@/ports/data';
 import {inMemoryAuthenticationSettings, keycloakAuthenticationSettings} from '@/adapters/authentication';
 import type {SettingsPort} from '@/ports/settings';
 import {EnvSettingsAdapter} from '@/adapters/settings';
@@ -27,9 +28,14 @@ interface AuthenticationPortConfig {
   keycloakConfig: KeycloakAuthenticationConfig;
 }
 
+interface DataPortConfig {
+  adapter: string;
+}
+
 export interface SettingsConfig {
   settingsPort: SettingsPortConfig;
   authenticationPort: AuthenticationPortConfig;
+  dataPort: DataPortConfig;
 }
 
 export const useSettingsStore = defineStore('settings', () => {
@@ -50,6 +56,9 @@ export const useSettingsStore = defineStore('settings', () => {
         realm: '',
         clientId: '',
       },
+    },
+    dataPort: {
+      adapter: '',
     },
   });
 
@@ -92,6 +101,9 @@ export const useSettingsStore = defineStore('settings', () => {
     config.value.authenticationPort.keycloakConfig.clientId = settingsAdapter.getSetting(
       keycloakAuthenticationSettings.clientId
     );
+
+    // DataPortSettings
+    config.value.dataPort.adapter = settingsAdapter.getSetting(dataPortSetting, '');
 
     initialized.value = true;
   };
