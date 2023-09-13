@@ -59,7 +59,8 @@ services:
       - UDM_DATA_ADAPTER__PASSWORD
       - UDM_DATA_ADAPTER__URL
       - OPA_ADAPTER__URL
-      - OAUTH_ADAPTER__WELL_KNOWN
+      - OAUTH_ADAPTER__WELL_KNOWN_URL
+      - OAUTH_ADAPTER__WELL_KNOWN_URL_SECURE
     labels:
       traefik.http.routers.authz.entrypoints: web
       traefik.http.routers.authz.rule: PathPrefix(`/guardian/authorization`)

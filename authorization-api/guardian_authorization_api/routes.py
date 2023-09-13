@@ -3,25 +3,8 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 
-import jwt
-import requests
-from fastapi import APIRouter, Depends, HTTPException, status
-
-# async def authenticate():
-#     authentication_adapter = await port_dep(AuthenticationPort)()
-#     if not await authentication_adapter.authorized():
-#         raise HTTPException(
-#             status_code=status.HTTP_401_UNAUTHORIZED,
-#             detail="Not Authorized",
-#         )
-# from fastapi.security import OAuth2AuthorizationCodeBearer
-# oauth2_keycloak = OAuth2AuthorizationCodeBearer(
-#     authorizationUrl="https://ucs-sso-ng.ucs.test/realms/dev-guardian/protocol/openid-connect/auth",
-#     tokenUrl="https://ucs-sso-ng.ucs.test/realms/dev-guardian/protocol/openid-connect/token",
-# )
-from fastapi.security import OAuth2AuthorizationCodeBearer
+from fastapi import APIRouter, Depends
 from guardian_lib.adapter_registry import port_dep
-from starlette.requests import Request
 
 from . import business_logic
 from .adapters.api import FastAPIGetPermissionsAPIAdapter, GetPermissionsAPIPort
@@ -37,54 +20,7 @@ from .models.routes import (
 )
 from .ports import PolicyPort
 
-
-class FastAPIOAuth2(OAuth2AuthorizationCodeBearer):
-    OAUTH_WELL_KNOWN_URL_SETTING_NAME = "oauth_adapter.well_known"
-
-    class Config:
-        is_cached = True
-        alias = "fast_api_oauth2"
-
-    def __init__(self):
-        # from guardian_lib.models.settings import SETTINGS_NAME_METADATA
-        # well_known_url: str = field(metadata={SETTINGS_NAME_METADATA: self.OAUTH_WELL_KNOWN_URL_SETTING_NAME})
-        well_known_url = "https://ucs-sso-ng.ucs.test/realms/dev-guardian/.well-known/openid-configuration"
-        self.oauth_settings = requests.get(well_known_url, verify=False).json()
-        import ssl
-
-        ctx = ssl.create_default_context()
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl.CERT_NONE
-        self.jwks_client = jwt.PyJWKClient(
-            self.oauth_settings["jwks_uri"], ssl_context=ctx
-        )
-        authorizationUrl = self.oauth_settings["authorization_endpoint"]
-        tokenUrl = self.oauth_settings["token_endpoint"]
-        super().__init__(authorizationUrl=authorizationUrl, tokenUrl=tokenUrl)
-
-    async def __call__(self, request: Request):
-        token = await super().__call__(request)
-        try:
-            jwt.decode(
-                token,
-                self.jwks_client.get_signing_key_from_jwt(token).key,
-                algorithms=["RS256"],
-                audience="guardian",
-                issuer=self.oauth_settings["issuer"],
-                options={
-                    "require": ["exp", "iss", "aud", "sub", "client_id", "iat", "jti"]
-                },
-            )
-        except jwt.exceptions.DecodeError:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Not Authorized",
-            )
-
-
-# authentication_adapter = await port_dep(AuthenticationPort)()
-# router = APIRouter(dependencies=[Depends(authentication_adapter)])
-router = APIRouter(dependencies=[Depends(FastAPIOAuth2())])
+router = APIRouter()
 
 
 @router.post("/permissions")
