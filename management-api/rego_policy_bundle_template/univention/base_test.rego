@@ -19,7 +19,7 @@ test_get_permissions_happy_case if {
 		"contexts": {},
 		"extra_args": {},
 	}
-	result = get_permissions with input as inp
+	result = get_permissions with input as inp with data.guardian.mapping as data.univention.test_mapping
 
 	# regal ignore: print-or-trace-call
 	print("TEST_DEBUG -- result: ", result)
@@ -48,7 +48,7 @@ test_get_permissions_null_namespaces if {
 		"contexts": null,
 		"extra_args": {},
 	}
-	result = get_permissions with input as inp
+	result = get_permissions with input as inp with data.guardian.mapping as data.univention.test_mapping
 
 	# regal ignore: print-or-trace-call
 	print("TEST_DEBUG -- result: ", result)
@@ -172,7 +172,7 @@ test_get_permissions_filtering if {
 		"extra_args": {},
 	}
 	result = get_permissions with input as inp
-		with data.univention.mapping.roleCapabilityMapping as role_capability_mapping
+		with data.guardian.mapping.roleCapabilityMapping as role_capability_mapping
 
 	# regal ignore: print-or-trace-call
 	print("TEST_DEBUG -- result: ", result)
@@ -206,7 +206,7 @@ test_get_permissions_filtering if {
 
 test_get_permissions_empty_input if {
 	inp = {}
-	result = get_permissions with input as inp
+	result = get_permissions with input as inp with data.guardian.mapping as data.univention.test_mapping
 
 	# regal ignore: print-or-trace-call
 	print("TEST_DEBUG -- result: ", result)
@@ -227,7 +227,7 @@ test_get_permissions_wrong_role if {
 		"contexts": {},
 		"extra_args": {},
 	}
-	result = get_permissions with input as inp
+	result = get_permissions with input as inp with data.guardian.mapping as data.univention.test_mapping
 
 	# regal ignore: print-or-trace-call
 	print("TEST_DEBUG -- result: ", result)
@@ -337,7 +337,7 @@ check_permissions_parametrize := [
 test_check_permissions if {
 	every case in check_permissions_parametrize {
 		inp = case.input
-		result := check_permissions with input as inp
+		result := check_permissions with input as inp with data.guardian.mapping as data.univention.test_mapping
 
 		# regal ignore: print-or-trace-call
 		print("TEST_DEBUG -- result: ", result)

@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from unittest.mock import call
 
+import orjson
 import pytest
 import pytest_asyncio
 from guardian_management_api.adapters.bundle_server import (
@@ -9,6 +10,14 @@ from guardian_management_api.adapters.bundle_server import (
     BundleServerAdapterSettings,
 )
 from guardian_management_api.errors import BundleBuildError, BundleGenerationIOError
+from guardian_management_api.models.base import PersistenceGetManyResult
+from guardian_management_api.models.capability import (
+    Capability,
+    CapabilityConditionRelation,
+    ParametrizedCondition,
+)
+from guardian_management_api.models.permission import Permission
+from guardian_management_api.models.role import Role
 from guardian_management_api.ports.bundle_server import BundleType
 
 
@@ -58,7 +67,6 @@ class TestBundleServerAdapter:
         await adapter.generate_templates()
         for part in (
             Path(adapter._data_bundle_name) / ".manifest",
-            Path(adapter._data_bundle_name) / "guardian/mapping/data.json",
             Path(adapter._policy_bundle_name) / ".manifest",
         ):
             assert (Path(bundle_server_base_dir) / "templates" / part).exists()
@@ -75,7 +83,6 @@ class TestBundleServerAdapter:
         await adapter.generate_templates()
         for part in (
             Path(adapter._data_bundle_name) / ".manifest",
-            Path(adapter._data_bundle_name) / "guardian/mapping/data.json",
             Path(adapter._policy_bundle_name) / ".manifest",
         ):
             assert (Path(bundle_server_base_dir) / "templates" / part).exists()
@@ -136,7 +143,7 @@ class TestBundleServerAdapter:
             if bundle_type == BundleType.data
             else adapter._policy_bundle_name
         )
-        await adapter._build_bundle(bundle_type, mocker.AsyncMock())
+        await adapter._build_bundle(bundle_type, mocker.AsyncMock(), mocker.AsyncMock())
         build_cmd = (
             f"opa build -b {Path(bundle_server_base_dir) / 'build' / subpath} -o "
             f"{Path(bundle_server_base_dir) / 'bundles' / subpath}.tar.gz"
@@ -168,7 +175,9 @@ class TestBundleServerAdapter:
         process_mock.returncode = 1
         mocker.patch("asyncio.create_subprocess_shell", subprocess_mock)
         with pytest.raises(BundleBuildError):
-            await adapter._build_bundle(BundleType.data, mocker.AsyncMock())
+            await adapter._build_bundle(
+                BundleType.data, mocker.AsyncMock(), mocker.AsyncMock()
+            )
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
@@ -194,12 +203,13 @@ class TestBundleServerAdapter:
         build_bundle_mock = mocker.AsyncMock()
         adapter._build_bundle = build_bundle_mock
         cond_persistence_mock = mocker.AsyncMock()
+        cap_persistence_mock = mocker.AsyncMock()
         await adapter.schedule_bundle_build(BundleType.data)
         await adapter.schedule_bundle_build(BundleType.policies)
-        await adapter.generate_bundles(cond_persistence_mock)
+        await adapter.generate_bundles(cond_persistence_mock, cap_persistence_mock)
         assert build_bundle_mock.call_args_list == [
-            call(BundleType.data, cond_persistence_mock),
-            call(BundleType.policies, cond_persistence_mock),
+            call(BundleType.data, cond_persistence_mock, cap_persistence_mock),
+            call(BundleType.policies, cond_persistence_mock, cap_persistence_mock),
         ]
 
     @pytest.mark.asyncio
@@ -208,7 +218,7 @@ class TestBundleServerAdapter:
     ):
         build_bundle_mock = mocker.AsyncMock()
         adapter._build_bundle = build_bundle_mock
-        await adapter.generate_bundles(mocker.AsyncMock())
+        await adapter.generate_bundles(mocker.AsyncMock(), mocker.AsyncMock())
         assert build_bundle_mock.call_args_list == []
 
     @pytest.mark.asyncio
@@ -247,4 +257,154 @@ class TestBundleServerAdapter:
         ):
             await adapter._dump_conditions(
                 cond_persistence_mock, Path(tmpdir) / "conditions"
+            )
+
+    @pytest.mark.asyncio
+    async def test__generate_mapping(
+        self, adapter: BundleServerAdapter, mocker, tmpdir
+    ):
+        async def _read_many(*args, **kwargs):
+            return PersistenceGetManyResult(
+                total_count=3,
+                objects=[
+                    Capability(
+                        app_name="app",
+                        namespace_name="namespace",
+                        name="cap1",
+                        display_name="cap1",
+                        role=Role(
+                            app_name="app",
+                            namespace_name="namespace",
+                            name="role",
+                            display_name="role",
+                        ),
+                        permissions=[
+                            Permission(
+                                app_name="app", namespace_name="namespace", name="perm1"
+                            ),
+                            Permission(
+                                app_name="app", namespace_name="namespace", name="perm2"
+                            ),
+                        ],
+                        relation=CapabilityConditionRelation.AND,
+                        conditions=[
+                            ParametrizedCondition(
+                                app_name="app",
+                                namespace_name="namespace",
+                                name="cond1",
+                                parameters={"A": 1, "B": True},
+                            ),
+                            ParametrizedCondition(
+                                app_name="app",
+                                namespace_name="namespace",
+                                name="cond2",
+                                parameters={"C": "three", "D": 4.0},
+                            ),
+                        ],
+                    ),
+                    Capability(
+                        app_name="app",
+                        namespace_name="namespace",
+                        name="cap2",
+                        display_name="cap2",
+                        role=Role(
+                            app_name="app",
+                            namespace_name="namespace",
+                            name="role",
+                            display_name="role",
+                        ),
+                        permissions=[
+                            Permission(
+                                app_name="app", namespace_name="namespace", name="perm3"
+                            ),
+                            Permission(
+                                app_name="app", namespace_name="namespace", name="perm4"
+                            ),
+                        ],
+                        relation=CapabilityConditionRelation.AND,
+                        conditions=[],
+                    ),
+                    Capability(
+                        app_name="app",
+                        namespace_name="namespace",
+                        name="cap3",
+                        display_name="cap3",
+                        role=Role(
+                            app_name="app",
+                            namespace_name="namespace",
+                            name="role2",
+                            display_name="role2",
+                        ),
+                        permissions=[
+                            Permission(
+                                app_name="app", namespace_name="namespace", name="perm1"
+                            ),
+                            Permission(
+                                app_name="app", namespace_name="namespace", name="perm2"
+                            ),
+                        ],
+                        relation=CapabilityConditionRelation.OR,
+                        conditions=[],
+                    ),
+                ],
+            )
+
+        cap_persistence_mock = mocker.MagicMock()
+        cap_persistence_mock.read_many = _read_many
+        target_dir = Path(tmpdir) / "mapping"
+        (target_dir / "guardian/mapping").mkdir(parents=True)
+        await adapter._generate_mapping(cap_persistence_mock, target_dir)
+        with open(target_dir / "guardian/mapping/data.json", "rb") as file:
+            result = orjson.loads(file.read())
+        assert result == {
+            "roleCapabilityMapping": {
+                "app:namespace:role": [
+                    {
+                        "app_name": "app",
+                        "namespace_name": "namespace",
+                        "permissions": ["perm1", "perm2"],
+                        "relation": "AND",
+                        "conditions": [
+                            {
+                                "name": "app:namespace:cond1",
+                                "parameters": {"A": 1, "B": True},
+                            },
+                            {
+                                "name": "app:namespace:cond2",
+                                "parameters": {"C": "three", "D": 4.0},
+                            },
+                        ],
+                    },
+                    {
+                        "app_name": "app",
+                        "namespace_name": "namespace",
+                        "permissions": ["perm3", "perm4"],
+                        "relation": "AND",
+                        "conditions": [],
+                    },
+                ],
+                "app:namespace:role2": [
+                    {
+                        "app_name": "app",
+                        "namespace_name": "namespace",
+                        "permissions": ["perm1", "perm2"],
+                        "relation": "OR",
+                        "conditions": [],
+                    },
+                ],
+            }
+        }
+
+    @pytest.mark.asyncio
+    async def test__generate_mapping_error(
+        self, adapter: BundleServerAdapter, mocker, tmpdir
+    ):
+        cap_persistence_mock = mocker.AsyncMock
+        cap_persistence_mock.read_many = mocker.AsyncMock(side_effect=RuntimeError)
+        with pytest.raises(
+            BundleGenerationIOError,
+            match="An error occurred while writing the role capability mapping to files.",
+        ):
+            await adapter._generate_mapping(
+                cap_persistence_mock, Path(tmpdir) / "mapping"
             )

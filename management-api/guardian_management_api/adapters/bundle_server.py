@@ -1,7 +1,8 @@
 import asyncio
 import base64
 from asyncio import Lock, Queue, QueueEmpty, QueueFull
-from dataclasses import dataclass, field
+from collections import defaultdict
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Type
 
@@ -17,8 +18,10 @@ from guardian_management_api.errors import BundleBuildError, BundleGenerationIOE
 from guardian_management_api.models.base import (
     PaginationRequest,
 )
+from guardian_management_api.models.capability import CapabilitiesGetQuery
 from guardian_management_api.models.condition import ConditionsGetQuery
 from guardian_management_api.ports.bundle_server import BundleServerPort, BundleType
+from guardian_management_api.ports.capability import CapabilityPersistencePort
 from guardian_management_api.ports.condition import ConditionPersistencePort
 
 BUNDLE_SERVER_ADAPTER_BASE_DIR = "bundle_server_adapter.base_dir"
@@ -152,10 +155,6 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
             )
             async with aiofiles.open(str(data_bundle_dir / ".manifest"), "wb") as file:
                 await file.write(orjson.dumps(data_bundle_manifest))
-            async with aiofiles.open(
-                str(data_bundle_dir / "guardian" / "mapping" / "data.json"), "wb"
-            ) as file:
-                await file.write(orjson.dumps(DUMMY_MAPPING_JSON))
         except Exception:
             raise BundleGenerationIOError("Template could not be generated.")
 
@@ -202,11 +201,52 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
                 "An error occurred while writing the conditions to files."
             ) from exc
 
-    async def _generate_mapping(self):
-        pass  # pragma: no cover
+    async def _generate_mapping(
+        self, persistence: CapabilityPersistencePort, bundle_build_dir: Path
+    ):
+        """
+        Writes the role capability mapping to the build directory.
+
+        If the Bundle Server does not get replaced by some external service:
+        - Implement paginated iteration
+        """
+        try:
+            mapping = {"roleCapabilityMapping": defaultdict(list)}  # type: ignore[var-annotated]
+            get_many_result = await persistence.read_many(
+                CapabilitiesGetQuery(
+                    pagination=PaginationRequest(query_offset=0, query_limit=None)
+                )
+            )
+            for capability in get_many_result.objects:
+                cap = asdict(capability)
+                del cap["name"]
+                del cap["display_name"]
+                del cap["role"]
+                cap["permissions"] = [perm.name for perm in capability.permissions]
+                cap["conditions"] = [
+                    {
+                        "name": f"{cond.app_name}:{cond.namespace_name}:{cond.name}",
+                        "parameters": cond.parameters,
+                    }
+                    for cond in capability.conditions
+                ]
+                mapping["roleCapabilityMapping"][
+                    f"{capability.role.app_name}:{capability.role.namespace_name}:{capability.role.name}"
+                ].append(cap)
+            async with aiofiles.open(
+                str(bundle_build_dir / "guardian" / "mapping" / "data.json"), "wb"
+            ) as file:
+                await file.write(orjson.dumps(mapping))
+        except Exception as exc:
+            raise BundleGenerationIOError(
+                "An error occurred while writing the role capability mapping to files."
+            ) from exc
 
     async def _build_bundle(
-        self, bundle_type: BundleType, cond_persistence_port: ConditionPersistencePort
+        self,
+        bundle_type: BundleType,
+        cond_persistence_port: ConditionPersistencePort,
+        cap_persistence_port: CapabilityPersistencePort,
     ):
         if bundle_type == BundleType.data:
             bundle_name = self._data_bundle_name
@@ -223,7 +263,9 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
         base_dir = Path(self._base_dir)
         await self._prepare_build_directory(base_dir, bundle_name, local_logger)
         if bundle_type == BundleType.data:
-            await self._generate_mapping()
+            await self._generate_mapping(
+                cap_persistence_port, base_dir / "build" / bundle_name
+            )
         elif bundle_type == BundleType.policies:
             await self._dump_conditions(
                 cond_persistence_port, base_dir / "build" / bundle_name
@@ -239,17 +281,25 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
         if build_proc.returncode != 0:
             raise BundleBuildError("Error during build of OPA bundles.")
 
-    async def generate_bundles(self, cond_persistence_port: ConditionPersistencePort):
+    async def generate_bundles(
+        self,
+        cond_persistence_port: ConditionPersistencePort,
+        cap_persistence_port: CapabilityPersistencePort,
+    ):
         async with self._build_lock:
             try:
                 self._data_bundle_queue.get_nowait()
-                await self._build_bundle(BundleType.data, cond_persistence_port)
+                await self._build_bundle(
+                    BundleType.data, cond_persistence_port, cap_persistence_port
+                )
                 self._data_bundle_queue.task_done()
             except QueueEmpty:
                 self.logger.debug("No data bundle scheduled for generation.")
             try:
                 self._policies_bundle_queue.get_nowait()
-                await self._build_bundle(BundleType.policies, cond_persistence_port)
+                await self._build_bundle(
+                    BundleType.policies, cond_persistence_port, cap_persistence_port
+                )
                 self._policies_bundle_queue.task_done()
             except QueueEmpty:
                 self.logger.debug("No policy bundle scheduled for generation.")
