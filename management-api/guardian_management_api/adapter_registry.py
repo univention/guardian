@@ -13,10 +13,9 @@ from port_loader import (
 from pydantic import BaseSettings, Field
 
 from guardian_management_api.adapters.app import FastAPIAppAPIAdapter
-from guardian_management_api.adapters.permission import FastAPIPermissionAPIAdapter
-from guardian_management_api.adapters.role import FastAPIRoleAPIAdapter
 from guardian_management_api.adapters.context import FastAPIContextAPIAdapter
 from guardian_management_api.adapters.permission import FastAPIPermissionAPIAdapter
+from guardian_management_api.adapters.role import FastAPIRoleAPIAdapter
 from guardian_management_api.ports.app import (
     AppAPIPort,
     AppPersistencePort,

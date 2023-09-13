@@ -4,6 +4,8 @@
 
 from dataclasses import asdict
 
+from loguru import logger
+
 from .models.namespace import Namespace
 from .models.permission import Permission
 from .models.role import Role
@@ -15,6 +17,13 @@ from .models.routers.app import (
     AppsGetRequest,
     AppSingleResponse,
 )
+from .models.routers.context import (
+    ContextCreateRequest,
+    ContextEditRequest,
+    ContextGetRequest,
+    ContextMultipleResponse,
+    ContextSingleResponse,
+)
 from .models.routers.role import (
     RoleCreateRequest,
     RoleEditRequest,
@@ -24,14 +33,6 @@ from .models.routers.role import (
     RoleGetFullIdentifierRequest,
     RoleMultipleResponse,
     RoleSingleResponse,
-)
-from .models.routers.context import ContextCreateRequest
-from .models.routers.context import (
-    ContextCreateRequest,
-    ContextEditRequest,
-    ContextGetRequest,
-    ContextMultipleResponse,
-    ContextSingleResponse,
 )
 from .ports.app import (
     AppAPICreateRequestObject,
@@ -356,13 +357,13 @@ async def create_context(
 ):
     query = await api_port.to_context_create(api_request)
     try:
-        created_namespace = await persistence_port.create(query)
-        logger.bind(query=query, created_namespace=created_namespace).debug(
+        created_context = await persistence_port.create(query)
+        logger.bind(query=query, created_context=created_context).debug(
             "Context created."
         )
     except Exception as exc:
         raise (await api_port.transform_exception(exc)) from exc
-    return await api_port.to_api_create_response(created_namespace)
+    return await api_port.to_api_create_response(created_context)
 
 
 async def get_context(
