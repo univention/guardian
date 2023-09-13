@@ -63,7 +63,7 @@ LABEL "description"="Guardian Management API." \
     "release date"="$date" \
     "commit"="$commit"
 
-WORKDIR /app
+WORKDIR /app/management-api
 ENTRYPOINT ["/init"]
 
 ENV SERVICE_USER $service_user

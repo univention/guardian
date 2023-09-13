@@ -50,5 +50,4 @@ COPY s6-rc.d /etc/s6-overlay/s6-rc.d
 # Install OPA
 COPY --from=builder /usr/bin/opa /usr/bin/opa
 
-COPY --chown=$service_user:$service_user BaseBundle $service_dir/BaseBundle
 COPY --chown=$service_user:$service_user opa_config.yaml $service_dir/opa_config.yaml
