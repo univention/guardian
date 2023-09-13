@@ -2,7 +2,7 @@
 
 Revision ID: 1.0.0
 Revises:
-Create Date: 2023-09-11 13:36:02.175740
+Create Date: 2023-09-14 07:10:20.026170
 
 """
 import base64
@@ -171,8 +171,7 @@ def upgrade() -> None:
         sa.Column("condition_id", sa.Integer(), nullable=False),
         sa.Column("kwargs", sa.JSON(), nullable=True),
         sa.ForeignKeyConstraint(
-            ["capability_id"],
-            ["capability.id"],
+            ["capability_id"], ["capability.id"], ondelete="CASCADE"
         ),
         sa.ForeignKeyConstraint(["condition_id"], ["condition.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
@@ -182,8 +181,7 @@ def upgrade() -> None:
         sa.Column("capability_id", sa.Integer(), nullable=False),
         sa.Column("permission_id", sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(
-            ["capability_id"],
-            ["capability.id"],
+            ["capability_id"], ["capability.id"], ondelete="CASCADE"
         ),
         sa.ForeignKeyConstraint(
             ["permission_id"], ["permission.id"], ondelete="CASCADE"

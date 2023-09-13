@@ -130,7 +130,7 @@ capability_permission_table = Table(
     Base.metadata,
     Column(
         "capability_id",
-        ForeignKey("capability.id"),
+        ForeignKey("capability.id", ondelete="CASCADE"),
         primary_key=True,
     ),
     Column(
@@ -144,7 +144,9 @@ capability_permission_table = Table(
 class DBCapabilityCondition(Base):
     __tablename__ = "capability_condition"
     id: Mapped[int] = mapped_column(primary_key=True)
-    capability_id: Mapped[int] = mapped_column(ForeignKey("capability.id"))
+    capability_id: Mapped[int] = mapped_column(
+        ForeignKey("capability.id", ondelete="CASCADE")
+    )
     capability: Mapped["DBCapability"] = relationship(
         lazy="joined", back_populates="conditions"
     )
@@ -165,7 +167,8 @@ class DBCapability(Base):
     role_id: Mapped[int] = mapped_column(ForeignKey(DBRole.id))
     role: Mapped[DBRole] = relationship(lazy="joined")
     permissions: Mapped[set[DBPermission]] = relationship(
-        secondary=capability_permission_table, lazy="joined", cascade="all, delete"
+        secondary=capability_permission_table,
+        lazy="joined",
     )
     relation: Mapped[CapabilityConditionRelation] = mapped_column()
     conditions: Mapped[set[DBCapabilityCondition]] = relationship(
