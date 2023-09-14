@@ -32,7 +32,7 @@ async def get_permissions(
         port_dep(GetPermissionsAPIPort, FastAPIGetPermissionsAPIAdapter)
     ),
     policy_port: PolicyPort = Depends(port_dep(PolicyPort)),
-) -> AuthzPermissionsPostResponse:
+) -> AuthzPermissionsPostResponse:  # pragma no cover
     """
     Retrieve a list of permissions for an actor, with optional targets.
     Actor and target objects must be supplied in their entirety.
@@ -43,15 +43,15 @@ async def get_permissions(
 
 
 @router.post("/permissions/with-lookup")
-async def get_permissions_with_lookup(  # pragma: no-cover
+async def get_permissions_with_lookup(
     permissions_with_lookup_request: AuthzPermissionsLookupPostRequest,
-) -> AuthzPermissionsPostResponse:
+) -> AuthzPermissionsPostResponse:  # pragma: no cover
     """
     Retrieve a list of permissions for an actor, with optional targets.
     Actor and target objects can be looked up by Guardian using an identifier.
     """
     # Example only; not implemented
-    # Remove the pragma: no-cover when this is implemented
+    # Remove the pragma: no cover when this is implemented
     return AuthzPermissionsPostResponse(
         actor_id=permissions_with_lookup_request.actor.id,
         general_permissions=[],
@@ -60,7 +60,7 @@ async def get_permissions_with_lookup(  # pragma: no-cover
 
 
 @router.post("/permissions/check")
-async def check_permissions(  # pragma: no-cover
+async def check_permissions(
     permissions_check_request: AuthzPermissionsCheckPostRequest,
     check_permission_api: CheckPermissionsAPIPort = Depends(
         port_dep(CheckPermissionsAPIPort, FastAPICheckPermissionsAPIAdapter)
@@ -88,9 +88,9 @@ async def check_permissions(  # pragma: no-cover
 
 
 @router.post("/permissions/check/with-lookup")
-async def check_permissions_with_lookup(  # pragma: no-cover
+async def check_permissions_with_lookup(
     permissions_check_with_lookup_request: AuthzPermissionsCheckLookupPostRequest,
-) -> AuthzPermissionsCheckPostResponse:
+) -> AuthzPermissionsCheckPostResponse:  # pragma: no cover
     """
     Retrieve a yes/no answer to whether an actor has all specified permissions.
     May optionally include targets.
@@ -107,12 +107,12 @@ async def check_permissions_with_lookup(  # pragma: no-cover
 
 
 @router.post("/permissions/custom/{app_name}/{namespace_name}/{endpoint_name}")
-async def custom_permissions_endpoint(  # pragma: no-cover
+async def custom_permissions_endpoint(
     app_name: str,
     namespace_name: str,
     endpoint_name: str,
     custom_endpoint_request: AuthzCustomEndpointPostRequest,
-) -> AuthzCustomEndpointPostResponse:
+) -> AuthzCustomEndpointPostResponse:  # pragma: no cover
     """
     Perform a custom permissions check.
     Data supplied to this endpoint is variable, and is dependent on the endpoint.

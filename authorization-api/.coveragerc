@@ -6,8 +6,6 @@
 # Those omits should be removed, once integration tests are added. See univention/components/authorization-engine/guardian#7
 omit=
     main.py
-    routes.py
-    */models/api.py
     udm_client.py
 
 [report]
