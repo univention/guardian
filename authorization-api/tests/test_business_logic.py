@@ -28,14 +28,18 @@ async def test_get_permissions(mocker):
 @pytest.mark.asyncio
 async def test_check_permissions(mocker, get_policy_object):
     api_port_mock = mocker.AsyncMock()
-    query_return_value = CheckPermissionsQuery(actor=get_policy_object("id1"))
+    query_return_value = CheckPermissionsQuery(actor=get_policy_object("actor_id"))
     api_port_mock.to_policy_query.return_value = query_return_value
-    api_port_mock.to_api_response.return_value = 4
+    api_port_mock.to_api_response.return_value = "api_response"
     policy_mock = mocker.AsyncMock()
-    policy_mock.check_permissions.return_value = 3
+    policy_mock.check_permissions.return_value = "permissions_result"
     api_port_mock.transform_exception.return_value = Exception()
-    result = await check_permissions(1, api_port_mock, policy_mock)
-    api_port_mock.to_policy_query.assert_called_once_with(1)
+    result = await check_permissions(
+        "permission_check_request", api_port_mock, policy_mock
+    )
+    api_port_mock.to_policy_query.assert_called_once_with("permission_check_request")
     policy_mock.check_permissions.assert_called_once_with(query_return_value)
-    api_port_mock.to_api_response.assert_called_once_with("id1", 3)
-    assert result == 4
+    api_port_mock.to_api_response.assert_called_once_with(
+        "actor_id", "permissions_result"
+    )
+    assert result == "api_response"
