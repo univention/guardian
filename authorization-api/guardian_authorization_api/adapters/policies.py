@@ -153,18 +153,18 @@ class OPAAdapter(PolicyPort, AsyncConfiguredAdapterMixin):
         target_permissions = []
         actor_has_general_permissions = False
         try:
-            for result in opa_response_general_permissions:
-                if result["target_id"] == "":
-                    actor_has_general_permissions = result["result"]
+            for response in opa_response_general_permissions:
+                if response["target_id"] == "":
+                    actor_has_general_permissions = response["result"]
                     continue
 
-            for result in opa_response_targeted_permissions:
-                if result["target_id"] == "":
+            for response in opa_response_targeted_permissions:
+                if response["target_id"] == "":
                     continue
                 target_permissions.append(
                     CheckResult(
-                        target_id=result["target_id"],
-                        actor_has_permissions=result["result"],
+                        target_id=response["target_id"],
+                        actor_has_permissions=response["result"],
                     )
                 )
             return CheckPermissionsResult(
