@@ -213,78 +213,78 @@ curl -X 'POST' \
 }
 ```
 
-With that done, they can add the role capability mapping, which assigns permissions to roles:
+With that done, they can add a capability for the role, which assigns permissions to it:
 
 ```shell
-curl -X 'PUT' \
-  'https://management.guardian.intranet/role_capability_mappings/happy-workplace/default' \
+curl -X 'POST' \
+  'https://management.guardian.intranet/capabilities/happy-workplace/default' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
-  -d '{
-  "mappings": [
+  -d '
+{
+  "role": {
+    "app_name": "happy-workplace",
+    "namespace_name": "default",
+    "name": "cake_sender"
+  },
+  "conditions": [
     {
-      "role": {
-        "app_name": "happy-workplace",
-        "namespace_name": "default",
-        "name": "cake_sender"
-      },
-      "conditions": [
-        {
-          "app_name": "guardian",
-          "namespace_name": "default",
-          "name": "actor_field_lt",
-          "parameters": {
-            "field_name": "cake_counter",
-            "value": 5
-          }
-        }
-      ],
-      "relation": "AND",
-      "permissions": [
-        {
-          "app_name": "cake",
-          "namespace_name": "default",
-          "name": "send_cake"
-        }
-      ]
+      "app_name": "guardian",
+      "namespace_name": "default",
+      "name": "actor_field_lt",
+      "parameters": {
+        "field_name": "cake_counter",
+        "value": 5
+      }
+    }
+  ],
+  "relation": "AND",
+  "permissions": [
+    {
+      "app_name": "cake",
+      "namespace_name": "default",
+      "name": "send_cake"
     }
   ]
 }'
 
 #Response
 {
-  "mappings": [
+  "capability": {
+    "app_name": "happy-workplace",
+    "namespace_name": "default",
+    "name": "de8b209d-4117-4543-a198-bfdab266cdcb",
+    "display_name": null,
+    "resource_url": "http://localhost/guardian/management/capabilities/happy-workplace/default/de8b209d-4117-4543-a198-bfdab266cdcb",
+    "role": {
+      "app_name": "happy-workplace",
+      "namespace_name": "default",
+      "name": "cake_sender"
+    },
+    "conditions": [
     {
-      "role": {
-        "app_name": "happy-workplace",
-        "namespace_name": "default",
-        "name": "cake_sender"
-      },
-      "conditions": [
-        {
-          "app_name": "guardian",
-          "namespace_name": "default",
-          "name": "actor_field_lt",
-          "parameters": {
-            "field_name": "cake_counter",
-            "value": 5
-          }
-        }
-      ],
-      "relation": "AND",
-      "permissions": [
-        {
-          "app_name": "cake",
-          "namespace_name": "default",
-          "name": "send_cake"
-        }
-      ]
+      "app_name": "guardian",
+      "namespace_name": "default",
+      "name": "actor_field_lt",
+      "parameters": {
+        "field_name": "cake_counter",
+        "value": 5
+      }
+    }
+  ],
+    "relation": "AND",
+    "permissions": [
+    {
+      "app_name": "cake",
+      "namespace_name": "default",
+      "name": "send_cake"
     }
   ]
+  }
 }
 ```
 
-Let's dissect this request. We add a new mapping for the role `happy-workplace:default:cake_sender`.
+Let's dissect this request. We add a new capability for the role `happy-workplace:default:cake_sender`.
 This role gets the permission `cake:default:send_cake`, but only if a condition is fulfilled.
 The condition `guardian:default:actor_field_lt` is builtin to the guardian and checks if a field of the actor is
 less than a specified value. In this case the parameters are set to the field `cake_counter` and the value it needs
