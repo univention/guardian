@@ -36,26 +36,7 @@ class TestPermissionsCheckUnittest:
         # FIXME move to with-lookup endpoint test file when implemented
         error_msg = "Test object not found error."
         opa_check_permissions_mock.side_effect = ObjectNotFoundError(error_msg)
-        data = {
-            "actor": {
-                "id": "1",
-                "roles": [
-                    {
-                        "app_name": "app1",
-                        "namespace_name": "namespace1",
-                        "name": "role1",
-                    },
-                ],
-                "attributes": {},
-            },
-            "general_permissions_to_check": [
-                {"app_name": "app1", "namespace_name": "ns1", "name": "ps1"}
-            ],
-            "permissions_to_check": [
-                {"app_name": "app1", "namespace_name": "ns1", "name": "ps2"}
-            ],
-            "extra_request_data": {},
-        }
+        data = get_authz_permissions_check_request_dict()
         response = client.post(client.app.url_path_for("check_permissions"), json=data)
         assert response.status_code == 404, response.json()
         assert response.json() == {"detail": {"message": error_msg}}
@@ -67,7 +48,7 @@ class TestPermissionsCheckUnittest:
         assert response.status_code == 500, response.json()
         assert response.json() == {"detail": {"message": error_msg}}
 
-        error_msg = "Test general"
+        error_msg = "Test general error"
         opa_check_permissions_mock.side_effect = Exception(error_msg)
 
         response = client.post(client.app.url_path_for("check_permissions"), json=data)
@@ -79,26 +60,7 @@ class TestPermissionsCheckUnittest:
         self, client, register_test_adapters, opa_async_mock
     ):
         opa_async_mock.return_value = 1
-        data = {
-            "actor": {
-                "id": "1",
-                "roles": [
-                    {
-                        "app_name": "app1",
-                        "namespace_name": "namespace1",
-                        "name": "role1",
-                    },
-                ],
-                "attributes": {},
-            },
-            "general_permissions_to_check": [
-                {"app_name": "app1", "namespace_name": "ns1", "name": "ps1"}
-            ],
-            "permissions_to_check": [
-                {"app_name": "app1", "namespace_name": "ns1", "name": "ps2"}
-            ],
-            "extra_request_data": {},
-        }
+        data = get_authz_permissions_check_request_dict()
         response = client.post(client.app.url_path_for("check_permissions"), json=data)
         assert response.status_code == 500, response.json()
         assert response.json() == {
