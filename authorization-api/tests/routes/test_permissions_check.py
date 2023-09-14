@@ -195,7 +195,7 @@ class TestPermissionsCheckUnittest:
 
 
 def opa_is_running():
-    opa_url = os.environ.get("OPA_ADAPTER_URL")
+    opa_url = os.environ.get("OPA_ADAPTER__URL")
     if opa_url is None:
         return False
     try:
