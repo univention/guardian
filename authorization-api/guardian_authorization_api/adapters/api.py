@@ -42,11 +42,9 @@ from ..ports import CheckPermissionsAPIPort, GetPermissionsAPIPort
 class TransformExceptionMixin:
     logger: typing.Any
 
-    async def transform_exception(self, exc: Exception) -> Exception:
+    async def transform_exception(self, exc: Exception) -> HTTPException:
         self.logger.exception(exc)
-        if isinstance(exc, PolicyUpstreamError):
-            return HTTPException(status_code=500, detail={"message": str(exc)})
-        elif isinstance(exc, PersistenceError):
+        if isinstance(exc, PolicyUpstreamError) or isinstance(exc, PersistenceError):
             return HTTPException(status_code=500, detail={"message": str(exc)})
         elif isinstance(exc, ObjectNotFoundError):
             return HTTPException(status_code=404, detail={"message": str(exc)})
