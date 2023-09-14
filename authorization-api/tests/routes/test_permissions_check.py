@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 from guardian_authorization_api.errors import ObjectNotFoundError, PersistenceError
 from guardian_authorization_api.main import app
 
-from .conftest import get_authz_permissions_check_request_dict
+from ..conftest import get_authz_permissions_check_request_dict
 
 
 class TestPermissionsCheckUnittest:
