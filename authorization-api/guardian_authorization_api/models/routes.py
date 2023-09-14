@@ -140,6 +140,7 @@ class AuthzPermissionsCheckLookupPostRequest(GuardianBaseModel):
     targets: Optional[list[TargetLookup]]
     contexts: Optional[list[Context]]
     targeted_permissions_to_check: list[Permission]
+    general_permissions_to_check: list[Permission]
     extra_request_data: dict[str, Any]
 
 
