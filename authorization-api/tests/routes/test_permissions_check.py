@@ -184,7 +184,6 @@ class TestPermissionsCheck:
         assert response.status_code == 200, response.json()
 
         # convert list of results to dictionary with target_ids as keys
-        # TODO maybe the API should return it like this in the first place
         expected_values = {
             element["target_id"]: element
             for element in [
