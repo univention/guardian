@@ -446,19 +446,23 @@ files = [
 
 [[package]]
 name = "guardian-lib"
-version = "0.0.0.dev0+22.integrate.authz.api.with.keycloak.e5ef91de"
+version = "0.0.0.dev0+22.integrate.authz.api.with.keycloak.8758818c"
 description = ""
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "guardian_lib-0.0.0.dev0+22.integrate.authz.api.with.keycloak.e5ef91de-py3-none-any.whl", hash = "sha256:dfd627d0ebf472150bcac5aa847e815b64b1c3a2d6810263f67ca923a5eeaa81"},
-    {file = "guardian_lib-0.0.0.dev0+22.integrate.authz.api.with.keycloak.e5ef91de.tar.gz", hash = "sha256:dbea685eba833050fe03237ad9eaa4b2b636605be91eca559a3cbd86883c9934"},
+    {file = "guardian_lib-0.0.0.dev0+22.integrate.authz.api.with.keycloak.8758818c-py3-none-any.whl", hash = "sha256:70e99c6f0652455a31c8f5794192dbd58fab53b1fa09f01acdffccce43b83578"},
+    {file = "guardian_lib-0.0.0.dev0+22.integrate.authz.api.with.keycloak.8758818c.tar.gz", hash = "sha256:fa589641b6b78b602ad9d2932f8950fd4c50bb12e3bdf7f9e094d47e662910b1"},
 ]
 
 [package.dependencies]
+fastapi = ">=0.100.0,<0.101.0"
 lazy-object-proxy = ">=1.9.0,<2.0.0"
 loguru = ">=0.7.0,<0.8.0"
 port-loader = ">=1.0.1,<2.0.0"
+pydantic = ">=1.8.2,<2.0.0"
+pyjwt = ">=2.8.0,<3.0.0"
+requests = ">=2.31.0,<3.0.0"
 
 [package.source]
 type = "legacy"
@@ -897,6 +901,23 @@ dotenv = ["python-dotenv (>=0.10.4)"]
 email = ["email-validator (>=1.0.3)"]
 
 [[package]]
+name = "pyjwt"
+version = "2.8.0"
+description = "JSON Web Token implementation in Python"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "PyJWT-2.8.0-py3-none-any.whl", hash = "sha256:59127c392cc44c2da5bb3192169a91f429924e17aff6534d70fdc02ab3e04320"},
+    {file = "PyJWT-2.8.0.tar.gz", hash = "sha256:57e28d156e3d5c10088e0c68abb90bfac3df82b40a71bd0daa20c65ccd5c23de"},
+]
+
+[package.extras]
+crypto = ["cryptography (>=3.4.0)"]
+dev = ["coverage[toml] (==5.0.4)", "cryptography (>=3.4.0)", "pre-commit", "pytest (>=6.0.0,<7.0.0)", "sphinx (>=4.5.0,<5.0.0)", "sphinx-rtd-theme", "zope.interface"]
+docs = ["sphinx (>=4.5.0,<5.0.0)", "sphinx-rtd-theme", "zope.interface"]
+tests = ["coverage[toml] (==5.0.4)", "pytest (>=6.0.0,<7.0.0)"]
+
+[[package]]
 name = "pytest"
 version = "7.4.0"
 description = "pytest: simple powerful testing with Python"
@@ -1195,4 +1216,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "99502592b5366286126e6afae6cd2b7144282c9cd5e7bee1719801a47c667664"
+content-hash = "372f52240f217c4cb94dfbe09c4ed3dee9180074cec3f0720bf3cd0cfea2a338"

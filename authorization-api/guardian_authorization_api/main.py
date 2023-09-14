@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
 from fastapi.responses import ORJSONResponse
-from guardian_lib.adapter_registry import ADAPTER_REGISTRY, port_dep
+from guardian_lib.adapter_registry import ADAPTER_REGISTRY
 from guardian_lib.ports import AuthenticationPort, SettingsPort
 from loguru import logger
 
@@ -25,7 +25,7 @@ async def lifespan(fastapi_app: FastAPI):
         f"Starting Guardian Authorization API with working dir '{os.getcwd()}'."
     )
     await initialize_adapters(ADAPTER_REGISTRY)
-    auth_adapter = await port_dep(AuthenticationPort)()
+    auth_adapter = await ADAPTER_REGISTRY.request_port(AuthenticationPort)
     fastapi_app.include_router(
         router, prefix=API_PREFIX, dependencies=[Depends(auth_adapter)]
     )
