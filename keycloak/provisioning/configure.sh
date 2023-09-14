@@ -10,7 +10,7 @@ while ! /opt/keycloak/bin/kcadm.sh config credentials --server http://traefik/gu
 #sleep 1
 /opt/keycloak/bin/kcadm.sh create roles -r GuardianDev -s name=admin
 #sleep 1
-/opt/keycloak/bin/kcadm.sh create clients -r GuardianDev -s clientId=guardian_client -s publicClient=true -o
+/opt/keycloak/bin/kcadm.sh create clients -r GuardianDev -s clientId=guardian -s publicClient=true -s 'redirectUris=["http://traefik/guardian/authorization/docs/oauth2-redirect"]' -o
 #sleep 1
 /opt/keycloak/bin/kcadm.sh create groups -r GuardianDev -b '{"name": "Admins"}'
 #sleep 1

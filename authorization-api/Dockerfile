@@ -29,7 +29,7 @@ FROM docker-registry.knut.univention.de/python:3.11-slim as dev
 
 EXPOSE 8000
 WORKDIR /app
-CMD uvicorn --reload --log-level debug --host 0.0.0.0 --port 8000 guardian_authorization_api.main:app
+CMD sleep 60 && uvicorn --reload --log-level debug --host 0.0.0.0 --port 8000 guardian_authorization_api.main:app
 
 RUN pip install --no-cache-dir -U pip wheel && pip install --no-cache-dir poetry==1.5.1 && poetry config virtualenvs.create false
 COPY authorization-api authorization-api

@@ -49,6 +49,8 @@ services:
     depends_on:
       - opa
       - proxy
+      - keycloak-provisioning
+      - keycloak
     networks:
       - proxy-net
     volumes:
@@ -104,6 +106,7 @@ services:
       - GUARDIAN__MANAGEMENT__ADAPTER__NAMESPACE_PERSISTENCE_PORT
       - GUARDIAN__MANAGEMENT__ADAPTER__PERMISSION_PERSISTENCE_PORT
       - GUARDIAN__MANAGEMENT__ADAPTER__ROLE_PERSISTENCE_PORT
+      - GUARDIAN__MANAGEMENT__ADAPTER__CAPABILITY_PERSISTENCE_PORT
       - GUARDIAN__MANAGEMENT__BASE_URL
       - SQL_PERSISTENCE_ADAPTER__DIALECT
       - SQL_PERSISTENCE_ADAPTER__DB_NAME
@@ -137,6 +140,7 @@ services:
       - GUARDIAN__MANAGEMENT__ADAPTER__NAMESPACE_PERSISTENCE_PORT
       - GUARDIAN__MANAGEMENT__ADAPTER__PERMISSION_PERSISTENCE_PORT
       - GUARDIAN__MANAGEMENT__ADAPTER__ROLE_PERSISTENCE_PORT
+      - GUARDIAN__MANAGEMENT__ADAPTER__CAPABILITY_PERSISTENCE_PORT
       - GUARDIAN__MANAGEMENT__BASE_URL
       - SQL_PERSISTENCE_ADAPTER__DIALECT
       - SQL_PERSISTENCE_ADAPTER__DB_NAME
@@ -164,8 +168,10 @@ services:
       traefik.http.routers.keycloak.rule: PathPrefix(`/guardian/keycloak`)
       traefik.http.routers.keycloak.service: keycloak
       traefik.http.services.keycloak.loadbalancer.server.port: 8080
-      traefik.http.middlewares.schemeheader.headers.customrequestheaders.X-Forwarded-Proto: http
-      traefik.http.routers.keycloak.middlewares: schemeheader
+      traefik.http.middlewares.customheaders.headers.customrequestheaders.X-Forwarded-Proto: http
+      traefik.http.routers.keycloak.middlewares: customheaders
+      # traefik.http.middlewares.customheaders.headers.customrequestheaders.X-Forwarded-Host: localhost
+      # traefik.http.routers.keycloak.middlewares: hostheader
   keycloak-provisioning:
     container_name: keycloak-provisioning-dev
     image: keycloak-guardian-provisioning:dev

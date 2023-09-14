@@ -4,6 +4,7 @@ FROM quay.io/keycloak/keycloak:latest as builder
 ENV KC_DB=dev-file
 
 # relative path needs to be set in build stage
+ENV KC_HOSTNAME=traefik
 ENV KC_HTTP_RELATIVE_PATH=/guardian/keycloak
 
 
@@ -24,7 +25,7 @@ ENV KC_HEALTH_ENABLED=true
 ENV KC_METRICS_ENABLED=true
 
 # configuring keycloak
-ENV KC_HOSTNAME=localhost
+ENV KC_HOSTNAME=traefik
 ENV KC_HTTP_ENABLED=true
 ENV KC_PROXY=edge
 ENV KC_HOSTNAME_STRICT_HTTPS=false
