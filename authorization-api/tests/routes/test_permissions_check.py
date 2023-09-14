@@ -252,7 +252,9 @@ class TestPermissionsCheck:
     @pytest.mark.asyncio
     async def test_permission_check_basic(self, client, register_test_adapters):
         """
-        Actor has one role and tries to
+        - Actor has one role: ucsschool:users:teacher
+        - According to the role-capability-mapping,
+          he should always have the permission read_first_name
         """
         data = get_authz_permissions_check_request_dict(n_actor_roles=1, n_targets=1)
         data["actor"]["roles"] = [
