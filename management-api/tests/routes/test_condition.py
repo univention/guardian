@@ -144,7 +144,7 @@ class TestConditionEndpoints:
             name="condition",
             display_name="Condition",
             documentation="doc",
-            code=b"CODE",
+            code=b"Q09ERQ==",
             parameters=["A", "B", "Z"],
         )
         result = client.post(
@@ -192,7 +192,7 @@ class TestConditionEndpoints:
             name="condition",
             display_name="Condition",
             documentation="doc",
-            code=b"CODE",
+            code=b"Q09ERQ==",
             parameters=["A", "B", "Z"],
         )
         result = client.post(
@@ -227,7 +227,7 @@ class TestConditionEndpoints:
             name=db_condition.name,
             display_name="Condition",
             documentation="doc",
-            code=b"CODE",
+            code=b"Q09ERQ==",
             parameters=["A", "B", "Z"],
         )
         result = client.post(

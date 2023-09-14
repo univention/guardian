@@ -1,10 +1,12 @@
 # Copyright (C) 2023 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
+import base64
+import binascii
 from typing import Optional
 
 from fastapi import Path, Query
-from pydantic import AnyHttpUrl, BaseModel, ConstrainedStr, Field
+from pydantic import AnyHttpUrl, BaseModel, ConstrainedStr, Field, validator
 
 from guardian_management_api.constants import STRING_MAX_LENGTH
 
@@ -51,6 +53,15 @@ class RawCodeObjectMixin(BaseModel):
     code: Optional[bytes] = Field(
         None, description="Raw code, as a base64 encoded string."
     )
+
+    @validator("code")
+    def ensure_code_base64(cls, value: Optional[bytes]) -> Optional[bytes]:
+        if value is not None:
+            try:
+                base64.b64decode(value).decode("utf-8")
+            except (binascii.Error, UnicodeDecodeError):
+                raise ValueError("The code needs to be a base64 encoded string.")
+        return value
 
 
 class DocumentationObjectMixin(BaseModel):
