@@ -33,7 +33,6 @@ async def test_check_permissions(mocker, get_policy_object):
     api_port_mock.to_api_response.return_value = "api_response"
     policy_mock = mocker.AsyncMock()
     policy_mock.check_permissions.return_value = "permissions_result"
-    api_port_mock.transform_exception.return_value = Exception()
     result = await check_permissions(
         "permission_check_request", api_port_mock, policy_mock
     )
