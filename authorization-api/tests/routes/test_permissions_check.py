@@ -194,17 +194,18 @@ class TestPermissionsCheckUnittest:
         }
 
 
-def opa_is_not_running():
-    if "OPA_ADAPTER__URL" not in os.environ:
-        return True
+def opa_is_running():
+    opa_url = os.environ.get("OPA_ADAPTER_URL")
+    if opa_url is None:
+        return False
     try:
-        response = requests.get(os.environ["OPA_ADAPTER__URL"])
+        response = requests.get(opa_url)
     except requests.exceptions.ConnectionError:
-        return True
-    return response.status_code != 200
+        return False
+    return response.status_code == 200
 
 
-@pytest.mark.skipif(opa_is_not_running(), reason="Needs a running OPA instance.")
+@pytest.mark.skipif(not opa_is_running(), reason="Needs a running OPA instance.")
 @pytest.mark.e2e
 class TestPermissionsCheck:
     @pytest.fixture(autouse=True)
