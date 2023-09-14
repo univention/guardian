@@ -92,7 +92,7 @@ class TestFastAPICheckPermissionsAPIAdapter:
                     target_id=AuthzObjectIdentifier("id1"), actor_has_permissions=True
                 )
             ],
-            actor_has_all_permissions=True,
+            actor_has_all_targeted_permissions=True,
             actor_has_all_general_permissions=True,
         )
 
@@ -158,7 +158,7 @@ class TestFastAPICheckPermissionsAPIAdapter:
                     namespace_name=NamespaceName(permission["namespace_name"]),
                     name=PermissionName(permission["name"]),
                 )
-                for permission in data["permissions_to_check"]
+                for permission in data["targeted_permissions_to_check"]
             ],
             general_permissions=[
                 PoliciesPermission(

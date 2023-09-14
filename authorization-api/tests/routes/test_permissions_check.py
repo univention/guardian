@@ -77,7 +77,7 @@ class TestPermissionsCheckUnittest:
             "detail": {"message": "Upstream error while checking targeted permissions."}
         }
 
-        data["permissions_to_check"] = []
+        data["targeted_permissions_to_check"] = []
         response = client.post(client.app.url_path_for("check_permissions"), json=data)
         assert response.status_code == 500, response.json()
         assert response.json() == {
@@ -103,7 +103,7 @@ class TestPermissionsCheckUnittest:
             "general_permissions_to_check": [
                 {"app_name": "app1", "namespace_name": "ns1", "name": "ps1"}
             ],
-            "permissions_to_check": [
+            "targeted_permissions_to_check": [
                 {"app_name": "app1", "namespace_name": "ns1", "name": "ps2"}
             ],
             "extra_request_data": {},
@@ -125,7 +125,7 @@ class TestPermissionsCheckUnittest:
                 {"target_id": "id2", "actor_has_permissions": True},
             ],
             "actor_has_all_general_permissions": True,
-            "actor_has_all_permissions": False,
+            "actor_has_all_targeted_permissions": False,
         }
 
     @pytest.mark.asyncio
@@ -152,7 +152,7 @@ class TestPermissionsCheckUnittest:
                 {"target_id": "id2", "actor_has_permissions": True},
             ],
             "actor_has_all_general_permissions": True,
-            "actor_has_all_permissions": False,
+            "actor_has_all_targeted_permissions": False,
         }
 
 
@@ -206,7 +206,7 @@ class TestPermissionsCheck:
 
         assert response_json == {
             "actor_has_all_general_permissions": False,
-            "actor_has_all_permissions": False,
+            "actor_has_all_targeted_permissions": False,
             "actor_id": data["actor"]["id"],
         }
 
@@ -223,7 +223,7 @@ class TestPermissionsCheck:
         ]
 
         data["contexts"] = []
-        data["permissions_to_check"] = [
+        data["targeted_permissions_to_check"] = [
             {
                 "app_name": "ucsschool",
                 "namespace_name": "users",
@@ -248,7 +248,7 @@ class TestPermissionsCheck:
                     "actor_has_permissions": True,
                 },
             ],
-            "actor_has_all_permissions": True,
+            "actor_has_all_targeted_permissions": True,
             "actor_has_all_general_permissions": False,
         }
 
@@ -266,7 +266,7 @@ class TestPermissionsCheck:
             {"app_name": "ucsschool", "namespace_name": "users", "name": "teacher"}
         ]
 
-        data["permissions_to_check"] = [
+        data["targeted_permissions_to_check"] = [
             {
                 "app_name": "ucsschool",
                 "namespace_name": "users",
@@ -298,7 +298,7 @@ class TestPermissionsCheck:
                     "actor_has_permissions": True,
                 },
             ],
-            "actor_has_all_permissions": True,
+            "actor_has_all_targeted_permissions": True,
             "actor_has_all_general_permissions": True,
         }
 
@@ -311,7 +311,7 @@ class TestPermissionsCheck:
             {"app_name": "ucsschool", "namespace_name": "users", "name": "teacher"}
         ]
 
-        data["permissions_to_check"] = []
+        data["targeted_permissions_to_check"] = []
         data["general_permissions_to_check"] = [
             {
                 "app_name": "ucsschool",
@@ -331,6 +331,6 @@ class TestPermissionsCheck:
         assert response.json() == {
             "actor_id": data["actor"]["id"],
             "permissions_check_results": [],
-            "actor_has_all_permissions": False,
+            "actor_has_all_targeted_permissions": False,
             "actor_has_all_general_permissions": True,
         }

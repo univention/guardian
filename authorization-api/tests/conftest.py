@@ -167,7 +167,7 @@ def get_authz_permissions_check_request_dict(
         "actor": get_authz_object_dict(n_roles=n_actor_roles),
         "targets": [get_target_dict() for _ in range(n_targets)],
         "contexts": [get_authz_context_dict() for _ in range(n_context)],
-        "permissions_to_check": [
+        "targeted_permissions_to_check": [
             get_authz_permission_dict() for _ in range(n_permissions)
         ],
         "general_permissions_to_check": [

@@ -68,9 +68,17 @@ async def check_permissions(  # pragma: no-cover
     policy_port: PolicyPort = Depends(port_dep(PolicyPort)),
 ) -> AuthzPermissionsCheckPostResponse:
     """
-    Retrieve a yes/no answer to whether an actor has all specified permissions.
-    May optionally include targets.
+    Retrieve a yes/no answer to whether an actor has the specified permissions.
+
+    Permissions passed via targeted_permissions_to_check are tested with respect
+    to the provided targets.
+
+    For permissions passed via general_permissions_to_check the targets are ignored.
+
     Actor and target objects must be supplied in their entirety.
+
+    With actor_has_all_general_permissions and actor_has_all_targeted_permissions the response
+    includes a separate answer for both permission types.
     """
     return await business_logic.check_permissions(
         permissions_check_request=permissions_check_request,
@@ -93,7 +101,7 @@ async def check_permissions_with_lookup(  # pragma: no-cover
     return AuthzPermissionsCheckPostResponse(
         actor_id=permissions_check_with_lookup_request.actor.id,
         permissions_check_results=[],
-        actor_has_all_permissions=False,
+        actor_has_all_targeted_permissions=False,
         actor_has_all_general_permissions=False,
     )
 

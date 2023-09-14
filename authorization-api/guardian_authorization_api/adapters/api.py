@@ -226,7 +226,7 @@ class FastAPICheckPermissionsAPIAdapter(
         return AuthzPermissionsCheckPostResponse(
             actor_id=actor_id,
             permissions_check_results=permissions_check_results,
-            actor_has_all_permissions=actor_has_all_permissions,
+            actor_has_all_targeted_permissions=actor_has_all_permissions,
             actor_has_all_general_permissions=check_result.actor_has_general_permissions,
         )
 
@@ -262,7 +262,7 @@ class FastAPICheckPermissionsAPIAdapter(
                     namespace_name=permission.namespace_name,
                     name=permission.name,
                 )
-                for permission in api_request.permissions_to_check
+                for permission in api_request.targeted_permissions_to_check
             ],
             general_permissions=[
                 PoliciesPermission(
