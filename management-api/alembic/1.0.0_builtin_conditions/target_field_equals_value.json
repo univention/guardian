@@ -1,5 +1,14 @@
 {
   "display_name": "Only if target field equals value",
   "documentation": "True if the value of the target's specified field matches the specified value.",
-  "parameters": "field,value"
+  "parameters": [
+    {
+      "name": "field",
+      "value_type": "STRING"
+    },
+    {
+      "name": "value",
+      "value_type": "ANY"
+    }
+  ]
 }

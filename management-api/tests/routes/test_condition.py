@@ -8,7 +8,11 @@ from urllib.parse import urljoin
 import pytest
 from guardian_management_api.adapters.condition import SQLConditionPersistenceAdapter
 from guardian_management_api.constants import BASE_URL, COMPLETE_URL
-from guardian_management_api.models.condition import Condition
+from guardian_management_api.models.condition import Condition, ConditionParameterType
+from guardian_management_api.models.routers.condition import (
+    ConditionParameter,
+    ConditionParameterName,
+)
 from guardian_management_api.models.sql_persistence import DBCondition
 
 
@@ -37,7 +41,10 @@ class TestConditionEndpoints:
                 "name": condition.name,
                 "display_name": condition.display_name,
                 "documentation": condition.documentation,
-                "parameter_names": condition.parameters,
+                "parameters": [
+                    {"name": cond_param.name, "value_type": cond_param.value_type.name}
+                    for cond_param in condition.parameters
+                ],
                 "resource_url": urljoin(BASE_URL, resource),
             }
         }
@@ -80,7 +87,10 @@ class TestConditionEndpoints:
                 "name": orig_condition.name,
                 "display_name": orig_condition.display_name,
                 "documentation": orig_condition.documentation,
-                "parameter_names": orig_condition.parameters,
+                "parameters": [
+                    {"name": cond_param.name, "value_type": cond_param.value_type.name}
+                    for cond_param in orig_condition.parameters
+                ],
                 "resource_url": urljoin(BASE_URL, resource),
             }
 
@@ -124,7 +134,10 @@ class TestConditionEndpoints:
                 "name": orig_condition.name,
                 "display_name": orig_condition.display_name,
                 "documentation": orig_condition.documentation,
-                "parameter_names": orig_condition.parameters,
+                "parameters": [
+                    {"name": param.name, "value_type": param.value_type.name}
+                    for param in orig_condition.parameters
+                ],
                 "resource_url": urljoin(BASE_URL, resource),
             }
 
@@ -145,7 +158,12 @@ class TestConditionEndpoints:
             display_name="Condition",
             documentation="doc",
             code=b"Q09ERQ==",
-            parameters=["A", "B", "Z"],
+            parameters=[
+                ConditionParameter(
+                    name=ConditionParameterName("a"),
+                    value_type=ConditionParameterType.ANY,
+                )
+            ],
         )
         result = client.post(
             client.app.url_path_for(
@@ -157,14 +175,12 @@ class TestConditionEndpoints:
                 "name": condition_to_create.name,
                 "display_name": condition_to_create.display_name,
                 "documentation": condition_to_create.documentation,
-                "parameter_names": condition_to_create.parameters,
+                "parameters": [{"name": "a", "value_type": "ANY"}],
                 "code": condition_to_create.code.decode(),
             },
         )
         assert result.status_code == 201, result.json()
         expected_result = asdict(condition_to_create)
-        expected_result["parameter_names"] = expected_result["parameters"]
-        del expected_result["parameters"]
         del expected_result["code"]
         expected_result["resource_url"] = (
             f"{COMPLETE_URL}/conditions/{condition_to_create.app_name}/"
@@ -181,7 +197,9 @@ class TestConditionEndpoints:
             assert getattr(db_condition, attribute) == getattr(
                 condition_to_create, attribute
             )
-        assert db_condition.parameters == "A,B,Z"
+        assert len(db_condition.parameters) == 1
+        assert db_condition.parameters[0].name == "a"
+        assert db_condition.parameters[0].value_type == ConditionParameterType.ANY
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")

@@ -20,6 +20,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 from guardian_management_api.constants import STRING_MAX_LENGTH
 from guardian_management_api.models.capability import CapabilityConditionRelation
+from guardian_management_api.models.condition import ConditionParameterType
 
 SQL_DIALECT = "sql_persistence_adapter.dialect"
 SQL_HOST = "sql_persistence_adapter.host"
@@ -108,6 +109,15 @@ class DBContext(Base):
     )
 
 
+class DBConditionParameter(Base):
+    __tablename__ = "condition_parameter"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    condition_id: Mapped[int] = mapped_column(ForeignKey("condition.id"))
+    name: Mapped[str] = mapped_column(String(STRING_MAX_LENGTH))
+    value_type: Mapped[ConditionParameterType] = mapped_column()
+
+
 class DBCondition(Base):
     __tablename__ = "condition"
 
@@ -117,7 +127,9 @@ class DBCondition(Base):
     name: Mapped[str] = mapped_column(String(STRING_MAX_LENGTH))
     display_name: Mapped[Optional[str]] = mapped_column(String(STRING_MAX_LENGTH))
     documentation: Mapped[Optional[str]] = mapped_column(Text())
-    parameters: Mapped[str] = mapped_column(Text)
+    parameters: Mapped[list[DBConditionParameter]] = relationship(
+        lazy="joined", cascade="all, delete-orphan"
+    )
     code: Mapped[bytes] = mapped_column(LargeBinary())
 
     __table_args__ = (  # type: ignore[var-annotated]

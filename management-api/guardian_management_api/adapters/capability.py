@@ -170,7 +170,7 @@ class SQLCapabilityPersistenceAdapter(
                 )
             )
         )
-        result = list((await session.scalars(stmt)).all())
+        result = list((await session.scalars(stmt)).unique().all())
         if len(result) != len(objs):
             raise ObjectNotFoundError(
                 f"Not all {'permissions' if obj_type is DBPermission else 'contexts'} "

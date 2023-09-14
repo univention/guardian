@@ -1,5 +1,10 @@
 {
   "display_name": "Only if target is self",
   "documentation": "True if the field of the actor matches the field of the target. If no field is passed, the username is used.",
-  "parameters": "field"
+  "parameters": [
+    {
+      "name": "field",
+      "value_type": "STRING"
+    }
+  ]
 }

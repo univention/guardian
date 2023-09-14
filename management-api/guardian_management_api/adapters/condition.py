@@ -13,7 +13,12 @@ from ..errors import (
     ParentNotFoundError,
 )
 from ..models.base import PaginationRequest, PersistenceGetManyResult
-from ..models.condition import Condition, ConditionGetQuery, ConditionsGetQuery
+from ..models.condition import (
+    Condition,
+    ConditionGetQuery,
+    ConditionParameter,
+    ConditionsGetQuery,
+)
 from ..models.routers.base import (
     GetAllRequest,
     GetByAppRequest,
@@ -29,11 +34,16 @@ from ..models.routers.condition import (
     ConditionCreateRequest,
     ConditionEditRequest,
     ConditionMultipleResponse,
+    ConditionParameterName,
     ConditionSingleResponse,
+)
+from ..models.routers.condition import (
+    ConditionParameter as ResponseConditionParameter,
 )
 from ..models.sql_persistence import (
     DBApp,
     DBCondition,
+    DBConditionParameter,
     DBNamespace,
     SQLPersistenceAdapterSettings,
 )
@@ -81,7 +91,13 @@ class FastAPIConditionAPIAdapter(
                 namespace_name=ManagementObjectName(obj.namespace_name),
                 name=ManagementObjectName(obj.name),
                 display_name=obj.display_name,
-                parameter_names=obj.parameters,
+                parameters=[
+                    ResponseConditionParameter(
+                        name=ConditionParameterName(cond_param.name),
+                        value_type=cond_param.value_type,
+                    )
+                    for cond_param in obj.parameters
+                ],
                 documentation=obj.documentation,
                 resource_url=f"{COMPLETE_URL}/conditions/{obj.app_name}/{obj.namespace_name}/{obj.name}",
             )
@@ -113,7 +129,13 @@ class FastAPIConditionAPIAdapter(
                     name=ManagementObjectName(condition.name),
                     display_name=condition.display_name,
                     documentation=condition.documentation,
-                    parameter_names=condition.parameters,
+                    parameters=[
+                        ResponseConditionParameter(
+                            name=ConditionParameterName(cond_param.name),
+                            value_type=cond_param.value_type,
+                        )
+                        for cond_param in condition.parameters
+                    ],
                     resource_url=f"{COMPLETE_URL}/conditions/{condition.app_name}/{condition.namespace_name}/{condition.name}",
                 )
                 for condition in objs
@@ -133,7 +155,12 @@ class FastAPIConditionAPIAdapter(
             display_name=api_request.data.display_name,
             documentation=api_request.data.documentation,
             code=api_request.data.code if api_request.data.code else b"",
-            parameters=api_request.data.parameter_names,
+            parameters=[
+                ConditionParameter(
+                    name=cond_param.name, value_type=cond_param.value_type
+                )
+                for cond_param in api_request.data.parameters
+            ],
         )
 
     async def to_obj_edit(
@@ -160,7 +187,12 @@ class SQLConditionPersistenceAdapter(
             name=condition.name,
             display_name=condition.display_name,
             documentation=condition.documentation,
-            parameters=",".join(condition.parameters),
+            parameters=[
+                DBConditionParameter(
+                    name=cond_param.name, value_type=cond_param.value_type
+                )
+                for cond_param in condition.parameters
+            ],
             code=condition.code,
         )
 
@@ -172,7 +204,12 @@ class SQLConditionPersistenceAdapter(
             name=db_condition.name,
             display_name=db_condition.display_name,
             documentation=db_condition.documentation,
-            parameters=[param for param in db_condition.parameters.split(",") if param],
+            parameters=[
+                ConditionParameter(
+                    name=cond_param.name, value_type=cond_param.value_type
+                )
+                for cond_param in db_condition.parameters
+            ],
             code=db_condition.code,
         )
 
@@ -258,7 +295,12 @@ class SQLConditionPersistenceAdapter(
             db_condition,
             display_name=condition.display_name,
             documentation=condition.documentation,
-            parameters=",".join(condition.parameters),
+            parameters=[
+                DBConditionParameter(
+                    name=cond_param.name, value_type=cond_param.value_type
+                )
+                for cond_param in condition.parameters
+            ],
             code=condition.code,
         )
         return SQLConditionPersistenceAdapter._db_condition_to_condition(modified)

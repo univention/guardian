@@ -1,5 +1,14 @@
 {
   "display_name": "Only if target field equals actor field",
   "documentation": "True if the value of the target's specified field matches the actor specified one.",
-  "parameters": "target_field,actor_field"
+  "parameters": [
+    {
+      "name": "target_field",
+      "value_type": "STRING"
+    },
+    {
+      "name": "actor_field",
+      "value_type": "STRING"
+    }
+  ]
 }

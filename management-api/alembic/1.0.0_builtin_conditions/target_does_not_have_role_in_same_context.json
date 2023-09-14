@@ -1,5 +1,10 @@
 {
   "display_name": "Only if the target does not have a role in the same context as the actor",
   "documentation": "True if the target does not have the specified role in the same context as the actor role that's being evaluated.",
-  "parameters": "role"
+  "parameters": [
+    {
+      "name": "role",
+      "value_type": "ROLE"
+    }
+  ]
 }

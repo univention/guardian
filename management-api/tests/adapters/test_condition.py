@@ -23,6 +23,8 @@ from guardian_management_api.models.base import (
 from guardian_management_api.models.condition import (
     Condition,
     ConditionGetQuery,
+    ConditionParameter,
+    ConditionParameterType,
     ConditionsGetQuery,
 )
 from guardian_management_api.models.sql_persistence import (
@@ -53,7 +55,9 @@ class TestSQLConditionPersistenceAdapter:
                 name="condition",
                 display_name="Condition",
                 documentation="doc",
-                parameters=["a", "b", "c"],
+                parameters=[
+                    ConditionParameter(name="a", value_type=ConditionParameterType.ANY)
+                ],
                 code=b"CODE",
             )
         )
@@ -63,16 +67,20 @@ class TestSQLConditionPersistenceAdapter:
             name="condition",
             display_name="Condition",
             documentation="doc",
-            parameters=["a", "b", "c"],
+            parameters=[
+                ConditionParameter(name="a", value_type=ConditionParameterType.ANY)
+            ],
             code=b"CODE",
         )
         async with condition_sql_adapter.session() as session:
-            result = (await session.scalars(select(DBCondition))).one()
+            result = (await session.scalars(select(DBCondition))).unique().one()
             assert result.namespace_id == namespace.id
             assert result.name == "condition"
             assert result.display_name == "Condition"
             assert result.documentation == "doc"
-            assert result.parameters == "a,b,c"
+            assert len(result.parameters) == 1
+            assert result.parameters[0].name == "a"
+            assert result.parameters[0].value_type == "ANY"
             assert result.code == b"CODE"
 
     @pytest.mark.asyncio
@@ -275,7 +283,12 @@ class TestSQLConditionPersistenceAdapter:
                 name=db_condition.name,
                 display_name="NEW DISPLAY NAME",
                 documentation="NEW DOC",
-                parameters=["N", "E", "W"],
+                parameters=[
+                    ConditionParameter(name="a", value_type=ConditionParameterType.INT),
+                    ConditionParameter(
+                        name="b", value_type=ConditionParameterType.BOOLEAN
+                    ),
+                ],
                 code=b"NEW CODE",
             )
         )
@@ -285,15 +298,24 @@ class TestSQLConditionPersistenceAdapter:
             name=db_condition.name,
             display_name="NEW DISPLAY NAME",
             documentation="NEW DOC",
-            parameters=["N", "E", "W"],
+            parameters=[
+                ConditionParameter(name="a", value_type=ConditionParameterType.INT),
+                ConditionParameter(name="b", value_type=ConditionParameterType.BOOLEAN),
+            ],
             code=b"NEW CODE",
         )
         async with condition_sql_adapter.session() as session:
-            result = (await session.scalars(select(DBCondition))).one()
+            result = (await session.scalars(select(DBCondition))).unique().one()
             assert result.name == db_condition.name
             assert result.display_name == "NEW DISPLAY NAME"
             assert result.documentation == "NEW DOC"
-            assert result.parameters == "N,E,W"
+            assert [
+                ConditionParameter(name=param.name, value_type=param.value_type)
+                for param in result.parameters
+            ] == [
+                ConditionParameter(name="a", value_type=ConditionParameterType.INT),
+                ConditionParameter(name="b", value_type=ConditionParameterType.BOOLEAN),
+            ]
             assert result.code == b"NEW CODE"
 
     @pytest.mark.asyncio

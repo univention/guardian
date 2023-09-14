@@ -3,9 +3,26 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 from dataclasses import dataclass, field
+from enum import StrEnum
 from typing import Optional
 
 from guardian_management_api.models.base import PaginationRequest
+
+
+class ConditionParameterType(StrEnum):
+    ANY = "ANY"
+    STRING = "STRING"
+    FLOAT = "FLOAT"
+    INT = "INT"
+    BOOLEAN = "BOOLEAN"
+    ROLE = "ROLE"
+    CONTEXT = "CONTEXT"
+
+
+@dataclass
+class ConditionParameter:
+    name: str
+    value_type: ConditionParameterType
 
 
 @dataclass
@@ -16,7 +33,7 @@ class Condition:
     code: bytes
     display_name: Optional[str] = None
     documentation: Optional[str] = None
-    parameters: list[str] = field(default_factory=list)
+    parameters: list[ConditionParameter] = field(default_factory=list)
 
 
 @dataclass(frozen=True)

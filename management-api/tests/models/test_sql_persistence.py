@@ -1,10 +1,12 @@
 import pytest
 from guardian_management_api.models.capability import CapabilityConditionRelation
+from guardian_management_api.models.condition import ConditionParameterType
 from guardian_management_api.models.sql_persistence import (
     DBApp,
     DBCapability,
     DBCapabilityCondition,
     DBCondition,
+    DBConditionParameter,
     DBNamespace,
     DBPermission,
     DBRole,
@@ -88,7 +90,7 @@ async def test_cap_condition_cascading(sqlalchemy_mixin):
             db_ns = DBNamespace(app=db_app, name="ns1")
             db_role = DBRole(namespace=db_ns, name="role1")
             db_cond = DBCondition(
-                namespace=db_ns, name="cond1", parameters="", code=b""
+                namespace=db_ns, name="cond1", parameters=[], code=b""
             )
             db_cap = DBCapability(
                 namespace=db_ns,
@@ -120,7 +122,7 @@ async def test_condition_cap_cascading(sqlalchemy_mixin):
             db_ns = DBNamespace(app=db_app, name="ns1")
             db_role = DBRole(namespace=db_ns, name="role1")
             db_cond = DBCondition(
-                namespace=db_ns, name="cond1", parameters="", code=b""
+                namespace=db_ns, name="cond1", parameters=[], code=b""
             )
             db_cap = DBCapability(
                 namespace=db_ns,
@@ -139,3 +141,68 @@ async def test_condition_cap_cascading(sqlalchemy_mixin):
         assert list(result) == []
         result = (await session.execute(select(DBCapability.name))).scalars()
         assert list(result) == ["test"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("create_tables")
+async def test_condition_parameter_cascading(sqlalchemy_mixin):
+    """
+    Tests that if a condition is deleted or a parameter removed from the condition,
+    that its parameters are deleted as well.
+    """
+    async with sqlalchemy_mixin.session() as session:
+        async with session.begin():
+            db_app = DBApp(name="app1")
+            db_ns = DBNamespace(app=db_app, name="ns1")
+            db_param = DBConditionParameter(
+                name="param1", value_type=ConditionParameterType.ANY
+            )
+            db_param2 = DBConditionParameter(
+                name="param2", value_type=ConditionParameterType.ANY
+            )
+            db_cond = DBCondition(
+                namespace=db_ns,
+                name="cond1",
+                parameters=[db_param, db_param2],
+                code=b"",
+            )
+            session.add_all([db_app, db_ns, db_cond])
+        async with session.begin():
+            db_cond.parameters = [db_param2]
+            session.add(db_cond)
+        async with session.begin():
+            result = (
+                await session.execute(select(DBConditionParameter.name))
+            ).scalars()
+        assert list(result) == ["param2"]
+        async with session.begin():
+            await session.delete(db_cond)
+        result = (await session.execute(select(DBCondition.name))).scalars()
+        assert list(result) == []
+        result = (await session.execute(select(DBConditionParameter))).scalars()
+        assert list(result) == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("create_tables")
+async def test_parameter_condition_cascading(sqlalchemy_mixin):
+    """
+    Tests that if a parameter is deleted, that its condition is not deleted.
+    """
+    async with sqlalchemy_mixin.session() as session:
+        async with session.begin():
+            db_app = DBApp(name="app1")
+            db_ns = DBNamespace(app=db_app, name="ns1")
+            db_param = DBConditionParameter(
+                name="param1", value_type=ConditionParameterType.ANY
+            )
+            db_cond = DBCondition(
+                namespace=db_ns, name="cond1", parameters=[db_param], code=b""
+            )
+            session.add_all([db_app, db_ns, db_cond])
+        async with session.begin():
+            await session.delete(db_param)
+        result = (await session.execute(select(DBCondition.name))).scalars()
+        assert list(result) == ["cond1"]
+        result = (await session.execute(select(DBConditionParameter))).scalars()
+        assert list(result) == []

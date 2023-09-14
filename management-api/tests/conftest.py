@@ -5,7 +5,7 @@
 import os
 from base64 import b64encode
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 
 import guardian_lib.adapter_registry as adapter_registry
 import pytest
@@ -45,12 +45,14 @@ from guardian_management_api.adapters.role import (
 from guardian_management_api.adapters.sql_persistence import SQLAlchemyMixin
 from guardian_management_api.main import app, mount_routers
 from guardian_management_api.models.capability import CapabilityConditionRelation
+from guardian_management_api.models.condition import ConditionParameterType
 from guardian_management_api.models.sql_persistence import (
     Base,
     DBApp,
     DBCapability,
     DBCapabilityCondition,
     DBCondition,
+    DBConditionParameter,
     DBContext,
     DBNamespace,
     DBPermission,
@@ -503,11 +505,11 @@ def create_condition():
         name: str = "condition",
         display_name: str = "Condition",
         documentation: str = "docstring",
-        parameters: Optional[list[str]] = None,
+        parameters: Optional[list[Tuple[str, ConditionParameterType]]] = None,
         code: Optional[bytes] = None,
     ):
         if parameters is None:
-            parameters = ["a", "b"]
+            parameters = [("A", ConditionParameterType.ANY), ("B", ConditionParameterType.ANY)]
         if code is None:
             code = b64encode(b"CODE")
         async with session.begin():
@@ -527,7 +529,10 @@ def create_condition():
                 name=name,
                 display_name=display_name,
                 documentation=documentation,
-                parameters=",".join(parameters),
+                parameters=[
+                    DBConditionParameter(name=cond_param[0], value_type=cond_param[1])
+                    for cond_param in parameters
+                ],
                 code=code,
             )
             session.add(condition)
@@ -554,7 +559,16 @@ def create_conditions(create_namespaces):
                     name=f"condition_{namespace.app_id:09d}_{namespace.id:09d}_{i:09d}",
                     display_name=f"Condition {namespace.app_id} {namespace.id} {i}",
                     documentation=f"Doc {namespace.app_id} {namespace.id} {i}",
-                    parameters="a,b,c",
+                    parameters=[
+                        DBConditionParameter(
+                            name=cond_param[0], value_type=cond_param[1]
+                        )
+                        for cond_param in [
+                            ("a", ConditionParameterType.ANY),
+                            ("b", ConditionParameterType.ANY),
+                            ("c", ConditionParameterType.ANY),
+                        ]
+                    ],
                     code=b64encode(b"CODE"),
                 )
                 for i in range(conditions_per_namespace)
