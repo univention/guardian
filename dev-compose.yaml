@@ -155,8 +155,8 @@ services:
     ports:
       - "8080:8080"
     command: start --optimized
-    # depends_on:
-    #   - management-api
+    depends_on:
+      - management-api
     networks:
       - proxy-net
     labels:
@@ -176,9 +176,9 @@ services:
     depends_on:
       - proxy
       - keycloak
-
     networks:
       - proxy-net
+
 networks:
   proxy-net:
     name: proxy-net

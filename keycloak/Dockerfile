@@ -28,3 +28,7 @@ ENV KC_HOSTNAME=localhost
 ENV KC_HTTP_ENABLED=true
 ENV KC_PROXY=edge
 ENV KC_HOSTNAME_STRICT_HTTPS=false
+
+# configure logging
+# ENV KC_LOG=file
+# ENV KC_LOG_LEVEL=info
