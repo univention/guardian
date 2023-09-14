@@ -183,30 +183,18 @@ def get_authz_permissions_check_request_dict(
     }
 
 
-@pytest.fixture()
-def get_authz_permissions_get_request_dict(
-    get_target_dict,
-    get_authz_object_dict,
-    get_namespace_dict,
-    get_authz_context_dict,
-    get_authz_permission_dict,
-) -> Callable:
-    def _get_authz_permissions_get_request_dict(
-        n_actor_roles=3,
-        n_namespaces=3,
-        n_targets=3,
-        n_context=3,
-        n_extra_request_data=3,
-    ) -> dict:
-        return {
-            "namespaces": [get_namespace_dict() for _ in range(n_namespaces)],
-            "actor": get_authz_object_dict(n_roles=n_actor_roles),
-            "targets": [get_target_dict() for _ in range(n_targets)],
-            "contexts": [get_authz_context_dict() for _ in range(n_context)],
-            "include_general_permissions": fake.pybool(),
-            "extra_request_data": fake.pydict(
-                n_extra_request_data, value_types=[str, int]
-            ),
-        }
-
-    return _get_authz_permissions_get_request_dict
+def _get_authz_permissions_get_request_dict(
+    n_actor_roles=3,
+    n_namespaces=3,
+    n_targets=3,
+    n_context=3,
+    n_extra_request_data=3,
+) -> dict:
+    return {
+        "namespaces": [get_namespace_dict() for _ in range(n_namespaces)],
+        "actor": get_authz_object_dict(n_roles=n_actor_roles),
+        "targets": [get_target_dict() for _ in range(n_targets)],
+        "contexts": [get_authz_context_dict() for _ in range(n_context)],
+        "include_general_permissions": fake.pybool(),
+        "extra_request_data": fake.pydict(n_extra_request_data, value_types=[str, int]),
+    }
