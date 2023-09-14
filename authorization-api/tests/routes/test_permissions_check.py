@@ -215,7 +215,6 @@ class TestPermissionsCheck:
     async def test_permission_check_randomized_data(
         self, client, register_test_adapters
     ):
-        # get random request data
         data = get_authz_permissions_check_request_dict(n_permissions=10, n_targets=10)
 
         response = client.post(client.app.url_path_for("check_permissions"), json=data)
