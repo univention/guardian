@@ -59,12 +59,6 @@ def client(register_test_adapters):
 
 @pytest.fixture()
 def register_test_adapters(patch_env):
-    """Fixture that registers the test adapters.
-
-    In this case:
-      - In-memory app persistence adapter.
-      - Dummy settings adapter.
-    """
     for port, adapter in [
         (SettingsPort, EnvSettingsAdapter),
         (CheckPermissionsAPIPort, FastAPICheckPermissionsAPIAdapter),
