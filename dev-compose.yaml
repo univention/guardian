@@ -93,6 +93,8 @@ services:
     depends_on:
       keycloak:
         condition: service_healthy
+      db:
+        condition: service_healthy
     volumes:
       - ./management-api:/app/management-api
       - type: bind
@@ -118,6 +120,8 @@ services:
       - OAUTH_ADAPTER__WELL_KNOWN_URL
       - REQUESTS_CA_BUNDLE
       - SSL_CERT_FILE
+    networks:
+      - proxy-net
   management-api:
     container_name: management-guardian-dev
     image: guardian-management-api:dev
@@ -134,6 +138,8 @@ services:
       proxy:
         condition: service_started
       keycloak:
+        condition: service_healthy
+      db:
         condition: service_healthy
     networks:
       - proxy-net
@@ -203,6 +209,15 @@ services:
       - proxy-net
     labels:
       traefik.enable: "false"
+  db:
+    image: python:3.11.5-alpine
+    restart: always
+    container_name: dummy-db-service
+    command: python3 -m http.server
+    networks:
+      - proxy-net
+    healthcheck:
+      test: ["CMD", "sleep", "0.1"]
 
 networks:
   proxy-net:

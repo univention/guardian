@@ -63,6 +63,11 @@ class FastAPIRoleAPIAdapter(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail={"message": "App not found."},
             )
+        elif isinstance(exc, ParentNotFoundError):
+            return HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"message": str(exc)},
+            )
         return HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={"message": "Internal Server Error"},

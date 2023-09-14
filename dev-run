@@ -1,4 +1,13 @@
 #!/usr/bin/bash
+if [ "postgres" = "$1" ]
+then
+	COMPOSEFILES="-f dev-compose.yaml -f dev-compose-postgres.yaml"
+elif [ "mariadb" = "$1" ]
+then
+  COMPOSEFILES="-f dev-compose.yaml -f dev-compose-mariadb.yaml"
+else
+  COMPOSEFILES="-f dev-compose.yaml"
+fi
 
 mkdir -p management_service_dir/
-USER_ID=$(id --user) GITLAB_IP=$(getent -i ahostsv4 git.knut.univention.de | head -n 1 | cut -d ' ' -f 1) exec docker compose -f dev-compose.yaml up --build
+USER_ID=$(id --user) GITLAB_IP=$(getent -i ahostsv4 git.knut.univention.de | head -n 1 | cut -d ' ' -f 1) exec docker compose $COMPOSEFILES up --build

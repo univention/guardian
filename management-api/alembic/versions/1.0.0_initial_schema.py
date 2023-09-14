@@ -2,7 +2,7 @@
 
 Revision ID: 1.0.0
 Revises:
-Create Date: 2023-09-14 12:59:51.704076
+Create Date: 2023-09-22 08:02:51.412858
 
 """
 import base64
@@ -24,7 +24,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def create_guardian_app(session, app_table, ns_table) -> Tuple[int, int]:
     app_data = {"name": "guardian", "display_name": "The Guardian Application"}
-    app_id = session.execute(insert(app_table).values(app_data)).lastrowid
+    app_id = session.execute(insert(app_table).values(app_data)).inserted_primary_key[0]
     ns_default = {
         "app_id": app_id,
         "name": "default",
@@ -36,7 +36,9 @@ def create_guardian_app(session, app_table, ns_table) -> Tuple[int, int]:
         "display_name": "Builtin Namespace of the Guardian Application",
     }
     session.execute(insert(ns_table).values(ns_default))
-    ns_id = session.execute(insert(ns_table).values(ns_protected)).lastrowid
+    ns_id = session.execute(insert(ns_table).values(ns_protected)).inserted_primary_key[
+        0
+    ]
     return app_id, ns_id
 
 
@@ -164,7 +166,7 @@ def create_management_permissions(session, permission_table, ns_id):
     ]:
         permissions[perm_data["name"]] = session.execute(
             insert(permission_table).values(perm_data)
-        ).lastrowid
+        ).inserted_primary_key[0]
     return permissions
 
 
@@ -255,7 +257,9 @@ def create_builtin_conditions(session, cond_table, ns_id, cond_param_table):
             "namespace_id": ns_id,
         }
         del cond["parameters"]
-        cond_id = session.execute(insert(cond_table).values(cond)).lastrowid
+        cond_id = session.execute(insert(cond_table).values(cond)).inserted_primary_key[
+            0
+        ]
         conditions[cond_name] = cond_id
         for cond_param in data["parameters"]:
             session.execute(
@@ -350,7 +354,7 @@ def upgrade() -> None:
         sa.Column("role_id", sa.Integer(), nullable=False),
         sa.Column(
             "relation",
-            sa.Enum("AND", "OR", name="capabilityconditionrelation"),
+            sa.Enum("AND", "OR", name="capabilityconditionrelation", native_enum=False),
             nullable=False,
         ),
         sa.ForeignKeyConstraint(
@@ -379,7 +383,8 @@ def upgrade() -> None:
                 "BOOLEAN",
                 "ROLE",
                 "CONTEXT",
-                name="conditiontype",
+                name="conditionparametertype",
+                native_enum=False,
             ),
             nullable=False,
         ),
@@ -427,7 +432,7 @@ def upgrade() -> None:
                 "display_name": "Management API Namespace of the Guardian Application",
             }
         )
-    ).lastrowid
+    ).inserted_primary_key[0]
     conditions = create_builtin_conditions(
         session, cond_table, builtin_ns_id, cond_param_table
     )

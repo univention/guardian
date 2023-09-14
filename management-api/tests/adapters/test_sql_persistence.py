@@ -63,10 +63,6 @@ class TestSQLAlchemyMixin:
     def test_create_db_string(
         self, dialect, host, port, db_name, username, password, expected
     ):
-        if dialect in ("mysql, postgresql"):
-            pytest.skip(
-                "Reactivate with univention/components/authorization-engine/guardian#98"
-            )
         assert (
             SQLAlchemyMixin.create_db_string(
                 dialect, host, port, db_name, username, password
@@ -103,9 +99,6 @@ class TestSQLAlchemyMixin:
             ("a", "b", "", "", "e"),
             # Not all permutations tested, but this should be sufficient
         ],
-    )
-    @pytest.mark.skip(
-        "Reactivate with univention/components/authorization-engine/guardian#98"
     )
     def test_create_db_string_missing_values(
         self, dialect, host, port, db_name, username, password

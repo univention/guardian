@@ -489,10 +489,13 @@ async def create_role(
     role_api_port: RoleAPIPort,
     persistence_port: RolePersistencePort,
 ) -> RoleSingleResponse:
-    query = await role_api_port.to_role_create(api_request)
-    role = query.roles[0]
-    created_role = await persistence_port.create(role)
-    return await role_api_port.to_role_create_response(created_role)
+    try:
+        query = await role_api_port.to_role_create(api_request)
+        role = query.roles[0]
+        created_role = await persistence_port.create(role)
+        return await role_api_port.to_role_create_response(created_role)
+    except Exception as exc:
+        raise (await role_api_port.transform_exception(exc)) from exc
 
 
 async def edit_role(

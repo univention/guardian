@@ -34,7 +34,7 @@ repos:
     -   id: mypy
         exclude: "docs/|authorization-api/tests/|port-loader/tests/|management-api/tests|guardian-lib/tests"
         args: []
-        additional_dependencies: [fastapi==0.95.2, loguru==0.7.0, requests==2.31.0, types-requests==2.31.0, alembic==1.11.3, types-aiofiles]
+        additional_dependencies: [fastapi==0.95.2, loguru==0.7.0, requests==2.31.0, types-requests==2.31.0, alembic==1.11.3, types-aiofiles, types-pymysql]
 - repo: https://github.com/jackdewinter/pymarkdown
   rev: v0.9.9
   hooks:

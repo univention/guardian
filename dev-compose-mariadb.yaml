@@ -1,0 +1,34 @@
+# Copyright (C) 2023 Univention GmbH
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
+# Use this compose file in conjunction with dev-compose.yaml
+
+services:
+  db_provisioning:
+    environment:
+      - SQL_PERSISTENCE_ADAPTER__DIALECT=mysql
+      - SQL_PERSISTENCE_ADAPTER__DB_NAME=mysql
+      - SQL_PERSISTENCE_ADAPTER__HOST=db
+      - SQL_PERSISTENCE_ADAPTER__PORT=3306
+      - SQL_PERSISTENCE_ADAPTER__USERNAME=root
+      - SQL_PERSISTENCE_ADAPTER__PASSWORD=mariadb
+  management-api:
+    environment:
+      - SQL_PERSISTENCE_ADAPTER__DIALECT=mysql
+      - SQL_PERSISTENCE_ADAPTER__DB_NAME=mysql
+      - SQL_PERSISTENCE_ADAPTER__HOST=db
+      - SQL_PERSISTENCE_ADAPTER__PORT=3306
+      - SQL_PERSISTENCE_ADAPTER__USERNAME=root
+      - SQL_PERSISTENCE_ADAPTER__PASSWORD=mariadb
+  db:
+    image: mariadb
+    container_name: mariadb-db
+    command: []
+    environment:
+      - MARIADB_ROOT_PASSWORD=mariadb
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/healthcheck.sh", "--connect"]
+      interval: 5s
+      timeout: 5s
+      retries: 3

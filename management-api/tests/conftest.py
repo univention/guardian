@@ -112,9 +112,23 @@ class DummySettingsAdapter(SettingsPort):
         return False
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--real_db",
+        action="store_true",
+        default=False,
+        help="Use the database set by the environment variables "
+        "instead of the db provided by fixture 'sqlite_db_name'. "
+        "If a database other then sqlite is used, all SQL_PERSISTENCE_* "
+        "environment variables have to be set in the environment. "
+        "Never run this against a production database! Tables will be dropped.",
+    )
+
+
 @pytest.fixture(scope="session")
-def patch_env(sqlite_db_name, bundle_server_base_dir):
+def patch_env(sqlite_db_name, bundle_server_base_dir, pytestconfig):
     _environ = os.environ.copy()
+    os.environ["GUARDIAN__MANAGEMENT__BUNDLE_SERVER__DISABLED"] = "1"
     os.environ["GUARDIAN__MANAGEMENT__ADAPTER__APP_PERSISTENCE_PORT"] = "sql"
     os.environ["GUARDIAN__MANAGEMENT__ADAPTER__CONDITION_PERSISTENCE_PORT"] = "sql"
     os.environ["GUARDIAN__MANAGEMENT__ADAPTER__CONTEXT_PERSISTENCE_PORT"] = "sql"
@@ -124,8 +138,16 @@ def patch_env(sqlite_db_name, bundle_server_base_dir):
     os.environ["GUARDIAN__MANAGEMENT__ADAPTER__CAPABILITY_PERSISTENCE_PORT"] = "sql"
     os.environ["GUARDIAN__MANAGEMENT__ADAPTER__SETTINGS_PORT"] = "env"
     os.environ["GUARDIAN__MANAGEMENT__ADAPTER__APP_API_PORT"] = "APP_API_PORT"
-    os.environ["SQL_PERSISTENCE_ADAPTER__DIALECT"] = "sqlite"
-    os.environ["SQL_PERSISTENCE_ADAPTER__DB_NAME"] = sqlite_db_name
+    if pytestconfig.getoption("real_db"):
+        os.environ["SQL_PERSISTENCE_ADAPTER__DIALECT"] = os.environ.get(
+            "SQL_PERSISTENCE_ADAPTER__DIALECT", "sqlite"
+        )
+        os.environ["SQL_PERSISTENCE_ADAPTER__DB_NAME"] = os.environ.get(
+            "SQL_PERSISTENCE_ADAPTER__DB_NAME", sqlite_db_name
+        )
+    else:
+        os.environ["SQL_PERSISTENCE_ADAPTER__DIALECT"] = "sqlite"
+        os.environ["SQL_PERSISTENCE_ADAPTER__DB_NAME"] = sqlite_db_name
     os.environ["BUNDLE_SERVER_ADAPTER__BASE_DIR"] = bundle_server_base_dir
     os.environ["BUNDLE_SERVER_ADAPTER__POLICY_BUNDLE_TEMPLATE_SRC"] = str(
         Path(__file__).parents[1] / "rego_policy_bundle_template"
@@ -225,30 +247,98 @@ def sqlite_url(sqlite_db_name):
     return f"///{sqlite_db_name}"
 
 
+def db_url():
+    db_name = os.environ["SQL_PERSISTENCE_ADAPTER__DB_NAME"]
+    host = os.environ["SQL_PERSISTENCE_ADAPTER__HOST"]
+    port = os.environ["SQL_PERSISTENCE_ADAPTER__PORT"]
+    username = os.environ["SQL_PERSISTENCE_ADAPTER__USERNAME"]
+    password = os.environ["SQL_PERSISTENCE_ADAPTER__PASSWORD"]
+    return f"{username}:{password}@{host}:{port}/{db_name}"
+
+
 @pytest_asyncio.fixture(scope="function")
-async def create_tables(sqlite_url, sqlite_db_name):
-    engine = create_async_engine(f"sqlite+aiosqlite:{sqlite_url}")
+async def create_tables(sqlite_url, patch_env, sqlite_db_name, pytestconfig):
+    dialect = os.environ.get("SQL_PERSISTENCE_ADAPTER__DIALECT")
+    if dialect in [None, "sqlite"]:
+        if pytestconfig.getoption("real_db"):
+            url = f"sqlite+aiosqlite://{db_url()}"
+        else:
+            url = f"sqlite+aiosqlite://{sqlite_url}"
+    elif dialect == "postgresql":
+        url = f"postgresql+asyncpg://{db_url()}"
+    elif dialect == "mysql":
+        url = f"mysql+aiomysql://{db_url()}"
+    else:
+        raise Exception(f"Unknown dialect: '{dialect}'")
+
+    engine = create_async_engine(url)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
-    os.remove(sqlite_db_name)
+
+    if dialect not in [None, "sqlite"] or pytestconfig.getoption("real_db"):
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+    else:
+        os.remove(sqlite_db_name)
 
 
 @pytest.fixture
 def run_alembic_migrations(patch_env, sqlite_db_name):
+    try:
+        subprocess.check_call(
+            ["python3", "-m", "alembic", "downgrade", "base"],
+            cwd=Path(__file__).parents[1],
+        )
+    except subprocess.CalledProcessError:
+        pass  # we do not care if everything after works.
     subprocess.check_call(
         ["python3", "-m", "alembic", "upgrade", "head"], cwd=Path(__file__).parents[1]
     )
     yield
-    os.remove(sqlite_db_name)
+    subprocess.check_call(
+        ["python3", "-m", "alembic", "downgrade", "base"], cwd=Path(__file__).parents[1]
+    )
+    try:
+        os.remove(sqlite_db_name)
+    except FileNotFoundError:
+        pass
 
 
 @pytest.fixture
-def sqlalchemy_mixin(sqlite_url):
+def sqlalchemy_mixin(sqlite_url, pytestconfig):
+    dialect = os.environ.get("SQL_PERSISTENCE_ADAPTER__DIALECT")
     mixin = SQLAlchemyMixin()
-    mixin._db_string = SQLAlchemyMixin.create_db_string(
-        "sqlite", "", "", sqlite_url, "", ""
-    )
+    if dialect in [None, "sqlite"]:
+        if pytestconfig.getoption("real_db"):
+            db_name = os.environ.get("SQL_PERSISTENCE_ADAPTER__DB_NAME")
+            mixin._db_string = SQLAlchemyMixin.create_db_string(
+                "sqlite", "", "", db_name, "", ""
+            )
+        else:
+            mixin._db_string = SQLAlchemyMixin.create_db_string(
+                "sqlite", "", "", sqlite_url, "", ""
+            )
+    elif dialect == "postgresql":
+        mixin._db_string = SQLAlchemyMixin.create_db_string(
+            "postgresql",
+            os.environ.get("SQL_PERSISTENCE_ADAPTER__HOST"),
+            os.environ.get("SQL_PERSISTENCE_ADAPTER__PORT"),
+            os.environ.get("SQL_PERSISTENCE_ADAPTER__DB_NAME"),
+            os.environ.get("SQL_PERSISTENCE_ADAPTER__USERNAME"),
+            os.environ.get("SQL_PERSISTENCE_ADAPTER__PASSWORD"),
+        )
+    elif dialect == "mysql":
+        mixin._db_string = SQLAlchemyMixin.create_db_string(
+            "mysql",
+            os.environ.get("SQL_PERSISTENCE_ADAPTER__HOST"),
+            os.environ.get("SQL_PERSISTENCE_ADAPTER__PORT"),
+            os.environ.get("SQL_PERSISTENCE_ADAPTER__DB_NAME"),
+            os.environ.get("SQL_PERSISTENCE_ADAPTER__USERNAME"),
+            os.environ.get("SQL_PERSISTENCE_ADAPTER__PASSWORD"),
+        )
+    else:
+        raise Exception(f"Unknown dialect: '{dialect}'")
     return mixin
 
 

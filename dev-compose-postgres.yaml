@@ -1,0 +1,39 @@
+# Copyright (C) 2023 Univention GmbH
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
+# Use this compose file in conjunction with dev-compose.yaml
+
+services:
+  db_provisioning:
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - SQL_PERSISTENCE_ADAPTER__DIALECT=postgresql
+      - SQL_PERSISTENCE_ADAPTER__DB_NAME=postgres
+      - SQL_PERSISTENCE_ADAPTER__HOST=db
+      - SQL_PERSISTENCE_ADAPTER__PORT=5432
+      - SQL_PERSISTENCE_ADAPTER__USERNAME=postgres
+      - SQL_PERSISTENCE_ADAPTER__PASSWORD=postgres
+  management-api:
+    environment:
+      - SQL_PERSISTENCE_ADAPTER__DIALECT=postgresql
+      - SQL_PERSISTENCE_ADAPTER__DB_NAME=postgres
+      - SQL_PERSISTENCE_ADAPTER__HOST=db
+      - SQL_PERSISTENCE_ADAPTER__PORT=5432
+      - SQL_PERSISTENCE_ADAPTER__USERNAME=postgres
+      - SQL_PERSISTENCE_ADAPTER__PASSWORD=postgres
+  db:
+    image: postgres:bookworm
+    container_name: postgres-db
+    command: []
+    user: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 5s
+      timeout: 5s
+      retries: 5

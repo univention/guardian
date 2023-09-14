@@ -57,7 +57,7 @@ class TestRoleEndpoints:
 
     @pytest.mark.usefixtures("create_tables")
     @pytest.mark.asyncio
-    async def test_edit_role(
+    async def test_post_role_404_missing_namespace(
         self,
         client,
         sqlalchemy_mixin,
@@ -68,9 +68,6 @@ class TestRoleEndpoints:
         namespace_name = "test_namespace"
         async with sqlalchemy_mixin.session() as session:
             await create_app(session, name=app_name, display_name=None)
-            await create_namespace(
-                session, name=namespace_name, app_name=app_name, display_name=None
-            )
 
         response = client.post(
             client.app.url_path_for(
@@ -79,17 +76,59 @@ class TestRoleEndpoints:
             json={"name": "test_role", "display_name": "test_role_display_name"},
         )
 
-        assert response.status_code == 200
-        json_response = response.json()
-        assert json_response == {
-            "role": {
-                "name": "test_role",
-                "app_name": app_name,
-                "namespace_name": namespace_name,
-                "display_name": "test_role_display_name",
-                "resource_url": f"{COMPLETE_URL}/roles/{app_name}/{namespace_name}/test_role",
+        assert response.status_code == 404
+        assert response.json() == {
+            "detail": {
+                "message": "The namespace of the object to be created does not exist."
             }
         }
+
+    @pytest.mark.usefixtures("create_tables")
+    @pytest.mark.asyncio
+    async def test_post_role_404_missing_app(
+        self,
+        client,
+        sqlalchemy_mixin,
+        create_app,
+        create_namespace,
+    ):
+        app_name = "test_app1"
+        namespace_name = "test_namespace1"
+
+        response = client.post(
+            client.app.url_path_for(
+                "create_role", app_name=app_name, namespace_name=namespace_name
+            ),
+            json={"name": "test_role", "display_name": "test_role_display_name"},
+        )
+
+        assert response.status_code == 404
+        assert response.json() == {
+            "detail": {"message": "The app of the object to be created does not exist."}
+        }
+
+    @pytest.mark.usefixtures("create_tables")
+    @pytest.mark.asyncio
+    async def test_edit_role(
+        self, client, sqlalchemy_mixin, create_app, create_namespace, create_role
+    ):
+        app_name = "test_app"
+        namespace_name = "test_namespace"
+        name = "test_role"
+        display_name = "test_role_display_name"
+        new_display_name = f"{display_name}_new"
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session, name=app_name, display_name=None)
+            await create_namespace(
+                session, name=namespace_name, app_name=app_name, display_name=None
+            )
+            await create_role(
+                session,
+                namespace_name=namespace_name,
+                app_name=app_name,
+                name=name,
+                display_name=display_name,
+            )
 
         response = client.patch(
             client.app.url_path_for(
@@ -98,11 +137,16 @@ class TestRoleEndpoints:
                 namespace_name=namespace_name,
                 name="test_role",
             ),
-            json={"display_name": "a_new_display_name"},
+            json={"display_name": new_display_name},
         )
         assert response.status_code == 200
-        json_response["role"]["display_name"] = "a_new_display_name"
-        assert response.json() == json_response
+        assert response.json()["role"] == {
+            "name": name,
+            "display_name": new_display_name,
+            "namespace_name": namespace_name,
+            "app_name": app_name,
+            "resource_url": f"{COMPLETE_URL}/roles/{app_name}/{namespace_name}/{name}",
+        }
 
         db_role = await sqlalchemy_mixin._get_single_object(
             DBRole,
@@ -112,43 +156,21 @@ class TestRoleEndpoints:
         )
 
         assert db_role is not None
-        assert db_role.display_name == "a_new_display_name"
+        assert db_role.display_name == new_display_name
 
     @pytest.mark.usefixtures("create_tables")
     @pytest.mark.asyncio
     async def test_edit_role_404(
-        self,
-        client,
-        sqlalchemy_mixin,
-        create_app,
-        create_namespace,
+        self, client, sqlalchemy_mixin, create_app, create_namespace, create_role
     ):
         app_name = "test_app"
         namespace_name = "test_namespace"
+        display_name = "test_displayname"
         async with sqlalchemy_mixin.session() as session:
             await create_app(session, name=app_name, display_name=None)
             await create_namespace(
                 session, name=namespace_name, app_name=app_name, display_name=None
             )
-
-        response = client.post(
-            client.app.url_path_for(
-                "create_role", app_name=app_name, namespace_name=namespace_name
-            ),
-            json={"name": "test_role", "display_name": "test_role_display_name"},
-        )
-
-        assert response.status_code == 200
-        json_response = response.json()
-        assert json_response == {
-            "role": {
-                "name": "test_role",
-                "app_name": app_name,
-                "namespace_name": namespace_name,
-                "display_name": "test_role_display_name",
-                "resource_url": f"{COMPLETE_URL}/roles/{app_name}/{namespace_name}/test_role",
-            }
-        }
 
         response = client.patch(
             client.app.url_path_for(
@@ -157,9 +179,10 @@ class TestRoleEndpoints:
                 namespace_name=namespace_name,
                 name="test_role1",
             ),
-            json={"display_name": '"asdasdasd34ß8524%&234ß05223*"'},
+            json={"display_name": display_name},
         )
         assert response.status_code == 404
+        assert response.json() == {"detail": {"message": "App not found."}}
 
     @pytest.mark.usefixtures("create_tables")
     @pytest.mark.asyncio

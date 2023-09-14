@@ -9,6 +9,7 @@ from guardian_lib.models.settings import SETTINGS_NAME_METADATA
 from sqlalchemy import (
     JSON,
     Column,
+    Enum,
     ForeignKey,
     LargeBinary,
     String,
@@ -115,7 +116,9 @@ class DBConditionParameter(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     condition_id: Mapped[int] = mapped_column(ForeignKey("condition.id"))
     name: Mapped[str] = mapped_column(String(STRING_MAX_LENGTH))
-    value_type: Mapped[ConditionParameterType] = mapped_column()
+    value_type: Mapped[ConditionParameterType] = mapped_column(
+        Enum(ConditionParameterType, native_enum=False)
+    )
 
 
 class DBCondition(Base):
@@ -182,7 +185,9 @@ class DBCapability(Base):
         secondary=capability_permission_table,
         lazy="joined",
     )
-    relation: Mapped[CapabilityConditionRelation] = mapped_column()
+    relation: Mapped[CapabilityConditionRelation] = mapped_column(
+        Enum(CapabilityConditionRelation, native_enum=False)
+    )
     conditions: Mapped[set[DBCapabilityCondition]] = relationship(
         lazy="joined", back_populates="capability", cascade="all, delete"
     )
