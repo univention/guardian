@@ -168,7 +168,7 @@ def opa_is_running():
 
 
 @pytest.mark.skipif(not opa_is_running(), reason="Needs a running OPA instance.")
-@pytest.mark.e2e
+@pytest.mark.in_container_test
 class TestPermissionsCheck:
     @pytest.fixture(autouse=True)
     def client(self):

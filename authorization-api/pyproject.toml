@@ -60,7 +60,7 @@ priority = "primary"
 [tool.pytest.ini_options]
 markers = [
     "integration: marks test as requiring services outside of the guardian",
-    "e2e: marked test is relying on services outside the authzorization-api (e.g.: opa)",
+    "in_container_test: marked test is relying on services outside the authzorization-api (e.g.: opa)",
 ]
 
 [build-system]
