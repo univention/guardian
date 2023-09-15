@@ -22,6 +22,10 @@ GetPermissionsAPIRequestObject = TypeVar("GetPermissionsAPIRequestObject")
 CheckPermissionsAPIResponseObject = TypeVar("CheckPermissionsAPIResponseObject")
 CheckPermissionsAPIRequestObject = TypeVar("CheckPermissionsAPIRequestObject")
 
+CheckPermissionsWithLookupAPIRequestObject = TypeVar(
+    "CheckPermissionsWithLookupAPIRequestObject"
+)
+
 
 class PersistencePort(BasePort, ABC):
     """
@@ -113,7 +117,11 @@ class GetPermissionsAPIPort(
 class CheckPermissionsAPIPort(
     BasePort,
     ABC,
-    Generic[CheckPermissionsAPIRequestObject, CheckPermissionsAPIResponseObject],
+    Generic[
+        CheckPermissionsAPIRequestObject,
+        CheckPermissionsAPIResponseObject,
+        CheckPermissionsWithLookupAPIRequestObject,
+    ],
 ):
     @abstractmethod
     async def transform_exception(self, exc: Exception) -> Exception:
@@ -129,4 +137,10 @@ class CheckPermissionsAPIPort(
     async def to_api_response(
         self, actor_id, check_result: CheckPermissionsResult
     ) -> CheckPermissionsAPIResponseObject:
+        ...  # pragma: no cover
+
+    @abstractmethod
+    async def to_policy_lookup_query(
+        self, api_request: CheckPermissionsWithLookupAPIRequestObject, actor, targets
+    ) -> CheckPermissionsQuery:
         ...  # pragma: no cover
