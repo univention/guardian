@@ -6,6 +6,7 @@ import os
 from typing import Callable, Optional
 from unittest.mock import AsyncMock
 
+import guardian_authorization_api
 import guardian_lib.adapter_registry as adapter_registry
 import pytest
 import pytest_asyncio
@@ -30,6 +31,8 @@ from guardian_lib.ports import SettingsPort
 from opa_client import client as opa_client
 from port_loader import AsyncAdapterRegistry, AsyncAdapterSettingsProvider
 from starlette.testclient import TestClient
+
+from tests.mock_classes import UDMMock
 
 fake = Faker()
 
@@ -192,3 +195,25 @@ def _get_authz_permissions_get_request_dict(
         "include_general_permissions": fake.pybool(),
         "extra_request_data": fake.pydict(n_extra_request_data, value_types=[str, int]),
     }
+
+
+@pytest.fixture()
+def udm_mock():
+    old_cls = (
+        guardian_authorization_api.adapters.persistence.UDMPersistenceAdapter.udm_client
+    )
+
+    def _func(users: dict = None, groups: dict = None):
+        guardian_authorization_api.adapters.persistence.UDMPersistenceAdapter.udm_client = UDMMock(
+            users=users,
+            groups=groups,
+        )
+        return (
+            guardian_authorization_api.adapters.persistence.UDMPersistenceAdapter.udm_client
+        )
+
+    yield _func
+
+    guardian_authorization_api.adapters.persistence.UDMPersistenceAdapter.udm_client = (
+        old_cls
+    )

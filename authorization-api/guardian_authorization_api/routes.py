@@ -20,7 +20,12 @@ from .models.routes import (
     AuthzPermissionsPostRequest,
     AuthzPermissionsPostResponse,
 )
-from .ports import CheckPermissionsAPIPort, GetPermissionsAPIPort, PolicyPort
+from .ports import (
+    CheckPermissionsAPIPort,
+    GetPermissionsAPIPort,
+    PersistencePort,
+    PolicyPort,
+)
 
 router = APIRouter()
 
@@ -88,21 +93,24 @@ async def check_permissions(  # pragma: no-cover
 
 
 @router.post("/permissions/check/with-lookup")
-async def check_permissions_with_lookup(  # pragma: no-cover
+async def check_permissions_with_lookup(
     permissions_check_with_lookup_request: AuthzPermissionsCheckLookupPostRequest,
+    check_permissions_port: CheckPermissionsAPIPort = Depends(
+        port_dep(CheckPermissionsAPIPort, FastAPICheckPermissionsAPIAdapter)
+    ),
+    policy_port: PolicyPort = Depends(port_dep(PolicyPort)),
+    persistence_port: PersistencePort = Depends(port_dep(PersistencePort)),
 ) -> AuthzPermissionsCheckPostResponse:
     """
     Retrieve a yes/no answer to whether an actor has all specified permissions.
     May optionally include targets.
     Actor and target objects can be looked up by Guardian using an identifier.
     """
-    # Example only; not implemented
-    # Remove the pragma: no-cover when this is implemented
-    return AuthzPermissionsCheckPostResponse(
-        actor_id=permissions_check_with_lookup_request.actor.id,
-        permissions_check_results=[],
-        actor_has_all_targeted_permissions=False,
-        actor_has_all_general_permissions=False,
+    return await business_logic.check_permissions_with_lookup(
+        permissions_check_with_lookup_request,
+        check_permissions_port,
+        policy_port,
+        persistence_port,
     )
 
 
