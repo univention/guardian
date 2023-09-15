@@ -9,6 +9,7 @@ from unittest.mock import AsyncMock
 import guardian_lib.adapter_registry as adapter_registry
 import pytest
 import pytest_asyncio
+import requests
 from faker import Faker
 from guardian_authorization_api.adapters.api import (
     FastAPICheckPermissionsAPIAdapter,
@@ -177,7 +178,7 @@ def get_authz_permissions_check_request_dict(
     }
 
 
-def _get_authz_permissions_get_request_dict(
+def get_authz_permissions_get_request_dict(
     n_actor_roles=3,
     n_namespaces=3,
     n_targets=3,
@@ -192,3 +193,14 @@ def _get_authz_permissions_get_request_dict(
         "include_general_permissions": fake.pybool(),
         "extra_request_data": fake.pydict(n_extra_request_data, value_types=[str, int]),
     }
+
+
+def opa_is_running():
+    opa_url = os.environ.get("OPA_ADAPTER__URL")
+    if opa_url is None:
+        return False
+    try:
+        response = requests.get(opa_url)
+    except requests.exceptions.ConnectionError:
+        return False
+    return response.status_code == 200

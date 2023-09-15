@@ -1,14 +1,12 @@
-import os
 from unittest.mock import AsyncMock
 
 import guardian_authorization_api.business_logic
 import pytest
-import requests
 from fastapi.testclient import TestClient
 from guardian_authorization_api.errors import ObjectNotFoundError, PersistenceError
 from guardian_authorization_api.main import app
 
-from ..conftest import get_authz_permissions_check_request_dict
+from ..conftest import get_authz_permissions_check_request_dict, opa_is_running
 
 
 class TestPermissionsCheckUnittest:
@@ -154,17 +152,6 @@ class TestPermissionsCheckUnittest:
             "actor_has_all_general_permissions": True,
             "actor_has_all_targeted_permissions": False,
         }
-
-
-def opa_is_running():
-    opa_url = os.environ.get("OPA_ADAPTER__URL")
-    if opa_url is None:
-        return False
-    try:
-        response = requests.get(opa_url)
-    except requests.exceptions.ConnectionError:
-        return False
-    return response.status_code == 200
 
 
 @pytest.mark.skipif(not opa_is_running(), reason="Needs a running OPA instance.")
