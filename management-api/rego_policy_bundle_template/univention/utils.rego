@@ -20,3 +20,11 @@ evaluate_conditions("OR", conditions, condition_data) if {
 evaluate_conditions("OR", conditions, condition_data) if {
 	conditions == []
 }
+
+# role_string: in the format "app_name:namespace:role&app_name:namespace:context"
+# result: dict with keys "role" and "context"
+extract_role_and_context(role_string) := result if {
+	contains(role_string, "&")
+	role_and_context := split(role_string, "&")
+	result := {"role": role_and_context[0], "context": role_and_context[1]}
+} else := {"role": role_string, "context": null}

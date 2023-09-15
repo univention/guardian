@@ -1,10 +1,11 @@
 package univention.utils_test
 
-import data.univention.utils.evaluate_conditions
 import future.keywords.every
 import future.keywords.in
 
 import data.univention.mapping.role_capability_mapping
+import data.univention.utils.evaluate_conditions
+import data.univention.utils.extract_role_and_context
 
 #######################
 # evaluate_conditions #
@@ -54,4 +55,49 @@ test_evaluate_conditions_integration {
 		],
 		{},
 	)
+}
+
+############################
+# extract_role_and_context #
+############################
+
+extract_role_and_context_parametrize := [
+	{
+		"input": "",
+		"result": {
+			"role": "",
+			"context": null,
+		},
+	},
+	{
+		"input": null,
+		"result": {
+			"role": null,
+			"context": null,
+		},
+	},
+	{
+		"input": "app_name:namespace:role&app_name:namespace:context",
+		"result": {
+			"role": "app_name:namespace:role",
+			"context": "app_name:namespace:context",
+		},
+	},
+	{
+		"input": "role&context",
+		"result": {
+			"role": "role",
+			"context": "context",
+		},
+	},
+]
+
+test_extract_role_and_context {
+	every case in extract_role_and_context_parametrize {
+		result := extract_role_and_context(case.input)
+
+		# regal ignore: print-or-trace-call
+		print("TEST_DEBUG result: ", result, " expected: ", case.result)
+		result == case.result
+	}
 }
