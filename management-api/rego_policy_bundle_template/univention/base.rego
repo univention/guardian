@@ -7,6 +7,7 @@ import future.keywords.in
 
 import data.guardian.mapping.roleCapabilityMapping
 import data.univention.utils.evaluate_conditions
+import data.univention.utils.extract_role_and_context
 
 # check if a dictionary of app to namespaces contains a given namespace
 # for the given app
@@ -26,13 +27,16 @@ has_namespace(namespaces, app_name, namespace) if {
 # result: Set of permission objects
 _get_permissions(actor, target_object, roleCapabilityMapping, namespaces, contexts, extra_args) := {permission |
 	some role in actor.roles
-	some capability in roleCapabilityMapping[role]
+	role_and_context := extract_role_and_context(role)
+	role_name := role_and_context.role
+	role_context := role_and_context.context
+	some capability in roleCapabilityMapping[role_name]
 	app_name := capability.appName
 	namespace := capability.namespace
 	any([is_null(namespaces), has_namespace(namespaces, app_name, namespace)])
 	condition_data := {
 		"actor": actor,
-		"actor_role": role,
+		"actor_role": role_and_context,
 		"target": {
 			"old": target_object.old,
 			"new": target_object.new,

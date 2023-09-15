@@ -8,7 +8,7 @@ target_field_equals_value_parametrize := [
 	{
 		"condition_data": {
 			"actor": {},
-			"actor_role": "",
+			"actor_role": {},
 			"target": {
 				"old": {},
 				"new": {},
@@ -23,7 +23,7 @@ target_field_equals_value_parametrize := [
 	{
 		"condition_data": {
 			"actor": {"id": "foo"},
-			"actor_role": "",
+			"actor_role": {},
 			"target": {
 				"old": {"id": "notfoo", "roles": [], "attributes": {"email": "foo"}},
 				"new": {},
@@ -38,7 +38,7 @@ target_field_equals_value_parametrize := [
 	{
 		"condition_data": {
 			"actor": {"id": "foo"},
-			"actor_role": "",
+			"actor_role": {},
 			"target": {
 				"old": {"id": "notfoo", "roles": [], "attributes": {"email": "foo"}},
 				"new": {},

@@ -8,7 +8,7 @@ import future.keywords.in
 # This is the data that is passed to the condition
 # condition_data = {
 #         "actor": {},
-#         "actor_role": "",
+#         "actor_role": {},
 #         "target": {
 #              "old": {},
 #              "new": {},

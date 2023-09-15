@@ -8,7 +8,7 @@ target_is_self_parametrize := [
 	{
 		"condition_data": {
 			"actor": {},
-			"actor_role": "",
+			"actor_role": {},
 			"target": {
 				"old": {},
 				"new": {},
@@ -23,7 +23,7 @@ target_is_self_parametrize := [
 	{
 		"condition_data": {
 			"actor": {"id": "foo"},
-			"actor_role": "",
+			"actor_role": {},
 			"target": {
 				"old": {"id": "notfoo"},
 				"new": {},
@@ -38,7 +38,7 @@ target_is_self_parametrize := [
 	{
 		"condition_data": {
 			"actor": {"id": "foo"},
-			"actor_role": "",
+			"actor_role": {},
 			"target": {
 				"old": {"id": "foo"},
 				"new": {},
@@ -53,7 +53,7 @@ target_is_self_parametrize := [
 	{
 		"condition_data": {
 			"actor": {"id": "foo", "attributes": {"uid": "foo"}},
-			"actor_role": "",
+			"actor_role": {},
 			"target": {
 				"old": {"id": "foo", "attributes": {"uid": "foo"}},
 				"new": {},
@@ -68,7 +68,7 @@ target_is_self_parametrize := [
 	{
 		"condition_data": {
 			"actor": {"id": "foo", "attributes": {"uid": "foo"}},
-			"actor_role": "",
+			"actor_role": {},
 			"target": {
 				"old": {"id": "foo", "attributes": {"uid": "notfoo"}},
 				"new": {},

@@ -319,6 +319,28 @@ check_permissions_parametrize := [
 		"input": {
 			"actor": {
 				"id": "actor_id_1",
+				"roles": {"ucsschool:users:teacher&ucsschool:school:school1"},
+			},
+			"targets": [{
+				"old": {"id": "target_id_1"},
+				"new": {"id": "target_id_1"},
+			}],
+			"namespaces": {"ucsschool": {"users", "groups"}},
+			"contexts": {},
+			"extra_args": {},
+			"permissions": {
+				{"appName": "ucsschool", "namespace": "users", "permission": "read_first_name"},
+				{"appName": "ucsschool", "namespace": "users", "permission": "read_last_name"},
+				{"appName": "ucsschool", "namespace": "users", "permission": "write_password"},
+				{"appName": "ucsschool", "namespace": "users", "permission": "export"},
+			},
+		},
+		"result": {{"target_id": "target_id_1", "result": true}},
+	},
+	{
+		"input": {
+			"actor": {
+				"id": "actor_id_1",
 				"roles": {"ucsschool:users:teacher"},
 			},
 			"targets": [{

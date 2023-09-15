@@ -8,7 +8,7 @@ no_targets_parametrize := [
 	{
 		"condition_data": {
 			"actor": {},
-			"actor_role": "",
+			"actor_role": {},
 			"target": {
 				"old": {},
 				"new": {},
@@ -23,7 +23,7 @@ no_targets_parametrize := [
 	{
 		"condition_data": {
 			"actor": {"id": "foo"},
-			"actor_role": "",
+			"actor_role": {},
 			"target": {
 				"old": {"id": ""},
 				"new": {"id": ""},
@@ -38,7 +38,7 @@ no_targets_parametrize := [
 	{
 		"condition_data": {
 			"actor": {"id": "foo"},
-			"actor_role": "",
+			"actor_role": {},
 			"target": {
 				"old": null,
 				"new": null,
@@ -53,7 +53,7 @@ no_targets_parametrize := [
 	{
 		"condition_data": {
 			"actor": {"id": "foo"},
-			"actor_role": "",
+			"actor_role": {},
 			"target": {
 				"old": null,
 				"new": {"id": "something"},
