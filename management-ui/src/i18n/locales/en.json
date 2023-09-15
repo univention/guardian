@@ -5,6 +5,18 @@
       "loginFailed": "Login failed."
     }
   },
+  "DeleteModal": {
+    "title": "Delete capabilities",
+    "description": "Please confirm the irrevocable deletion for {{toDelete}} of {{selected}} capabilities.",
+    "warning": "{{numberWarning}} of {{selected}} selected capabilities can't be deleted.",
+    "confirmLabel": "Delete",
+    "cancelLabel": "Cancel"
+  },
+  "DeleteModalError": {
+    "title": "Deleting capabilities failed",
+    "description": "Not all selected capabilities could be deleted:",
+    "confirmLabel": "OK"
+  },
   "SearchLimitReachedModal": {
     "title": "Search limit reached",
     "description": "More than {{limit}} objects were found. Loading could take some time. Would you like to continue with your search?",
@@ -22,13 +34,15 @@
     "heading": {
       "role": "Roles",
       "context": "Contexts",
-      "namespace": "Namespaces"
+      "namespace": "Namespaces",
+      "capability": "Capabilities"
     },
     "searchForm": {
       "resetButtonLabel": "Reset",
       "searchButtonLabel": "Search"
     },
     "contextActions": {
+      "deleteLabel": "Delete",
       "editLabel": "Edit"
     },
     "globalActions": {
@@ -40,16 +54,23 @@
       "add.role": "Create role",
       "add.context": "Create context",
       "add.namespace": "Create namespace",
+      "add.capability": "Add capability",
       "edit.role": "Role",
       "edit.context": "Context",
-      "edit.namespace": "Namespace"
+      "edit.namespace": "Namespace",
+      "edit.capability": "Capability"
+    },
+    "headerLink": {
+      "editRole": "Role",
+      "listCapabilities": "Capabilities"
     },
     "button": {
       "back": "Back",
       "save": "Save",
       "add.role": "Create role",
       "add.context": "Create context",
-      "add.namespace": "Create namespace"
+      "add.namespace": "Create namespace",
+      "add.capability": "Create capability"
     },
     "notFound.role": "The role object does not exist",
     "notFound.context": "The context object does not exist",
@@ -86,6 +107,7 @@
     "heading.role": "The role object '{{name}}' was successfully created",
     "heading.context": "The context object '{{name}}' was successfully created",
     "heading.namespace": "The namespace object '{{name}}' was successfully created",
+    "heading.capability": "The capability object '{{name}}' was successfully created",
     "button": {
       "confirmation": "OK"
     }

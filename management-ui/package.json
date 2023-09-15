@@ -14,7 +14,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
-    "@univention/univention-veb": "0.0.55",
+    "@univention/univention-veb": "0.0.56",
     "i18next": "^23.2.11",
     "i18next-vue": "^2.2.1",
     "keycloak-js": "22.0.1",

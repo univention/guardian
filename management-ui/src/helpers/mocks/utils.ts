@@ -2,6 +2,7 @@ import type {ListResponseModel} from '@/helpers/models';
 import {rolesListResponseModel} from '@/helpers/mocks/roles';
 import {namespacesListResponseModel} from '@/helpers/mocks/namespaces';
 import {contextsListResponseModel} from '@/helpers/mocks/contexts';
+import {capabilitiesListResponseModel} from '@/helpers/mocks/capabilities';
 
 export const fetchMockData = <T>(mockData: T, name: string): Promise<T> => {
   console.debug(`${name}. VITE_USE_REAL_BACKEND===false in DEV mode. Returning mock data:`, mockData);
@@ -53,6 +54,23 @@ export const getContextsListResponseModels = (): ListResponseModel[] => {
     y.id = `context${x}`;
     y.attributes.name.value = y.id;
     y.attributes.displayname.value = `Context ${x}`;
+    y.attributes.app.value = 'App1';
+    y.attributes.namespace.value = 'Namespace1';
+    if (x % 2 === 0) {
+      y.allowedActions = ['edit'];
+    }
+    rows.push(y);
+  }
+  return rows;
+};
+export const getCapabilitiesListResponseModels = (): ListResponseModel[] => {
+  const rows: ListResponseModel[] = [];
+
+  for (let x = 2; x < 500; x++) {
+    const y = JSON.parse(JSON.stringify(capabilitiesListResponseModel));
+    y.id = `capability${x}`;
+    y.attributes.name.value = y.id;
+    y.attributes.displayname.value = `Capability ${x}`;
     y.attributes.app.value = 'App1';
     y.attributes.namespace.value = 'Namespace1';
     if (x % 2 === 0) {

@@ -5,6 +5,18 @@
       "loginFailed": "Login fehlgeschlagen."
     }
   },
+  "DeleteModal": {
+    "title": "Capability löschen",
+    "description": "Bitte bestätigen Sie das unwiderrufliche Löschen der {{toDelete}} von {{selected}} Capabilities.",
+    "warning": "{{numberWarning}} von {{selected}} ausgewählten Capbilities können nicht gelöscht werden.",
+    "confirmLabel": "Löschen",
+    "cancelLabel": "Abbrechen"
+  },
+  "DeleteModalError": {
+    "title": "Das Löschen von Capabilities ist fehlgeschlagen",
+    "description": "Die folgenden Capabilities konnten nicht gelöscht werden:",
+    "confirmLabel": "OK"
+  },
   "SearchLimitReachedModal": {
     "title": "Such-Limit erreicht",
     "description": "Es wurden mehr als {{limit}} Objekte gefunden. Das Laden könnte einige Zeit dauern. Möchten Sie mit der Suche fortfahren?",
@@ -22,13 +34,15 @@
     "heading": {
       "role": "Rollen",
       "context": "Contexts",
-      "namespace": "Namespaces"
+      "namespace": "Namespaces",
+      "capability": "Capabilities"
     },
     "searchForm": {
       "resetButtonLabel": "Zurücksetzen",
       "searchButtonLabel": "Suchen"
     },
     "contextActions": {
+      "deleteLabel": "Löschen",
       "editLabel": "Bearbeiten"
     },
     "globalActions": {
@@ -40,16 +54,23 @@
       "add.role": "Rolle anlegen",
       "add.context": "Context anlegen",
       "add.namespace": "Namespace anlegen",
+      "add.capability": "Capability hinzufügen",
       "edit.role": "Rolle",
       "edit.context": "Context",
-      "edit.namespace": "Namespace"
+      "edit.namespace": "Namespace",
+      "edit.capability": "Capability"
+    },
+    "headerLink": {
+      "editRole": "Rolle",
+      "listCapabilities": "Capabilities"
     },
     "button": {
       "back": "Zurück",
       "save": "Speichern",
       "add.role": "Rolle anlegen",
       "add.context": "Context anlegen",
-      "add.namespace": "Namespace anlegen"
+      "add.namespace": "Namespace anlegen",
+      "add.capability": "Capability anlegen"
     },
     "notFound.role": "Das Rollen-Object existiert nicht",
     "notFound.context": "Das Context-Object existiert nicht",
@@ -86,6 +107,7 @@
     "heading.role": "Das Rollen-Objekt '{{name}}' wurde erfolgreich angelegt",
     "heading.context": "Das Context-Objekt '{{name}}' wurde erfolgreich angelegt",
     "heading.namespace": "Das Namespace-Objekt '{{name}}' wurde erfolgreich angelegt",
+    "heading.capability": "Das Capability-Objekt '{{name}}' wurde erfolgreich angelegt",
     "button": {
       "confirmation": "OK"
     }

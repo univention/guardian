@@ -17,12 +17,15 @@ import {
   addRoleViewConfig,
   addContextViewConfig,
   addNamespaceViewConfig,
+  addCapabilityViewConfig,
   roleDetailResponseModel,
   namespaceDetailResponseModel,
   contextDetailResponseModel,
+  capabilityDetailResponseModel,
   fetchMockData,
   getRolesListResponseModels,
   getNamespacesListResponseModels,
+  getCapabilitiesListResponseModels,
   getContextsListResponseModels,
 } from '@/helpers/mocks';
 
@@ -78,6 +81,7 @@ export const fetchAddViewConfig = async (objectType: ObjectType): Promise<AddVie
       role: addRoleViewConfig,
       context: addContextViewConfig,
       namespace: addNamespaceViewConfig,
+      capability: addCapabilityViewConfig,
     }[objectType];
     return fetchMockData(config, 'fetchAddViewConfig');
   }
@@ -87,6 +91,7 @@ export const fetchAddViewConfig = async (objectType: ObjectType): Promise<AddVie
     role: addRoleViewConfig,
     context: addContextViewConfig,
     namespace: addNamespaceViewConfig,
+    capability: addCapabilityViewConfig,
   }[objectType];
   return fetchMockData(config, 'fetchAddViewConfig');
   /*
@@ -118,6 +123,7 @@ export const fetchObjects = async (
       role: getRolesListResponseModels,
       context: getContextsListResponseModels,
       namespace: getNamespacesListResponseModels,
+      capability: getCapabilitiesListResponseModels,
     }[objectType]();
     return fetchMockData(mockData, 'fetchObjects');
   }
@@ -127,6 +133,7 @@ export const fetchObjects = async (
     role: getRolesListResponseModels,
     context: getContextsListResponseModels,
     namespace: getNamespacesListResponseModels,
+    capability: getCapabilitiesListResponseModels,
   }[objectType]();
   return fetchMockData(mockData, 'fetchObjects');
 
@@ -168,6 +175,7 @@ export const fetchObject = async (
       role: roleDetailResponseModel,
       context: contextDetailResponseModel,
       namespace: namespaceDetailResponseModel,
+      capability: capabilityDetailResponseModel,
     }[objectType];
     return fetchMockData(model, 'fetchObject');
   }
@@ -177,6 +185,7 @@ export const fetchObject = async (
     role: roleDetailResponseModel,
     context: contextDetailResponseModel,
     namespace: namespaceDetailResponseModel,
+    capability: capabilityDetailResponseModel,
   }[objectType];
   return fetchMockData(model, 'fetchObject');
 
@@ -336,6 +345,44 @@ export const createObject = async (
   */
 };
 
+export const deleteCapabilities = async(ids: string[]): Promise<{id: string; error: string}[]> => {
+  if (needMock) {
+    return fetchMockData([
+      {
+        id: ids[0] as string,
+        error: 'some error',
+      },
+    ], 'deleteCapabilities');
+  }
+
+  console.log('Real backend call not implemented yet. Returning mock data');
+  return fetchMockData([
+    {
+      id: ids[0] as string,
+      error: 'some error',
+    },
+  ], 'deleteCapabilities');
+
+  /*
+  const responses = await Promise.all(ids.map(id => fetchAuthenticated(`/ucsschool/guardian/v1/capabilities/${id}`, {
+    method: 'DELETE',
+  })));
+  const errors = await Promise.all(responses.map(x => getError(x)));
+  const fails: {id: string; error: string}[] = [];
+  for (let x = 0; x < responses.length; x++) {
+    const error = errors[x];
+    if (error) {
+      fails.push({
+        id: ids[x] as string,
+        error: JSON.stringify(error.detail),
+      });
+    }
+  }
+  return fails;
+  */
+};
+
+
 const fetchNamespacesMock = (appName: string): LabeledValue<string>[] => {
   const mock: LabeledValue<string>[] = [];
   for (let x = 0; x < 2; x++) {
@@ -353,4 +400,23 @@ export const fetchNamespaces = async (appName: string): Promise<LabeledValue<str
 
   console.log('Real backend call not implemented yet. Returning mock data');
   return fetchMockData(fetchNamespacesMock(appName), 'fetchNamespaces');
+};
+
+const fetchPermissionsMock = (appName: string, namespaceName: string): LabeledValue<string>[] => {
+  const mock: LabeledValue<string>[] = [];
+  for (let x = 0; x < 2; x++) {
+    mock.push({
+      label: `${appName}/${namespaceName}/Permission ${x + 1}`,
+      value: `${appName}/${namespaceName}/permission${x + 1}`,
+    });
+  }
+  return mock;
+};
+export const fetchPermissions = async (appName: string, namespaceName: string): Promise<LabeledValue<string>[]> => {
+  if (needMock) {
+    return fetchMockData(fetchPermissionsMock(appName, namespaceName), 'fetchNamespaces');
+  }
+
+  console.log('Real backend call not implemented yet. Returning mock data');
+  return fetchMockData(fetchPermissionsMock(appName, namespaceName), 'fetchNamespaces');
 };

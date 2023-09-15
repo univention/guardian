@@ -35,7 +35,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'landing',
-      redirect: '/roles',
+      redirect: {name: 'listRoles'},
     },
     {
       path: '/roles',
@@ -49,11 +49,39 @@ const router = createRouter({
       component: EditView,
       props: {action: 'add', objectType: 'role'},
     },
+    /*
     {
       path: '/roles/edit/:id/:page?',
       name: 'editRole',
       component: EditView,
       props: {action: 'edit', objectType: 'role'},
+    },
+    */
+    {
+      path: '/roles/edit/:id/:page?',
+      name: 'editRole',
+      component: EditView,
+      props: {action: 'edit', objectType: 'role'},
+      children: [
+        {
+          name: 'listCapabilities',
+          path: 'capabilties',
+          component: ListView,
+          props: {objectType: 'capability'},
+        },
+        {
+          name: 'addCapability',
+          path: 'capabilties/add/:page?',
+          component: EditView,
+          props: {action: 'add', objectType: 'capability'},
+        },
+        {
+          name: 'editCapability',
+          path: 'capabilties/edit/:id2/:page?',
+          component: EditView,
+          props: {action: 'edit', objectType: 'capability'},
+        }
+      ],
     },
     {
       path: '/namespaces',

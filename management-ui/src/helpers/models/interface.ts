@@ -1,6 +1,6 @@
 import type {UGridRow, UGridColumnDefinition, SubElementProps} from '@univention/univention-veb';
 
-export type ObjectType = 'role' | 'context' | 'namespace';
+export type ObjectType = 'role' | 'context' | 'namespace' | 'capability';
 
 export interface LabeledValue<T> {
   value: T;
@@ -12,6 +12,7 @@ export interface ListViewConfigs {
   role: ListViewConfig;
   context: ListViewConfig;
   namespace: ListViewConfig;
+  capability: ListViewConfig;
 }
 export interface ListViewConfig {
   allowedGlobalActions: GlobalAction[];
@@ -25,7 +26,7 @@ export interface AddViewConfig {
 }
 
 export type Access = 'none' | 'read' | 'write';
-export type ContextAction = 'edit';
+export type ContextAction = 'edit' | 'delete';
 
 export interface Attribute {
   value?: unknown;
@@ -37,6 +38,19 @@ export interface ListResponseModel {
   attributes: Record<string, Attribute>;
 }
 
+export interface FieldExtendingInput {
+  type: 'UExtendingInput'
+  props: {
+    name: string;
+    label: string;
+    description?: string;
+    hint?: string;
+    // required?: boolean;
+    access?: 'write' | 'read' | 'none';
+    rootElement: Field;
+    extensions: Record<string, Field[]>;
+  }
+}
 export interface FieldInputText {
   type: 'UInputText';
   props: {
@@ -136,6 +150,7 @@ export interface FieldMultiInput {
     subElements: Field[];
     description?: string;
     hint?: string;
+    standby?: any; // boolean | Ref<boolean>;
   };
 }
 export interface FieldMultiObjectSelect {
@@ -171,6 +186,7 @@ export interface FieldInputClassified {
 }
 export type Field =
   | FieldComboBox
+  | FieldExtendingInput
   | FieldInputCheckbox
   | FieldInputClassified
   | FieldInputDate

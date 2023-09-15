@@ -7,6 +7,7 @@ import {
   UStandbyFullScreen,
   useStandby,
   UConfirmDialog,
+  UExtendingInput,
   UInputPassword,
   UInputCheckbox,
   UInputDate,
@@ -20,7 +21,7 @@ import {
 import type {UGridContextAction, UGridRow} from '@univention/univention-veb';
 import type {ListResponseModel, GlobalAction, Field, FormValues, ObjectType} from '@/helpers/models';
 import {useRoute} from 'vue-router';
-import {fetchListViewConfig, fetchNamespaces, fetchObjects} from '@/helpers/dataAccess';
+import {deleteCapabilities, fetchListViewConfig, fetchNamespaces, fetchObjects} from '@/helpers/dataAccess';
 import {ref, onMounted, watch, reactive, toRaw, computed, type ComputedRef} from 'vue';
 import {useTranslation} from 'i18next-vue';
 import {useRouter} from 'vue-router';
@@ -33,6 +34,7 @@ const props = defineProps<{
 
 const components = {
   UComboBox,
+  UExtendingInput,
   UInputCheckbox,
   UInputDate,
   UInputPassword,
@@ -64,6 +66,7 @@ interface Configs {
   role: Config;
   context: Config;
   namespace: Config;
+  capability: Config;
 }
 const configs = ref<Configs>({
   role: {
@@ -79,6 +82,12 @@ const configs = ref<Configs>({
     columns: [],
   },
   namespace: {
+    allowedGlobalActions: [],
+    searchForm: [],
+    searchFormOrigValues: {},
+    columns: [],
+  },
+  capability: {
     allowedGlobalActions: [],
     searchForm: [],
     searchFormOrigValues: {},
@@ -167,9 +176,48 @@ const fetchConfig = async (): Promise<void> => {
   configs.value.namespace.searchFormOrigValues = structuredClone(listViewConfig.namespace.searchFormValues);
   configs.value.namespace.columns = listViewConfig.namespace.columns;
 
+  configs.value.capability.allowedGlobalActions = listViewConfig.capability.allowedGlobalActions;
+  configs.value.capability.searchForm = listViewConfig.capability.searchForm;
+  configs.value.capability.searchFormOrigValues = structuredClone(listViewConfig.capability.searchFormValues);
+  configs.value.capability.columns = listViewConfig.capability.columns;
+  {
+    configs.value.capability.searchFormOrigValues['roleName'] = route.params['id'];
+
+    const field = configs.value.capability.searchForm.find(f => f.props.name === 'namespaceSelection') as FieldComboBox;
+    const _standby = reactive(useStandby());
+    field.props.standby = computed(() => _standby.active);
+
+    watch(
+      () => states.value.capability.searchFormValues['appSelection'],
+      async newValue => {
+        if (newValue === 'all') {
+          field.props.access = 'read';
+          field.props.options = [
+            {
+              label: 'All',
+              value: 'all',
+            },
+          ];
+          states.value.capability.searchFormValues['namespaceSelection'] = 'all';
+        } else {
+          field.props.access = 'write';
+          states.value.capability.searchFormValues['namespaceSelection'] = '';
+          const _options = await _standby.wrap(() => fetchNamespaces(newValue as string));
+          _options.unshift({
+            label: 'All',
+            value: 'all',
+          });
+          field.props.options = _options;
+          states.value.capability.searchFormValues['namespaceSelection'] = 'all';
+        }
+      }
+    );
+  }
+
   states.value.role.searchFormValues = structuredClone(listViewConfig.role.searchFormValues);
   states.value.context.searchFormValues = structuredClone(listViewConfig.context.searchFormValues);
   states.value.namespace.searchFormValues = structuredClone(listViewConfig.namespace.searchFormValues);
+  states.value.capability.searchFormValues = structuredClone(listViewConfig.capability.searchFormValues);
 };
 
 onMounted(async () => {
@@ -186,6 +234,7 @@ interface States {
   role: State;
   context: State;
   namespace: State;
+  capability: State;
 }
 const states = ref<States>({
   role: {
@@ -199,6 +248,11 @@ const states = ref<States>({
     rows: [],
   },
   namespace: {
+    searchFormValues: {},
+    selection: [],
+    rows: [],
+  },
+  capability: {
     searchFormValues: {},
     selection: [],
     rows: [],
@@ -256,10 +310,40 @@ const onAddAction = (): void => {
     role: 'addRole',
     context: 'addContext',
     namespace: 'addNamespace',
+    capability: 'addCapability',
   }[props.objectType];
   router.push({
     name,
   });
+};
+
+
+const deleteModalError = reactive({
+  active: false,
+  failedCapabilities: [] as {id: string; error: string}[],
+});
+const deleteModalActive = ref(false);
+const deleteModalProps = reactive<{
+  selected: string[];
+  toDelete: string[];
+}>({
+  selected: [],
+  toDelete: [],
+});
+const onDelete = async(ids: string[]): Promise<void> => {
+  deleteModalActive.value = false;
+  const failedCapabilities = await standby.wrap(() => deleteCapabilities(ids));
+  console.log(failedCapabilities);
+  if (failedCapabilities.length) {
+    deleteModalError.failedCapabilities = failedCapabilities;
+    deleteModalError.active = true;
+  }
+
+  // remove successfully deleted objects from list and selection
+  const failedIdsSet = new Set(failedCapabilities.map(x => x.id));
+  const successes = new Set(ids.filter(id => !failedIdsSet.has(id)));
+  states.value.capability.rows = states.value.capability.rows.filter(row => !successes.has(row.id));
+  states.value.capability.selection = states.value.capability.selection.filter(id => !successes.has(id));
 };
 
 const canDo =
@@ -275,18 +359,45 @@ const editContextAction: ComputedRef<UGridContextAction> = computed(() => ({
       role: 'editRole',
       context: 'editContext',
       namespace: 'editNamespace',
+      capability: 'editCapability',
     }[props.objectType];
-    router.push({
-      name,
-      params: {
-        id: ids[0],
-      },
-    });
+    if (props.objectType === 'capability') {
+      router.push({
+        name,
+        params: {
+          id2: ids[0],
+        },
+      });
+    } else {
+      router.push({
+        name,
+        params: {
+          id: ids[0],
+        },
+      });
+    }
   },
   canExecute: canDo('edit'),
   multi: false,
 }));
-const contextActions: ComputedRef<UGridContextAction[]> = computed(() => [editContextAction.value]);
+const contextActions: ComputedRef<UGridContextAction[]> = computed(() => {
+  const actions = [editContextAction.value];
+  if (props.objectType === 'capability') {
+    actions.push({
+      label: t('ListView.contextActions.deleteLabel'),
+      icon: 'trash',
+      callback: (ids: string[], objectsToDelete: UGridRow[], sel: string[]): void => {
+        deleteModalProps.selected = sel;
+        deleteModalProps.toDelete = ids;
+        deleteModalActive.value = true;
+      },
+      canExecute: canDo('delete'),
+      multi: true,
+      enablingMode: 'some',
+    })
+  }
+  return actions;
+});
 
 const globalActions = computed(() => {
   return [
@@ -298,24 +409,49 @@ const globalActions = computed(() => {
     },
   ];
 });
+
+const heading = computed(() => {
+  if (props.objectType === 'capability') {
+    return `${t(`EditView.heading.edit.role`)} > ${route.params['id']} > ${t('ListView.heading.capability')}`;
+  }
+
+  return t(`ListView.heading.${props.objectType}`)
+});
 </script>
 
 <template>
   <main v-if="!loading" class="listView">
-    <h1>
-      {{ t(`ListView.heading.${objectType}`) }}
-    </h1>
+    <div class="listView__header" :class="`listView__header--${props.objectType}`">
+      <h1 class="listView__header__heading">
+        {{ heading }}
+      </h1>
+      <div v-if="props.objectType === 'capability'" class="listView__header__buttons">
+        <RouterLink class="uButton routerButton" :to="{name: 'editRole', query: {back: 'true'}}">
+          {{ t('EditView.button.back') }}
+        </RouterLink>
+      </div>
+    </div>
     <div class="routeButtonsWrapper">
       <div class="routeButtons">
-        <RouterLink class="uButton" :class="{'uButton--flat': props.objectType !== 'role'}" to="/roles">
-          {{ t('ListView.heading.role') }}
-        </RouterLink>
-        <RouterLink class="uButton" :class="{'uButton--flat': props.objectType !== 'namespace'}" to="/namespaces">
-          {{ t('ListView.heading.namespace') }}
-        </RouterLink>
-        <RouterLink class="uButton" :class="{'uButton--flat': props.objectType !== 'context'}" to="/contexts">
-          {{ t('ListView.heading.context') }}
-        </RouterLink>
+        <template v-if="props.objectType === 'capability'">
+          <RouterLink class="uButton uButton--flat" :to="{name: 'editRole'}">
+            {{ t('EditView.headerLink.editRole') }}
+          </RouterLink>
+          <RouterLink class="uButton" :to="{name: 'listCapabilities'}">
+            {{ t('EditView.headerLink.listCapabilities') }}
+          </RouterLink>
+        </template>
+        <template v-else>
+          <RouterLink class="uButton" :class="{'uButton--flat': props.objectType !== 'role'}" :to="{name: 'listRoles'}">
+            {{ t('ListView.heading.role') }}
+          </RouterLink>
+          <RouterLink class="uButton" :class="{'uButton--flat': props.objectType !== 'namespace'}" :to="{name: 'listNamespaces'}">
+            {{ t('ListView.heading.namespace') }}
+          </RouterLink>
+          <RouterLink class="uButton" :class="{'uButton--flat': props.objectType !== 'context'}" :to="{name: 'listContexts'}">
+            {{ t('ListView.heading.context') }}
+          </RouterLink>
+        </template>
       </div>
     </div>
     <form @submit.prevent="search(false)">
@@ -333,39 +469,95 @@ const globalActions = computed(() => {
         <UButton primary type="submit" icon="search" :label="t('ListView.searchForm.searchButtonLabel')" />
       </div>
     </form>
-    <UGrid
-      v-show="objectType === 'role'"
-      v-model:selection="states.role.selection"
-      class="listView__uGrid"
-      :columns="configs.role.columns"
-      :globalActions="globalActions"
-      :contextActions="contextActions"
-      :rows="states.role.rows"
-      :itemsPerPageOptions="[20, 50, -1]"
-      :clickCallback="editContextAction"
-    />
-    <UGrid
-      v-show="objectType === 'context'"
-      v-model:selection="states.context.selection"
-      class="listView__uGrid"
-      :columns="configs.context.columns"
-      :globalActions="globalActions"
-      :contextActions="contextActions"
-      :rows="states.context.rows"
-      :itemsPerPageOptions="[20, 50, -1]"
-      :clickCallback="editContextAction"
-    />
-    <UGrid
-      v-show="objectType === 'namespace'"
-      v-model:selection="states.namespace.selection"
-      class="listView__uGrid"
-      :columns="configs.namespace.columns"
-      :globalActions="globalActions"
-      :contextActions="contextActions"
-      :rows="states.namespace.rows"
-      :itemsPerPageOptions="[20, 50, -1]"
-      :clickCallback="editContextAction"
-    />
+    <template v-if="props.objectType === 'capability'">
+      <UGrid
+        v-model:selection="states.capability.selection"
+        class="listView__uGrid"
+        :columns="configs.capability.columns"
+        :globalActions="globalActions"
+        :contextActions="contextActions"
+        :rows="states.capability.rows"
+        :itemsPerPageOptions="[20, 50, -1]"
+        :clickCallback="editContextAction"
+      />
+    </template>
+    <template v-else>
+      <UGrid
+        v-show="objectType === 'role'"
+        v-model:selection="states.role.selection"
+        class="listView__uGrid"
+        :columns="configs.role.columns"
+        :globalActions="globalActions"
+        :contextActions="contextActions"
+        :rows="states.role.rows"
+        :itemsPerPageOptions="[20, 50, -1]"
+        :clickCallback="editContextAction"
+      />
+      <UGrid
+        v-show="objectType === 'context'"
+        v-model:selection="states.context.selection"
+        class="listView__uGrid"
+        :columns="configs.context.columns"
+        :globalActions="globalActions"
+        :contextActions="contextActions"
+        :rows="states.context.rows"
+        :itemsPerPageOptions="[20, 50, -1]"
+        :clickCallback="editContextAction"
+      />
+      <UGrid
+        v-show="objectType === 'namespace'"
+        v-model:selection="states.namespace.selection"
+        class="listView__uGrid"
+        :columns="configs.namespace.columns"
+        :globalActions="globalActions"
+        :contextActions="contextActions"
+        :rows="states.namespace.rows"
+        :itemsPerPageOptions="[20, 50, -1]"
+        :clickCallback="editContextAction"
+      />
+    </template>
+    <UConfirmDialog
+      v-model:active="deleteModalActive"
+      :title="t('DeleteModal.title')"
+      :confirmLabel="t('DeleteModal.confirmLabel')"
+      :cancelLabel="t('DeleteModal.cancelLabel')"
+      @confirm="onDelete(deleteModalProps.toDelete)"
+    >
+      <template #description>
+        <div>
+          <p>
+            {{ t('DeleteModal.description', {toDelete: deleteModalProps.toDelete.length,
+            selected: deleteModalProps.selected.length}) }}
+          </p>
+          <p v-if="deleteModalProps.toDelete.length !== deleteModalProps.selected.length">
+            {{ t('DeleteModal.warning', {numberWarning: deleteModalProps.selected.length - deleteModalProps.toDelete.length,
+            selected: deleteModalProps.selected.length}) }}
+          </p>
+        </div>
+      </template>
+    </UConfirmDialog>
+    <UConfirmDialog
+      v-model:active="deleteModalError.active"
+      :title="t('DeleteModalError.title')"
+      :confirmLabel="t('DeleteModalError.confirmLabel')"
+      hideCancel
+    >
+      <template #description>
+        <div>
+          <p>
+            {{ t('DeleteModalError.description') }}
+          </p>
+          <ul>
+            <li
+              v-for="fail in deleteModalError.failedCapabilities"
+              :key="fail.id"
+            >
+              {{ fail.id }}: {{ fail.error }}
+            </li>
+          </ul>
+        </div>
+      </template>
+    </UConfirmDialog>
     <UConfirmDialog
       v-model:active="searchLimitReachedModalActive"
       :title="t('SearchLimitReachedModal.title')"
@@ -389,6 +581,10 @@ main.listView
   height: 100vh
   display: flex
   flex-direction: column
+  max-width: 1140px
+
+  h1
+    margin: 0
 
   .searchForm__elements
     display: flex
@@ -408,14 +604,17 @@ main.listView
   .routeButtonsWrapper
     display: flex
     margin: calc(2 * var(--layout-spacing-unit)) 0
-  .routeButtons
-    display: flex
-    border: 1px solid var(--font-color-contrast-low)
-    border-radius: var(--button-border-radius)
-    overflow: hidden
 
-    > .uButton
-      text-decoration: none
-      border-radius: 0
-      padding: 0 calc(2 * var(--layout-spacing-unit))
+.routerButton
+  text-decoration: none
+.routeButtons
+  display: flex
+  border: 1px solid var(--font-color-contrast-low)
+  border-radius: var(--button-border-radius)
+  overflow: hidden
+
+  > .uButton
+    @extends .routerButton
+    padding: 0 calc(2 * var(--layout-spacing-unit))
+    border-radius: 0
 </style>

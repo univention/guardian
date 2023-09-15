@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
   UStandbyFullScreen,
+  UExtendingInput,
   UInputText,
   UInputDate,
   UInputPassword,
@@ -19,16 +20,32 @@ import {
   useStandby,
 } from '@univention/univention-veb';
 import {computed, onMounted, onUnmounted, reactive, ref, watch, nextTick} from 'vue';
-import {useRoute, useRouter, onBeforeRouteLeave, RouterLink, type RouteLocationRaw} from 'vue-router';
+import {
+  useRoute,
+  useRouter,
+  onBeforeRouteLeave,
+  RouterLink,
+  type RouteLocationRaw,
+} from 'vue-router';
+import {RouterView} from 'vue-router';
+
 import {
   fetchAddViewConfig,
   fetchObject,
   createObject,
   updateObject,
   type SaveError,
-  fetchNamespaces,
+  fetchNamespaces, fetchPermissions,
 } from '@/helpers/dataAccess';
-import type {Page, DetailResponseModel, FormValues, Field, ObjectType, FieldComboBox} from '@/helpers/models';
+import type {
+  Page,
+  DetailResponseModel,
+  FormValues,
+  Field,
+  ObjectType,
+  FieldComboBox,
+  FieldMultiInput,
+} from '@/helpers/models';
 import {useTranslation} from 'i18next-vue';
 
 const props = defineProps<{
@@ -38,6 +55,7 @@ const props = defineProps<{
 
 const components = {
   UComboBox,
+  UExtendingInput,
   UInputClassified,
   UInputCheckbox,
   UInputDate,
@@ -164,9 +182,11 @@ const changedValues = computed(() => {
 });
 const hasChangedValues = computed(() => Object.keys(changedValues.value).length > 0);
 
+
+console.log('EditView: ', props.action);
 if (props.action === 'edit') {
   watch(
-    () => route.params['id'],
+    () => props.objectType === 'capability' ? route.params['id2'] : route.params['id'],
     async newId => {
       if (typeof newId !== 'string') {
         // TODO error handling
@@ -175,6 +195,7 @@ if (props.action === 'edit') {
       }
       nonModalError.value = '';
       const answer = await standby.wrap(() => fetchObject(props.objectType, newId));
+      console.log('Editview fetchObject: ', answer);
       if (answer === null) {
         nonModalError.value = t(`EditView.notFound.${props.objectType}`);
       } else {
@@ -209,11 +230,14 @@ if (props.action === 'add') {
     for (const field of fieldsFiltered.value) {
       _origValues[field.props.name] = defaultValue(field.type);
     }
+    if (props.objectType === 'capability') {
+      _origValues['relation'] = 'and';
+    }
     origValues.value = _origValues;
     currentValues.value = JSON.parse(JSON.stringify(_origValues));
 
     // FIXME? hard coded frontend logic. We might want to be able to define this in the backend.
-    if (props.objectType === 'role' || props.objectType === 'context') {
+    if (props.objectType === 'role' || props.objectType === 'context' || props.objectType === 'capability') {
       const field = fields.value.find(f => f.props.name === 'namespaceName') as FieldComboBox;
       const _standby = reactive(useStandby());
       field.props.standby = computed(() => _standby.active);
@@ -222,9 +246,25 @@ if (props.action === 'add') {
         () => currentValues.value['appName'],
         async newValue => {
           currentValues.value['namespaceName'] = '';
+          field.props.hint = '';
           field.props.options = await _standby.wrap(() => fetchNamespaces(newValue as string));
         }
       );
+
+      if (props.objectType === 'capability') {
+        const field = fields.value.find(f => f.props.name === 'permissions') as FieldMultiInput;
+        const _standby = reactive(useStandby());
+        field.props.standby = computed(() => _standby.active);
+
+        watch(
+          () => currentValues.value['namespaceName'],
+          async newValue => {
+            currentValues.value['permissions'] = [];
+            field.props.hint = '';
+            (field.props.subElements[0] as FieldComboBox).props.options = await _standby.wrap(() => fetchPermissions(currentValues.value['appName'] as string, newValue as string));
+          }
+        );
+      }
     }
   });
 }
@@ -245,6 +285,7 @@ const tryBack = (refetchGrid = false): void => {
     role: 'listRoles',
     context: 'listContexts',
     namespace: 'listNamespaces',
+    capability: 'listCapabilities'
   }[props.objectType];
   const _route: RouteLocationRaw = {
     name,
@@ -261,6 +302,24 @@ const forceBack = (refetchGrid = false): void => {
   backModal.skip = true;
   tryBack(refetchGrid);
 };
+watch(
+  () => route.query['back'],
+  async val => {
+    if (val !== undefined) {
+      const query = JSON.parse(JSON.stringify(route.query));
+      delete query.back;
+      await router.replace({
+        ...route,
+        query,
+      });
+      console.log('editview try vback');
+      tryBack(false);
+    }
+  },
+  {
+    immediate: true,
+  }
+);
 
 const accordionStates = ref<Record<string, boolean>>({});
 const updateAccordionState = (name: string): void => {
@@ -406,6 +465,12 @@ const add = async (): Promise<void> => {
 };
 
 const heading = computed(() => {
+  if (props.objectType === 'capability') {
+    if (props.action === 'edit') {
+      return `${t('EditView.heading.edit.role')} > ${route.params['id']} > ${t(`EditView.heading.edit.capability`)} > ${route.params['id2']}`;
+    }
+    return `${t('EditView.heading.edit.role')} > ${route.params['id']} > ${t(`EditView.heading.add.${props.objectType}`)}`;
+  }
   if (props.action === 'edit') {
     return `${t(`EditView.heading.edit.${props.objectType}`)} > ${route.params['id']}`;
   }
@@ -427,6 +492,7 @@ onUnmounted(() => {
 const formNavStickyTop = ref(-1);
 const formNav = ref<HTMLElement | null>(null);
 onMounted(() => {
+  console.log('EditView onMounted: ', route.name);
   if (formNav.value === null) {
     return;
   }
@@ -439,158 +505,186 @@ const getRow = (row: Field | Field[]): Field[] => {
   }
   return [row];
 };
+
+const hideRoleEdit = computed(() => {
+  return props.objectType === 'role' && (route.name === 'listCapabilities' || route.name === 'addCapability' || route.name === 'editCapability');
+});
 </script>
 
 <template>
-  <main class="editView">
-    <div class="editView__stickyHeader" :class="{'editView__stickyHeader--bordered': windowScroll > 0}">
-      <div class="listView__header">
-        <h1 class="listView__header__heading">
-          {{ heading }}
-        </h1>
-        <div class="listView__header__buttons">
-          <UButton
-            v-if="action === 'add' && addViewConfigLoaded"
-            :label="t(`EditView.button.add.${props.objectType}`)"
-            icon="save"
-            primary
-            @click="add"
-          />
-          <UButton
-            v-if="action === 'edit' && fetchedObject !== null"
-            :label="t('EditView.button.save')"
-            icon="save"
-            primary
-            @click="save"
-          />
-          <UButton :label="t('EditView.button.back')" @click="tryBack(false)" />
+  <div>
+    <main
+      v-show="!hideRoleEdit"
+      class="editView"
+      :class="[`editView--${props.objectType}`, `editView--${props.action}`]"
+    >
+      <div class="editView__stickyHeader" :class="{'editView__stickyHeader--bordered': windowScroll > 0}">
+        <div class="listView__header">
+          <h1 class="listView__header__heading">
+            {{ heading }}
+          </h1>
+          <div class="listView__header__buttons">
+            <UButton
+              v-if="action === 'add' && addViewConfigLoaded"
+              :label="t(`EditView.button.add.${props.objectType}`)"
+              icon="save"
+              primary
+              @click="add"
+            />
+            <UButton
+              v-if="action === 'edit' && fetchedObject !== null"
+              :label="t('EditView.button.save')"
+              icon="save"
+              primary
+              @click="save"
+            />
+            <UButton :label="t('EditView.button.back')" @click="tryBack(false)" />
+          </div>
+        </div>
+        <div v-if="props.objectType === 'role' && props.action === 'edit'" class="routeButtonsWrapper">
+          <div class="routeButtons">
+            <RouterLink class="uButton" :class="{'uButton--flat': route.name !== 'editRole'}" :to="{name: 'editRole'}">
+              {{ t('EditView.headerLink.editRole') }}
+            </RouterLink>
+            <RouterLink class="uButton" :class="{'uButton--flat': route.name !== 'listCapabilities'}" :to="{name: 'listCapabilities'}">
+              {{ t('EditView.headerLink.listCapabilities') }}
+            </RouterLink>
+          </div>
         </div>
       </div>
-    </div>
-    <div v-if="nonModalError !== ''" class="editView__notFoundError">
-      <UIcon icon="alert-circle" />
-      <h1>{{ nonModalError }}</h1>
-    </div>
-    <div v-else>
-      <form
-        novalidate
-        class="editView__form editView__form editView__form--navlessIfSinglePage"
-        @submit.prevent="action === 'add' ? add() : save()"
-      >
-        <div
-          ref="formNav"
-          class="uContainer uCard editView__form__nav"
-          :class="{
-            'editView__form__nav--hidden': pageLinks.length === 0,
-            'editView__form__nav--singlePage': pageLinks.length === 1,
-          }"
-          :style="`--local-top: ${formNavStickyTop}px`"
+      <div v-if="nonModalError !== ''" class="editView__notFoundError">
+        <UIcon icon="alert-circle" />
+        <h1>{{ nonModalError }}</h1>
+      </div>
+      <div v-else>
+        <form
+          novalidate
+          class="editView__form editView__form editView__form--navlessIfSinglePage"
+          @submit.prevent="action === 'add' ? add() : save()"
         >
-          <RouterLink
-            v-for="link in pageLinks"
-            :key="link.name"
-            :to="link.to"
-            :aria-current="currentPage === link.name.toLowerCase() ? 'page' : undefined"
-            class="editView__form__nav__link"
-            :class="{'editView__form__nav__link--invalid': link.isInvalid}"
+          <div
+            ref="formNav"
+            class="uContainer uCard editView__form__nav"
+            :class="{
+              'editView__form__nav--hidden': pageLinks.length === 0,
+              'editView__form__nav--singlePage': pageLinks.length === 1,
+            }"
+            :style="`--local-top: ${formNavStickyTop}px`"
           >
-            {{ link.label }}
-          </RouterLink>
-        </div>
-        <div
-          v-for="page in pages"
-          v-show="page.name === currentPage"
-          :key="page.name"
-          class="editView__form__content uContainer"
-        >
-          <div class="editView__form__pageHeading">
-            {{ page.label }}
+            <RouterLink
+              v-for="link in pageLinks"
+              :key="link.name"
+              :to="link.to"
+              :aria-current="currentPage === link.name.toLowerCase() ? 'page' : undefined"
+              class="editView__form__nav__link"
+              :class="{'editView__form__nav__link--invalid': link.isInvalid}"
+            >
+              {{ link.label }}
+            </RouterLink>
           </div>
-          <div v-for="fieldset in page.fieldsets" :key="fieldset.label">
-            <div class="editView__accordion" @click="updateAccordionState(fieldset.name)">
-              <div class="editView__accordion__label">
-                {{ fieldset.label }}
-              </div>
-              <UIcon :icon="accordionOpen(fieldset.name) ? 'chevron-up' : 'chevron-down'" />
+          <div
+            v-for="page in pages"
+            v-show="page.name === currentPage"
+            :key="page.name"
+            class="editView__form__content uContainer"
+          >
+            <div class="editView__form__pageHeading">
+              {{ page.label }}
             </div>
-            <UTransitionHeight>
-              <div v-show="accordionOpen(fieldset.name)" class="editView__accordion__contentWrapper">
-                <div class="editView__accordion__content">
-                  <div v-for="(row, index) in fieldset.rows" :key="index" class="editView__form__row">
-                    <component
-                      :is="components[field.type]"
-                      v-for="field in getRow(row)"
-                      :key="field.props.name"
-                      :ref="(el) => refFormElem(page.name, fieldset.name, field.props.name, el as unknown as FormElem)"
-                      v-bind="field.props"
-                      v-model:modelValue="currentValues[field.props.name]"
-                    />
+            <div v-for="fieldset in page.fieldsets" :key="fieldset.label">
+              <div class="editView__accordion" @click="updateAccordionState(fieldset.name)">
+                <div class="editView__accordion__label">
+                  {{ fieldset.label }}
+                </div>
+                <UIcon :icon="accordionOpen(fieldset.name) ? 'chevron-up' : 'chevron-down'" />
+              </div>
+              <UTransitionHeight>
+                <div v-show="accordionOpen(fieldset.name)" class="editView__accordion__contentWrapper">
+                  <div class="editView__accordion__content">
+                    <div v-for="(row, index) in fieldset.rows" :key="index" class="editView__form__row">
+                      <component
+                        :is="components[field.type]"
+                        v-for="field in getRow(row)"
+                        :key="field.props.name"
+                        :ref="(el) => refFormElem(page.name, fieldset.name, field.props.name, el as unknown as FormElem)"
+                        v-bind="field.props"
+                        v-model:modelValue="currentValues[field.props.name]"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </UTransitionHeight>
+              </UTransitionHeight>
+            </div>
           </div>
-        </div>
-        <button class="sr-only" type="submit" tabindex="-1">
-          {{ t('EditView.button.save') }}
-        </button>
-      </form>
-    </div>
-    <UConfirmDialog
-      v-model:active="backModal.active"
-      :title="t('ConfirmBackModal.heading')"
-      :confirmLabel="t('ConfirmBackModal.button.discard', {context: props.action})"
-      :cancelLabel="t('ConfirmBackModal.button.continue', {context: props.action})"
-      @confirm="forceBack(false)"
-    >
-      <template #description>
-        <div>
-          <p>
-            {{ t('ConfirmBackModal.description', {context: props.action}) }}
-          </p>
-        </div>
-      </template>
-    </UConfirmDialog>
-    <UConfirmDialog
-      v-model:active="saveFailedModal.active"
-      :title="t(`EditViewSaveFailedModal.heading.${props.objectType}`, {context: props.action})"
-      :confirmLabel="t('EditViewSaveFailedModal.button.confirmation')"
-      hideCancel
-    >
-      <template #description>
-        <template v-if="saveFailedModal.error === null">
-          <p>
-            {{ t('EditViewSaveFailedModal.baseDescription', {context: props.action}) }}
-          </p>
+          <button class="sr-only" type="submit" tabindex="-1">
+            {{ t('EditView.button.save') }}
+          </button>
+        </form>
+      </div>
+      <UConfirmDialog
+        v-model:active="backModal.active"
+        :title="t('ConfirmBackModal.heading')"
+        :confirmLabel="t('ConfirmBackModal.button.discard', {context: props.action})"
+        :cancelLabel="t('ConfirmBackModal.button.continue', {context: props.action})"
+        @confirm="forceBack(false)"
+      >
+        <template #description>
+          <div>
+            <p>
+              {{ t('ConfirmBackModal.description', {context: props.action}) }}
+            </p>
+          </div>
         </template>
-        <template v-else-if="saveFailedModal.error.type === 'generic'">
-          <p>
-            {{ saveFailedModal.error.message }}
-          </p>
+      </UConfirmDialog>
+      <UConfirmDialog
+        v-model:active="saveFailedModal.active"
+        :title="t(`EditViewSaveFailedModal.heading.${props.objectType}`, {context: props.action})"
+        :confirmLabel="t('EditViewSaveFailedModal.button.confirmation')"
+        hideCancel
+      >
+        <template #description>
+          <template v-if="saveFailedModal.error === null">
+            <p>
+              {{ t('EditViewSaveFailedModal.baseDescription', {context: props.action}) }}
+            </p>
+          </template>
+          <template v-else-if="saveFailedModal.error.type === 'generic'">
+            <p>
+              {{ saveFailedModal.error.message }}
+            </p>
+          </template>
+          <template v-else>
+            <p>{{ t('EditViewSaveFailedModal.fieldErrors.description') }}</p>
+            <ul>
+              <li v-for="err in saveFailedModal.error.errors" :key="err.field">
+                {{ getLabel(err.field) }}: {{ err.message }}
+              </li>
+            </ul>
+          </template>
         </template>
-        <template v-else>
-          <p>{{ t('EditViewSaveFailedModal.fieldErrors.description') }}</p>
-          <ul>
-            <li v-for="err in saveFailedModal.error.errors" :key="err.field">
-              {{ getLabel(err.field) }}: {{ err.message }}
-            </li>
-          </ul>
-        </template>
-      </template>
-    </UConfirmDialog>
-    <UConfirmDialog
-      v-model:active="saveSuccessModal.active"
-      :title="t(`EditViewSaveSuccessModal.heading.${props.objectType}`, {name: saveSuccessModal.name})"
-      :confirmLabel="t('EditViewSaveSuccessModal.button.confirmation')"
-      hideCancel
-      @confirm="forceBack(true)"
-    />
-  </main>
-  <UStandbyFullScreen :active="standby.active" />
+      </UConfirmDialog>
+      <UConfirmDialog
+        v-model:active="saveSuccessModal.active"
+        :title="t(`EditViewSaveSuccessModal.heading.${props.objectType}`, {name: saveSuccessModal.name})"
+        :confirmLabel="t('EditViewSaveSuccessModal.button.confirmation')"
+        hideCancel
+        @confirm="forceBack(true)"
+      />
+    </main>
+    <RouterView v-if="props.objectType === 'role'" v-slot="{Component}">
+      <KeepAlive :include="['ListView']">
+        <component :is="Component" />
+      </KeepAlive>
+    </RouterView>
+    <UStandbyFullScreen :active="standby.active" />
+  </div>
 </template>
 
 <style lang="stylus">
 .editView
+  h1
+    margin: 0
+
   .editView__stickyHeader
     position: sticky
     top: 0
@@ -602,22 +696,7 @@ const getRow = (row: Field | Field[]): Field[] => {
     &--bordered
       --local-border-color: var(--font-color-contrast-low)
 
-  .listView__header
-    padding: calc(4 * var(--layout-spacing-unit))
-    display: flex
-    align-items: flex-start
-    flex-wrap: wrap
-    gap: var(--layout-spacing-unit) 0
-    min-height: var(--button-size)
-    margin: 0 auto
-    max-width: 1140px
 
-  .listView__header__buttons
-    margin-left: auto
-    display: flex
-    flex-wrap: wrap
-    justify-content: flex-end
-    grid-gap: calc(2 * var(--layout-spacing-unit))
 
   .editView__form
     max-width: 1140px
@@ -685,7 +764,8 @@ const getRow = (row: Field | Field[]): Field[] => {
         &:only-child
           grid-column: 1 / 3
       &.uMultiObjectSelect,
-      &.uMultiSelect
+      &.uMultiSelect,
+      &.uMultiInput
         min-width: 1% // fix flex overflow
         &:only-child
           .uFormElement__labelBox
@@ -693,6 +773,12 @@ const getRow = (row: Field | Field[]): Field[] => {
           .uFormElement__inputBox
             grid-column: 1 / 3
 
+  .uExtendingInput.uMultiInput__subElement
+    display: flex
+    flex-direction: column
+    gap: var(--layout-spacing-unit)
+    > .uFormElement
+      flex: 1 1 auto
 
   .editView__accordion
     display: flex
@@ -732,6 +818,14 @@ const getRow = (row: Field | Field[]): Field[] => {
       color: var(--font-color-contrast-low)
       margin-bottom: calc(2 * var(--layout-spacing-unit))
 
+  .routeButtonsWrapper
+    padding: 0 calc(4 * var(--layout-spacing-unit))
+    max-width: 1140px
+    display: flex
+    //margin: var(--layout-spacing-unit) auto calc(2 * var(--layout-spacing-unit))
+    margin: calc(2 * var(--layout-spacing-unit)) auto
+
+
 .uContainer
   background-color: var(--bgc-content-container)
 .uCard
@@ -761,4 +855,26 @@ const getRow = (row: Field | Field[]): Field[] => {
   transition: opacity 250ms
   &--shown
     opacity: 1
+
+
+.editView .listView__header
+  padding: calc(4 * var(--layout-spacing-unit))
+  margin: 0 auto
+  max-width: 1140px
+.editView.editView--role.editView--edit .listView__header
+  padding-bottom: 0
+
+.listView__header
+  display: flex
+  align-items: flex-start
+  flex-wrap: wrap
+  gap: var(--layout-spacing-unit) 0
+  min-height: var(--button-size)
+
+.listView__header__buttons
+  margin-left: auto
+  display: flex
+  flex-wrap: wrap
+  justify-content: flex-end
+  grid-gap: calc(2 * var(--layout-spacing-unit))
 </style>
