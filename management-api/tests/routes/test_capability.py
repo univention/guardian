@@ -196,7 +196,10 @@ class TestCapabilityEndpoints:
                     "app_name": cond.app_name,
                     "namespace_name": cond.namespace_name,
                     "name": cond.name,
-                    "parameters": cond.parameters,
+                    "parameters": [
+                        {"name": param.name, "value": param.value}
+                        for param in cond.parameters
+                    ],
                 }
                 for cond in cap_to_create.conditions
             ],
@@ -262,7 +265,10 @@ class TestCapabilityEndpoints:
                     "app_name": cond.app_name,
                     "namespace_name": cond.namespace_name,
                     "name": cond.name,
-                    "parameters": cond.parameters,
+                    "parameters": [
+                        {"name": param.name, "value": param.value}
+                        for param in cond.parameters
+                    ],
                 }
                 for cond in cap_to_create.conditions
             ],
@@ -313,7 +319,10 @@ class TestCapabilityEndpoints:
                     "app_name": "foo",
                     "namespace_name": cond.namespace_name,
                     "name": cond.name,
-                    "parameters": cond.parameters,
+                    "parameters": [
+                        {"name": param.name, "value": param.value}
+                        for param in cond.parameters
+                    ],
                 }
                 for cond in cap_to_create.conditions
             ],
@@ -364,7 +373,10 @@ class TestCapabilityEndpoints:
                     "app_name": cond.app_name,
                     "namespace_name": cond.namespace_name,
                     "name": cond.name,
-                    "parameters": cond.parameters,
+                    "parameters": [
+                        {"name": param.name, "value": param.value}
+                        for param in cond.parameters
+                    ],
                 }
                 for cond in cap_to_create.conditions
             ],
@@ -414,7 +426,10 @@ class TestCapabilityEndpoints:
                     "app_name": cond.app_name,
                     "namespace_name": cond.namespace_name,
                     "name": cond.name,
-                    "parameters": cond.parameters,
+                    "parameters": [
+                        {"name": param.name, "value": param.value}
+                        for param in cond.parameters
+                    ],
                 }
                 for cond in cap_to_create.conditions
             ],
@@ -465,7 +480,10 @@ class TestCapabilityEndpoints:
                     "app_name": cond.app_name,
                     "namespace_name": cond.namespace_name,
                     "name": cond.name,
-                    "parameters": cond.parameters,
+                    "parameters": [
+                        {"name": param.name, "value": param.value}
+                        for param in cond.parameters
+                    ],
                 }
                 for cond in cap_to_create.conditions
             ],

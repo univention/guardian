@@ -7,6 +7,7 @@ from typing import Any, Optional
 
 from pydantic import Field, root_validator
 
+from guardian_management_api.models.condition import ConditionParameterType
 from guardian_management_api.models.routers.base import (
     AppNamePathMixin,
     CreateBaseRequest,
@@ -21,6 +22,7 @@ from guardian_management_api.models.routers.base import (
     PaginationRequestMixin,
     ResourceURLObjectMixin,
 )
+from guardian_management_api.models.routers.condition import ConditionParameterName
 
 
 def check_permissions_in_namespace(cls, values: dict[str, Any]):
@@ -54,8 +56,25 @@ class CapabilityPermission(GuardianBaseModel, NamespacedObjectMixin):
     ...
 
 
+class CapabilityConditionParameter(GuardianBaseModel):
+    name: ConditionParameterName
+    value: Any
+    value_type: ConditionParameterType
+
+
 class CapabilityCondition(GuardianBaseModel, NamespacedObjectMixin):
-    parameters: dict[str, bool | float | int | str] = Field(
+    parameters: list[CapabilityConditionParameter] = Field(
+        ..., description="The preset parameter values for the condition."
+    )
+
+
+class CapabilityEditConditionParameter(GuardianBaseModel):
+    name: ConditionParameterName
+    value: Any
+
+
+class CapabilityEditCondition(GuardianBaseModel, NamespacedObjectMixin):
+    parameters: list[CapabilityEditConditionParameter] = Field(
         ..., description="The preset parameter values for the condition."
     )
 
@@ -73,7 +92,7 @@ class CapabilityCreateData(GuardianBaseModel, DisplayNameObjectMixin):
     role: CapabilityRole = Field(
         ..., description="The role this capability attaches to."
     )
-    conditions: list[CapabilityCondition] = Field(
+    conditions: list[CapabilityEditCondition] = Field(
         ..., description="The list of conditions that apply to this capability."
     )
     relation: RelationChoices = Field(
@@ -88,7 +107,7 @@ class CapabilityEditData(GuardianBaseModel, DisplayNameObjectMixin):
     role: CapabilityRole = Field(
         ..., description="The role this capability attaches to."
     )
-    conditions: list[CapabilityCondition] = Field(
+    conditions: list[CapabilityEditCondition] = Field(
         ..., description="The list of conditions that apply to this capability."
     )
     relation: RelationChoices = Field(

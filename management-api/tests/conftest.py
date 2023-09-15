@@ -509,7 +509,10 @@ def create_condition():
         code: Optional[bytes] = None,
     ):
         if parameters is None:
-            parameters = [("A", ConditionParameterType.ANY), ("B", ConditionParameterType.ANY)]
+            parameters = [
+                ("a", ConditionParameterType.ANY),
+                ("b", ConditionParameterType.ANY),
+            ]
         if code is None:
             code = b64encode(b"CODE")
         async with session.begin():
@@ -624,7 +627,11 @@ def create_capabilities(
                         permissions={db_permission},
                         conditions={
                             DBCapabilityCondition(
-                                condition_id=db_condition.id, kwargs={"A": True}
+                                condition_id=db_condition.id,
+                                kwargs=[
+                                    {"name": "a", "value": True},
+                                    {"name": "b", "value": 1},
+                                ],
                             )
                         },
                     )

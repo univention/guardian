@@ -16,10 +16,12 @@ from guardian_management_api.models.capability import (
     CapabilitiesByRoleQuery,
     CapabilitiesGetQuery,
     Capability,
+    CapabilityConditionParameter,
     CapabilityConditionRelation,
     CapabilityGetQuery,
     ParametrizedCondition,
 )
+from guardian_management_api.models.condition import ConditionParameterType
 from guardian_management_api.models.permission import Permission
 from guardian_management_api.models.role import Role
 from guardian_management_api.models.sql_persistence import (
@@ -78,7 +80,10 @@ class TestSQLCapabilityPersistenceAdapter:
                         app_name=db_cond.namespace.app.name,
                         namespace_name=db_cond.namespace.name,
                         name=db_cond.name,
-                        parameters={"A": 1, "B": True},
+                        parameters=[
+                            CapabilityConditionParameter(name="a", value=1),
+                            CapabilityConditionParameter(name="b", value=True),
+                        ],
                     )
                 ],
             )
@@ -152,6 +157,9 @@ class TestSQLCapabilityPersistenceAdapter:
             key=lambda x: f"{x.app_name}:{x.namespace_name}:{x.name}"
         )
         cap.conditions.sort(key=lambda x: f"{x.app_name}:{x.namespace_name}:{x.name}")
+        for cond in cap.conditions:
+            for param in cond.parameters:
+                param.value_type = ConditionParameterType.ANY
         assert result == cap
         async with adapter.session() as session:
             db_cap = (
@@ -211,6 +219,9 @@ class TestSQLCapabilityPersistenceAdapter:
             key=lambda x: f"{x.app_name}:{x.namespace_name}:{x.name}"
         )
         cap.conditions.sort(key=lambda x: f"{x.app_name}:{x.namespace_name}:{x.name}")
+        for cond in cap.conditions:
+            for param in cond.parameters:
+                param.value_type = ConditionParameterType.ANY
         assert result == cap
 
     @pytest.mark.asyncio

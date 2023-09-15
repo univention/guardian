@@ -6,6 +6,7 @@ from dataclasses import asdict
 from typing import Optional, Tuple, Type, Union
 
 from fastapi import HTTPException
+from loguru import logger
 from port_loader import AsyncConfiguredAdapterMixin
 from sqlalchemy import select, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -30,6 +31,7 @@ from guardian_management_api.models.capability import (
     CapabilitiesByRoleQuery,
     CapabilitiesGetQuery,
     Capability,
+    CapabilityConditionParameter,
     CapabilityConditionRelation,
     CapabilityGetQuery,
     ParametrizedCondition,
@@ -58,6 +60,10 @@ from guardian_management_api.models.routers.capability import (
 from guardian_management_api.models.routers.capability import (
     Capability as ResponseCapability,
 )
+from guardian_management_api.models.routers.capability import (
+    CapabilityConditionParameter as ResponseCapCondParam,
+)
+from guardian_management_api.models.routers.condition import ConditionParameterName
 from guardian_management_api.models.sql_persistence import (
     DBApp,
     DBCapability,
@@ -94,8 +100,19 @@ class SQLCapabilityPersistenceAdapter(
         )
         cap_conditions = set()
         for cond, db_cond in zip(sorted_conditions, db_conditions):
+            db_cond_params_dict = {param.name: param for param in db_cond.parameters}
             cap_conditions.add(
-                DBCapabilityCondition(condition_id=db_cond.id, kwargs=cond.parameters)
+                DBCapabilityCondition(
+                    condition_id=db_cond.id,
+                    kwargs=[
+                        {
+                            "name": param.name,
+                            "value": param.value,
+                            "value_type": db_cond_params_dict[param.name].value_type,
+                        }
+                        for param in cond.parameters
+                    ],
+                )
             )
         return DBCapability(
             namespace_id=namespace_id,
@@ -109,6 +126,26 @@ class SQLCapabilityPersistenceAdapter(
 
     @staticmethod
     def _db_cap_to_cap(db_cap: DBCapability) -> Capability:
+        conditions = []
+        for cap_cond in db_cap.conditions:
+            db_cond_parameters = {
+                param.name: param for param in cap_cond.condition.parameters
+            }
+            conditions.append(
+                ParametrizedCondition(
+                    app_name=cap_cond.condition.namespace.app.name,
+                    namespace_name=cap_cond.condition.namespace.name,
+                    name=cap_cond.condition.name,
+                    parameters=[
+                        CapabilityConditionParameter(
+                            name=param["name"],
+                            value=param["value"],
+                            value_type=db_cond_parameters[param["name"]].value_type,
+                        )
+                        for param in cap_cond.kwargs
+                    ],
+                )
+            )
         return Capability(
             app_name=db_cap.namespace.app.name,
             namespace_name=db_cap.namespace.name,
@@ -128,15 +165,7 @@ class SQLCapabilityPersistenceAdapter(
                 for perm in db_cap.permissions
             ],
             relation=db_cap.relation,
-            conditions=[
-                ParametrizedCondition(
-                    app_name=cap_cond.condition.namespace.app.name,
-                    namespace_name=cap_cond.condition.namespace.name,
-                    name=cap_cond.condition.name,
-                    parameters=cap_cond.kwargs,
-                )
-                for cap_cond in db_cap.conditions
-            ],
+            conditions=conditions,
         )
 
     @classmethod
@@ -340,7 +369,14 @@ class FastAPICapabilityAPIAdapter(
                 app_name=ManagementObjectName(cond.app_name),
                 namespace_name=ManagementObjectName(cond.namespace_name),
                 name=ManagementObjectName(cond.name),
-                parameters=cond.parameters,
+                parameters=[
+                    ResponseCapCondParam(
+                        name=ConditionParameterName(param.name),
+                        value=param.value,
+                        value_type=param.value_type,
+                    )
+                    for param in cond.parameters
+                ],
             )
             for cond in obj.conditions
         ]
@@ -401,6 +437,7 @@ class FastAPICapabilityAPIAdapter(
                 status_code=400,
                 detail={"message": "The app and or namespace does not exist."},
             )
+        logger.exception(exc)
         return HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={"message": "Internal Server Error"},
@@ -498,7 +535,10 @@ class FastAPICapabilityAPIAdapter(
                     app_name=cond.app_name,
                     namespace_name=cond.namespace_name,
                     name=cond.name,
-                    parameters=cond.parameters,
+                    parameters=[
+                        CapabilityConditionParameter(name=param.name, value=param.value)
+                        for param in cond.parameters
+                    ],
                 )
                 for cond in api_request.data.conditions
             ],
@@ -531,7 +571,10 @@ class FastAPICapabilityAPIAdapter(
                     app_name=cond.app_name,
                     namespace_name=cond.namespace_name,
                     name=cond.name,
-                    parameters=cond.parameters,
+                    parameters=[
+                        CapabilityConditionParameter(name=param.name, value=param.value)
+                        for param in cond.parameters
+                    ],
                 )
                 for cond in api_request.data.conditions
             ],
