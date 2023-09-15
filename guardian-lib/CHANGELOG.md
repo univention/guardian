@@ -6,6 +6,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 # Changelog
 
+## 1.0.1
+
+* Add oauth authentication adapter
+
 ## 1.0.0
 
 * Initial release of shared code between management and authorization API
