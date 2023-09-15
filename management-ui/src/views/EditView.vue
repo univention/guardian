@@ -20,13 +20,7 @@ import {
   useStandby,
 } from '@univention/univention-veb';
 import {computed, onMounted, onUnmounted, reactive, ref, watch, nextTick} from 'vue';
-import {
-  useRoute,
-  useRouter,
-  onBeforeRouteLeave,
-  RouterLink,
-  type RouteLocationRaw,
-} from 'vue-router';
+import {useRoute, useRouter, onBeforeRouteLeave, RouterLink, type RouteLocationRaw} from 'vue-router';
 import {RouterView} from 'vue-router';
 
 import {
@@ -35,7 +29,8 @@ import {
   createObject,
   updateObject,
   type SaveError,
-  fetchNamespaces, fetchPermissions,
+  fetchNamespaces,
+  fetchPermissions,
 } from '@/helpers/dataAccess';
 import type {
   Page,
@@ -182,11 +177,10 @@ const changedValues = computed(() => {
 });
 const hasChangedValues = computed(() => Object.keys(changedValues.value).length > 0);
 
-
 console.log('EditView: ', props.action);
 if (props.action === 'edit') {
   watch(
-    () => props.objectType === 'capability' ? route.params['id2'] : route.params['id'],
+    () => (props.objectType === 'capability' ? route.params['id2'] : route.params['id']),
     async newId => {
       if (typeof newId !== 'string') {
         // TODO error handling
@@ -261,7 +255,9 @@ if (props.action === 'add') {
           async newValue => {
             currentValues.value['permissions'] = [];
             field.props.hint = '';
-            (field.props.subElements[0] as FieldComboBox).props.options = await _standby.wrap(() => fetchPermissions(currentValues.value['appName'] as string, newValue as string));
+            (field.props.subElements[0] as FieldComboBox).props.options = await _standby.wrap(() =>
+              fetchPermissions(currentValues.value['appName'] as string, newValue as string)
+            );
           }
         );
       }
@@ -285,7 +281,7 @@ const tryBack = (refetchGrid = false): void => {
     role: 'listRoles',
     context: 'listContexts',
     namespace: 'listNamespaces',
-    capability: 'listCapabilities'
+    capability: 'listCapabilities',
   }[props.objectType];
   const _route: RouteLocationRaw = {
     name,
@@ -467,9 +463,13 @@ const add = async (): Promise<void> => {
 const heading = computed(() => {
   if (props.objectType === 'capability') {
     if (props.action === 'edit') {
-      return `${t('EditView.heading.edit.role')} > ${route.params['id']} > ${t(`EditView.heading.edit.capability`)} > ${route.params['id2']}`;
+      return `${t('EditView.heading.edit.role')} > ${route.params['id']} > ${t(`EditView.heading.edit.capability`)} > ${
+        route.params['id2']
+      }`;
     }
-    return `${t('EditView.heading.edit.role')} > ${route.params['id']} > ${t(`EditView.heading.add.${props.objectType}`)}`;
+    return `${t('EditView.heading.edit.role')} > ${route.params['id']} > ${t(
+      `EditView.heading.add.${props.objectType}`
+    )}`;
   }
   if (props.action === 'edit') {
     return `${t(`EditView.heading.edit.${props.objectType}`)} > ${route.params['id']}`;
@@ -507,7 +507,10 @@ const getRow = (row: Field | Field[]): Field[] => {
 };
 
 const hideRoleEdit = computed(() => {
-  return props.objectType === 'role' && (route.name === 'listCapabilities' || route.name === 'addCapability' || route.name === 'editCapability');
+  return (
+    props.objectType === 'role' &&
+    (route.name === 'listCapabilities' || route.name === 'addCapability' || route.name === 'editCapability')
+  );
 });
 </script>
 
@@ -546,7 +549,11 @@ const hideRoleEdit = computed(() => {
             <RouterLink class="uButton" :class="{'uButton--flat': route.name !== 'editRole'}" :to="{name: 'editRole'}">
               {{ t('EditView.headerLink.editRole') }}
             </RouterLink>
-            <RouterLink class="uButton" :class="{'uButton--flat': route.name !== 'listCapabilities'}" :to="{name: 'listCapabilities'}">
+            <RouterLink
+              class="uButton"
+              :class="{'uButton--flat': route.name !== 'listCapabilities'}"
+              :to="{name: 'listCapabilities'}"
+            >
               {{ t('EditView.headerLink.listCapabilities') }}
             </RouterLink>
           </div>

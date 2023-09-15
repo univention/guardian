@@ -76,7 +76,7 @@ export const addCapabilityViewConfig: AddViewConfig = {
                         name: 'conditions2',
                         label: '',
                         extensions: {
-                          'condition1': [
+                          condition1: [
                             {
                               type: 'UInputText',
                               props: {
@@ -148,7 +148,7 @@ export const addCapabilityViewConfig: AddViewConfig = {
                     },
                   ],
                 },
-              }
+              },
             ],
           ],
         },

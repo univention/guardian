@@ -39,7 +39,7 @@ export interface ListResponseModel {
 }
 
 export interface FieldExtendingInput {
-  type: 'UExtendingInput'
+  type: 'UExtendingInput';
   props: {
     name: string;
     label: string;
@@ -49,7 +49,7 @@ export interface FieldExtendingInput {
     access?: 'write' | 'read' | 'none';
     rootElement: Field;
     extensions: Record<string, Field[]>;
-  }
+  };
 }
 export interface FieldInputText {
   type: 'UInputText';

@@ -345,23 +345,29 @@ export const createObject = async (
   */
 };
 
-export const deleteCapabilities = async(ids: string[]): Promise<{id: string; error: string}[]> => {
+export const deleteCapabilities = async (ids: string[]): Promise<{id: string; error: string}[]> => {
   if (needMock) {
-    return fetchMockData([
+    return fetchMockData(
+      [
+        {
+          id: ids[0] as string,
+          error: 'some error',
+        },
+      ],
+      'deleteCapabilities'
+    );
+  }
+
+  console.log('Real backend call not implemented yet. Returning mock data');
+  return fetchMockData(
+    [
       {
         id: ids[0] as string,
         error: 'some error',
       },
-    ], 'deleteCapabilities');
-  }
-
-  console.log('Real backend call not implemented yet. Returning mock data');
-  return fetchMockData([
-    {
-      id: ids[0] as string,
-      error: 'some error',
-    },
-  ], 'deleteCapabilities');
+    ],
+    'deleteCapabilities'
+  );
 
   /*
   const responses = await Promise.all(ids.map(id => fetchAuthenticated(`/ucsschool/guardian/v1/capabilities/${id}`, {
@@ -381,7 +387,6 @@ export const deleteCapabilities = async(ids: string[]): Promise<{id: string; err
   return fails;
   */
 };
-
 
 const fetchNamespacesMock = (appName: string): LabeledValue<string>[] => {
   const mock: LabeledValue<string>[] = [];

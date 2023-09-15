@@ -80,7 +80,7 @@ const router = createRouter({
           path: 'capabilties/edit/:id2/:page?',
           component: EditView,
           props: {action: 'edit', objectType: 'capability'},
-        }
+        },
       ],
     },
     {

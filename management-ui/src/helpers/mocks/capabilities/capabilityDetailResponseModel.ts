@@ -65,7 +65,7 @@ export const capabilityDetailResponseModel: DetailResponseModel = {
                         name: 'conditions2',
                         label: '',
                         extensions: {
-                          'condition1': [
+                          condition1: [
                             {
                               type: 'UInputText',
                               props: {
@@ -145,7 +145,7 @@ export const capabilityDetailResponseModel: DetailResponseModel = {
                     },
                   ],
                 },
-              }
+              },
             ],
           ],
         },

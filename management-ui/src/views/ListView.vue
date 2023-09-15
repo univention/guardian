@@ -317,7 +317,6 @@ const onAddAction = (): void => {
   });
 };
 
-
 const deleteModalError = reactive({
   active: false,
   failedCapabilities: [] as {id: string; error: string}[],
@@ -330,7 +329,7 @@ const deleteModalProps = reactive<{
   selected: [],
   toDelete: [],
 });
-const onDelete = async(ids: string[]): Promise<void> => {
+const onDelete = async (ids: string[]): Promise<void> => {
   deleteModalActive.value = false;
   const failedCapabilities = await standby.wrap(() => deleteCapabilities(ids));
   console.log(failedCapabilities);
@@ -394,7 +393,7 @@ const contextActions: ComputedRef<UGridContextAction[]> = computed(() => {
       canExecute: canDo('delete'),
       multi: true,
       enablingMode: 'some',
-    })
+    });
   }
   return actions;
 });
@@ -415,7 +414,7 @@ const heading = computed(() => {
     return `${t(`EditView.heading.edit.role`)} > ${route.params['id']} > ${t('ListView.heading.capability')}`;
   }
 
-  return t(`ListView.heading.${props.objectType}`)
+  return t(`ListView.heading.${props.objectType}`);
 });
 </script>
 
@@ -445,10 +444,18 @@ const heading = computed(() => {
           <RouterLink class="uButton" :class="{'uButton--flat': props.objectType !== 'role'}" :to="{name: 'listRoles'}">
             {{ t('ListView.heading.role') }}
           </RouterLink>
-          <RouterLink class="uButton" :class="{'uButton--flat': props.objectType !== 'namespace'}" :to="{name: 'listNamespaces'}">
+          <RouterLink
+            class="uButton"
+            :class="{'uButton--flat': props.objectType !== 'namespace'}"
+            :to="{name: 'listNamespaces'}"
+          >
             {{ t('ListView.heading.namespace') }}
           </RouterLink>
-          <RouterLink class="uButton" :class="{'uButton--flat': props.objectType !== 'context'}" :to="{name: 'listContexts'}">
+          <RouterLink
+            class="uButton"
+            :class="{'uButton--flat': props.objectType !== 'context'}"
+            :to="{name: 'listContexts'}"
+          >
             {{ t('ListView.heading.context') }}
           </RouterLink>
         </template>
@@ -526,12 +533,20 @@ const heading = computed(() => {
       <template #description>
         <div>
           <p>
-            {{ t('DeleteModal.description', {toDelete: deleteModalProps.toDelete.length,
-            selected: deleteModalProps.selected.length}) }}
+            {{
+              t('DeleteModal.description', {
+                toDelete: deleteModalProps.toDelete.length,
+                selected: deleteModalProps.selected.length,
+              })
+            }}
           </p>
           <p v-if="deleteModalProps.toDelete.length !== deleteModalProps.selected.length">
-            {{ t('DeleteModal.warning', {numberWarning: deleteModalProps.selected.length - deleteModalProps.toDelete.length,
-            selected: deleteModalProps.selected.length}) }}
+            {{
+              t('DeleteModal.warning', {
+                numberWarning: deleteModalProps.selected.length - deleteModalProps.toDelete.length,
+                selected: deleteModalProps.selected.length,
+              })
+            }}
           </p>
         </div>
       </template>
@@ -548,12 +563,7 @@ const heading = computed(() => {
             {{ t('DeleteModalError.description') }}
           </p>
           <ul>
-            <li
-              v-for="fail in deleteModalError.failedCapabilities"
-              :key="fail.id"
-            >
-              {{ fail.id }}: {{ fail.error }}
-            </li>
+            <li v-for="fail in deleteModalError.failedCapabilities" :key="fail.id">{{ fail.id }}: {{ fail.error }}</li>
           </ul>
         </div>
       </template>
