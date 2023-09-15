@@ -86,11 +86,12 @@ You can now access the following services:
 
 Secondary services for integration:
 
-- [keycloak](http://traefik.localhost/guardian/keycloak/)
+- [keycloak](http://traefik/guardian/keycloak/)
 
 ### Authentication
 
-You can choose between multiple authentication providers. Set them in `GUARDIAN__AUTHZ__ADAPTER__AUTHENTICATION_PORT`.
+You can choose between multiple authentication providers.
+Set them in `GUARDIAN__AUTHZ__ADAPTER__AUTHENTICATION_PORT` and `GUARDIAN__MANAGEMENT__ADAPTER__AUTHENTICATION_PORT`.
 
 - `fast_api_always_authorized`
 - `fast_api_never_authorized`
@@ -98,6 +99,9 @@ You can choose between multiple authentication providers. Set them in `GUARDIAN_
 
 If you choose `fast_api_oauth` the local keycloak started in the compose file will be used.
 The username is `dev:univention`. The admin credentials for keycloak are `admin:admin`.
+
+_Note: If you want to use the keycloak supplied by the docker compose file,
+_you need to add traefik to your /etc/hosts file: `127.0.0.1 traefik`.
 
 You can use your own keycloak by changing `OAUTH_ADAPTER__WELL_KNOWN_URL`.
 You might need to change `SSL_CERT_FILE` and provide a cert file.

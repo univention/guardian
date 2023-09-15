@@ -2,15 +2,20 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
+import asyncio
 import os
+import subprocess
 from base64 import b64encode
 from pathlib import Path
 from typing import Optional, Tuple
 
-import alembic.config
 import guardian_lib.adapter_registry as adapter_registry
 import pytest
 import pytest_asyncio
+from guardian_lib.adapters.authentication import (
+    FastAPIAlwaysAuthorizedAdapter,
+    FastAPINeverAuthorizedAdapter,
+)
 from guardian_lib.adapters.settings import EnvSettingsAdapter
 from guardian_lib.ports import SettingsPort
 from guardian_management_api.adapters.app import (
@@ -44,7 +49,7 @@ from guardian_management_api.adapters.role import (
     SQLRolePersistenceAdapter,
 )
 from guardian_management_api.adapters.sql_persistence import SQLAlchemyMixin
-from guardian_management_api.main import app, mount_routers
+from guardian_management_api.main import app
 from guardian_management_api.models.capability import CapabilityConditionRelation
 from guardian_management_api.models.condition import ConditionParameterType
 from guardian_management_api.models.sql_persistence import (
@@ -107,7 +112,7 @@ class DummySettingsAdapter(SettingsPort):
         return False
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def patch_env(sqlite_db_name, bundle_server_base_dir):
     _environ = os.environ.copy()
     os.environ["GUARDIAN__MANAGEMENT__ADAPTER__APP_PERSISTENCE_PORT"] = "sql"
@@ -125,56 +130,35 @@ def patch_env(sqlite_db_name, bundle_server_base_dir):
     os.environ["BUNDLE_SERVER_ADAPTER__POLICY_BUNDLE_TEMPLATE_SRC"] = str(
         Path(__file__).parents[1] / "rego_policy_bundle_template"
     )
+    os.environ[
+        "GUARDIAN__MANAGEMENT__ADAPTER__AUTHENTICATION_PORT"
+    ] = "fast_api_always_authorized"
+    os.environ["OAUTH_ADAPTER__WELL_KNOWN_URL"] = "/dev/zero"
     yield
     os.environ.clear()
     os.environ.update(_environ)
 
 
-@pytest.fixture()
-@pytest.mark.usefixtures("register_test_adapters")
-def client(register_test_adapters):
-    mount_routers(app)
-    return TestClient(app)
+@pytest_asyncio.fixture(scope="session")
+async def client(patch_env):
+    with TestClient(app) as client:
+        yield client
+
+
+@pytest.fixture(scope="session")
+def event_loop():
+    """Overrides pytest default function scoped event loop"""
+    policy = asyncio.get_event_loop_policy()
+    loop = policy.new_event_loop()
+    yield loop
+    loop.close()
 
 
 @pytest.fixture()
-def register_test_adapters_static(patch_env):
-    """Fixture that registers the test adapters.
+def registry_test_adapters(patch_env):
+    """Fixture that returns a registers with test adapters."""
 
-    In this case:
-      - In-memory app persistence adapter.
-      - Dummy settings adapter.
-    """
-    adapter_registry.ADAPTER_REGISTRY = AsyncAdapterRegistry()
-    for port, adapter in [
-        (SettingsPort, EnvSettingsAdapter),
-        (PermissionPersistencePort, PermissionStaticDataAdapter),
-        (PermissionAPIPort, FastAPIPermissionAPIAdapter),
-    ]:
-        adapter_registry.ADAPTER_REGISTRY.register_port(port)
-        adapter_registry.ADAPTER_REGISTRY.register_adapter(port, adapter_cls=adapter)
-        adapter_registry.ADAPTER_REGISTRY.set_adapter(port, adapter)
-
-    adapter_registry.ADAPTER_REGISTRY.register_adapter(
-        AsyncAdapterSettingsProvider, adapter_cls=EnvSettingsAdapter
-    )
-    adapter_registry.ADAPTER_REGISTRY.set_adapter(
-        AsyncAdapterSettingsProvider, EnvSettingsAdapter
-    )
-
-    yield adapter_registry.ADAPTER_REGISTRY
-    adapter_registry.ADAPTER_REGISTRY = AsyncAdapterRegistry()
-
-
-@pytest.fixture()
-def register_test_adapters(patch_env):
-    """Fixture that registers the test adapters.
-
-    In this case:
-      - In-memory app persistence adapter.
-      - Dummy settings adapter.
-    """
-    adapter_registry.ADAPTER_REGISTRY = AsyncAdapterRegistry()
+    registry = AsyncAdapterRegistry()
     for port, adapter in [
         (SettingsPort, EnvSettingsAdapter),
         (AppPersistencePort, SQLAppPersistenceAdapter),
@@ -193,47 +177,70 @@ def register_test_adapters(patch_env):
         (RoleAPIPort, FastAPIRoleAPIAdapter),
         (ContextAPIPort, FastAPIContextAPIAdapter),
     ]:
-        adapter_registry.ADAPTER_REGISTRY.register_port(port)
-        adapter_registry.ADAPTER_REGISTRY.register_adapter(port, adapter_cls=adapter)
-        adapter_registry.ADAPTER_REGISTRY.set_adapter(port, adapter)
-    adapter_registry.ADAPTER_REGISTRY.register_adapter(
+        registry.register_port(port)
+        registry.register_adapter(port, adapter_cls=adapter)
+        registry.set_adapter(port, adapter)
+    registry.register_adapter(
         AsyncAdapterSettingsProvider, adapter_cls=EnvSettingsAdapter
     )
+    registry.set_adapter(AsyncAdapterSettingsProvider, EnvSettingsAdapter)
+
+    return registry
+
+
+@pytest_asyncio.fixture(scope="function")
+async def register_test_adapters_static():
+    """Fixture that registers the test adapters.
+
+    In this case:
+      - In-memory app persistence adapter.
+      - Dummy settings adapter.
+    """
+    active_adapter = await adapter_registry.ADAPTER_REGISTRY.request_port(
+        PermissionPersistencePort
+    )
     adapter_registry.ADAPTER_REGISTRY.set_adapter(
-        AsyncAdapterSettingsProvider, EnvSettingsAdapter
+        PermissionPersistencePort, PermissionStaticDataAdapter
+    )
+    yield
+    adapter_registry.ADAPTER_REGISTRY.set_adapter(
+        PermissionPersistencePort, active_adapter.__class__
     )
 
-    yield adapter_registry.ADAPTER_REGISTRY
-    adapter_registry.ADAPTER_REGISTRY = AsyncAdapterRegistry()
+
+@pytest.fixture(scope="session")
+def sqlite_db_name(tmpdir_factory):
+    sqlite_db_name = tmpdir_factory.mktemp("db").join("management.db")
+    return str(sqlite_db_name)
 
 
-@pytest.fixture
-def sqlite_db_name(tmpdir):
-    return f"/{tmpdir / 'management.db'}"
-
-
-@pytest.fixture
-def bundle_server_base_dir(tmpdir):
-    return f"{tmpdir / 'bundle_server'}"
+@pytest.fixture(scope="session")
+def bundle_server_base_dir(tmpdir_factory):
+    bundle_dir = tmpdir_factory.mktemp("bundle_server")
+    return str(bundle_dir)
 
 
 @pytest.fixture
 def sqlite_url(sqlite_db_name):
-    return f"//{sqlite_db_name}"
+    return f"///{sqlite_db_name}"
 
 
-@pytest_asyncio.fixture
-async def create_tables(sqlite_url):
+@pytest_asyncio.fixture(scope="function")
+async def create_tables(sqlite_url, sqlite_db_name):
     engine = create_async_engine(f"sqlite+aiosqlite:{sqlite_url}")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    yield
+    os.remove(sqlite_db_name)
 
 
 @pytest.fixture
-def run_alembic_migrations(patch_env):
-    os.chdir(Path(__file__).parents[1])
-    print(os.getcwd())
-    alembic.config.main(argv=["upgrade", "head"])
+def run_alembic_migrations(patch_env, sqlite_db_name):
+    subprocess.check_call(
+        ["python3", "-m", "alembic", "upgrade", "head"], cwd=Path(__file__).parents[1]
+    )
+    yield
+    os.remove(sqlite_db_name)
 
 
 @pytest.fixture
@@ -653,3 +660,13 @@ def create_capabilities(
         return caps
 
     return _create_capabilities
+
+
+@pytest.fixture(scope="function")
+def error401(monkeypatch):
+    monkeypatch.setattr(
+        FastAPIAlwaysAuthorizedAdapter,
+        "__call__",
+        FastAPINeverAuthorizedAdapter.__call__,
+    )
+    yield

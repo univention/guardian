@@ -4,7 +4,6 @@
 
 
 import pytest
-from fastapi.testclient import TestClient
 from guardian_management_api.constants import COMPLETE_URL
 from guardian_management_api.main import app
 
@@ -14,14 +13,8 @@ DEFAULT_TEST_NAMESPACE = "namespace"
 
 @pytest.mark.usefixtures("create_tables")
 class TestNamespaceEndpoints:
-    @pytest.fixture(autouse=True)
-    def client(self):
-        return TestClient(app)
-
     @pytest.mark.asyncio
-    async def test_post_namespace(
-        self, client, register_test_adapters, create_app, sqlalchemy_mixin
-    ):
+    async def test_post_namespace(self, client, create_app, sqlalchemy_mixin):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session)
         namespace_name = "new-namespace"
@@ -42,7 +35,7 @@ class TestNamespaceEndpoints:
             }
         }
 
-    def test_post_app_non_existing_raises_404(self, client, register_test_adapters):
+    def test_post_app_non_existing_raises_404(self, client):
         app_name = "non-existing-app"
         response = client.post(
             app.url_path_for("create_namespace", app_name=app_name),
@@ -57,7 +50,6 @@ class TestNamespaceEndpoints:
     async def test_post_namespace_exists_raises_409(
         self,
         client,
-        register_test_adapters,
         create_app,
         sqlalchemy_mixin,
         create_namespace,
@@ -77,7 +69,6 @@ class TestNamespaceEndpoints:
     async def test_get_namespace(
         self,
         client,
-        register_test_adapters,
         create_app,
         sqlalchemy_mixin,
         create_namespace,
@@ -100,7 +91,7 @@ class TestNamespaceEndpoints:
             }
         }
 
-    def test_get_namespace_404_app(self, client, register_test_adapters):
+    def test_get_namespace_404_app(self, client):
         app_name = "non-existing-app"
         response = client.get(
             app.url_path_for(
@@ -113,7 +104,6 @@ class TestNamespaceEndpoints:
     async def test_get_namespace_non_existing(
         self,
         client,
-        register_test_adapters,
         create_app,
         sqlalchemy_mixin,
         create_namespace,
@@ -133,7 +123,6 @@ class TestNamespaceEndpoints:
     async def test_get_all_namespaces(
         self,
         client,
-        register_test_adapters,
         create_app,
         sqlalchemy_mixin,
         create_namespace,
@@ -167,7 +156,6 @@ class TestNamespaceEndpoints:
     async def test_get_all_namespaces_for_app(
         self,
         client,
-        register_test_adapters,
         create_app,
         sqlalchemy_mixin,
         create_namespace,
@@ -199,7 +187,6 @@ class TestNamespaceEndpoints:
     async def test_get_all_namespaces_for_app_non_existing_app_no_result(
         self,
         client,
-        register_test_adapters,
         create_app,
         sqlalchemy_mixin,
         create_namespace,
@@ -220,7 +207,6 @@ class TestNamespaceEndpoints:
     async def test_get_all_namespaces_limit_and_offset(
         self,
         client,
-        register_test_adapters,
         create_app,
         sqlalchemy_mixin,
         create_namespace,
@@ -250,7 +236,6 @@ class TestNamespaceEndpoints:
     async def test_patch_namespace(
         self,
         client,
-        register_test_adapters,
         create_app,
         sqlalchemy_mixin,
         create_namespace,
@@ -276,9 +261,7 @@ class TestNamespaceEndpoints:
             }
         }
 
-    def test_patch_namespace_non_existing_app_raises(
-        self, client, register_test_adapters
-    ):
+    def test_patch_namespace_non_existing_app_raises(self, client):
         changed_display_name = "changed_display_name"
         response = client.patch(
             app.url_path_for(
@@ -294,7 +277,6 @@ class TestNamespaceEndpoints:
     async def test_patch_namespace_non_existing_namespace_raises(
         self,
         client,
-        register_test_adapters,
         create_app,
         sqlalchemy_mixin,
     ):

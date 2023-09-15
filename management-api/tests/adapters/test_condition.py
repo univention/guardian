@@ -37,9 +37,9 @@ from sqlalchemy import select
 class TestSQLConditionPersistenceAdapter:
     @pytest_asyncio.fixture
     async def condition_sql_adapter(
-        self, register_test_adapters
+        self, registry_test_adapters
     ) -> SQLConditionPersistenceAdapter:
-        return await register_test_adapters.request_port(ConditionPersistencePort)
+        return await registry_test_adapters.request_port(ConditionPersistencePort)
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")

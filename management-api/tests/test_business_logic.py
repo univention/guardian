@@ -28,19 +28,19 @@ from guardian_management_api.ports.namespace import NamespacePersistencePort
 class TestBusinessLogic:
     @pytest_asyncio.fixture
     async def context_sql_adapter(
-        self, register_test_adapters
+        self, registry_test_adapters
     ) -> SQLContextPersistenceAdapter:
-        return await register_test_adapters.request_port(ContextPersistencePort)
+        return await registry_test_adapters.request_port(ContextPersistencePort)
 
     @pytest_asyncio.fixture
     async def namespace_sql_adapter(
-        self, register_test_adapters
+        self, registry_test_adapters
     ) -> SQLNamespacePersistenceAdapter:
-        return await register_test_adapters.request_port(NamespacePersistencePort)
+        return await registry_test_adapters.request_port(NamespacePersistencePort)
 
     @pytest_asyncio.fixture
-    async def app_sql_adapter(self, register_test_adapters) -> SQLAppPersistenceAdapter:
-        return await register_test_adapters.request_port(AppPersistencePort)
+    async def app_sql_adapter(self, registry_test_adapters) -> SQLAppPersistenceAdapter:
+        return await registry_test_adapters.request_port(AppPersistencePort)
 
     @pytest.mark.asyncio
     async def test_get_contexts_internal_error(self, context_sql_adapter):

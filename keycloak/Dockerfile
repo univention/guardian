@@ -24,7 +24,7 @@ ENV KC_HEALTH_ENABLED=true
 ENV KC_METRICS_ENABLED=true
 
 # configuring keycloak
-ENV KC_HOSTNAME=traefik.localhost
+ENV KC_HOSTNAME=traefik
 ENV KC_HTTP_ENABLED=true
 ENV KC_PROXY=edge
 ENV KC_HOSTNAME_STRICT_HTTPS=false

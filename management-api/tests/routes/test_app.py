@@ -23,7 +23,7 @@ from sqlalchemy import select
 @pytest.mark.e2e
 class TestAppEndpoints:
     @pytest.mark.usefixtures("create_tables")
-    def test_post_app_minimal(self, client, register_test_adapters):
+    def test_post_app_minimal(self, client):
         response = client.post(
             app.url_path_for("create_app"), json={"name": "test_app"}
         )
@@ -37,7 +37,7 @@ class TestAppEndpoints:
         }
 
     @pytest.mark.usefixtures("create_tables")
-    def test_post_app_all(self, client, register_test_adapters):
+    def test_post_app_all(self, client):
         response = client.post(
             app.url_path_for("create_app"),
             json={"name": "test_app", "display_name": "test_app display_name"},
@@ -53,7 +53,7 @@ class TestAppEndpoints:
 
     @pytest.mark.usefixtures("run_alembic_migrations")
     @pytest.mark.asyncio
-    async def test_register_app(self, client, register_test_adapters, sqlalchemy_mixin):
+    async def test_register_app(self, client, sqlalchemy_mixin):
         response = client.post(
             client.app.url_path_for("register_app"),
             json={"name": "app1", "display_name": "App 1"},
@@ -133,7 +133,7 @@ class TestAppEndpoints:
     @pytest.mark.usefixtures("create_tables")
     @pytest.mark.asyncio
     async def test_register_app_exists_error(
-        self, client, register_test_adapters, sqlalchemy_mixin, create_app
+        self, client, sqlalchemy_mixin, create_app
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session, name="app1")
@@ -145,9 +145,7 @@ class TestAppEndpoints:
 
     @pytest.mark.usefixtures("create_tables")
     @pytest.mark.asyncio
-    async def test_get_app(
-        self, client, register_test_adapters, create_app, sqlalchemy_mixin
-    ):
+    async def test_get_app(self, client, create_app, sqlalchemy_mixin):
         name: str = "test_app2"
         async with sqlalchemy_mixin.session() as session:
             await create_app(session, name=name, display_name=None)
@@ -162,16 +160,14 @@ class TestAppEndpoints:
         }
 
     @pytest.mark.usefixtures("create_tables")
-    def test_get_app_404(self, client, register_test_adapters):
+    def test_get_app_404(self, client):
         name: str = "test_app3"
         response = client.get(app.url_path_for("get_app", name=name))
         assert response.status_code == 404
 
     @pytest.mark.usefixtures("create_tables")
     @pytest.mark.asyncio
-    async def test_get_all_apps(
-        self, client, register_test_adapters, create_apps, sqlalchemy_mixin
-    ):
+    async def test_get_all_apps(self, client, create_apps, sqlalchemy_mixin):
         async with sqlalchemy_mixin.session() as session:
             apps = await create_apps(session, 2)
         response = client.get(app.url_path_for("get_all_apps"))
@@ -195,7 +191,7 @@ class TestAppEndpoints:
     @pytest.mark.usefixtures("create_tables")
     @pytest.mark.asyncio
     async def test_get_all_apps_limit_and_offset(
-        self, client, register_test_adapters, create_apps, sqlalchemy_mixin
+        self, client, create_apps, sqlalchemy_mixin
     ):
         async with sqlalchemy_mixin.session() as session:
             apps = await create_apps(session, 2)
@@ -214,9 +210,7 @@ class TestAppEndpoints:
 
     @pytest.mark.usefixtures("create_tables")
     @pytest.mark.asyncio
-    async def test_patch_app(
-        self, client, register_test_adapters, create_app, sqlalchemy_mixin
-    ):
+    async def test_patch_app(self, client, create_app, sqlalchemy_mixin):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session, "test_app2", display_name=None)
         response = client.patch(
@@ -234,9 +228,18 @@ class TestAppEndpoints:
 
     @pytest.mark.usefixtures("create_tables")
     @pytest.mark.asyncio
-    async def test_patch_non_existing_app_fails(self, client, register_test_adapters):
+    async def test_patch_non_existing_app_fails(self, client):
         response = client.patch(
             app.url_path_for("edit_app", name="non-existing"),
             json={"name": "non-existing", "display_name": "displayname"},
         )
         assert response.status_code == 404
+
+    @pytest.mark.usefixtures("create_tables")
+    @pytest.mark.asyncio
+    async def test_post_permissions_401(self, client, error401):
+        response = client.post(
+            app.url_path_for("create_app"), json={"name": "test_app"}
+        )
+        assert response.status_code == 401
+        assert response.json() == {"detail": "Not Authorized"}

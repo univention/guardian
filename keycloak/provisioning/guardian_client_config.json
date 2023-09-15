@@ -79,7 +79,8 @@
   ],
   "publicClient": true,
   "redirectUris": [
-    "http://localhost/guardian/authorization/docs/oauth2-redirect"
+    "http://localhost/guardian/authorization/docs/oauth2-redirect",
+    "http://localhost/guardian/management/docs/oauth2-redirect"
   ],
   "rootUrl": "",
   "serviceAccountsEnabled": false,

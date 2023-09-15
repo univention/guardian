@@ -30,9 +30,9 @@ from sqlalchemy import select
 class TestSQLPermissionPersistenceAdapter:
     @pytest_asyncio.fixture
     async def permission_sql_adapter(
-        self, register_test_adapters
+        self, registry_test_adapters
     ) -> SQLPermissionPersistenceAdapter:
-        return await register_test_adapters.request_port(PermissionPersistencePort)
+        return await registry_test_adapters.request_port(PermissionPersistencePort)
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")

@@ -1,7 +1,7 @@
 # Copyright (C) 2023 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
-from guardian_lib.ports import SettingsPort
+from guardian_lib.ports import AuthenticationPort, SettingsPort
 from guardian_management_api.adapter_registry import (
     AdapterSelection,
     configure_registry,
@@ -59,9 +59,10 @@ def test_adapter_selection_loading(patch_env):
     assert adapter_selection.permission_persistence_port == "sql"
     assert adapter_selection.role_persistence_port == "sql"
     assert adapter_selection.capability_persistence_port == "sql"
+    assert adapter_selection.authentication_port == "fast_api_always_authorized"
 
 
-def test_configure_registry(mocker, register_test_adapters):
+def test_configure_registry(mocker, registry_test_adapters):
     registry_mock = mocker.MagicMock()
     load_from_ep_mock = mocker.MagicMock()
     mocker.patch(
@@ -78,6 +79,7 @@ def test_configure_registry(mocker, register_test_adapters):
         mocker.call(PermissionPersistencePort, "sql"),
         mocker.call(RolePersistencePort, "sql"),
         mocker.call(CapabilityPersistencePort, "sql"),
+        mocker.call(AuthenticationPort, "fast_api_always_authorized"),
         mocker.call(AsyncAdapterSettingsProvider, "env"),
         mocker.call(AppAPIPort, FastAPIAppAPIAdapter),
         mocker.call(PermissionAPIPort, FastAPIPermissionAPIAdapter),
@@ -97,6 +99,7 @@ def test_configure_registry(mocker, register_test_adapters):
         mocker.call(PermissionPersistencePort),
         mocker.call(RolePersistencePort),
         mocker.call(CapabilityPersistencePort),
+        mocker.call(AuthenticationPort),
         mocker.call(AppAPIPort),
         mocker.call(PermissionAPIPort),
         mocker.call(ConditionAPIPort),
@@ -144,6 +147,11 @@ def test_configure_registry(mocker, register_test_adapters):
             registry_mock,
             CapabilityPersistencePort,
             "guardian_management_api.CapabilityPersistencePort",
+        ),
+        mocker.call(
+            registry_mock,
+            AuthenticationPort,
+            "guardian_management_api.AuthenticationPort",
         ),
         mocker.call(
             registry_mock,

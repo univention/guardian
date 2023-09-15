@@ -4,7 +4,7 @@
 from functools import partial
 
 from guardian_lib.adapter_registry import initialize_adapters as lib_initialize_adapters
-from guardian_lib.ports import SettingsPort
+from guardian_lib.ports import AuthenticationPort, SettingsPort
 from port_loader import (
     AsyncAdapterRegistry,
     AsyncAdapterSettingsProvider,
@@ -45,6 +45,7 @@ PORT_CLASSES = (
     PermissionPersistencePort,
     RolePersistencePort,
     CapabilityPersistencePort,
+    AuthenticationPort,
 )
 
 
@@ -90,6 +91,11 @@ class AdapterSelection(BaseSettings):
         ...,
         alias="CapabilityPersistencePort",
         env="GUARDIAN__MANAGEMENT__ADAPTER__CAPABILITY_PERSISTENCE_PORT",
+    )
+    authentication_port: str = Field(
+        ...,
+        alias="AuthenticationPort",
+        env="GUARDIAN__MANAGEMENT__ADAPTER__AUTHENTICATION_PORT",
     )
 
 

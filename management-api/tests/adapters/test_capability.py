@@ -37,8 +37,8 @@ from sqlalchemy.sql.functions import count
 
 class TestSQLCapabilityPersistenceAdapter:
     @pytest_asyncio.fixture
-    async def adapter(self, register_test_adapters) -> SQLCapabilityPersistenceAdapter:
-        return await register_test_adapters.request_port(CapabilityPersistencePort)
+    async def adapter(self, registry_test_adapters) -> SQLCapabilityPersistenceAdapter:
+        return await registry_test_adapters.request_port(CapabilityPersistencePort)
 
     @pytest_asyncio.fixture
     async def capability_for_testing(

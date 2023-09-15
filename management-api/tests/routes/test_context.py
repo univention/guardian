@@ -4,7 +4,6 @@
 
 
 import pytest
-from fastapi.testclient import TestClient
 from guardian_management_api.constants import COMPLETE_URL
 from guardian_management_api.main import app
 
@@ -15,15 +14,10 @@ DEFAULT_TEST_CONTEXT = "context"
 
 @pytest.mark.usefixtures("create_tables")
 class TestContextEndpoints:
-    @pytest.fixture(autouse=True)
-    def client(self):
-        return TestClient(app)
-
     @pytest.mark.asyncio
     async def test_post(
         self,
         client,
-        register_test_adapters,
         create_app,
         create_namespace,
         sqlalchemy_mixin,
@@ -59,7 +53,6 @@ class TestContextEndpoints:
     async def test_post_409_exists(
         self,
         client,
-        register_test_adapters,
         create_app,
         create_namespace,
         create_context,
@@ -83,7 +76,7 @@ class TestContextEndpoints:
         assert response.status_code == 409
 
     @pytest.mark.asyncio
-    async def test_post_non_existing_app(self, client, register_test_adapters):
+    async def test_post_non_existing_app(self, client):
         context_name = "new-context"
         response = client.post(
             app.url_path_for(
@@ -102,7 +95,6 @@ class TestContextEndpoints:
     async def test_post_non_existing_namespace(
         self,
         client,
-        register_test_adapters,
         create_app,
         sqlalchemy_mixin,
     ):
@@ -127,7 +119,6 @@ class TestContextEndpoints:
     async def test_get_context(
         self,
         client,
-        register_test_adapters,
         create_app,
         sqlalchemy_mixin,
         create_namespace,
@@ -160,7 +151,6 @@ class TestContextEndpoints:
     async def test_get_context_non_existing_raises_404(
         self,
         client,
-        register_test_adapters,
         create_app,
         sqlalchemy_mixin,
         create_namespace,
@@ -182,7 +172,6 @@ class TestContextEndpoints:
     async def test_get_all_contexts(
         self,
         client,
-        register_test_adapters,
         create_app,
         sqlalchemy_mixin,
         create_namespace,
@@ -220,7 +209,6 @@ class TestContextEndpoints:
     async def test_get_contexts_for_app_name(
         self,
         client,
-        register_test_adapters,
         create_app,
         sqlalchemy_mixin,
         create_namespace,
@@ -253,7 +241,6 @@ class TestContextEndpoints:
     async def test_get_contexts_for_namespace_name(
         self,
         client,
-        register_test_adapters,
         create_app,
         sqlalchemy_mixin,
         create_namespace,
@@ -294,7 +281,6 @@ class TestContextEndpoints:
     async def test_get_contexts_for_app_name_non_existent_app(
         self,
         client,
-        register_test_adapters,
         create_app,
         sqlalchemy_mixin,
         create_namespace,
@@ -316,7 +302,6 @@ class TestContextEndpoints:
     async def test_patch_context(
         self,
         client,
-        register_test_adapters,
         create_app,
         sqlalchemy_mixin,
         create_namespace,
@@ -353,7 +338,6 @@ class TestContextEndpoints:
     async def test_patch_context_non_existing_context(
         self,
         client,
-        register_test_adapters,
         create_app,
         sqlalchemy_mixin,
         create_namespace,
@@ -378,7 +362,6 @@ class TestContextEndpoints:
     async def test_patch_context_non_existing_app(
         self,
         client,
-        register_test_adapters,
     ):
         changed_display_name = "changed_display_name"
         response = client.patch(
@@ -396,7 +379,6 @@ class TestContextEndpoints:
     async def test_patch_context_non_existing_namespace(
         self,
         client,
-        register_test_adapters,
         create_app,
         sqlalchemy_mixin,
     ):

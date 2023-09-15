@@ -7,10 +7,10 @@ import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.responses import ORJSONResponse
 from guardian_lib.adapter_registry import ADAPTER_REGISTRY
-from guardian_lib.ports import SettingsPort
+from guardian_lib.ports import AuthenticationPort, SettingsPort
 from loguru import logger
 from starlette.staticfiles import StaticFiles
 
@@ -30,15 +30,32 @@ from .routers.permission import router as permission_router
 from .routers.role import router as role_router
 
 
-def mount_routers(fastapi_app: FastAPI):
-    fastapi_app.include_router(app_router, prefix=API_PREFIX)
-    fastapi_app.include_router(namespace_router, prefix=API_PREFIX)
-    fastapi_app.include_router(role_router, prefix=API_PREFIX)
-    fastapi_app.include_router(context_router, prefix=API_PREFIX)
-    fastapi_app.include_router(permission_router, prefix=API_PREFIX)
-    fastapi_app.include_router(condition_router, prefix=API_PREFIX)
-    fastapi_app.include_router(capability_router, prefix=API_PREFIX)
-    fastapi_app.include_router(custom_endpoint_router, prefix=API_PREFIX)
+async def mount_routers(fastapi_app: FastAPI):
+    auth_adapter = await ADAPTER_REGISTRY.request_port(AuthenticationPort)
+    fastapi_app.include_router(
+        app_router, prefix=API_PREFIX, dependencies=[Depends(auth_adapter)]
+    )
+    fastapi_app.include_router(
+        namespace_router, prefix=API_PREFIX, dependencies=[Depends(auth_adapter)]
+    )
+    fastapi_app.include_router(
+        role_router, prefix=API_PREFIX, dependencies=[Depends(auth_adapter)]
+    )
+    fastapi_app.include_router(
+        context_router, prefix=API_PREFIX, dependencies=[Depends(auth_adapter)]
+    )
+    fastapi_app.include_router(
+        permission_router, prefix=API_PREFIX, dependencies=[Depends(auth_adapter)]
+    )
+    fastapi_app.include_router(
+        condition_router, prefix=API_PREFIX, dependencies=[Depends(auth_adapter)]
+    )
+    fastapi_app.include_router(
+        capability_router, prefix=API_PREFIX, dependencies=[Depends(auth_adapter)]
+    )
+    fastapi_app.include_router(
+        custom_endpoint_router, prefix=API_PREFIX, dependencies=[Depends(auth_adapter)]
+    )
 
 
 def mount_bundle_server(fastapi_app: FastAPI, bundle_dir: Path):
@@ -71,7 +88,7 @@ async def lifespan(fastapi_app: FastAPI):
     logger.info(f"Starting Guardian Management API with working dir '{os.getcwd()}'.")
     await initialize_adapters(ADAPTER_REGISTRY)
     logger.info("Mounting routers.")
-    mount_routers(fastapi_app)
+    await mount_routers(fastapi_app)
     rebuild_bundle_task = None
     if not await settings_port.get_setting(
         BUNDLE_SERVER_DISABLED_SETTING_NAME, bool, False
@@ -107,4 +124,10 @@ app = FastAPI(
     openapi_url=f"{API_PREFIX}/openapi.json",
     docs_url=f"{API_PREFIX}/docs",
     default_response_class=ORJSONResponse,
+    swagger_ui_oauth2_redirect_url=f"{API_PREFIX}/docs/oauth2-redirect",
+    swagger_ui_init_oauth={
+        "usePkceWithAuthorizationCodeGrant": True,
+        "clientId": "guardian",
+        "scopes": ["openid"],
+    },
 )

@@ -27,8 +27,8 @@ from guardian_management_api.ports.permission import PermissionAPIPort
 
 class TestFastPermissionAppAdapter:
     @pytest_asyncio.fixture
-    async def adapter(self, register_test_adapters) -> FastAPIPermissionAPIAdapter:
-        return await register_test_adapters.request_port(PermissionAPIPort)
+    async def adapter(self, registry_test_adapters) -> FastAPIPermissionAPIAdapter:
+        return await registry_test_adapters.request_port(PermissionAPIPort)
 
     @pytest.mark.asyncio
     async def test_to_permission_create(self, adapter):

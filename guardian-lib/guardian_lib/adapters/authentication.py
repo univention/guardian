@@ -73,7 +73,11 @@ class FastAPIOAuth2(
         )
         authorizationUrl = self.oauth_settings["authorization_endpoint"]
         tokenUrl = self.oauth_settings["token_endpoint"]
-        super().__init__(authorizationUrl=authorizationUrl, tokenUrl=tokenUrl)
+        super().__init__(
+            authorizationUrl=authorizationUrl,
+            tokenUrl=tokenUrl,
+            scopes={"openid": "scope for openid"},
+        )
 
     @classmethod
     def get_settings_cls(cls) -> Type[FastAPIOAuth2AdapterSettings]:

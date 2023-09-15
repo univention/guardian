@@ -194,9 +194,9 @@ class TestFastAPINamespaceAdapter:
 class TestSQLNamespacePersistenceAdapter:
     @pytest_asyncio.fixture
     async def namespace_sql_adapter(
-        self, register_test_adapters
+        self, registry_test_adapters
     ) -> SQLNamespacePersistenceAdapter:
-        return await register_test_adapters.request_port(NamespacePersistencePort)
+        return await registry_test_adapters.request_port(NamespacePersistencePort)
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")

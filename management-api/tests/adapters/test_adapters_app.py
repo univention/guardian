@@ -276,8 +276,8 @@ class TestAppStaticDataAdapter:
 
 class TestSQLAppPersistenceAdapter:
     @pytest_asyncio.fixture
-    async def app_sql_adapter(self, register_test_adapters) -> SQLAppPersistenceAdapter:
-        return await register_test_adapters.request_port(AppPersistencePort)
+    async def app_sql_adapter(self, registry_test_adapters) -> SQLAppPersistenceAdapter:
+        return await registry_test_adapters.request_port(AppPersistencePort)
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")

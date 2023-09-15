@@ -3,7 +3,6 @@ from unittest.mock import patch
 from urllib.parse import urljoin
 
 import pytest
-from fastapi.testclient import TestClient
 from guardian_management_api.adapters.permission import SQLPermissionPersistenceAdapter
 from guardian_management_api.constants import BASE_URL, COMPLETE_URL
 from guardian_management_api.main import app
@@ -257,10 +256,6 @@ class TestPermissionEndpoints:
 
 
 class TestPermissionEndpointsStatic:
-    @pytest.fixture(autouse=True)
-    def client(self):
-        return TestClient(app)
-
     @patch(
         "guardian_management_api.adapters.permission.PermissionStaticDataAdapter._data",
         new={"permissions": []},

@@ -77,8 +77,6 @@ services:
       traefik.http.routers.authz.rule: PathPrefix(`/guardian/authorization`)
       traefik.http.routers.authz.service: authz
       traefik.http.services.authz.loadbalancer.server.port: 8000
-    extra_hosts:
-      - traefik.localhost:host-gateway
   db_provisioning:
     container_name: db_provisioning
     image: guardian-management-api:dev
@@ -92,6 +90,9 @@ services:
       target: dev
       extra_hosts:
         - git.knut.univention.de:${GITLAB_IP}
+    depends_on:
+      keycloak:
+        condition: service_healthy
     volumes:
       - ./management-api:/app/management-api
       - type: bind
@@ -110,9 +111,13 @@ services:
       - GUARDIAN__MANAGEMENT__ADAPTER__PERMISSION_PERSISTENCE_PORT
       - GUARDIAN__MANAGEMENT__ADAPTER__ROLE_PERSISTENCE_PORT
       - GUARDIAN__MANAGEMENT__ADAPTER__CAPABILITY_PERSISTENCE_PORT
+      - GUARDIAN__MANAGEMENT__ADAPTER__AUTHENTICATION_PORT
       - GUARDIAN__MANAGEMENT__BASE_URL
       - SQL_PERSISTENCE_ADAPTER__DIALECT
       - SQL_PERSISTENCE_ADAPTER__DB_NAME
+      - OAUTH_ADAPTER__WELL_KNOWN_URL
+      - REQUESTS_CA_BUNDLE
+      - SSL_CERT_FILE
   management-api:
     container_name: management-guardian-dev
     image: guardian-management-api:dev
@@ -124,8 +129,12 @@ services:
       extra_hosts:
         - git.knut.univention.de:${GITLAB_IP}
     depends_on:
-      - proxy
-      - db_provisioning
+      db_provisioning:
+        condition: service_started
+      proxy:
+        condition: service_started
+      keycloak:
+        condition: service_healthy
     networks:
       - proxy-net
     volumes:
@@ -144,9 +153,13 @@ services:
       - GUARDIAN__MANAGEMENT__ADAPTER__PERMISSION_PERSISTENCE_PORT
       - GUARDIAN__MANAGEMENT__ADAPTER__ROLE_PERSISTENCE_PORT
       - GUARDIAN__MANAGEMENT__ADAPTER__CAPABILITY_PERSISTENCE_PORT
+      - GUARDIAN__MANAGEMENT__ADAPTER__AUTHENTICATION_PORT
       - GUARDIAN__MANAGEMENT__BASE_URL
       - SQL_PERSISTENCE_ADAPTER__DIALECT
       - SQL_PERSISTENCE_ADAPTER__DB_NAME
+      - OAUTH_ADAPTER__WELL_KNOWN_URL
+      - REQUESTS_CA_BUNDLE
+      - SSL_CERT_FILE
     labels:
       traefik.http.routers.management.entrypoints: web
       traefik.http.routers.management.rule: PathPrefix(`/guardian/management`)
@@ -164,9 +177,9 @@ services:
       test: "/opt/keycloak/bin/kcadm.sh get realms/GuardianDev --server http://localhost:8080/guardian/keycloak --realm master --user admin --password admin"
       interval: 30s
       timeout: 10s
-      retries: 5
+      retries: 30
       start_period: 40s
-      start_interval: 5s
+      start_interval: 2s
     depends_on:
       - proxy
       - keycloak-provisioning

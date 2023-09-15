@@ -62,6 +62,12 @@ class KeycloakConfigurator:
     def configure(self):
         # create realm
         self.logger.info(f"Creating Realm: {self.realm_name}")
+
+        # lets keep this simple and always start fresh
+        try:
+            self.keycloak_admin.delete_realm(self.realm_name)
+        except keycloak.exceptions.KeycloakDeleteError:
+            pass
         self.keycloak_admin.create_realm(
             payload={"realm": self.realm_name, "enabled": True}, skip_exists=True
         )

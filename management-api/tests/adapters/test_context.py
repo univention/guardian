@@ -226,9 +226,9 @@ class TestFastAPIContextAdapter:
 class TestSQLContextPersistenceAdapter:
     @pytest_asyncio.fixture
     async def context_sql_adapter(
-        self, register_test_adapters
+        self, registry_test_adapters
     ) -> SQLContextPersistenceAdapter:
-        return await register_test_adapters.request_port(ContextPersistencePort)
+        return await registry_test_adapters.request_port(ContextPersistencePort)
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")
