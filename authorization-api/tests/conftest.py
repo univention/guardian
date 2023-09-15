@@ -7,6 +7,7 @@ import os
 from typing import Callable, Optional
 from unittest.mock import AsyncMock
 
+import guardian_authorization_api
 import pytest
 import pytest_asyncio
 import requests
@@ -20,6 +21,8 @@ from guardian_lib.adapters.authentication import (
 )
 from opa_client import client as opa_client
 from starlette.testclient import TestClient
+
+from tests.mock_classes import UDMMock
 
 fake = Faker()
 
@@ -196,3 +199,39 @@ def error401(monkeypatch):
         FastAPINeverAuthorizedAdapter.__call__,
     )
     yield
+
+
+@pytest.fixture
+def opa_check_permissions_mock():
+    old_method = (
+        guardian_authorization_api.adapters.policies.OPAAdapter.check_permissions
+    )
+    guardian_authorization_api.adapters.policies.OPAAdapter.check_permissions = (
+        AsyncMock()
+    )
+    yield guardian_authorization_api.adapters.policies.OPAAdapter.check_permissions
+    guardian_authorization_api.adapters.policies.OPAAdapter.check_permissions = (
+        old_method
+    )
+
+
+@pytest.fixture()
+def udm_mock():
+    old_cls = (
+        guardian_authorization_api.adapters.persistence.UDMPersistenceAdapter.udm_client
+    )
+
+    def _func(users: dict = None, groups: dict = None):
+        guardian_authorization_api.adapters.persistence.UDMPersistenceAdapter.udm_client = UDMMock(
+            users=users,
+            groups=groups,
+        )
+        return (
+            guardian_authorization_api.adapters.persistence.UDMPersistenceAdapter.udm_client
+        )
+
+    yield _func
+
+    guardian_authorization_api.adapters.persistence.UDMPersistenceAdapter.udm_client = (
+        old_cls
+    )

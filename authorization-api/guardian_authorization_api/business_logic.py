@@ -6,9 +6,11 @@ from guardian_authorization_api.ports import (
     CheckPermissionsAPIPort,
     CheckPermissionsAPIRequestObject,
     CheckPermissionsAPIResponseObject,
+    CheckPermissionsWithLookupAPIRequestObject,
     GetPermissionsAPIPort,
     GetPermissionsAPIRequestObject,
     GetPermissionsAPIResponseObject,
+    PersistencePort,
     PolicyPort,
 )
 
@@ -31,6 +33,34 @@ async def check_permissions(
     try:
         check_permissions_query = await check_permissions_api_port.to_policy_query(
             permissions_check_request
+        )
+        check_permissions_result = await policy_port.check_permissions(
+            check_permissions_query
+        )
+        return await check_permissions_api_port.to_api_response(
+            check_permissions_query.actor.id, check_permissions_result
+        )
+    except Exception as exc:
+        raise (await check_permissions_api_port.transform_exception(exc)) from exc
+
+
+async def check_permissions_with_lookup(
+    api_request: CheckPermissionsWithLookupAPIRequestObject,
+    check_permissions_api_port: CheckPermissionsAPIPort,
+    policy_port: PolicyPort,
+    persistence_port: PersistencePort,
+):
+    try:
+        actor_id, old_target_ids = check_permissions_api_port.get_actor_and_target_ids(
+            api_request=api_request
+        )
+        actor, old_targets = await persistence_port.lookup_actor_and_old_targets(
+            actor_id=actor_id, old_target_ids=old_target_ids
+        )
+        check_permissions_query = (
+            await check_permissions_api_port.to_policy_lookup_query(
+                api_request=api_request, actor=actor, old_targets=old_targets
+            )
         )
         check_permissions_result = await policy_port.check_permissions(
             check_permissions_query

@@ -23,6 +23,7 @@ from ..models.routes import (
     AppName,
     AuthzObject,
     AuthzObjectIdentifier,
+    AuthzPermissionsCheckLookupPostRequest,
     AuthzPermissionsCheckPostRequest,
     AuthzPermissionsCheckPostResponse,
     AuthzPermissionsPostRequest,
@@ -274,3 +275,64 @@ class FastAPICheckPermissionsAPIAdapter(
             ],
             extra_args=api_request.extra_request_data,
         )
+
+    async def to_policy_lookup_query(
+        self,
+        api_request: AuthzPermissionsCheckLookupPostRequest,
+        actor: PolicyObject,
+        old_targets: list[PolicyObject | None],
+    ) -> CheckPermissionsQuery:
+        contexts = FastAPIAdapterUtils.api_contexts_to_policy_contexts(
+            api_request.contexts
+        )
+        namespaces = FastAPIAdapterUtils.api_namespaces_to_policy_namespaces(
+            api_request.namespaces
+        )
+        targets = []
+        if api_request.targets:
+            for old_target, request_target in zip(old_targets, api_request.targets):
+                targets.append(
+                    PoliciesTarget(
+                        new_target=FastAPIAdapterUtils.authz_to_policy_object(
+                            request_target.new_target
+                        )
+                        if request_target.new_target
+                        else None,
+                        old_target=old_target,
+                    )
+                )
+        return CheckPermissionsQuery(
+            actor=actor,
+            contexts=contexts,
+            targets=targets,
+            namespaces=namespaces,
+            target_permissions=[
+                PoliciesPermission(
+                    app_name=permission.app_name,
+                    namespace_name=permission.namespace_name,
+                    name=permission.name,
+                )
+                for permission in api_request.targeted_permissions_to_check
+            ],
+            general_permissions=[
+                PoliciesPermission(
+                    app_name=permission.app_name,
+                    namespace_name=permission.namespace_name,
+                    name=permission.name,
+                )
+                for permission in api_request.general_permissions_to_check
+            ],
+            extra_args=api_request.extra_request_data,
+        )
+
+    @staticmethod
+    def get_actor_and_target_ids(
+        api_request: AuthzPermissionsCheckLookupPostRequest,
+    ) -> tuple[str, list[str | None]]:
+        target_ids = []
+        if api_request.targets:
+            target_ids = [
+                str(target.old_target.id) if target.old_target else None
+                for target in api_request.targets
+            ]
+        return str(api_request.actor.id), target_ids
