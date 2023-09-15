@@ -16,6 +16,7 @@ onMounted(async () => {
     <ul>
       <li><RouterLink :to="{name: 'testsSettingsAdapter'}">Settings Adapter Tests</RouterLink></li>
       <li><RouterLink :to="{name: 'testsAuthenticationAdapter'}">Authentication Adapter Tests</RouterLink></li>
+      <li><RouterLink :to="{name: 'testsDataAdapter'}">Data Adapter Tests</RouterLink></li>
     </ul>
   </main>
 </template>
