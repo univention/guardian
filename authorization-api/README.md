@@ -150,7 +150,17 @@ poetry install
 pytest -vv --cov=guardian_authorization_api .
 ```
 
-There are also integration tests, that run automatically, if their prerequisites are met. You can enable or disable
+There are also integration tests, that run automatically, if their prerequisites are met.
+
+To be able to run the integration tests against the test mapping inside the authorization api docker container,
+run the following commands in the project directory outside the docker container.
+
+```shell
+cp management-api/rego_policy_bundle_template/univention/test_mapping/data.json management_service_dir/bundle_server/build/GuardianDataBundle/guardian/mapping/data.json
+opa build -b management_service_dir/bundle_server/build/GuardianDataBundle -o management_service_dir/bundle_server/bundles/GuardianDataBundle.tar.gz
+```
+
+You can enable or disable
 the integration tests on purpose by using the `integration` mark:
 
 ```shell
