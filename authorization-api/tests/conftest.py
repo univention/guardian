@@ -4,6 +4,8 @@
 
 import asyncio
 import os
+import shutil
+import subprocess
 from typing import Callable, Optional
 from unittest.mock import AsyncMock
 
@@ -234,4 +236,24 @@ def udm_mock():
 
     guardian_authorization_api.adapters.persistence.UDMPersistenceAdapter.udm_client = (
         old_cls
+    )
+
+
+@pytest.fixture(scope="session", autouse=True)
+def use_test_mapping(request):
+    if "in_container_test" not in request.keywords:
+        return
+    shutil.copy(
+        "management-api/rego_policy_bundle_template/univention/test_mapping/data.json",
+        "management_service_dir/bundle_server/build/GuardianDataBundle/guardian/mapping/data.json",
+    )
+    subprocess.call(
+        [
+            "opa",
+            "build",
+            "-b",
+            "management_service_dir/bundle_server/build/GuardianDataBundle",
+            "-o",
+            "management_service_dir/bundle_server/bundles/GuardianDataBundle.tar.gz",
+        ]
     )
