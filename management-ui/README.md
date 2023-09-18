@@ -7,8 +7,8 @@
 - [Node.js](https://nodejs.org/en/) (18.x, LTS until 2023-10-24 and supported until 2025-04-30)
 - [yarn](https://yarnpkg.com/getting-started/install)
   - We use `yarn` as package manager instead of `npm`
-  - Installation: `sudo npm install --global yarn`
-    - `npm` comes with Node.js
+  - Enable corepack `corepack enable` to use `yarn` (`corepack` comes with Node.js)
+    - Or if corepack doesn't work for you: `sudo npm install --global yarn` (`npm` comes with Node.js)
 
 ## Project Setup
 
