@@ -13,9 +13,7 @@ class TestGetPermissions:
         return TestClient(app)
 
     @pytest.mark.asyncio
-    async def test_get_permissions_randomized_data(
-        self, client, register_test_adapters
-    ):
+    async def test_get_permissions_randomized_data(self, client):
         data = get_authz_permissions_get_request_dict(n_targets=10)
 
         response = client.post(client.app.url_path_for("get_permissions"), json=data)
@@ -34,7 +32,7 @@ class TestGetPermissions:
         assert response_json["general_permissions"] == []
 
     @pytest.mark.asyncio
-    async def test_get_permissions_basic(self, client, register_test_adapters):
+    async def test_get_permissions_basic(self, client):
         """
         - Actor has one role: ucsschool:users:teacher
         - According to the role-capability-mapping,
