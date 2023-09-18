@@ -25,7 +25,10 @@ target_has_role_parametrize := [
 			"actor": {"id": "foo"},
 			"actor_role": {},
 			"target": {
-				"old": {"id": "notfoo", "roles": ["guardian:role:role1:role2"]},
+				"old": {
+					"id": "notfoo",
+					"roles": ["guardian:role:role1:role2&app:namespace:context"],
+				},
 				"new": {},
 			},
 			"namespaces": {},
@@ -40,7 +43,28 @@ target_has_role_parametrize := [
 			"actor": {"id": "foo"},
 			"actor_role": {},
 			"target": {
-				"old": {"id": "notfoo", "roles": ["guardian:role:role1"]},
+				"old": {
+					"id": "notfoo",
+					"roles": ["guardian:role:role1"],
+				},
+				"new": {},
+			},
+			"namespaces": {},
+			"contexts": set(),
+			"extra_args": {},
+		},
+		"parameters": {"role": "guardian:role:role1"},
+		"result": true,
+	},
+	{
+		"condition_data": {
+			"actor": {"id": "foo"},
+			"actor_role": {},
+			"target": {
+				"old": {
+					"id": "notfoo",
+					"roles": ["guardian:role:role1&app:namespace:context"],
+				},
 				"new": {},
 			},
 			"namespaces": {},

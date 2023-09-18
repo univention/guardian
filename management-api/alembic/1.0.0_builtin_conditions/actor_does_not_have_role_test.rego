@@ -22,7 +22,10 @@ actor_does_not_have_role_parametrize := [
 	},
 	{
 		"condition_data": {
-			"actor": {"id": "foo", "roles": ["guardian:role:role1:role2"]},
+			"actor": {
+				"id": "foo",
+				"roles": ["guardian:role:role1:role2&app:namespace:context"],
+			},
 			"actor_role": {},
 			"target": {
 				"old": {"id": "notfoo"},
@@ -37,7 +40,13 @@ actor_does_not_have_role_parametrize := [
 	},
 	{
 		"condition_data": {
-			"actor": {"id": "foo", "roles": ["guardian:role:role1", "guardian:role:role2"]},
+			"actor": {
+				"id": "foo",
+				"roles": [
+					"guardian:role:role1&app:namespace:context",
+					"guardian:role:role2",
+				],
+			},
 			"actor_role": {},
 			"target": {
 				"old": {"id": "notfoo"},
