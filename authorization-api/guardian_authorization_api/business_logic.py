@@ -11,6 +11,7 @@ from guardian_authorization_api.ports import (
     GetPermissionsAPIPort,
     GetPermissionsAPIRequestObject,
     GetPermissionsAPIResponseObject,
+    GetPermissionsWithLookupAPIRequestObject,
     PersistencePort,
     PolicyPort,
 )
@@ -91,3 +92,22 @@ async def check_permissions_with_lookup(
         )
     except Exception as exc:
         raise (await check_permissions_api_port.transform_exception(exc)) from exc
+
+
+async def get_permissions_with_lookup(
+    api_request: GetPermissionsWithLookupAPIRequestObject,
+    get_permission_api: GetPermissionsAPIPort,
+    policy_port: PolicyPort,
+    persistence_port: PersistencePort,
+):
+    try:
+        actor, targets = await _lookup_actor_and_targets(
+            persistence_port=persistence_port, api_request=api_request
+        )
+        query = await get_permission_api.to_policy_lookup_query(
+            api_request, actor, targets
+        )
+        policy_result = await policy_port.get_permissions(query)
+        return await get_permission_api.to_api_response(policy_result)
+    except Exception as exc:
+        raise (await get_permission_api.transform_exception(exc)) from exc

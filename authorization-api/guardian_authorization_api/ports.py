@@ -19,6 +19,10 @@ from .models.policies import (
 GetPermissionsAPIResponseObject = TypeVar("GetPermissionsAPIResponseObject")
 GetPermissionsAPIRequestObject = TypeVar("GetPermissionsAPIRequestObject")
 
+GetPermissionsWithLookupAPIRequestObject = TypeVar(
+    "GetPermissionsWithLookupAPIRequestObject"
+)
+
 CheckPermissionsAPIResponseObject = TypeVar("CheckPermissionsAPIResponseObject")
 CheckPermissionsAPIRequestObject = TypeVar("CheckPermissionsAPIRequestObject")
 
@@ -99,8 +103,16 @@ class PolicyPort(BasePort, ABC):
 class GetPermissionsAPIPort(
     BasePort,
     ABC,
-    Generic[GetPermissionsAPIRequestObject, GetPermissionsAPIResponseObject],
+    Generic[
+        GetPermissionsAPIRequestObject,
+        GetPermissionsAPIResponseObject,
+        GetPermissionsWithLookupAPIRequestObject,
+    ],
 ):
+    @abstractmethod
+    async def transform_exception(self, exc: Exception) -> Exception:
+        ...  # pragma: no cover
+
     @abstractmethod
     async def to_policy_query(
         self, api_request: GetPermissionsAPIRequestObject
@@ -112,6 +124,12 @@ class GetPermissionsAPIPort(
         self, permissions_result: GetPermissionsResult
     ) -> GetPermissionsAPIResponseObject:
         raise NotImplementedError  # pragma: no cover
+
+    @abstractmethod
+    async def to_policy_lookup_query(
+        self, api_request: GetPermissionsWithLookupAPIRequestObject, actor, targets
+    ) -> GetPermissionsQuery:
+        ...  # pragma: no cover
 
 
 class CheckPermissionsAPIPort(

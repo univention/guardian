@@ -27,6 +27,7 @@ from ..models.routes import (
     AuthzPermissionsCheckLookupPostRequest,
     AuthzPermissionsCheckPostRequest,
     AuthzPermissionsCheckPostResponse,
+    AuthzPermissionsLookupPostRequest,
     AuthzPermissionsPostRequest,
     AuthzPermissionsPostResponse,
     Context,
@@ -188,7 +189,7 @@ class FastAPIAdapterUtils:
         )
 
 
-class FastAPIGetPermissionsAPIAdapter(GetPermissionsAPIPort):
+class FastAPIGetPermissionsAPIAdapter(TransformExceptionMixin, GetPermissionsAPIPort):
     async def to_policy_query(
         self, api_request: AuthzPermissionsPostRequest
     ) -> GetPermissionsQuery:
@@ -203,6 +204,29 @@ class FastAPIGetPermissionsAPIAdapter(GetPermissionsAPIPort):
         return GetPermissionsQuery(
             actor=FastAPIAdapterUtils.authz_to_policy_object(api_request.actor),
             targets=targets,
+            namespaces=namespaces,
+            contexts=contexts,
+            extra_args=api_request.extra_request_data,
+            include_general_permissions=api_request.include_general_permissions,
+        )
+
+    async def to_policy_lookup_query(
+        self,
+        api_request: AuthzPermissionsLookupPostRequest,
+        actor: PersistenceObject,
+        targets: list[typing.Tuple[PersistenceObject, TargetLookup]],
+    ) -> GetPermissionsQuery:
+        _actor = FastAPIAdapterUtils.persistence_object_to_policy_object(actor)
+        _targets = FastAPIAdapterUtils.persistence_targets_to_policy_targets(targets)
+        contexts = FastAPIAdapterUtils.api_contexts_to_policy_contexts(
+            api_request.contexts
+        )
+        namespaces = FastAPIAdapterUtils.api_namespaces_to_policy_namespaces(
+            api_request.namespaces
+        )
+        return GetPermissionsQuery(
+            actor=_actor,
+            targets=_targets,
             namespaces=namespaces,
             contexts=contexts,
             extra_args=api_request.extra_request_data,
