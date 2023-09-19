@@ -17,6 +17,8 @@ from guardian_management_api.models.routers.capability import (
     CapabilitiesGetByRoleRequest,
     CapabilityCreateRequest,
     CapabilityEditRequest,
+    CapabilityMultipleResponse,
+    CapabilitySingleResponse,
 )
 from guardian_management_api.ports.bundle_server import BundleServerPort
 from guardian_management_api.ports.capability import (
@@ -36,7 +38,7 @@ async def get_capability(
     persistence_port: CapabilityPersistencePort = Depends(
         port_dep(CapabilityPersistencePort)
     ),
-):
+) -> CapabilitySingleResponse:
     return await business_logic.get_capability(request_data, api_port, persistence_port)
 
 
@@ -49,7 +51,7 @@ async def get_capabilities_by_namespace(
     persistence_port: CapabilityPersistencePort = Depends(
         port_dep(CapabilityPersistencePort)
     ),
-):
+) -> CapabilityMultipleResponse:
     return await business_logic.get_capabilities(
         request_data, api_port, persistence_port
     )
@@ -64,7 +66,7 @@ async def get_all_capabilities(
     persistence_port: CapabilityPersistencePort = Depends(
         port_dep(CapabilityPersistencePort)
     ),
-):
+) -> CapabilityMultipleResponse:
     return await business_logic.get_capabilities(
         request_data, api_port, persistence_port
     )
@@ -79,7 +81,7 @@ async def get_capabilities_by_role(
     persistence_port: CapabilityPersistencePort = Depends(
         port_dep(CapabilityPersistencePort)
     ),
-):
+) -> CapabilityMultipleResponse:
     return await business_logic.get_capabilities(
         request_data, api_port, persistence_port
     )
@@ -95,7 +97,7 @@ async def create_capability(
         port_dep(CapabilityPersistencePort)
     ),
     bundle_server_port: BundleServerPort = Depends(port_dep(BundleServerPort)),
-):
+) -> CapabilitySingleResponse:
     return await business_logic.create_capability(
         request_data, api_port, bundle_server_port, persistence_port
     )
@@ -111,7 +113,7 @@ async def update_capability(
         port_dep(CapabilityPersistencePort)
     ),
     bundle_server_port: BundleServerPort = Depends(port_dep(BundleServerPort)),
-):
+) -> CapabilitySingleResponse:
     return await business_logic.update_capability(
         request_data, api_port, bundle_server_port, persistence_port
     )
@@ -130,7 +132,7 @@ async def delete_capability(
         port_dep(CapabilityPersistencePort)
     ),
     bundle_server_port: BundleServerPort = Depends(port_dep(BundleServerPort)),
-):
+) -> None:
     return await business_logic.delete_capability(
         request_data, api_port, bundle_server_port, persistence_port
     )
