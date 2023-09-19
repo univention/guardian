@@ -360,8 +360,8 @@ class TestBundleServerAdapter:
             "roleCapabilityMapping": {
                 "app:namespace:role": [
                     {
-                        "app_name": "app",
-                        "namespace_name": "namespace",
+                        "appName": "app",
+                        "namespace": "namespace",
                         "permissions": ["perm1", "perm2"],
                         "relation": "AND",
                         "conditions": [
@@ -376,8 +376,8 @@ class TestBundleServerAdapter:
                         ],
                     },
                     {
-                        "app_name": "app",
-                        "namespace_name": "namespace",
+                        "appName": "app",
+                        "namespace": "namespace",
                         "permissions": ["perm3", "perm4"],
                         "relation": "AND",
                         "conditions": [],
@@ -385,8 +385,8 @@ class TestBundleServerAdapter:
                 ],
                 "app:namespace:role2": [
                     {
-                        "app_name": "app",
-                        "namespace_name": "namespace",
+                        "appName": "app",
+                        "namespace": "namespace",
                         "permissions": ["perm1", "perm2"],
                         "relation": "OR",
                         "conditions": [],
