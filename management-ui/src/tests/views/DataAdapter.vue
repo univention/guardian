@@ -12,14 +12,19 @@ import {
   type UGridColumnDefinition,
 } from '@univention/univention-veb';
 import type {DataPort} from '@/ports/data';
-import {InMemoryDataAdapter} from '@/adapters/data';
+import {ApiDataAdapter, InMemoryDataAdapter} from '@/adapters/data';
+import {InMemoryAuthenticationAdapter} from '@/adapters/authentication';
+import type {DisplayApp} from '@/helpers/models/apps';
 import type {DisplayNamespace} from '@/helpers/models/namespaces';
 import type {DisplayRole} from '@/helpers/models/roles';
 import type {DisplayCondition} from '@/helpers/models/conditions';
 import type {DisplayPermission} from '@/helpers/models/permissions';
 import type {DisplayCapability} from '@/helpers/models/capabilities';
+import {useSettingsStore} from '@/stores/settings';
+import {useAdapterStore} from '@/stores/adapter';
 
 const loading = ref(true);
+const settingsStore = useSettingsStore();
 
 interface FilterConfig {
   show: boolean;
@@ -756,16 +761,32 @@ const config: Ref<Config> = ref({
 });
 
 // Adapters
+const configuredAdapter: Adapter = {
+  name: 'configured',
+  adapter: new InMemoryDataAdapter(), // This will be swapped out during onMounted
+  currentTab: 'apps',
+  state: makeDefaultState(),
+};
 const inMemoryAdapter: Adapter = {
   name: 'inMemory',
   adapter: new InMemoryDataAdapter(),
   currentTab: 'apps',
   state: makeDefaultState(),
 };
+const apiAdapter: Adapter = {
+  name: 'api',
+  adapter: new ApiDataAdapter(
+    new InMemoryAuthenticationAdapter('test-user', true),
+    'http://localhost/guardian/management'
+  ),
+  currentTab: 'apps',
+  state: makeDefaultState(),
+};
 
-const currentAdapter: Ref<Adapter> = ref(inMemoryAdapter);
+const currentAdapter: Ref<Adapter> = ref(configuredAdapter);
 
 // Form Data
+const apps: Ref<DisplayApp[]> = ref([]);
 const namespaces: Ref<DisplayNamespace[]> = ref([]);
 const roles: Ref<DisplayRole[]> = ref([]);
 const conditions: Ref<DisplayCondition[]> = ref([]);
@@ -777,13 +798,12 @@ const rolesFilter: ComputedRef<Option[]> = computed(() => {
     return [];
   }
 
-  let roleOptions: Option[] = [];
-  roles.value.forEach(role => {
-    let roleId = `${role.appName}:${role.namespaceName}:${role.name}`;
-    roleOptions.push({
+  const roleOptions: Option[] = roles.value.map(role => {
+    const roleId = `${role.appName}:${role.namespaceName}:${role.name}`;
+    return {
       label: roleId,
       value: roleId,
-    });
+    };
   });
   roleOptions.sort((a, b) => {
     return a.value < b.value ? -1 : 1;
@@ -791,12 +811,24 @@ const rolesFilter: ComputedRef<Option[]> = computed(() => {
   return roleOptions;
 });
 const appsFilter: ComputedRef<Option[]> = computed((): Option[] => {
-  if (!config.value[currentAdapter.value.currentTab].filters.app.show) {
+  const filterOptions = config.value[currentAdapter.value.currentTab].filters;
+
+  if (!filterOptions.app.show) {
     return [];
   }
+  // When only showing apps as a filter, show all apps;
+  // If we're showing namespaces too, then only show apps that have namespaces.
+  if (!filterOptions.namespace.show) {
+    return apps.value.map(app => {
+      return {
+        label: app.name,
+        value: app.name,
+      };
+    });
+  }
 
-  let seenValues: string[] = [];
   let appOptions: Option[] = [];
+  let seenValues: string[] = [];
   namespaces.value.forEach(ns => {
     if (seenValues.indexOf(ns.appName) !== -1) {
       return;
@@ -820,7 +852,7 @@ const namespacesFilter: ComputedRef<Option[]> = computed(() => {
 
   const currentState = currentAdapter.value.state[currentAdapter.value.currentTab];
 
-  let namespaceOptions: Option[] = [];
+  const namespaceOptions: Option[] = [];
   namespaces.value.forEach(ns => {
     if (ns.appName === currentState.filters.app) {
       namespaceOptions.push({
@@ -837,8 +869,20 @@ const namespacesFilter: ComputedRef<Option[]> = computed(() => {
 
 // EditForm
 const appsEditForm: ComputedRef<Option[]> = computed(() => {
-  if (!config.value[currentAdapter.value.currentTab].editForm?.app.show) {
+  const editFormOptions = config.value[currentAdapter.value.currentTab].editForm;
+
+  if (!editFormOptions?.app.show) {
     return [];
+  }
+  // When only showing apps as a filter, show all apps;
+  // If we're showing namespaces too, then only show apps that have namespaces.
+  if (!editFormOptions?.namespace.show) {
+    return apps.value.map(app => {
+      return {
+        label: app.name,
+        value: app.name,
+      };
+    });
   }
 
   let seenValues: string[] = [];
@@ -885,13 +929,12 @@ const roleEditForm: ComputedRef<Option[]> = computed(() => {
     return [];
   }
 
-  let roleOptions: Option[] = [];
-  roles.value.forEach(role => {
-    let roleId = `${role.appName}:${role.namespaceName}:${role.name}`;
-    roleOptions.push({
+  const roleOptions: Option[] = roles.value.map(role => {
+    const roleId = `${role.appName}:${role.namespaceName}:${role.name}`;
+    return {
       label: roleId,
       value: roleId,
-    });
+    };
   });
   roleOptions.sort((a, b) => {
     return a.value < b.value ? -1 : 1;
@@ -920,7 +963,7 @@ const conditionsEditFormProps: ComputedRef<SubElementProps[]> = computed(() => {
     }
 
     options.push({
-      label: `${condition.appName} / ${condition.namespaceName} / ${condition.displayName}`,
+      label: conditionId,
       value: `${conditionId}`,
     });
   });
@@ -989,23 +1032,27 @@ const fetchPermissions = async () => {
   let permissionData = await currentAdapter.value.adapter.fetchPermissions(app, namespace);
   permissions.value = permissionData.permissions ?? [];
 };
-const filterApp: Ref<string> = ref(
-  computed(() => {
-    return currentAdapter.value.state[currentAdapter.value.currentTab].filters.app;
-  })
-);
-const editFormApp: Ref<string> = ref(
-  computed(() => {
-    return currentAdapter.value.state[currentAdapter.value.currentTab].editForm.values.app;
-  })
-);
-const editFormNamespace: Ref<string> = ref(
-  computed(() => {
-    return currentAdapter.value.state[currentAdapter.value.currentTab].editForm.values.namespace;
-  })
-);
+const filterApp = computed(() => {
+  return currentAdapter.value.state[currentAdapter.value.currentTab].filters.app;
+});
+const filterNamespace = computed(() => {
+  return currentAdapter.value.state[currentAdapter.value.currentTab].filters.namespace;
+});
+const editFormApp = computed(() => {
+  return currentAdapter.value.state[currentAdapter.value.currentTab].editForm.values.app;
+});
+const editFormNamespace = computed(() => {
+  return currentAdapter.value.state[currentAdapter.value.currentTab].editForm.values.namespace;
+});
 watch(filterApp, () => {
-  currentAdapter.value.state[currentAdapter.value.currentTab].filters.namespace = '';
+  const currentFilters = currentAdapter.value.state[currentAdapter.value.currentTab].filters;
+  currentFilters.namespace = '';
+  currentFilters.name = '';
+});
+watch(filterNamespace, newNamespace => {
+  if (newNamespace === '') {
+    currentAdapter.value.state[currentAdapter.value.currentTab].filters.name = '';
+  }
 });
 watch(editFormApp, async () => {
   await fetchPermissions();
@@ -1039,13 +1086,27 @@ const resetEditForm = () => {
   }
 };
 
+const switchToConfiguredAdapter = () => {
+  currentAdapter.value = configuredAdapter;
+};
 const switchToInMemoryAdapter = () => {
   currentAdapter.value = inMemoryAdapter;
+};
+const switchToApiAdapter = () => {
+  currentAdapter.value = apiAdapter;
 };
 
 const setupFormData = async () => {
   const currentConfig = config.value[currentAdapter.value.currentTab];
-  if (currentConfig.filters.app.show || currentConfig.editForm?.app.show) {
+
+  // For namespaces only, we want to get all apps.
+  // For other tabs that use namespaces, we only show apps that have namespaces.
+  if (currentAdapter.value.currentTab == 'namespaces') {
+    let appData = await currentAdapter.value.adapter.fetchApps();
+    apps.value = appData.apps ?? [];
+  }
+
+  if (currentConfig.filters.namespace.show || currentConfig.editForm?.namespace.show) {
     let namespaceData = await currentAdapter.value.adapter.fetchNamespaces();
     namespaces.value = namespaceData.namespaces ?? [];
   }
@@ -1482,6 +1543,10 @@ const deleteOne = async () => {
 };
 
 onMounted(async () => {
+  await settingsStore.init();
+  const adapterStore = useAdapterStore(settingsStore.config);
+  configuredAdapter.adapter = adapterStore.dataAdapter;
+
   loading.value = false;
 });
 </script>
@@ -1495,13 +1560,30 @@ onMounted(async () => {
 
     <div class="testButtonsWrapper">
       <UButton
+        :class="{'uButton--flat': currentAdapter.name !== 'configured'}"
+        type="button"
+        label="Configured Global Adapter"
+        @click="switchToConfiguredAdapter"
+      />
+      <UButton
         :class="{'uButton--flat': currentAdapter.name !== 'inMemory'}"
         type="button"
         label="In Memory Adapter"
         @click="switchToInMemoryAdapter"
       />
+      <UButton
+        :class="{'uButton--flat': currentAdapter.name !== 'api'}"
+        type="button"
+        label="API Adapter"
+        @click="switchToApiAdapter"
+      />
     </div>
+    <p v-show="currentAdapter.name === 'configured'">Test the adapter configured in the .env file</p>
     <p v-show="currentAdapter.name === 'inMemory'">Test the in-memory adapter</p>
+    <p v-show="currentAdapter.name === 'api'">
+      Test an adapter running against the Management API, without authentication. You have to set
+      GUARDIAN__MANAGEMENT__ADAPTER__AUTHENTICATION_PORT=fast_api_always_authorized for this to work.
+    </p>
 
     <div class="testWrapper">
       <div class="uContainer uCard listDisplay">
@@ -1635,7 +1717,7 @@ onMounted(async () => {
           :itemsPerPageOptions="[20, 50, -1]"
         />
       </div>
-      <div v-if="config[currentAdapter.currentTab].editForm !== null" class="uContainer uCard">
+      <div v-if="config[currentAdapter.currentTab].editForm !== null" class="uContainer uCard dataDisplay">
         <h3>
           {{ currentAdapter.state[currentAdapter.currentTab].editForm.mode.charAt(0).toUpperCase()
           }}{{ currentAdapter.state[currentAdapter.currentTab].editForm.mode.slice(1) }} {{ currentAdapter.currentTab }}
@@ -1768,6 +1850,7 @@ onMounted(async () => {
 <style lang="stylus">
 main.testView
   .listDisplay
-    min-width: calc(120 * var(--layout-spacing-unit))
-    max-width: 70%
+    width: 65%
+  .dataDisplay
+    width: 35%
 </style>

@@ -19,9 +19,12 @@ main.testView
 
   .testView__uGrid
     margin-top: calc(4 * var(--layout-spacing-unit))
+    .uGrid__section
+      max-height: 600px
 
   .testButtonsWrapper
     display: flex
+    flex-wrap: wrap
     margin: calc(2 * var(--layout-spacing-unit)) 0
 
   .testButtons
@@ -43,3 +46,4 @@ main.testView
     display: flex
     align-items: flex-start
     gap: calc(2 * var(--layout-spacing-unit))
+    width: 100%

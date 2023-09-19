@@ -58,41 +58,46 @@ export VITE__IN_MEMORY_AUTHENTICATION_ADAPTER__USERNAME=test-admin
 
 You can test being unauthenticated by setting `VITE__IN_MEMORY_AUTHENTICATION_ADAPTER__IS_AUTHENTICATED=0`.
 
-If you want to test against a keycloak instance, you can use an existing [RAM environment](https://jenkins2022.knut.univention.de/view/UCS@school/job/UCSschool-5.0/view/Environments/job/RAM-environment/) to bootstrap this.
+If you want to test against the keycloak instance that is included in the `dev-compose.yaml` file in the top-level directory:
 
-1. Configure your `/etc/hosts` to point to the RAM instance:
-
-   ```text
-   10.207.16.184   primary.school.test ucs-sso.school.test ucs-sso-ng.school.test
-   10.207.16.185   backup1.school.test
-   ```
-
-2. On the `primary.school.test` VM, run the following to create your client:
-
-   ```shell
-   /usr/share/ucs-school-ui-common/scripts/univention-create-keycloak-clients \
-       --admin-password univention \
-       --client-id guardian-management-ui-dev
-   ```
-
-3. Update your `.env` file:
-
-   ```shell
-   export VITE__MANAGEMENT_UI__ADAPTER__AUTHENTICATION_PORT=keycloak
-   export VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__SSO_URI=https://ucs-sso-ng.school.test
-   export VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__REALM=ucs
-   export VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__CLIENT_ID=guardian-management-ui-dev
-   ```
+```shell
+export VITE__MANAGEMENT_UI__ADAPTER__AUTHENTICATION_PORT=keycloak
+export VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__SSO_URI=http://traefik/guardian/keycloak
+export VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__REALM=GuardianDev
+export VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__CLIENT_ID=guardian
+```
 
 #### Data Port
 
 The data port pulls data from the API or a locally-generated in-memory store.
 
-Currently, there is only the `in-memory` adapter:
+Currently, the default is the `in-memory` adapter:
 
 ```shell
 export VITE__MANAGEMENT_UI__ADAPTER__DATA_PORT=in_memory
 ```
+
+For working with the Management API locally, you need the following settings:
+
+```shell
+export VITE__MANAGEMENT_UI__ADAPTER__DATA_PORT=api
+export VITE__API_DATA_ADAPTER__URI=http://localhost/guardian/management
+```
+
+If you're working with a non-local instance of the Guardian backend, you can set up a proxy to avoid CORS errors:
+
+```shell
+export VITE__MANAGEMENT_UI__CORS__USE_PROXY=1
+```
+
+Please note that, depending on your setup in the Management API, you may need to configure the Keycloak authentication adapter as well.
+The following setting disables Keycloak integration in the Management API:
+
+```shell
+export GUARDIAN__MANAGEMENT__ADAPTER__AUTHENTICATION_PORT=fast_api_always_authorized
+```
+
+Please see the instructions for configuring authentication in the top-level repository README for more information.
 
 #### CORS
 
@@ -108,7 +113,7 @@ export GUARDIAN__MANAGEMENT__CORS__ALLOWED_ORIGINS=*
 If you would like to develop against a remote server, you can enable a proxy that will make requests to the backend look like they're coming from the local server:
 
 ```shell
-export VITE__MANAGEMENT_UI__CORS__USE_PROXY=0
+export VITE__MANAGEMENT_UI__CORS__USE_PROXY=1
 ```
 
 ### Compile and Hot-Reload for Development

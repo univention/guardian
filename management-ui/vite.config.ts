@@ -24,11 +24,11 @@ export default defineConfig(async({mode}) => {
   if (mode === 'development' || mode === 'test') {
     const env = loadEnv(mode, process.cwd(), '');
     if (env.VITE__MANAGEMENT_UI__CORS__USE_PROXY === '1') {
-      const backendUri = new URL((env.VITE__API_DATA_ADAPTER__URI ?? '').replace(/\/$/, ''));
+      const backendUri = new URL(env.VITE__API_DATA_ADAPTER__URI.replace(/\/$/, ''));
       config.server = {
         proxy: {
           [`^${backendUri.pathname}/`]: {
-            target: `${backendUri.protocol}//${backendUri.host}`,
+            target: `${backendUri.origin}`,
             changeOrigin: false, // let the bff link back to this proxy in the absolute url values
             secure: false,
           },

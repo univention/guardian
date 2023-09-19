@@ -3,6 +3,7 @@ import {ref, type Ref} from 'vue';
 import {authenticationPortSetting} from '@/ports/authentication';
 import {dataPortSetting} from '@/ports/data';
 import {inMemoryAuthenticationSettings, keycloakAuthenticationSettings} from '@/adapters/authentication';
+import {apiDataSettings} from '@/adapters/data';
 import type {SettingsPort} from '@/ports/settings';
 import {EnvSettingsAdapter} from '@/adapters/settings';
 import {InvalidAdapterError} from '@/adapters/errors';
@@ -28,8 +29,14 @@ interface AuthenticationPortConfig {
   keycloakConfig: KeycloakAuthenticationConfig;
 }
 
+interface ApiDataConfig {
+  uri: string;
+  useProxy: boolean;
+}
+
 interface DataPortConfig {
   adapter: string;
+  apiConfig: ApiDataConfig;
 }
 
 export interface SettingsConfig {
@@ -59,6 +66,10 @@ export const useSettingsStore = defineStore('settings', () => {
     },
     dataPort: {
       adapter: '',
+      apiConfig: {
+        uri: '',
+        useProxy: false,
+      },
     },
   });
 
@@ -104,6 +115,9 @@ export const useSettingsStore = defineStore('settings', () => {
 
     // DataPortSettings
     config.value.dataPort.adapter = settingsAdapter.getSetting(dataPortSetting, '');
+    // API Data Adapter settings
+    config.value.dataPort.apiConfig.uri = settingsAdapter.getSetting(apiDataSettings.uri);
+    config.value.dataPort.apiConfig.useProxy = settingsAdapter.getSetting(apiDataSettings.useProxy) == '1';
 
     initialized.value = true;
   };

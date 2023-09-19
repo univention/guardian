@@ -3,7 +3,7 @@ import type {SettingsConfig} from '@/stores/settings';
 import type {AuthenticationPort} from '@/ports/authentication';
 import type {DataPort} from '@/ports/data';
 import {InMemoryAuthenticationAdapter, KeycloakAuthenticationAdapter} from '@/adapters/authentication';
-import {InMemoryDataAdapter} from '@/adapters/data';
+import {ApiDataAdapter, InMemoryDataAdapter} from '@/adapters/data';
 import {InvalidAdapterError} from '@/adapters/errors';
 
 export const useAdapterStore = (config: SettingsConfig) => {
@@ -32,6 +32,12 @@ export const useAdapterStore = (config: SettingsConfig) => {
       switch (portSetting) {
         case 'in_memory':
           return new InMemoryDataAdapter();
+        case 'api':
+          return new ApiDataAdapter(
+            authenticationAdapter,
+            config.dataPort.apiConfig.uri,
+            config.dataPort.apiConfig.useProxy
+          );
         default:
           throw new InvalidAdapterError(`Invalid data adapter: ${portSetting}`);
       }

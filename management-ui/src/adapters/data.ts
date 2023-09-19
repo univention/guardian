@@ -1,4 +1,6 @@
+import i18next from 'i18next';
 import {v4 as uuid4} from 'uuid';
+import type {AuthenticationPort} from '@/ports/authentication';
 import type {DataPort} from '@/ports/data';
 import type {AppResponseData, AppsResponse, DisplayApp, WrappedAppsList} from '@/helpers/models/apps';
 import type {
@@ -72,131 +74,94 @@ import {makeMockPermissions, makeMockPermissionsResponse} from '@/helpers/mocks/
 import {makeMockConditions, makeMockConditionsResponse} from '@/helpers/mocks/api/conditions';
 import {makeMockCapabilities, makeMockCapabilitiesResponse} from '@/helpers/mocks/api/capabilities';
 
-export const inMemoryDataSettings = {
-  loadData: 'inMemoryDataAdapter.loadData',
+export const apiDataSettings = {
+  uri: 'apiDataAdapter.uri',
+  useProxy: 'managementUi.cors.useProxy',
 };
 
 class GenericDataAdapter implements DataPort {
   async fetchApps(): Promise<WrappedAppsList> {
     const responseData = await this.fetchAppsRequest();
-    const apps: DisplayApp[] = [];
-    responseData.apps.forEach((app: AppResponseData) => {
-      apps.push(this._appFromApi(app));
-    });
-    return new Promise(resolve => {
-      resolve({apps: apps});
-    });
+    const apps = responseData.apps.map(app => this._appFromApi(app));
+    return {apps: apps};
   }
 
   async fetchNamespaces(app?: string): Promise<WrappedNamespacesList> {
     const responseData = await this.fetchNamespacesRequest(app);
-    const namespaces: DisplayNamespace[] = [];
-    responseData.namespaces.forEach((namespace: NamespaceResponseData) => {
-      namespaces.push(this._namespaceFromApi(namespace));
-    });
-    return new Promise(resolve => {
-      resolve({namespaces: namespaces});
-    });
+    const namespaces = responseData.namespaces.map(namespace => this._namespaceFromApi(namespace));
+    return {namespaces: namespaces};
   }
 
   async fetchNamespace(app: string, name: string): Promise<WrappedNamespace> {
     const responseData = await this.fetchNamespaceRequest(app, name);
     const namespace = this._namespaceFromApi(responseData.namespace);
-    return new Promise(resolve => {
-      resolve({namespace: namespace});
-    });
+    return {namespace: namespace};
   }
 
   async createNamespace(namespace: Namespace): Promise<WrappedNamespace> {
     const requestData = this._namespaceToApi(namespace);
     const responseData = await this.createNamespaceRequest(requestData);
     const newNamespace = this._namespaceFromApi(responseData.namespace);
-    return new Promise(resolve => {
-      resolve({namespace: newNamespace});
-    });
+    return {namespace: newNamespace};
   }
 
   async updateNamespace(namespace: Namespace): Promise<WrappedNamespace> {
     const requestData = this._namespaceToApi(namespace);
     const responseData = await this.updateNamespaceRequest(requestData);
     const updatedNamespace = this._namespaceFromApi(responseData.namespace);
-    return new Promise(resolve => {
-      resolve({namespace: updatedNamespace});
-    });
+    return {namespace: updatedNamespace};
   }
 
   async fetchRoles(app?: string, namespace?: string): Promise<WrappedRolesList> {
     const responseData = await this.fetchRolesRequest(app, namespace);
-    const roles: DisplayRole[] = [];
-    responseData.roles.forEach((role: RoleResponseData) => {
-      roles.push(this._roleFromApi(role));
-    });
-    return new Promise(resolve => {
-      resolve({roles: roles});
-    });
+    const roles = responseData.roles.map(role => this._roleFromApi(role));
+    return {roles: roles};
   }
 
   async fetchRole(app: string, namespace: string, name: string): Promise<WrappedRole> {
     const responseData = await this.fetchRoleRequest(app, namespace, name);
     const role = this._roleFromApi(responseData.role);
-    return new Promise(resolve => {
-      resolve({role: role});
-    });
+    return {role: role};
   }
 
   async createRole(role: Role): Promise<WrappedRole> {
     const requestData = this._roleToApi(role);
     const responseData = await this.createRoleRequest(requestData);
     const newRole = this._roleFromApi(responseData.role);
-    return new Promise(resolve => {
-      resolve({role: newRole});
-    });
+    return {role: newRole};
   }
 
   async updateRole(role: Role): Promise<WrappedRole> {
     const requestData = this._roleToApi(role);
     const responseData = await this.updateRoleRequest(requestData);
-    const newRole = this._roleFromApi(responseData.role);
-    return new Promise(resolve => {
-      resolve({role: newRole});
-    });
+    const updatedRole = this._roleFromApi(responseData.role);
+    return {role: updatedRole};
   }
 
   async fetchContexts(app?: string, namespace?: string): Promise<WrappedContextsList> {
     const responseData = await this.fetchContextsRequest(app, namespace);
-    const contexts: DisplayContext[] = [];
-    responseData.contexts.forEach((context: ContextResponseData) => {
-      contexts.push(this._contextFromApi(context));
-    });
-    return new Promise(resolve => {
-      resolve({contexts: contexts});
-    });
+    const contexts = responseData.contexts.map(context => this._contextFromApi(context));
+    return {contexts: contexts};
   }
 
   async fetchContext(app: string, namespace: string, name: string): Promise<WrappedContext> {
     const responseData = await this.fetchContextRequest(app, namespace, name);
     const context = this._contextFromApi(responseData.context);
-    return new Promise(resolve => {
-      resolve({context: context});
-    });
+    return {context: context};
   }
 
   async createContext(context: Context): Promise<WrappedContext> {
     const requestData = this._contextToApi(context);
     const responseData = await this.createContextRequest(requestData);
     const newContext = this._contextFromApi(responseData.context);
-    return new Promise(resolve => {
-      resolve({context: newContext});
-    });
+    return {context: newContext};
   }
 
   async updateContext(context: Context): Promise<WrappedContext> {
     const requestData = this._contextToApi(context);
     const responseData = await this.updateContextRequest(requestData);
-    const newContext = this._contextFromApi(responseData.context);
-    return new Promise(resolve => {
-      resolve({context: newContext});
-    });
+    const updatedContext = this._contextFromApi(responseData.context);
+    return {context: updatedContext};
   }
 
   async fetchCapabilities(role: CapabilityRole, app?: string, namespace?: string): Promise<WrappedCapabilitiesList> {
@@ -215,69 +180,45 @@ class GenericDataAdapter implements DataPort {
       }
     }
 
-    const capabilities: DisplayCapability[] = [];
-    responseData.forEach((capability: CapabilityResponseData) => {
-      capabilities.push(this._capabilityFromApi(capability));
-    });
-
-    return new Promise(resolve => {
-      resolve({capabilities: capabilities});
-    });
+    const capabilities = responseData.map(capability => this._capabilityFromApi(capability));
+    return {capabilities: capabilities};
   }
 
   async fetchCapability(app: string, namespace: string, name: string): Promise<WrappedCapability> {
     const responseData = await this.fetchCapabilityRequest(app, namespace, name);
     const capability: DisplayCapability = this._capabilityFromApi(responseData.capability);
-    return new Promise(resolve => {
-      resolve({capability: capability});
-    });
+    return {capability: capability};
   }
 
   async createCapability(capability: NewCapability): Promise<WrappedCapability> {
     const requestData = this._newCapabilityToApi(capability);
     const responseData = await this.createCapabilityRequest(requestData);
     const newCapability = this._capabilityFromApi(responseData.capability);
-    return new Promise(resolve => {
-      resolve({capability: newCapability});
-    });
+    return {capability: newCapability};
   }
 
   async updateCapability(capability: Capability): Promise<WrappedCapability> {
     const requestData = this._capabilityToApi(capability);
     const responseData = await this.updateCapabilityRequest(requestData);
-    const newCapability = this._capabilityFromApi(responseData.capability);
-    return new Promise(resolve => {
-      resolve({capability: newCapability});
-    });
+    const updatedCapability = this._capabilityFromApi(responseData.capability);
+    return {capability: updatedCapability};
   }
 
   async removeCapability(app: string, namespace: string, name: string): Promise<boolean> {
-    await this.removeCapabilityRequest(app, namespace, name);
-    return new Promise(resolve => {
-      resolve(true);
-    });
+    const response = await this.removeCapabilityRequest(app, namespace, name);
+    return response;
   }
 
   async fetchPermissions(app: string, namespace: string): Promise<WrappedPermissionsList> {
     const responseData = await this.fetchPermissionsRequest(app, namespace);
-    const permissions: DisplayPermission[] = [];
-    responseData.permissions.forEach((permission: PermissionResponseData) => {
-      permissions.push(this._permissionFromApi(permission));
-    });
-    return new Promise(resolve => {
-      resolve({permissions: permissions});
-    });
+    const permissions = responseData.permissions.map(permission => this._permissionFromApi(permission));
+    return {permissions: permissions};
   }
 
   async fetchConditions(): Promise<WrappedConditionsList> {
     const responseData = await this.fetchConditionsRequest();
-    const conditions: DisplayCondition[] = [];
-    responseData.conditions.forEach((condition: ConditionResponseData) => {
-      conditions.push(this._conditionFromApi(condition));
-    });
-    return new Promise(resolve => {
-      resolve({conditions: conditions});
-    });
+    const conditions = responseData.conditions.map(condition => this._conditionFromApi(condition));
+    return {conditions: conditions};
   }
 
   _appFromApi(appData: AppResponseData): DisplayApp {
@@ -354,9 +295,8 @@ class GenericDataAdapter implements DataPort {
   }
 
   _conditionFromApi(conditionData: ConditionResponseData): DisplayCondition {
-    const parameters: ConditionParameter[] = [];
-    conditionData.parameters.forEach(param => {
-      parameters.push({name: param.name});
+    const parameters: ConditionParameter[] = conditionData.parameters.map(param => {
+      return {name: param.name};
     });
 
     return {
@@ -377,31 +317,28 @@ class GenericDataAdapter implements DataPort {
       name: capabilityData.role.name,
     };
 
-    const conditions: CapabilityCondition[] = [];
-    capabilityData.conditions.forEach(condition => {
-      const parameters: CapabilityParameter[] = [];
-      condition.parameters.forEach(param => {
-        parameters.push({
+    const conditions: CapabilityCondition[] = capabilityData.conditions.map(condition => {
+      const parameters: CapabilityParameter[] = condition.parameters.map(param => {
+        return {
           name: param.name,
           value: param.value,
-        });
+        };
       });
 
-      conditions.push({
+      return {
         appName: condition.app_name,
         namespaceName: condition.namespace_name,
         name: condition.name,
         parameters: parameters,
-      });
+      };
     });
 
-    const permissions: CapabilityPermission[] = [];
-    capabilityData.permissions.forEach(permission => {
-      permissions.push({
+    const permissions: CapabilityPermission[] = capabilityData.permissions.map(permission => {
+      return {
         appName: permission.app_name,
         namespaceName: permission.namespace_name,
         name: permission.name,
-      });
+      };
     });
 
     return {
@@ -424,31 +361,28 @@ class GenericDataAdapter implements DataPort {
       name: capability.role.name,
     };
 
-    const conditions: CapabilityConditionRequestData[] = [];
-    capability.conditions.forEach(condition => {
-      const parameters: CapabilityParameterRequestData[] = [];
-      condition.parameters.forEach(param => {
-        parameters.push({
+    const conditions: CapabilityConditionRequestData[] = capability.conditions.map(condition => {
+      const parameters: CapabilityParameterRequestData[] = condition.parameters.map(param => {
+        return {
           name: param.name,
           value: param.value,
-        });
+        };
       });
 
-      conditions.push({
+      return {
         app_name: condition.appName,
         namespace_name: condition.namespaceName,
         name: condition.name,
         parameters: parameters,
-      });
+      };
     });
 
-    const permissions: CapabilityPermissionRequestData[] = [];
-    capability.permissions.forEach(permission => {
-      permissions.push({
+    const permissions: CapabilityPermissionRequestData[] = capability.permissions.map(permission => {
+      return {
         app_name: permission.appName,
         namespace_name: permission.namespaceName,
         name: permission.name,
-      });
+      };
     });
 
     return {
@@ -470,31 +404,28 @@ class GenericDataAdapter implements DataPort {
       name: capability.role.name,
     };
 
-    const conditions: CapabilityConditionRequestData[] = [];
-    capability.conditions.forEach(condition => {
-      const parameters: CapabilityParameterRequestData[] = [];
-      condition.parameters.forEach(param => {
-        parameters.push({
+    const conditions: CapabilityConditionRequestData[] = capability.conditions.map(condition => {
+      const parameters: CapabilityParameterRequestData[] = condition.parameters.map(param => {
+        return {
           name: param.name,
           value: param.value,
-        });
+        };
       });
 
-      conditions.push({
+      return {
         app_name: condition.appName,
         namespace_name: condition.namespaceName,
         name: condition.name,
         parameters: parameters,
-      });
+      };
     });
 
-    const permissions: CapabilityPermissionRequestData[] = [];
-    capability.permissions.forEach(permission => {
-      permissions.push({
+    const permissions: CapabilityPermissionRequestData[] = capability.permissions.map(permission => {
+      return {
         app_name: permission.appName,
         namespace_name: permission.namespaceName,
         name: permission.name,
-      });
+      };
     });
 
     const newCapability: NewCapabilityRequestData = {
@@ -597,7 +528,7 @@ class GenericDataAdapter implements DataPort {
     throw new Error(`Not Implemented. capability=${capabilityData}`);
   }
 
-  removeCapabilityRequest(app: string, namespace: string, name: string): Promise<{}> {
+  removeCapabilityRequest(app: string, namespace: string, name: string): Promise<boolean> {
     throw new Error(`Not Implemented. app=${app}; namespace=${namespace}; name=${name}`);
   }
 }
@@ -983,7 +914,7 @@ export class InMemoryDataAdapter extends GenericDataAdapter {
     });
   }
 
-  removeCapabilityRequest(app: string, namespace: string, name: string): Promise<{}> {
+  removeCapabilityRequest(app: string, namespace: string, name: string): Promise<boolean> {
     const existingCapability = this._db.capabilities.filter(cap => {
       return cap.app_name === app && cap.namespace_name === namespace && cap.name === name;
     });
@@ -997,8 +928,276 @@ export class InMemoryDataAdapter extends GenericDataAdapter {
 
     return new Promise(resolve => {
       setTimeout(() => {
-        resolve({});
+        resolve(true);
       }, this._responseTimeout);
     });
+  }
+}
+
+export class ApiDataAdapter extends GenericDataAdapter {
+  private readonly _authAdapter: AuthenticationPort;
+  private readonly _apiUri: string;
+  // Proxy settings are for development use only.
+  // Please see vite.config.ts for proxy setup.
+  private _useProxy: boolean = false;
+
+  constructor(authAdapter: AuthenticationPort, apiUri: string, useProxy: boolean = false) {
+    super();
+    this._authAdapter = authAdapter;
+
+    // Remove a trailing slash, if one exists,
+    // so we always create a correct URL.
+    let url = apiUri.replace(/\/$/, '');
+    if (useProxy) {
+      const baseUrl = new URL(url);
+      url = baseUrl.pathname;
+    }
+    this._apiUri = url;
+    this._useProxy = useProxy;
+  }
+
+  async fetchAppsRequest(): Promise<AppsResponse> {
+    const endpoint = this._makeUrl('/apps');
+    const response = (await this._get(endpoint)) as AppsResponse;
+    return response;
+  }
+
+  async fetchNamespacesRequest(app?: string): Promise<NamespacesResponse> {
+    let endpoint = this._makeUrl('/namespaces');
+    if (app !== undefined && app !== '') {
+      endpoint = this._makeUrl(`/namespaces/${app}`);
+    }
+    const response = (await this._get(endpoint)) as NamespacesResponse;
+    return response;
+  }
+
+  async fetchNamespaceRequest(app: string, name: string): Promise<NamespaceResponse> {
+    const endpoint = this._makeUrl(`/namespaces/${app}/${name}`);
+    const response = (await this._get(endpoint)) as NamespaceResponse;
+    return response;
+  }
+
+  async createNamespaceRequest(namespace: NamespaceRequestData): Promise<NamespaceResponse> {
+    const endpoint = this._makeUrl(`/namespaces/${namespace.app_name}`);
+    const request = {
+      name: namespace.name,
+      display_name: namespace.display_name,
+    };
+    const response = (await this._post(endpoint, request)) as NamespaceResponse;
+    return response;
+  }
+
+  async updateNamespaceRequest(namespace: NamespaceRequestData): Promise<NamespaceResponse> {
+    const endpoint = this._makeUrl(`/namespaces/${namespace.app_name}/${namespace.name}`);
+    const request = {display_name: namespace.display_name};
+    const response = (await this._patch(endpoint, request)) as NamespaceResponse;
+    return response;
+  }
+
+  async fetchRolesRequest(app?: string, namespace?: string): Promise<RolesResponse> {
+    let endpoint = this._makeUrl(`/roles`);
+    if (app !== undefined && app !== '') {
+      if (namespace !== undefined && namespace !== '') {
+        endpoint = this._makeUrl(`/roles/${app}/${namespace}`);
+      } else {
+        endpoint = this._makeUrl(`/roles/${app}`);
+      }
+    }
+    const response = (await this._get(endpoint)) as RolesResponse;
+    return response;
+  }
+
+  async fetchRoleRequest(app: string, namespace: string, name: string): Promise<RoleResponse> {
+    const endpoint = this._makeUrl(`/roles/${app}/${namespace}/${name}`);
+    const response = (await this._get(endpoint)) as RoleResponse;
+    return response;
+  }
+
+  async createRoleRequest(role: RoleRequestData): Promise<RoleResponse> {
+    const endpoint = this._makeUrl(`/roles/${role.app_name}/${role.namespace_name}`);
+    const request = {
+      name: role.name,
+      display_name: role.display_name,
+    };
+    const response = (await this._post(endpoint, request)) as RoleResponse;
+    return response;
+  }
+
+  async updateRoleRequest(role: RoleRequestData): Promise<RoleResponse> {
+    const endpoint = this._makeUrl(`/roles/${role.app_name}/${role.namespace_name}/${role.name}`);
+    const request = {display_name: role.display_name};
+    const response = (await this._patch(endpoint, request)) as RoleResponse;
+    return response;
+  }
+
+  async fetchContextsRequest(app?: string, namespace?: string): Promise<ContextsResponse> {
+    let endpoint = this._makeUrl('/contexts');
+    if (app !== undefined && app !== '') {
+      if (namespace !== undefined && namespace !== '') {
+        endpoint = this._makeUrl(`/contexts/${app}/${namespace}`);
+      } else {
+        endpoint = this._makeUrl(`/contexts/${app}`);
+      }
+    }
+    const response = (await this._get(endpoint)) as ContextsResponse;
+    return response;
+  }
+
+  async fetchContextRequest(app: string, namespace: string, name: string): Promise<ContextResponse> {
+    const endpoint = this._makeUrl(`/contexts/${app}/${namespace}/${name}`);
+    const response = (await this._get(endpoint)) as ContextResponse;
+    return response;
+  }
+
+  async createContextRequest(context: ContextRequestData): Promise<ContextResponse> {
+    const endpoint = this._makeUrl(`/contexts/${context.app_name}/${context.namespace_name}`);
+    const data = {
+      name: context.name,
+      display_name: context.display_name,
+    };
+    const response = (await this._post(endpoint, data)) as ContextResponse;
+    return response;
+  }
+
+  async updateContextRequest(context: ContextRequestData): Promise<ContextResponse> {
+    const endpoint = this._makeUrl(`/contexts/${context.app_name}/${context.namespace_name}/${context.name}`);
+    const data = {
+      display_name: context.display_name,
+    };
+    const response = (await this._patch(endpoint, data)) as ContextResponse;
+    return response;
+  }
+
+  async fetchCapabilitiesRequest(role: CapabilityRoleRequestData): Promise<CapabilitiesResponse> {
+    const endpoint = this._makeUrl(`/roles/${role.app_name}/${role.namespace_name}/${role.name}/capabilities`);
+    const response = (await this._get(endpoint)) as CapabilitiesResponse;
+    return response;
+  }
+
+  async fetchCapabilityRequest(app: string, namespace: string, name: string): Promise<CapabilityResponse> {
+    const endpoint = this._makeUrl(`/capabilities/${app}/${namespace}/${name}`);
+    const response = (await this._get(endpoint)) as CapabilityResponse;
+    return response;
+  }
+
+  async createCapabilityRequest(capability: NewCapabilityRequestData): Promise<CapabilityResponse> {
+    const endpoint = this._makeUrl(`/capabilities/${capability.app_name}/${capability.namespace_name}`);
+    const data: Record<string, any> = {
+      display_name: capability.display_name,
+      role: capability.role,
+      conditions: capability.conditions,
+      relation: capability.relation,
+      permissions: capability.permissions,
+    };
+    if (capability.name !== undefined && capability.name !== '') {
+      data.name = capability.name;
+    }
+    const response = (await this._post(endpoint, data)) as CapabilityResponse;
+    return response;
+  }
+
+  async updateCapabilityRequest(capability: CapabilityRequestData): Promise<CapabilityResponse> {
+    const endpoint = this._makeUrl(
+      `/capabilities/${capability.app_name}/${capability.namespace_name}/${capability.name}`
+    );
+    const data = {
+      display_name: capability.display_name,
+      role: capability.role,
+      conditions: capability.conditions,
+      relation: capability.relation,
+      permissions: capability.permissions,
+    };
+    const response = (await this._put(endpoint, data)) as CapabilityResponse;
+    return response;
+  }
+
+  async removeCapabilityRequest(app: string, namespace: string, name: string): Promise<boolean> {
+    const endpoint = this._makeUrl(`/capabilities/${app}/${namespace}/${name}`);
+    const response = this._delete(endpoint);
+    return response;
+  }
+
+  async fetchPermissionsRequest(app: string, namespace: string): Promise<PermissionsResponse> {
+    const endpoint = this._makeUrl(`/permissions/${app}/${namespace}`);
+    const response = (await this._get(endpoint)) as PermissionsResponse;
+    return response;
+  }
+
+  async fetchConditionsRequest(): Promise<ConditionsResponse> {
+    const endpoint = this._makeUrl(`/conditions`);
+    const response = (await this._get(endpoint)) as ConditionsResponse;
+    return response;
+  }
+
+  _makeUrl(endpoint: string): string {
+    return `${this._apiUri}${endpoint}`;
+  }
+
+  async _makeHeaders(): Promise<HeadersInit> {
+    const authHeader = await this._authAdapter.getValidAuthorizationHeader();
+    const defaultHeaders = {
+      'Accept-Language': i18next.language,
+      accept: 'application/json',
+      'Content-Type': 'application/json;charset=UTF-8',
+    };
+    return {
+      ...defaultHeaders,
+      ...authHeader,
+    };
+  }
+
+  async _get(url: string): Promise<any> {
+    const headers = await this._makeHeaders();
+    const response = await fetch(url, {method: 'GET', headers: headers});
+    if (response.ok) {
+      return await response.json();
+    } else {
+      // TODO: guardian#128: handle errors
+      throw new Error(response.statusText);
+    }
+  }
+
+  async _post(url: string, request: any): Promise<any> {
+    const headers = await this._makeHeaders();
+    const response = await fetch(url, {method: 'POST', headers: headers, body: JSON.stringify(request)});
+    if (response.ok) {
+      return await response.json();
+    } else {
+      // TODO: guardian#128: handle errors
+      throw new Error(response.statusText);
+    }
+  }
+
+  async _patch(url: string, request: any): Promise<any> {
+    const headers = await this._makeHeaders();
+    const response = await fetch(url, {method: 'PATCH', headers: headers, body: JSON.stringify(request)});
+    if (response.ok) {
+      return await response.json();
+    } else {
+      // TODO: guardian#128: handle errors
+      throw new Error(response.statusText);
+    }
+  }
+
+  async _put(url: string, request: any): Promise<any> {
+    const headers = await this._makeHeaders();
+    const response = await fetch(url, {method: 'PUT', headers: headers, body: JSON.stringify(request)});
+    if (response.ok) {
+      return await response.json();
+    } else {
+      // TODO: guardian#128: handle errors
+      throw new Error(response.statusText);
+    }
+  }
+
+  async _delete(url: string): Promise<any> {
+    const headers = await this._makeHeaders();
+    const response = await fetch(url, {method: 'DELETE', headers: headers});
+    if (response.ok) {
+      return Promise.resolve(true);
+    } else {
+      // TODO: guardian#128: handle errors
+      throw new Error(response.statusText);
+    }
   }
 }
