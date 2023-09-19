@@ -8,6 +8,7 @@ import future.keywords.in
 import data.guardian.mapping.roleCapabilityMapping
 import data.univention.utils.evaluate_conditions
 import data.univention.utils.extract_role_and_context
+import data.univention.utils.extract_target_id
 
 # check if a dictionary of app to namespaces contains a given namespace
 # for the given app
@@ -98,7 +99,7 @@ check_permissions contains result if {
 	])
 
 	result := {
-		"target_id": target_object.old.id,
+		"target_id": extract_target_id(target_object),
 		"result": has_all_permissions,
 	}
 }

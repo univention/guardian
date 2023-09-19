@@ -6,6 +6,7 @@ import future.keywords.in
 import data.univention.mapping.role_capability_mapping
 import data.univention.utils.evaluate_conditions
 import data.univention.utils.extract_role_and_context
+import data.univention.utils.extract_target_id
 
 #######################
 # evaluate_conditions #
@@ -95,6 +96,43 @@ extract_role_and_context_parametrize := [
 test_extract_role_and_context {
 	every case in extract_role_and_context_parametrize {
 		result := extract_role_and_context(case.input)
+
+		# regal ignore: print-or-trace-call
+		print("TEST_DEBUG result: ", result, " expected: ", case.result)
+		result == case.result
+	}
+}
+
+############################
+# extract_target_id #
+############################
+
+extract_target_id_parametrize := [
+	{
+		"input": {},
+		"result": uuid.rfc4122(json.marshal({})),
+	},
+	{
+		"input": {"old": {"id": "ID"}},
+		"result": "ID",
+	},
+	{
+		"input": {"old": {}},
+		"result": uuid.rfc4122(json.marshal({"old": {}})),
+	},
+	{
+		"input": {"old": {"id": "ID"}, "new": {"id": "NEW"}},
+		"result": "ID",
+	},
+	{
+		"input": {"old": {}, "new": {"id": "NEW"}},
+		"result": "NEW",
+	},
+]
+
+test_extract_target_id {
+	every case in extract_target_id_parametrize {
+		result := extract_target_id(case.input)
 
 		# regal ignore: print-or-trace-call
 		print("TEST_DEBUG result: ", result, " expected: ", case.result)
