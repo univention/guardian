@@ -84,8 +84,10 @@ class OPAAdapter(PolicyPort, AsyncConfiguredAdapterMixin):
                 for target in query.targets
             ]
         )
-        namespaces: dict[str, list[str]] = self._process_namespaces(
-            query_namespaces=query.namespaces
+        namespaces: Optional[dict[str, list[str]]] = (
+            None
+            if query.namespaces is None
+            else self._process_namespaces(query_namespaces=query.namespaces)
         )
         contexts = [] if query.contexts is None else query.contexts
         extra_args = {} if query.extra_args is None else query.extra_args
@@ -194,8 +196,10 @@ class OPAAdapter(PolicyPort, AsyncConfiguredAdapterMixin):
                 for target in query.targets
             ]
         )
-        namespaces: dict[str, list[str]] = self._process_namespaces(
-            query_namespaces=query.namespaces
+        namespaces: Optional[dict[str, list[str]]] = (
+            None
+            if query.namespaces is None
+            else self._process_namespaces(query_namespaces=query.namespaces)
         )
         contexts = [] if query.contexts is None else query.contexts
         extra_args = {} if query.extra_args is None else query.extra_args

@@ -117,14 +117,14 @@ class FastAPIAdapterUtils:
     @staticmethod
     def api_namespaces_to_policy_namespaces(
         namespaces: Optional[list[NamespaceMinimal]],
-    ) -> list[PoliciesNamespace]:
+    ) -> Optional[list[PoliciesNamespace]]:
         return (
             [
                 FastAPIAdapterUtils.api_namespace_to_policy_namespace(namespace)
                 for namespace in namespaces
             ]
             if namespaces
-            else []
+            else None
         )
 
     @staticmethod
