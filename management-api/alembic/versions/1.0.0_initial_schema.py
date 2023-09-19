@@ -22,7 +22,7 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
-def create_guardian_app(session, app_table, ns_table, role_table) -> Tuple[int, int]:
+def create_guardian_app(session, app_table, ns_table) -> Tuple[int, int]:
     app_data = {"name": "guardian", "display_name": "The Guardian Application"}
     app_id = session.execute(insert(app_table).values(app_data)).lastrowid
     ns_default = {
@@ -37,13 +37,105 @@ def create_guardian_app(session, app_table, ns_table, role_table) -> Tuple[int, 
     }
     session.execute(insert(ns_table).values(ns_default))
     ns_id = session.execute(insert(ns_table).values(ns_protected)).lastrowid
+    return app_id, ns_id
+
+
+def create_app_admin(
+    session,
+    role_table,
+    cap_table,
+    cap_perm_table,
+    cap_cond_table,
+    builtin_ns_id,
+    management_ns_id,
+    conditions,
+    permissions,
+):
     role_data = {
-        "namespace_id": ns_id,
+        "namespace_id": builtin_ns_id,
         "name": "app-admin",
         "display_name": "The app admin for the Guardian Application",
     }
-    session.execute(insert(role_table).values(role_data))
-    return app_id, ns_id
+    role_id = session.execute(
+        insert(role_table).values(role_data)
+    ).inserted_primary_key[0]
+    cap_id = session.execute(
+        insert(cap_table).values(
+            {
+                "namespace_id": management_ns_id,
+                "name": "guardian-admin-cap",
+                "display_name": "App admin capability",
+                "role_id": role_id,
+                "relation": "AND",
+            }
+        )
+    ).inserted_primary_key[0]
+    readonly_cap_id = session.execute(
+        insert(cap_table).values(
+            {
+                "namespace_id": management_ns_id,
+                "name": "guardian-admin-cap-read-role-cond",
+                "display_name": "App admin capability for read access to all roles and conditions",
+                "role_id": role_id,
+                "relation": "OR",
+            }
+        )
+    ).inserted_primary_key[0]
+    for perm_id in permissions.values():
+        session.execute(
+            insert(cap_perm_table).values(
+                {"capability_id": cap_id, "permission_id": perm_id}
+            )
+        )
+    session.execute(
+        insert(cap_perm_table).values(
+            {
+                "capability_id": readonly_cap_id,
+                "permission_id": permissions["read_resource"],
+            }
+        )
+    )
+    session.execute(
+        insert(cap_cond_table).values(
+            {
+                "capability_id": cap_id,
+                "condition_id": conditions["target_field_equals_value"],
+                "kwargs": [
+                    {"name": "field", "value": "app_name"},
+                    {"name": "value", "value": "guardian"},
+                ],
+            }
+        )
+    )
+    session.execute(
+        insert(cap_cond_table).values(
+            {
+                "capability_id": cap_id,
+                "condition_id": conditions["target_field_not_equals_value"],
+                "kwargs": [
+                    {"name": "field", "value": "namespace_name"},
+                    {"name": "value", "value": "builtin"},
+                ],
+            }
+        )
+    )
+    for field, value in [
+        ("resource_type", "condition"),
+        ("resource_type", "role"),
+        ("app_name", "guardian"),
+    ]:
+        session.execute(
+            insert(cap_cond_table).values(
+                {
+                    "capability_id": readonly_cap_id,
+                    "condition_id": conditions["target_field_equals_value"],
+                    "kwargs": [
+                        {"name": "field", "value": field},
+                        {"name": "value", "value": value},
+                    ],
+                }
+            )
+        )
 
 
 def create_management_permissions(session, permission_table, ns_id):
@@ -145,6 +237,7 @@ def create_super_admin(
 
 
 def create_builtin_conditions(session, cond_table, ns_id, cond_param_table):
+    conditions = {}
     condition_path = (
         Path(os.path.dirname(os.path.realpath(__file__)))
         / "../1.0.0_builtin_conditions"
@@ -163,10 +256,12 @@ def create_builtin_conditions(session, cond_table, ns_id, cond_param_table):
         }
         del cond["parameters"]
         cond_id = session.execute(insert(cond_table).values(cond)).lastrowid
+        conditions[cond_name] = cond_id
         for cond_param in data["parameters"]:
             session.execute(
                 insert(cond_param_table).values({**cond_param, "condition_id": cond_id})
             )
+    return conditions
 
 
 def upgrade() -> None:
@@ -294,7 +389,7 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_table(
+    cap_cond_table = op.create_table(
         "capability_condition",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("capability_id", sa.Integer(), nullable=False),
@@ -323,9 +418,7 @@ def upgrade() -> None:
     # Setup Guardian default objects
     bind = op.get_bind()
     session = orm.Session(bind=bind)
-    app_id, builtin_ns_id = create_guardian_app(
-        session, app_table, ns_table, role_table
-    )
+    app_id, builtin_ns_id = create_guardian_app(session, app_table, ns_table)
     management_ns_id = session.execute(
         insert(ns_table).values(
             {
@@ -335,9 +428,22 @@ def upgrade() -> None:
             }
         )
     ).lastrowid
-    create_builtin_conditions(session, cond_table, builtin_ns_id, cond_param_table)
+    conditions = create_builtin_conditions(
+        session, cond_table, builtin_ns_id, cond_param_table
+    )
     permissions = create_management_permissions(
         session, permission_table, management_ns_id
+    )
+    create_app_admin(
+        session,
+        role_table,
+        cap_table,
+        cap_perm_table,
+        cap_cond_table,
+        builtin_ns_id,
+        management_ns_id,
+        conditions,
+        permissions,
     )
     create_super_admin(
         session,
