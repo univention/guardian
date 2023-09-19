@@ -228,7 +228,9 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
                 cap["conditions"] = [
                     {
                         "name": f"{cond.app_name}:{cond.namespace_name}:{cond.name}",
-                        "parameters": cond.parameters,
+                        "parameters": {
+                            param.name: param.value for param in cond.parameters
+                        },
                     }
                     for cond in capability.conditions
                 ]

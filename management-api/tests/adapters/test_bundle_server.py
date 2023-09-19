@@ -13,6 +13,7 @@ from guardian_management_api.errors import BundleBuildError, BundleGenerationIOE
 from guardian_management_api.models.base import PersistenceGetManyResult
 from guardian_management_api.models.capability import (
     Capability,
+    CapabilityConditionParameter,
     CapabilityConditionRelation,
     ParametrizedCondition,
 )
@@ -292,13 +293,21 @@ class TestBundleServerAdapter:
                                 app_name="app",
                                 namespace_name="namespace",
                                 name="cond1",
-                                parameters={"A": 1, "B": True},
+                                parameters=[
+                                    CapabilityConditionParameter(name="a", value=1),
+                                    CapabilityConditionParameter(name="b", value=True),
+                                ],
                             ),
                             ParametrizedCondition(
                                 app_name="app",
                                 namespace_name="namespace",
                                 name="cond2",
-                                parameters={"C": "three", "D": 4.0},
+                                parameters=[
+                                    CapabilityConditionParameter(
+                                        name="c", value="three"
+                                    ),
+                                    CapabilityConditionParameter(name="d", value=4.0),
+                                ],
                             ),
                         ],
                     ),
@@ -367,11 +376,11 @@ class TestBundleServerAdapter:
                         "conditions": [
                             {
                                 "name": "app:namespace:cond1",
-                                "parameters": {"A": 1, "B": True},
+                                "parameters": {"a": 1, "b": True},
                             },
                             {
                                 "name": "app:namespace:cond2",
-                                "parameters": {"C": "three", "D": 4.0},
+                                "parameters": {"c": "three", "d": 4.0},
                             },
                         ],
                     },
