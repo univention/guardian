@@ -1,0 +1,5 @@
+{
+  "display_name": "Only if target has the same context as the actor",
+  "documentation": "True if any of the target roles has the same context as any of the actor roles",
+  "parameters": ""
+}
