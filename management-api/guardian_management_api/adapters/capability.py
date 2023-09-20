@@ -95,11 +95,15 @@ class SQLCapabilityPersistenceAdapter(
         db_permissions: list[DBPermission],
         db_conditions: list[DBCondition],
     ) -> DBCapability:
-        sorted_conditions = sorted(
-            cap.conditions, key=lambda x: f"{x.app_name}:{x.namespace_name}:{x.name}"
-        )
+        db_conditions_dict = {
+            f"{db_cond.namespace.app.name}:{db_cond.namespace.name}:{db_cond.name}": db_cond
+            for db_cond in db_conditions
+        }
         cap_conditions = set()
-        for cond, db_cond in zip(sorted_conditions, db_conditions):
+        for cond in cap.conditions:
+            db_cond = db_conditions_dict[
+                f"{cond.app_name}:{cond.namespace_name}:{cond.name}"
+            ]
             db_cond_params_dict = {param.name: param for param in db_cond.parameters}
             cap_conditions.add(
                 DBCapabilityCondition(
@@ -200,9 +204,9 @@ class SQLCapabilityPersistenceAdapter(
             )
         )
         result = list((await session.scalars(stmt)).unique().all())
-        if len(result) != len(objs):
+        if len(result) != len(set(objs_identifiers)):
             raise ObjectNotFoundError(
-                f"Not all {'permissions' if obj_type is DBPermission else 'contexts'} "
+                f"Not all {'permissions' if obj_type is DBPermission else 'conditions'} "
                 f"specified for the capability could be found.",
                 object_type=Permission if obj_type is DBPermission else Condition,
             )

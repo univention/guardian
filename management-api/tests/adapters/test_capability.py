@@ -117,6 +117,29 @@ class TestSQLCapabilityPersistenceAdapter:
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")
+    async def test__get_db_children_for_capability_duplicate(
+        self, adapter: SQLCapabilityPersistenceAdapter, create_permissions
+    ):
+        async with adapter.session() as session:
+            db_permissions = await create_permissions(session, 5, 3, 3)
+            permissions = [
+                SQLPermissionPersistenceAdapter._db_permission_to_permission(
+                    db_permission
+                )
+                for db_permission in (
+                    db_permissions[0],
+                    db_permissions[0],
+                )
+            ]
+            result = await adapter._get_db_child_objs_for_capability(
+                DBPermission, permissions, session=session
+            )
+            assert result == [
+                db_permissions[0],
+            ], result
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
     async def test__get_db_children_for_capability_not_found_error(
         self, adapter: SQLCapabilityPersistenceAdapter, create_permissions
     ):
