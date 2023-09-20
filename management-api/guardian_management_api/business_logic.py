@@ -7,6 +7,12 @@ from dataclasses import asdict
 from loguru import logger
 
 from .adapters.namespace import FastAPINamespaceAPIAdapter
+from .models.capability import (
+    Capability,
+    CapabilityConditionParameter,
+    CapabilityConditionRelation,
+    ParametrizedCondition,
+)
 from .models.namespace import Namespace
 from .models.permission import Permission
 from .models.role import Role
@@ -197,6 +203,8 @@ async def register_app(
     app_persistence_port: AppPersistencePort,
     namespace_persistence_port: NamespacePersistencePort,
     role_persistence_port: RolePersistencePort,
+    cap_persistence_port: CapabilityPersistencePort,
+    bundle_server_port: BundleServerPort,
 ) -> AppAPIRegisterResponseObject:
     try:
         query = await app_api_port.to_app_create(api_request)
@@ -217,10 +225,79 @@ async def register_app(
                 display_name=f"App Administrator for {app_display}",
             )
         )
+        await cap_persistence_port.create(
+            Capability(
+                app_name="guardian",
+                namespace_name="management-api",
+                name=f"{app.name}-admin-cap",
+                display_name="App admin capability",
+                role=admin_role,
+                permissions=[
+                    Permission(
+                        app_name="guardian", namespace_name="management-api", name=name
+                    )
+                    for name in (
+                        "create_resource",
+                        "read_resource",
+                        "update_resource",
+                        "delete_resource",
+                    )
+                ],
+                relation=CapabilityConditionRelation.AND,
+                conditions=[
+                    ParametrizedCondition(
+                        app_name="guardian",
+                        namespace_name="builtin",
+                        name="target_field_equals_value",
+                        parameters=[
+                            CapabilityConditionParameter(name=name, value=value)
+                            for name, value in [
+                                ("field", "app_name"),
+                                ("value", app.name),
+                            ]
+                        ],
+                    )
+                ],
+            )
+        )
+        await cap_persistence_port.create(
+            Capability(
+                app_name="guardian",
+                namespace_name="management-api",
+                name=f"{app.name}-admin-cap-read-role-cond",
+                display_name="App admin capability for read access to all roles and conditions",
+                role=admin_role,
+                permissions=[
+                    Permission(
+                        app_name="guardian",
+                        namespace_name="management-api",
+                        name="read_resource",
+                    )
+                ],
+                relation=CapabilityConditionRelation.OR,
+                conditions=[
+                    ParametrizedCondition(
+                        app_name="guardian",
+                        namespace_name="builtin",
+                        name="target_field_equals_value",
+                        parameters=[
+                            CapabilityConditionParameter(name=name, value=value)
+                            for name, value in [
+                                ("field", "resource_type"),
+                                ("value", resource_type),
+                            ]
+                        ],
+                    )
+                    for resource_type in ("condition", "role")
+                ],
+            )
+        )
+        await bundle_server_port.schedule_bundle_build(BundleType.data)
         return await app_api_port.to_api_register_response(
             app, default_namespace, admin_role
         )
     except Exception as exc:
+        logger.exception(exc)
         raise (await app_api_port.transform_exception(exc)) from exc
 
 

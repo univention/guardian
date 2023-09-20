@@ -4,9 +4,9 @@
 
 
 import pytest
-from fastapi.testclient import TestClient
 from guardian_management_api.constants import COMPLETE_URL
 from guardian_management_api.main import app
+from guardian_management_api.models.capability import CapabilityConditionRelation
 from guardian_management_api.models.routers.app import App as ResponseApp
 from guardian_management_api.models.routers.app import (
     AppAdmin,
@@ -14,14 +14,14 @@ from guardian_management_api.models.routers.app import (
     AppRegisterResponse,
 )
 from guardian_management_api.models.routers.base import ManagementObjectName
+from guardian_management_api.models.sql_persistence import (
+    DBCapability,
+)
+from sqlalchemy import select
 
 
 @pytest.mark.e2e
 class TestAppEndpoints:
-    @pytest.fixture(autouse=True)
-    def client(self):
-        return TestClient(app)
-
     @pytest.mark.usefixtures("create_tables")
     def test_post_app_minimal(self, client, register_test_adapters):
         response = client.post(
@@ -51,8 +51,9 @@ class TestAppEndpoints:
             }
         }
 
-    @pytest.mark.usefixtures("create_tables")
-    def test_register_app(self, client, register_test_adapters):
+    @pytest.mark.usefixtures("run_alembic_migrations")
+    @pytest.mark.asyncio
+    async def test_register_app(self, client, register_test_adapters, sqlalchemy_mixin):
         response = client.post(
             client.app.url_path_for("register_app"),
             json={"name": "app1", "display_name": "App 1"},
@@ -81,6 +82,53 @@ class TestAppEndpoints:
                 ),
             ).dict()
         )
+        async with sqlalchemy_mixin.session() as session:
+            result = list(
+                (await session.execute(select(DBCapability))).unique().scalars()
+            )
+            assert len(result) == 6, [
+                o.name for o in result
+            ]  # The four builtin plus 2 new
+            admin_cap = await session.scalar(
+                select(DBCapability).where(DBCapability.name == "app1-admin-cap")
+            )
+            admin_cap_readonly = await session.scalar(
+                select(DBCapability).where(
+                    DBCapability.name == "app1-admin-cap-read-role-cond"
+                )
+            )
+            assert {
+                f"{perm.namespace.app.name}:{perm.namespace.name}:{perm.name}"
+                for perm in admin_cap.permissions
+            } == {
+                f"guardian:management-api:{name}"
+                for name in (
+                    "create_resource",
+                    "update_resource",
+                    "read_resource",
+                    "delete_resource",
+                )
+            }
+            assert len(admin_cap.conditions) == 1
+            cond = set(admin_cap.conditions).pop()
+            assert (
+                f"{cond.condition.namespace.app.name}:{cond.condition.namespace.name}:{cond.condition.name}"
+                == "guardian:builtin:target_field_equals_value"
+            )
+            assert cond.kwargs == [
+                {"name": "field", "value": "app_name", "value_type": "STRING"},
+                {"name": "value", "value": "app1", "value_type": "ANY"},
+            ]
+            assert (
+                f"{admin_cap.role.namespace.app.name}:{admin_cap.role.namespace.name}:{admin_cap.role.name}"
+                == "app1:default:app-admin"
+            )
+            assert {
+                f"{perm.namespace.app.name}:{perm.namespace.name}:{perm.name}"
+                for perm in admin_cap_readonly.permissions
+            } == {"guardian:management-api:read_resource"}
+            assert admin_cap_readonly.relation == CapabilityConditionRelation.OR
+            assert len(admin_cap_readonly.conditions) == 2
 
     @pytest.mark.usefixtures("create_tables")
     @pytest.mark.asyncio

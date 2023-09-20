@@ -7,6 +7,7 @@ from base64 import b64encode
 from pathlib import Path
 from typing import Optional, Tuple
 
+import alembic.config
 import guardian_lib.adapter_registry as adapter_registry
 import pytest
 import pytest_asyncio
@@ -173,6 +174,7 @@ def register_test_adapters(patch_env):
       - In-memory app persistence adapter.
       - Dummy settings adapter.
     """
+    adapter_registry.ADAPTER_REGISTRY = AsyncAdapterRegistry()
     for port, adapter in [
         (SettingsPort, EnvSettingsAdapter),
         (AppPersistencePort, SQLAppPersistenceAdapter),
@@ -225,6 +227,13 @@ async def create_tables(sqlite_url):
     engine = create_async_engine(f"sqlite+aiosqlite:{sqlite_url}")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+
+@pytest.fixture
+def run_alembic_migrations(patch_env):
+    os.chdir(Path(__file__).parents[1])
+    print(os.getcwd())
+    alembic.config.main(argv=["upgrade", "head"])
 
 
 @pytest.fixture

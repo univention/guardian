@@ -21,6 +21,8 @@ from ..models.routers.app import (
     AppSingleResponse,
 )
 from ..ports.app import AppAPIPort, AppPersistencePort
+from ..ports.bundle_server import BundleServerPort
+from ..ports.capability import CapabilityPersistencePort
 from ..ports.namespace import NamespacePersistencePort
 from ..ports.role import RolePersistencePort
 
@@ -89,6 +91,10 @@ async def register_app(
         port_dep(NamespacePersistencePort)
     ),
     role_persistence: RolePersistencePort = Depends(port_dep(RolePersistencePort)),
+    cap_persistence: CapabilityPersistencePort = Depends(
+        port_dep(CapabilityPersistencePort)
+    ),
+    bundle_server_port: BundleServerPort = Depends(port_dep(BundleServerPort)),
 ):  # pragma: no cover
     """
     Register an app.
@@ -102,6 +108,8 @@ async def register_app(
         app_persistence,
         namespace_persistence,
         role_persistence,
+        cap_persistence,
+        bundle_server_port,
     )
     return response.dict()
 
