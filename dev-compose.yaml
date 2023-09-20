@@ -58,6 +58,7 @@ services:
         source: ./management_service_dir
         target: /guardian_service_dir
     environment:
+      - GUARDIAN__AUTHZ__CORS__ALLOWED_ORIGINS
       - GUARDIAN__AUTHZ__LOGGING__LEVEL
       - GUARDIAN__AUTHZ__LOGGING__STRUCTURED
       - GUARDIAN__AUTHZ__ADAPTER__SETTINGS_PORT
@@ -149,6 +150,7 @@ services:
         source: ./management_service_dir
         target: /guardian_service_dir
     environment:
+      - GUARDIAN__MANAGEMENT__CORS__ALLOWED_ORIGINS
       - GUARDIAN__MANAGEMENT__LOGGING__LEVEL
       - GUARDIAN__MANAGEMENT__LOGGING__STRUCTURED
       - GUARDIAN__MANAGEMENT__ADAPTER__SETTINGS_PORT

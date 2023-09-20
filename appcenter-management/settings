@@ -27,6 +27,14 @@ Group = Logging
 Scope = outside
 Show = Install,Settings
 
+[guardian-management-api/cors/allowed-origins]
+Type = String
+Description = Comma-separated list of hosts that are allowed to make cross-origin resource sharing (CORS) requests to the server.
+Description[de] = Kommaseparierte Liste von Hosts, die CORS-Anfragen (Cross-Origin Resource Sharing) an den Server stellen dürfen.
+Group = CORS
+Scope = outside
+Show = Install,Settings
+
 [guardian-management-api/base_url]
 Type = String
 Description = Defines the base URL of the API. If unset the url is generated from hostname and domainname.

@@ -1,5 +1,4 @@
 import {fileURLToPath, URL} from 'node:url';
-import {readFile} from 'fs/promises';
 import {defineConfig, loadEnv, type UserConfig} from 'vite';
 import vue from '@vitejs/plugin-vue';
 
@@ -17,15 +16,19 @@ export default defineConfig(async({mode}) => {
       },
     },
   };
+
+  // If doing development against an external server,
+  // you can use a proxy to avoid getting a CORS errors.
+  // It's not needed if you're working against a local docker version of
+  // the Guardian backend and you have `GUARDIAN__MANAGEMENT__CORS__ALLOWED_ORIGINS=*`.
   if (mode === 'development' || mode === 'test') {
     const env = loadEnv(mode, process.cwd(), '');
-    if (env.VITE_USE_REAL_BACKEND === 'true') {
-      const appConfigFile: string = await readFile(fileURLToPath(new URL('./public/config.json', import.meta.url)), {encoding: 'utf-8'});
-      const appConfig = JSON.parse(appConfigFile);
+    if (env.VITE__MANAGEMENT_UI__CORS__USE_PROXY === '1') {
+      const backendUri = new URL((env.VITE__API_DATA_ADAPTER__URI ?? '').replace(/\/$/, ''));
       config.server = {
         proxy: {
-          '/ucsschool/guardian': { // TODO use correct backend url
-            target: appConfig['backendURL'],
+          [`^${backendUri.pathname}/`]: {
+            target: `${backendUri.protocol}//${backendUri.host}`,
             changeOrigin: false, // let the bff link back to this proxy in the absolute url values
             secure: false,
           },
@@ -33,5 +36,6 @@ export default defineConfig(async({mode}) => {
       };
     }
   }
+
   return config;
 });

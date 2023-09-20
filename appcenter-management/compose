@@ -5,6 +5,7 @@ services:
     security_opt:
       - seccomp:/etc/docker/seccomp-systemd.json
     environment:
+      GUARDIAN__MANAGEMENT__CORS__ALLOWED_ORIGINS: @%@guardian-management-api/cors/allowed-origins@%@
       GUARDIAN__MANAGEMENT__ADAPTER__SETTINGS_PORT: env
       GUARDIAN__MANAGEMENT__ADAPTER__APP_PERSISTENCE_PORT: in_memory
       IS_UNIVENTION_APPCENTER: 1

@@ -11,6 +11,8 @@ if not BASE_URL:
     raise RuntimeError("GUARDIAN__MANAGEMENT__BASE_URL is not set")
 COMPLETE_URL = urljoin(BASE_URL, API_PREFIX)
 
+CORS_ALLOWED_ORIGINS = os.environ.get("GUARDIAN__MANAGEMENT__CORS__ALLOWED_ORIGINS")
+
 # To accommodate some backends we proactively restrict the length of non text field strings.
 # This affects mostly names and display names.
 STRING_MAX_LENGTH = 256

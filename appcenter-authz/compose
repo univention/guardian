@@ -7,6 +7,7 @@ services:
     depends_on:
       - opa
     environment:
+      GUARDIAN__AUTHZ__CORS__ALLOWED_ORIGINS: @%@guardian-authorization-api/cors/allowed-origins@%@
       GUARDIAN__AUTHZ__ADAPTER__SETTINGS_PORT: env
       GUARDIAN__AUTHZ__ADAPTER__PERSISTENCE_PORT: udm_data
       GUARDIAN__AUTHZ__ADAPTER__POLICY_PORT: opa

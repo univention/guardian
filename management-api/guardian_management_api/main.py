@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 from guardian_lib.adapter_registry import ADAPTER_REGISTRY
 from guardian_lib.ports import AuthenticationPort, SettingsPort
@@ -15,7 +16,11 @@ from loguru import logger
 from starlette.staticfiles import StaticFiles
 
 from .adapter_registry import configure_registry, initialize_adapters
-from .constants import API_PREFIX, BUNDLE_SERVER_DISABLED_SETTING_NAME
+from .constants import (
+    API_PREFIX,
+    BUNDLE_SERVER_DISABLED_SETTING_NAME,
+    CORS_ALLOWED_ORIGINS,
+)
 from .logging import configure_logger
 from .ports.bundle_server import BundleServerPort, BundleType
 from .ports.capability import CapabilityPersistencePort
@@ -131,3 +136,14 @@ app = FastAPI(
         "scopes": ["openid"],
     },
 )
+# FastAPI doesn't allow adding middleware after the app has been started,
+# so unfortunately we can't put this in the lifespan to make use of the
+# settings_port.
+if CORS_ALLOWED_ORIGINS:
+    origins = CORS_ALLOWED_ORIGINS.split(",")
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_methods=["*"],
+        allow_headers=["Authorization"],
+    )

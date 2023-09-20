@@ -5,12 +5,14 @@ import os
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 from guardian_lib.adapter_registry import ADAPTER_REGISTRY
 from guardian_lib.ports import AuthenticationPort, SettingsPort
 from loguru import logger
 
 from .adapter_registry import configure_registry, initialize_adapters
+from .constants import API_PREFIX, CORS_ALLOWED_ORIGINS
 from .logging import configure_logger
 from .routes import router
 
@@ -32,7 +34,6 @@ async def lifespan(fastapi_app: FastAPI):
     yield
 
 
-API_PREFIX = os.environ.get("GUARDIAN__AUTHZ__API_PREFIX", "/guardian/authorization")
 app = FastAPI(
     lifespan=lifespan,
     title="Guardian Authorization API",
@@ -46,3 +47,14 @@ app = FastAPI(
         "scopes": ["openid"],
     },
 )
+# FastAPI doesn't allow adding middleware after the app has been started,
+# so unfortunately we can't put this in the lifespan to make use of the
+# settings_port.
+if CORS_ALLOWED_ORIGINS:
+    origins = CORS_ALLOWED_ORIGINS.split(",")
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_methods=["*"],
+        allow_headers=["Authorization"],
+    )

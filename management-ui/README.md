@@ -84,7 +84,7 @@ If you want to test against a keycloak instance, you can use an existing [RAM en
    export VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__CLIENT_ID=guardian-management-ui-dev
    ```
 
-### Data Port
+#### Data Port
 
 The data port pulls data from the API or a locally-generated in-memory store.
 
@@ -92,6 +92,23 @@ Currently, there is only the `in-memory` adapter:
 
 ```shell
 export VITE__MANAGEMENT_UI__ADAPTER__DATA_PORT=in_memory
+```
+
+#### CORS
+
+When working with the backend, you may encounter CORS errors.
+If you're using the local docker setup, please verify that you have the
+following two settings:
+
+```shell
+export GUARDIAN__AUTHZ__CORS__ALLOWED_ORIGINS=*
+export GUARDIAN__MANAGEMENT__CORS__ALLOWED_ORIGINS=*
+```
+
+If you would like to develop against a remote server, you can enable a proxy that will make requests to the backend look like they're coming from the local server:
+
+```shell
+export VITE__MANAGEMENT_UI__CORS__USE_PROXY=0
 ```
 
 ### Compile and Hot-Reload for Development

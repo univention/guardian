@@ -27,6 +27,15 @@ Group = Logging
 Scope = outside
 Show = Install,Settings
 
+[guardian-authorization-api/cors/allowed-origins]
+Type = String
+InitialValue = *
+Description = Comma-separated list of hosts that are allowed to make cross-origin resource sharing (CORS) requests to the server.
+Description[de] = Kommaseparierte Liste von Hosts, die CORS-Anfragen (Cross-Origin Resource Sharing) an den Server stellen dürfen.
+Group = CORS
+Scope = outside
+Show = Install,Settings
+
 [guardian-authorization-api/udm_data/url]
 Type = String
 Description = The URL of the UDM REST API for data queries.
