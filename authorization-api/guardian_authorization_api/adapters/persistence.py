@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 import json
+import re
 from typing import Type
 
 from port_loader import AsyncConfiguredAdapterMixin
@@ -14,6 +15,8 @@ from ..models.persistence import (
     StaticDataAdapterSettings,
     UDMPersistenceAdapterSettings,
 )
+from ..models.policies import PolicyObject
+from ..models.policies import Role as PoliciesRole
 from ..ports import PersistencePort
 from ..udm_client import (  # type: ignore[attr-defined]
     UDM,
@@ -24,6 +27,10 @@ from ..udm_client import (  # type: ignore[attr-defined]
 )
 from ..udm_client import (  # type: ignore[attr-defined]
     ConnectionError as UDMConnectionError,
+)
+
+re_split_roles_and_contexts = re.compile(
+    r"^(([a-z0-9-_]+):([a-z0-9-_]+):([a-z0-9-_]+))(&([a-z0-9-_]+):([a-z0-9-_]+):([a-z0-9-_]+))?$"
 )
 
 
@@ -105,6 +112,54 @@ class UDMPersistenceAdapter(PersistencePort, AsyncConfiguredAdapterMixin):
     ) -> Type[UDMPersistenceAdapterSettings]:  # pragma: no cover
         return UDMPersistenceAdapterSettings
 
+    @staticmethod
+    def _to_policy_role(role: str):
+        if res := re.search(re_split_roles_and_contexts, role):
+            groups = res.groups()
+            role_app = groups[1]
+            role_namespace = groups[2]
+            role_name = groups[3]
+            # fixme: add context support
+            # if len(groups) == 8:
+            #     context = PoliciesContext(
+            #         name=groups[7], app_name=groups[5], namespace_name=groups[6]
+            #     )
+            return PoliciesRole(
+                app_name=role_app,
+                namespace_name=role_namespace,
+                name=role_name,
+            )
+        raise PersistenceError(f"Role {role} is malformed.")
+
+    @staticmethod
+    def _to_policy_object(po: PersistenceObject) -> PolicyObject:
+        # todo in opa adapter include context in role
+        roles = []
+        for role in po.roles:
+            roles.append(UDMPersistenceAdapter._to_policy_role(role))
+        if "guardianRole" in po.attributes:
+            po.attributes.pop("guardianRole")
+        return PolicyObject(id=po.id, roles=roles, attributes=po.attributes)
+
+    async def lookup_actor_and_old_targets(
+        self, actor_id: str, old_target_ids: list[str | None]
+    ) -> tuple[PolicyObject, list[PolicyObject | None]]:
+        actor = UDMPersistenceAdapter._to_policy_object(
+            await self.get_object(identifier=actor_id, object_type=ObjectType.USER)
+        )
+        old_targets = []
+        for old_target_id in old_target_ids:
+            old_targets.append(
+                UDMPersistenceAdapter._to_policy_object(
+                    await self.get_object(
+                        identifier=old_target_id, object_type=ObjectType.USER
+                    )
+                )
+                if old_target_id
+                else None
+            )
+        return actor, old_targets
+
 
 class StaticDataAdapter(PersistencePort, AsyncConfiguredAdapterMixin):
     """
@@ -113,6 +168,23 @@ class StaticDataAdapter(PersistencePort, AsyncConfiguredAdapterMixin):
 
     This adapter is not meant for production but rather for testing purposes.
     """
+
+    async def lookup_actor_and_old_targets(
+        self, actor_id: str, old_target_ids: list[str | None]
+    ) -> tuple[PolicyObject, list[PolicyObject | None]]:  # pragma: no cover
+        # fix me with https://git.knut.univention.de/univention/components/authorization-engine/guardian/-/issues/139
+        return (
+            PolicyObject(
+                id="non-existent",
+                roles=[
+                    PoliciesRole(
+                        app_name="app", namespace_name="namespace", name="role"
+                    )
+                ],
+                attributes={},
+            ),
+            [],
+        )
 
     class Config:
         is_cached = True

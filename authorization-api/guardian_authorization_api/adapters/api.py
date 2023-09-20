@@ -7,7 +7,6 @@ from typing import Optional
 from fastapi import HTTPException
 
 from ..errors import ObjectNotFoundError, PersistenceError, PolicyUpstreamError
-from ..models.persistence import PersistenceObject
 from ..models.policies import (
     CheckPermissionsQuery,
     CheckPermissionsResult,
@@ -37,7 +36,6 @@ from ..models.routes import (
     PermissionName,
     PermissionResult,
     Target,
-    TargetLookup,
 )
 from ..ports import CheckPermissionsAPIPort, GetPermissionsAPIPort
 
@@ -92,36 +90,6 @@ class FastAPIAdapterUtils:
         )
 
     @staticmethod
-    def persistence_object_to_policy_object(po: PersistenceObject) -> PolicyObject:
-        roles = []
-        for app, namespace, role in [role.split(":") for role in po.roles]:
-            roles.append(
-                PoliciesRole(app_name=app, namespace_name=namespace, name=role)
-            )
-        if "guardianRole" in po.attributes:
-            po.attributes.pop("guardianRole")
-        return PolicyObject(id=po.id, roles=roles, attributes=po.attributes)
-
-    @staticmethod
-    def persistence_target_to_policy_target(
-        old_target: PersistenceObject, new_target: AuthzObject
-    ):
-        po_old_target = (
-            FastAPIAdapterUtils.persistence_object_to_policy_object(old_target)
-            if old_target
-            else None
-        )
-        po_new_target = (
-            FastAPIAdapterUtils.authz_to_policy_object(new_target)
-            if new_target
-            else None
-        )
-        return PoliciesTarget(
-            old_target=po_old_target,
-            new_target=po_new_target,
-        )
-
-    @staticmethod
     def api_targets_to_policy_targets(
         targets: Optional[list[Target]],
     ) -> list[PoliciesTarget]:
@@ -172,19 +140,6 @@ class FastAPIAdapterUtils:
             app_name=context.app_name,
             namespace_name=context.namespace_name,
             name=context.name,
-        )
-
-    @staticmethod
-    def persistence_targets_to_policy_targets(targets):
-        return (
-            [
-                FastAPIAdapterUtils.persistence_target_to_policy_target(
-                    old_target=old_target, new_target=new_target
-                )
-                for old_target, new_target in targets
-            ]
-            if targets
-            else []
         )
 
 
@@ -324,21 +279,32 @@ class FastAPICheckPermissionsAPIAdapter(
     async def to_policy_lookup_query(
         self,
         api_request: AuthzPermissionsCheckLookupPostRequest,
-        actor: PersistenceObject,
-        targets: list[typing.Tuple[PersistenceObject, TargetLookup]],
+        actor: PolicyObject,
+        old_targets: list[PolicyObject | None],
     ) -> CheckPermissionsQuery:
-        po_actor = FastAPIAdapterUtils.persistence_object_to_policy_object(actor)
-        po_targets = FastAPIAdapterUtils.persistence_targets_to_policy_targets(targets)
         contexts = FastAPIAdapterUtils.api_contexts_to_policy_contexts(
             api_request.contexts
         )
         namespaces = FastAPIAdapterUtils.api_namespaces_to_policy_namespaces(
             api_request.namespaces
         )
+        targets = []
+        if api_request.targets:
+            for old_target, request_target in zip(old_targets, api_request.targets):
+                targets.append(
+                    PoliciesTarget(
+                        new_target=FastAPIAdapterUtils.authz_to_policy_object(
+                            request_target.new_target
+                        )
+                        if request_target.new_target
+                        else None,
+                        old_target=old_target,
+                    )
+                )
         return CheckPermissionsQuery(
-            actor=po_actor,
+            actor=actor,
             contexts=contexts,
-            targets=po_targets,
+            targets=targets,
             namespaces=namespaces,
             target_permissions=[
                 PoliciesPermission(
@@ -358,3 +324,15 @@ class FastAPICheckPermissionsAPIAdapter(
             ],
             extra_args=api_request.extra_request_data,
         )
+
+    @staticmethod
+    def get_actor_and_target_ids(
+        api_request: AuthzPermissionsCheckLookupPostRequest,
+    ) -> tuple[str, list[str | None]]:
+        target_ids = []
+        if api_request.targets:
+            target_ids = [
+                str(target.old_target.id) if target.old_target else None
+                for target in api_request.targets
+            ]
+        return str(api_request.actor.id), target_ids

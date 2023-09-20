@@ -18,6 +18,7 @@ from guardian_authorization_api.models.persistence import (
     StaticDataAdapterSettings,
     UDMPersistenceAdapterSettings,
 )
+from guardian_authorization_api.models.policies import Role
 from guardian_authorization_api.udm_client import (
     UDM,
     NotFound,
@@ -150,6 +151,13 @@ class TestUDMDataAdapter:
         udm_adapter._udm_client = None
         client3 = udm_adapter.udm_client
         assert client is not client3
+
+    def test_to_policy_role(self):
+        assert UDMPersistenceAdapter._to_policy_role("ucsschool:users:teacher") == Role(
+            app_name="ucsschool", namespace_name="users", name="teacher"
+        )
+        with pytest.raises(PersistenceError):
+            UDMPersistenceAdapter._to_policy_role("ucsschool-users-teacher")
 
 
 @pytest.mark.skipif(

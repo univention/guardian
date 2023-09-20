@@ -14,6 +14,7 @@ from .models.policies import (
     GetPermissionsQuery,
     GetPermissionsResult,
     Policy,
+    PolicyObject,
 )
 
 GetPermissionsAPIResponseObject = TypeVar("GetPermissionsAPIResponseObject")
@@ -48,6 +49,16 @@ class PersistencePort(BasePort, ABC):
         :raises ObjectNotFoundError: If the requested object could not be found
         :raises PersistenceError: For any errors other than object not found
         """
+        raise NotImplementedError  # pragma: no cover
+
+    # @staticmethod
+    # def to_policy_object(po: PersistenceObject) -> PolicyObject:
+    #     raise NotImplementedError  # pragma: no cover
+
+    @abstractmethod
+    async def lookup_actor_and_old_targets(
+        self, actor_id: str, old_target_ids: list[str | None]
+    ) -> tuple[PolicyObject, list[PolicyObject | None]]:
         raise NotImplementedError  # pragma: no cover
 
 
@@ -141,6 +152,20 @@ class CheckPermissionsAPIPort(
 
     @abstractmethod
     async def to_policy_lookup_query(
-        self, api_request: CheckPermissionsWithLookupAPIRequestObject, actor, targets
+        self,
+        api_request: CheckPermissionsWithLookupAPIRequestObject,
+        actor: PolicyObject,
+        old_targets: list[PolicyObject | None],
     ) -> CheckPermissionsQuery:
         ...  # pragma: no cover
+
+    @staticmethod
+    def get_actor_and_target_ids(
+        api_request: CheckPermissionsWithLookupAPIRequestObject,
+    ) -> tuple[str, list[str | None]]:
+        """
+        Returns the actor id and the list of old target ids,
+        which are used to fetch the object from the persistence layer.
+        If the target is empty, None is appended.
+        """
+        raise NotImplementedError  # pragma: no cover
