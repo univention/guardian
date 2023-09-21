@@ -234,12 +234,3 @@ class TestAppEndpoints:
             json={"name": "non-existing", "display_name": "displayname"},
         )
         assert response.status_code == 404
-
-    @pytest.mark.usefixtures("create_tables")
-    @pytest.mark.asyncio
-    async def test_post_permissions_401(self, client, error401):
-        response = client.post(
-            app.url_path_for("create_app"), json={"name": "test_app"}
-        )
-        assert response.status_code == 401
-        assert response.json() == {"detail": "Not Authorized"}

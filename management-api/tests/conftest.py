@@ -12,10 +12,6 @@ from typing import Optional, Tuple
 import guardian_lib.adapter_registry as adapter_registry
 import pytest
 import pytest_asyncio
-from guardian_lib.adapters.authentication import (
-    FastAPIAlwaysAuthorizedAdapter,
-    FastAPINeverAuthorizedAdapter,
-)
 from guardian_lib.adapters.settings import EnvSettingsAdapter
 from guardian_lib.ports import SettingsPort
 from guardian_management_api.adapters.app import (
@@ -750,13 +746,3 @@ def create_capabilities(
         return caps
 
     return _create_capabilities
-
-
-@pytest.fixture(scope="function")
-def error401(monkeypatch):
-    monkeypatch.setattr(
-        FastAPIAlwaysAuthorizedAdapter,
-        "__call__",
-        FastAPINeverAuthorizedAdapter.__call__,
-    )
-    yield

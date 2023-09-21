@@ -15,10 +15,6 @@ from faker import Faker
 from guardian_authorization_api.logging import configure_logger
 from guardian_authorization_api.main import app
 from guardian_authorization_api.models.policies import PolicyObject
-from guardian_lib.adapters.authentication import (
-    FastAPIAlwaysAuthorizedAdapter,
-    FastAPINeverAuthorizedAdapter,
-)
 from opa_client import client as opa_client
 from starlette.testclient import TestClient
 
@@ -189,16 +185,6 @@ def event_loop():
     loop = policy.new_event_loop()
     yield loop
     loop.close()
-
-
-@pytest.fixture(scope="function")
-def error401(monkeypatch):
-    monkeypatch.setattr(
-        FastAPIAlwaysAuthorizedAdapter,
-        "__call__",
-        FastAPINeverAuthorizedAdapter.__call__,
-    )
-    yield
 
 
 @pytest.fixture

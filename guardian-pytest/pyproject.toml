@@ -1,0 +1,33 @@
+# Copyright (C) 2023 Univention GmbH
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
+[tool.poetry]
+name = "guardian-pytest"
+version = "0.1.0"
+description = "pytest utilities for guardian tests"
+authors = ["Jürn Brodersen <brodersen@univention.de>"]
+license = "AGPL"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pytest = "^7.4.2"
+pyjwt = "^2.8.0"
+requests = "^2.31.0"
+cryptography = "^41.0.4"
+guardian-lib = "^1.0.2"
+port-loader = "^1.0.1"
+
+[[tool.poetry.source]]
+name = "PyPI"
+priority = "primary"
+
+[[tool.poetry.source]]
+name = "guardian"
+url = "https://git.knut.univention.de/api/v4/projects/830/packages/pypi/simple"
+priority = "supplemental"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

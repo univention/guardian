@@ -21,7 +21,7 @@ orjson = "^3.9.0"
 opa-client = {version = "^1.0.3", source = "opa-client"}
 requests = "^2.31.0"
 uritemplate = "^4.1.1"
-guardian-lib = "1.0.1"
+guardian-lib = "1.0.2"
 
 [tool.poetry.plugins."guardian_authorization_api.SettingsPort"]
 "env" = "guardian_lib.adapters.settings:EnvSettingsAdapter"
@@ -45,6 +45,8 @@ pytest-mock = "^3.10.0"
 pytest-asyncio = "^0.21.0"
 Faker = "^19.6.1"
 httpx = "^0.24.1"
+cryptography = "^41.0.4"
+guardian-pytest = "0.0.0.dev0+124.additional.test.2aefc029"
 
 
 [[tool.poetry.source]]
