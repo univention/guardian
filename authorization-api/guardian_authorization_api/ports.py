@@ -26,6 +26,9 @@ CheckPermissionsAPIRequestObject = TypeVar("CheckPermissionsAPIRequestObject")
 CheckPermissionsWithLookupAPIRequestObject = TypeVar(
     "CheckPermissionsWithLookupAPIRequestObject"
 )
+GetPermissionsWithLookupAPIRequestObject = TypeVar(
+    "GetPermissionsWithLookupAPIRequestObject"
+)
 
 
 class PersistencePort(BasePort, ABC):
@@ -50,10 +53,6 @@ class PersistencePort(BasePort, ABC):
         :raises PersistenceError: For any errors other than object not found
         """
         raise NotImplementedError  # pragma: no cover
-
-    # @staticmethod
-    # def to_policy_object(po: PersistenceObject) -> PolicyObject:
-    #     raise NotImplementedError  # pragma: no cover
 
     @abstractmethod
     async def lookup_actor_and_old_targets(
@@ -110,8 +109,16 @@ class PolicyPort(BasePort, ABC):
 class GetPermissionsAPIPort(
     BasePort,
     ABC,
-    Generic[GetPermissionsAPIRequestObject, GetPermissionsAPIResponseObject],
+    Generic[
+        GetPermissionsAPIRequestObject,
+        GetPermissionsAPIResponseObject,
+        GetPermissionsWithLookupAPIRequestObject,
+    ],
 ):
+    @abstractmethod
+    async def transform_exception(self, exc: Exception) -> Exception:
+        ...  # pragma: no cover
+
     @abstractmethod
     async def to_policy_query(
         self, api_request: GetPermissionsAPIRequestObject
@@ -122,6 +129,26 @@ class GetPermissionsAPIPort(
     async def to_api_response(
         self, permissions_result: GetPermissionsResult
     ) -> GetPermissionsAPIResponseObject:
+        raise NotImplementedError  # pragma: no cover
+
+    @abstractmethod
+    async def to_policy_lookup_query(
+        self,
+        api_request: GetPermissionsWithLookupAPIRequestObject,
+        actor: PolicyObject,
+        old_targets: list[PolicyObject | None],
+    ) -> GetPermissionsQuery:
+        ...  # pragma: no cover
+
+    @staticmethod
+    def get_actor_and_target_ids(
+        api_request: GetPermissionsWithLookupAPIRequestObject,
+    ) -> tuple[str, list[str | None]]:
+        """
+        Returns the actor id and the list of old target ids,
+        which are used to fetch the object from the persistence layer.
+        If the target is empty, None is appended.
+        """
         raise NotImplementedError  # pragma: no cover
 
 
