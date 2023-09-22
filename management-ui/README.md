@@ -2,7 +2,28 @@
 
 > The `yarn` command is used throughout this README (e.g., `yarn type-check`). You can find more examples of `yarn` commands in the `scripts` block of the `package.json`.
 
-## Dev Requirements
+## Non-Dev Quickstart
+
+If you are not doing development on the Management UI code, you can run the Management UI from docker in production mode.
+
+Copy the `.env.example` file in the top-level guardian folder to an `.env` file, per the instructions in the [repository README](../README.md).
+The defaults needed for this setup should already be correct:
+
+```bash
+export GUARDIAN__MANAGEMENT__ADAPTER__AUTHENTICATION_PORT=fast_api_oauth
+
+export VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__SSO_URI=http://traefik/guardian/keycloak
+export VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__REALM=GuardianDev
+export VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__CLIENT_ID=guardian
+export VITE__API_DATA_ADAPTER__URI=http://localhost/guardian/management
+export VITE__URL_SETTINGS_ADAPTER__CONFIG_URL=http://localhost/guardian/management-ui/config.json
+```
+
+Then run the [`dev-run`](../dev-run) script just as you would for other projects.
+
+## Development Setup
+
+### Requirements
 
 - [Node.js](https://nodejs.org/en/) (18.x, LTS until 2023-10-24 and supported until 2025-04-30)
 - [yarn](https://yarnpkg.com/getting-started/install)
@@ -10,7 +31,7 @@
   - Enable corepack `corepack enable` to use `yarn` (`corepack` comes with Node.js)
     - Or if corepack doesn't work for you: `sudo npm install --global yarn` (`npm` comes with Node.js)
 
-## Project Setup
+### Project Setup
 
 ```shell
 yarn install
@@ -21,29 +42,51 @@ The packages are installed only locally inside the `node_modules` folder.
 
 **NOTE:** If you change git branches and things don't work correctly, try deleting your `node_modules` folder and re-running `yarn install`.
 
-### Environment Variables
+### Quickstart
 
 As part of the setup for the [main Guardian app](../README.md) you should have created an `.env` file.
 The default already works out of the box.
 
-Be sure to source your `.env` file before running the development server:
+Source your `.env` file before running the development server:
 
 ```shell
 source ../.env
 ```
 
+Then run the development server:
+
+```shell
+yarn dev
+```
+
+The output of the command will tell you where to view the Management UI, usually at [localhost:5173/guardian/management-ui](http://localhost:5173/guardian/management-ui).
+
+### Customizing Development Environment Variables
+
 **NOTE:** All new environment variables need to be prefixed with `VITE` in order to be detected by the Management UI
 
-Here are the variables you can set:
+Here are the variables you can set in your `.env` file:
 
 #### Settings Port
 
-The settings port determines where the app's settings will come from.
-Currently the only source is environment variables:
+The settings port determines where the app's settings will come from, either environment variables or a config hosted at a URL.
+
+For local development, you usually want the `env` adapter to read directly from the sourced environment variables:
 
 ```shell
 export VITE__MANAGEMENT_UI__ADAPTER__SETTINGS_PORT=env
 ```
+
+The `url` adapter is used in production/docker environments to read a config that is hosted at a given URL.
+If you're doing development against this adapter, you need the following settings:
+
+```shell
+export VITE__MANAGEMENT_UI__ADAPTER__SETTINGS_PORT=url
+export VITE__MANAGEMENT_UI__CORS__USE_PROXY=1
+export VITE__URL_SETTINGS_ADAPTER__CONFIG_URL=http://localhost/guardian/management-ui/config.json
+```
+
+Note that the config file in this example is being hosted in docker, so you'll also need to run [dev-run](../dev-run) if you're using the `url` adapter.
 
 #### Authorization Port
 
@@ -67,6 +110,8 @@ export VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__REALM=GuardianDev
 export VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__CLIENT_ID=guardian
 ```
 
+Testing against keycloak requires using [dev-run](../dev-run).
+
 #### Data Port
 
 The data port pulls data from the API or a locally-generated in-memory store.
@@ -77,7 +122,7 @@ Currently, the default is the `in-memory` adapter:
 export VITE__MANAGEMENT_UI__ADAPTER__DATA_PORT=in_memory
 ```
 
-For working with the Management API locally, you need the following settings:
+For working with the Management API running in docker via [dev-run](../dev-run), you need the following settings:
 
 ```shell
 export VITE__MANAGEMENT_UI__ADAPTER__DATA_PORT=api
@@ -87,7 +132,9 @@ export VITE__API_DATA_ADAPTER__URI=http://localhost/guardian/management
 If you're working with a non-local instance of the Guardian backend, you can set up a proxy to avoid CORS errors:
 
 ```shell
+export VITE__MANAGEMENT_UI__ADAPTER__DATA_PORT=api
 export VITE__MANAGEMENT_UI__CORS__USE_PROXY=1
+export VITE__API_DATA_ADAPTER__URI=https://primary.school.test/guardian/management
 ```
 
 Please note that, depending on your setup in the Management API, you may need to configure the Keycloak authentication adapter as well.
@@ -97,7 +144,7 @@ The following setting disables Keycloak integration in the Management API:
 export GUARDIAN__MANAGEMENT__ADAPTER__AUTHENTICATION_PORT=fast_api_always_authorized
 ```
 
-Please see the instructions for configuring authentication in the top-level repository README for more information.
+Please see the instructions for configuring authentication in the top-level [repository README](../README.md) for more information.
 
 #### CORS
 
@@ -114,14 +161,6 @@ If you would like to develop against a remote server, you can enable a proxy tha
 
 ```shell
 export VITE__MANAGEMENT_UI__CORS__USE_PROXY=1
-```
-
-### Compile and Hot-Reload for Development
-
-Run a hot-loading development server:
-
-```shell
-yarn dev
 ```
 
 ### Use local univention-veb version

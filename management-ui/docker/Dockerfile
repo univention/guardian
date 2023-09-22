@@ -1,7 +1,6 @@
 FROM node:18 AS builder
 
 COPY management-ui /management-ui
-COPY .env* /management-ui/
 WORKDIR /management-ui
 RUN yarn install
 RUN yarn build

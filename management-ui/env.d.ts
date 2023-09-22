@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_USE_REAL_BACKEND: 'true' | 'false';
+  readonly VITE__MANAGEMENT_UI__ADAPTER__SETTINGS_PORT: 'url' | 'env';
 }
 
 interface ImportMeta {

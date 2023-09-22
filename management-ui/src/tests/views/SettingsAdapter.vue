@@ -6,7 +6,23 @@ import SettingsConfig from '@/tests/components/SettingsConfig.vue';
 
 const loading = ref(true);
 
+const configuredAdapter = import.meta.env.VITE__MANAGEMENT_UI__ADAPTER__SETTINGS_PORT;
 const settingsStore = useSettingsStore();
+const config = ref(settingsStore.config);
+const currentAdapter = ref('configured');
+
+const switchToConfiguredAdapter = async () => {
+  currentAdapter.value = 'configured';
+  await settingsStore.init(configuredAdapter, true);
+};
+const switchToEnvAdapter = async () => {
+  currentAdapter.value = 'env';
+  await settingsStore.init('env', true);
+};
+const switchToUrlAdapter = async () => {
+  currentAdapter.value = 'url';
+  await settingsStore.init('url', true);
+};
 
 onMounted(async () => {
   await settingsStore.init();
@@ -22,12 +38,29 @@ onMounted(async () => {
     <h2>Settings Adapter Tests</h2>
 
     <div class="testButtonsWrapper">
-      <UButton type="button" label="Configured Global Adapter" />
+      <UButton
+        :class="{'uButton--flat': currentAdapter !== 'configured'}"
+        type="button"
+        label="Configured Global Adapter"
+        @click="switchToConfiguredAdapter"
+      />
+      <UButton
+        :class="{'uButton--flat': currentAdapter !== 'env'}"
+        type="button"
+        label="Env Adapter"
+        @click="switchToEnvAdapter"
+      />
+      <UButton
+        :class="{'uButton--flat': currentAdapter !== 'config'}"
+        type="button"
+        label="Config Adapter"
+        @click="switchToUrlAdapter"
+      />
     </div>
     <p>Verify settings for the currently configured adapter for the app</p>
 
     <div class="uContainer uCard">
-      <SettingsConfig :configObj="settingsStore.config" />
+      <SettingsConfig :configObj="config" />
     </div>
   </main>
 </template>
