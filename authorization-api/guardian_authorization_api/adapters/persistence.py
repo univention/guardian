@@ -93,7 +93,7 @@ class UDMPersistenceAdapter(PersistencePort, AsyncConfiguredAdapterMixin):
             ) from exc
         try:
             raw_object: Object = module.get(identifier)
-        except UnprocessableEntity as exc:
+        except (UnprocessableEntity, NotFound) as exc:
             raise ObjectNotFoundError(
                 f"Could not find object of type '{object_type.name}' with identifier '{identifier}'."
             ) from exc
@@ -149,15 +149,32 @@ class UDMPersistenceAdapter(PersistencePort, AsyncConfiguredAdapterMixin):
         )
         old_targets = []
         for old_target_id in old_target_ids:
-            old_targets.append(
-                UDMPersistenceAdapter._to_policy_object(
+            # In the context of the UDMPersistenceAdapter the IDs are equal to distinguished names
+            obj = None
+            if old_target_id:
+                if old_target_id.startswith("cn"):
+                    # Three remarks:
+                    # 1. This can match other, but not yet supported targets like shares and computers.
+                    #    In that case, we will get an error when looking up the object.
+                    # 2. It is possible that a group DN does not contain 'cn=groups'
+                    #    as UCS supports changing the default groups container, so we cannot determine
+                    #    the group object type via `'cn=groups' in  old_target_id`
+                    # 3. We might want to use the method `obj_by_dn` from the udm client instead of
+                    #    instantiating the different object modules
+                    object_type = ObjectType.GROUP
+                elif old_target_id.startswith("uid"):
+                    object_type = ObjectType.USER
+                else:
+                    raise PersistenceError(
+                        f"Cannot determine object type from DN: {old_target_id}"
+                    )
+                obj = UDMPersistenceAdapter._to_policy_object(
                     await self.get_object(
-                        identifier=old_target_id, object_type=ObjectType.USER
+                        identifier=old_target_id, object_type=object_type
                     )
                 )
-                if old_target_id
-                else None
-            )
+            old_targets.append(obj)
+
         return actor, old_targets
 
 

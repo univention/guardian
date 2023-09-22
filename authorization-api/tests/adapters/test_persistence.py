@@ -4,9 +4,11 @@
 
 import json
 import os
+import urllib.parse
 
 import pytest
 import pytest_asyncio
+import requests
 from guardian_authorization_api.adapters.persistence import (
     StaticDataAdapter,
     UDMPersistenceAdapter,
@@ -18,7 +20,7 @@ from guardian_authorization_api.models.persistence import (
     StaticDataAdapterSettings,
     UDMPersistenceAdapterSettings,
 )
-from guardian_authorization_api.models.policies import Role
+from guardian_authorization_api.models.policies import PolicyObject, Role
 from guardian_authorization_api.udm_client import (
     UDM,
     NotFound,
@@ -29,13 +31,25 @@ from guardian_authorization_api.udm_client import (
     ConnectionError as UDMConnectionError,
 )
 
+from ..mock_classes import MockUdmObject
 
-def udm_adapter_integrated():
-    return (
-        os.environ.get("UDM_DATA_ADAPTER__URL") is None
-        or os.environ.get("UDM_DATA_ADAPTER__USERNAME") is None
-        or os.environ.get("UDM_DATA_ADAPTER__PASSWORD") is None
-    )
+
+def udm_adapter_not_integrated():
+    url = os.environ.get("UDM_DATA_ADAPTER__URL")
+    username = os.environ.get("UDM_DATA_ADAPTER__USERNAME")
+    password = os.environ.get("UDM_DATA_ADAPTER__PASSWORD")
+
+    if not (url and username and password):
+        return True
+
+    parse_result = urllib.parse.urlparse(url)
+    udm_url = f"{parse_result.scheme}://{username}:{password}@{parse_result.netloc}{parse_result.path}"
+    try:
+        response = requests.get(udm_url)
+    except (requests.ConnectionError, requests.ConnectTimeout):
+        return True
+
+    return 200 != response.status_code
 
 
 @pytest.fixture()
@@ -142,6 +156,155 @@ class TestUDMDataAdapter:
             id="ID", object_type=object_type, attributes={"a": 1, "b": 2}, roles=[]
         )
 
+    @pytest.mark.asyncio
+    async def test_lookup_errors(self, udm_adapter: UDMPersistenceAdapter, udm_mock):
+        actor_id = "ID"
+        users = {
+            actor_id: MockUdmObject(
+                dn=actor_id,
+                properties={
+                    "guardianRole": ["ucsschool:users:teacher"],
+                    "school": "school1",
+                },
+            ),
+        }
+
+        udm_mock(users=users)
+
+        invalid_id = "abcdefg"
+        with pytest.raises(PersistenceError) as excinfo:
+            actor_obj, targets = await udm_adapter.lookup_actor_and_old_targets(
+                actor_id="ID", old_target_ids=[invalid_id]
+            )
+        assert f"Cannot determine object type from DN: {invalid_id}" in str(
+            excinfo.value
+        )
+
+    @pytest.mark.asyncio
+    async def test_lookup_targets_users(
+        self, udm_adapter: UDMPersistenceAdapter, udm_mock
+    ):
+        actor_id = "uid=demo_teacher,cn=lehrer,cn=users,ou=DEMOSCHOOL,dc=school,dc=test"
+        user_id = (
+            "uid=demo_student,cn=schueler,cn=users,ou=DEMOSCHOOL,dc=school,dc=test"
+        )
+        user_id_2 = (
+            "uid=demo_student_2,cn=schueler,cn=users,ou=DEMOSCHOOL,dc=school,dc=test"
+        )
+        users = {
+            user_id: MockUdmObject(
+                dn=user_id,
+                properties={
+                    "guardianRole": ["ucsschool:users:student"],
+                    "school": "school1",
+                },
+            ),
+            user_id_2: MockUdmObject(
+                dn=user_id_2,
+                properties={
+                    "guardianRole": ["ucsschool:users:teacher"],
+                    "school": "school2",
+                },
+            ),
+            actor_id: MockUdmObject(
+                dn=actor_id,
+                properties={
+                    "guardianRole": ["ucsschool:users:teacher"],
+                    "school": "school1",
+                },
+            ),
+        }
+
+        udm_mock(users=users)
+
+        actor_obj, targets = await udm_adapter.lookup_actor_and_old_targets(
+            actor_id=actor_id, old_target_ids=[user_id, None, user_id_2, None]
+        )
+        assert actor_obj == PolicyObject(
+            actor_id,
+            [Role("ucsschool", "users", "teacher")],
+            attributes={"school": "school1"},
+        )
+
+        assert targets == [
+            PolicyObject(
+                id=user_id,
+                roles=[Role("ucsschool", "users", "student")],
+                attributes={"school": "school1"},
+            ),
+            None,
+            PolicyObject(
+                id=user_id_2,
+                roles=[Role("ucsschool", "users", "teacher")],
+                attributes={"school": "school2"},
+            ),
+            None,
+        ]
+
+    @pytest.mark.asyncio
+    async def test_lookup_targets_groups(
+        self, udm_adapter: UDMPersistenceAdapter, udm_mock
+    ):
+        actor_id = "ID"
+        group_id = (
+            "cn=DEMOSCHOOL-Democlass,cn=klassen,"
+            "cn=schueler,cn=groups,ou=DEMOSCHOOL,dc=school,dc=test"
+        )
+        group_id_2 = (
+            "cn=DEMOSCHOOL-Democlass_2,cn=klassen,"
+            "cn=schueler,cn=groups,ou=DEMOSCHOOL,dc=school,dc=test"
+        )
+        users = {
+            actor_id: MockUdmObject(
+                dn=actor_id,
+                properties={
+                    "guardianRole": ["ucsschool:users:teacher"],
+                    "school": "school1",
+                },
+            ),
+        }
+
+        groups = {
+            group_id: MockUdmObject(
+                dn=group_id,
+                properties={
+                    "guardianRole": ["ucsschool:groups:class"],
+                    "school": "school1",
+                },
+            ),
+            group_id_2: MockUdmObject(
+                dn=group_id_2,
+                properties={
+                    "guardianRole": ["ucsschool:groups:class"],
+                    "school": "school2",
+                },
+            ),
+        }
+        udm_mock(users=users, groups=groups)
+
+        actor_obj, targets = await udm_adapter.lookup_actor_and_old_targets(
+            actor_id="ID", old_target_ids=[None, group_id, group_id_2]
+        )
+        assert actor_obj == PolicyObject(
+            "ID",
+            [Role("ucsschool", "users", "teacher")],
+            attributes={"school": "school1"},
+        )
+
+        assert targets == [
+            None,
+            PolicyObject(
+                id=group_id,
+                roles=[Role("ucsschool", "groups", "class")],
+                attributes={"school": "school1"},
+            ),
+            PolicyObject(
+                id=group_id_2,
+                roles=[Role("ucsschool", "groups", "class")],
+                attributes={"school": "school2"},
+            ),
+        ]
+
     def test_udm_client_cached(self, udm_adapter: UDMPersistenceAdapter):
         assert udm_adapter._udm_client is None
         client = udm_adapter.udm_client
@@ -161,8 +324,8 @@ class TestUDMDataAdapter:
 
 
 @pytest.mark.skipif(
-    udm_adapter_integrated(),
-    reason="Cannot run integration tests for UDM adapter without config",
+    udm_adapter_not_integrated(),
+    reason="Cannot run integration tests for UDM adapter if UDM not available",
 )
 @pytest.mark.integration
 class TestUDMDataAdapterIntegration:

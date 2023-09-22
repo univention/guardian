@@ -112,7 +112,7 @@ class TestPermissionsCheckUnittest:
     ):
         data = get_authz_permissions_check_request_dict(n_actor_roles=0, n_targets=1)
         actor_id = "actor-id"
-        target_id = "target-id"
+        target_id = "uid=target-id"
         data["actor"] = {"id": actor_id}
         data["targets"][0]["old_target"] = {"id": target_id}
         data["targets"][0]["new_target"]["id"] = target_id
@@ -148,7 +148,7 @@ class TestPermissionsCheckUnittest:
     ):
         data = get_authz_permissions_check_request_dict(n_actor_roles=0, n_targets=1)
         actor_id = "actor-id"
-        target_id = "target-id"
+        target_id = "uid=target-id"
         data["actor"] = {"id": actor_id}
         data["targets"][0]["old_target"] = {"id": target_id}
         data["targets"][0]["new_target"]["id"] = target_id
@@ -372,7 +372,7 @@ class TestPermissionsCheck:
     ):
         data = get_authz_permissions_check_request_dict(n_actor_roles=0, n_targets=1)
         actor_id = "actor-id"
-        target_id = "target-id"
+        target_id = "uid=target-id"
         data["actor"] = {"id": actor_id}
         data["targets"][0]["old_target"] = {"id": target_id}
         data["targets"][0]["new_target"]["id"] = target_id
@@ -438,7 +438,7 @@ class TestPermissionsCheck:
         """
         data = get_authz_permissions_check_request_dict(n_actor_roles=1, n_targets=1)
         actor_id = "actor-id"
-        target_id = "target-id"
+        target_id = "uid=target-id"
         users = {
             target_id: MockUdmObject(
                 dn=target_id, properties={"guardianRole": ["ucsschool:users:student"]}
@@ -486,7 +486,7 @@ class TestPermissionsCheck:
         data = get_authz_permissions_check_request_dict(n_actor_roles=1, n_targets=1)
         data["namespaces"] = [{"app_name": "ucsschool", "name": "users"}]
         actor_id = "actor-id"
-        target_id = "target-id"
+        target_id = "uid=target-id"
         data["actor"] = {"id": actor_id}
         data["targets"][0]["old_target"] = {"id": target_id}
         data["targeted_permissions_to_check"] = [
@@ -545,7 +545,7 @@ class TestPermissionsCheck:
         data = get_authz_permissions_check_request_dict(n_actor_roles=1, n_targets=1)
         data["namespaces"] = [{"app_name": "ucsschool", "name": "users"}]
         actor_id = "actor-id"
-        target_id = "target-id"
+        target_id = "uid=target-id"
         data["actor"] = {"id": actor_id}
         data["targets"][0]["old_target"] = {"id": target_id}
         data["targeted_permissions_to_check"] = []
