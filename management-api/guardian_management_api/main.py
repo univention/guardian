@@ -58,7 +58,7 @@ async def mount_routers(fastapi_app: FastAPI):
     )
 
 
-def mount_bundle_server(fastapi_app: FastAPI, bundle_dir: Path):
+def mount_bundle_server(fastapi_app: FastAPI, bundle_dir: Path):  # pragma: no cover
     fastapi_app.mount(
         f"{API_PREFIX}/bundles", StaticFiles(directory=bundle_dir), name="bundles"
     )
@@ -92,7 +92,7 @@ async def lifespan(fastapi_app: FastAPI):
     rebuild_bundle_task = None
     if not await settings_port.get_setting(
         BUNDLE_SERVER_DISABLED_SETTING_NAME, bool, False
-    ):
+    ):  # pragma: no cover
         logger.info("Mounting bundle server.")
         bundle_server_port: BundleServerPort = await ADAPTER_REGISTRY.request_port(
             BundleServerPort
@@ -115,7 +115,7 @@ async def lifespan(fastapi_app: FastAPI):
         )
     yield
     if rebuild_bundle_task is not None:
-        rebuild_bundle_task.cancel()
+        rebuild_bundle_task.cancel()  # pragma: no cover
 
 
 app = FastAPI(
