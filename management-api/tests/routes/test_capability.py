@@ -300,6 +300,63 @@ class TestCapabilityEndpoints:
         assert result.json() == expected
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures("run_alembic_migrations")
+    async def test_create_and_get_capability(self, client):
+        """Test for https://git.knut.univention.de/univention/components/authorization-engine/guardian/-/issues/143"""
+        response = client.post(
+            client.app.url_path_for(
+                "create_role", app_name="guardian", namespace_name="default"
+            ),
+            json={"name": "test", "display_name": "Test role"},
+        )
+        assert response.status_code == 200
+        cap_data = {
+            "name": "test",
+            "display_name": "This is a test",
+            "role": {
+                "app_name": "guardian",
+                "namespace_name": "default",
+                "name": "test",
+            },
+            "conditions": [],
+            "relation": "AND",
+            "permissions": [
+                {
+                    "app_name": "guardian",
+                    "namespace_name": "management-api",
+                    "name": "read_resource",
+                }
+            ],
+        }
+        response = client.post(
+            client.app.url_path_for(
+                "create_capability",
+                app_name="guardian",
+                namespace_name="management-api",
+            ),
+            json=cap_data,
+        )
+        assert response.status_code == 200
+        response = client.post(
+            client.app.url_path_for(
+                "create_capability",
+                app_name="guardian",
+                namespace_name="management-api",
+            ),
+            json=cap_data,
+        )
+        assert response.status_code == 400
+        response = client.get(
+            client.app.url_path_for(
+                "get_capability",
+                app_name="guardian",
+                namespace_name="management-api",
+                name="test",
+            )
+        )
+        assert response.status_code == 200
+
+    @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")
     async def test_create_capability_role_not_found(
         self, client, create_capabilities, sqlalchemy_mixin
