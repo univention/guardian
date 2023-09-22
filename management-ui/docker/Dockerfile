@@ -1,7 +1,10 @@
 FROM node:18 AS builder
 
+# This is only for local development.
+# Don't include this setting in the docker file for the AppCenter.
+ENV VITE__MANAGEMENT_UI__TESTING__ENABLE_TEST_ROUTES=1
+
 COPY management-ui /management-ui
-COPY .env* /management-ui/
 WORKDIR /management-ui
 RUN yarn install
 RUN yarn build

@@ -39,10 +39,21 @@ Here are the variables you can set:
 #### Settings Port
 
 The settings port determines where the app's settings will come from.
-Currently the only source is environment variables:
+
+If you're doing frontend development and planning to run `yarn dev`, you should use the `env` adapter:
 
 ```shell
 export VITE__MANAGEMENT_UI__ADAPTER__SETTINGS_PORT=env
+```
+
+If you're doing backend development and want to use the frontend from docker, you don't need to change any configuration. It uses the `url` settings port by default.
+
+Finally, if you're doing development on the URL adapter running `yarn dev`:
+
+```shell
+export VITE__MANAGEMENT_UI__CORS__USE_PROXY=1
+export VITE__MANAGEMENT_UI__ADAPTER__SETTINGS_PORT=url
+export VITE__URL_SETTINGS_ADAPTER__CONFIG_URL=http://localhost/guardian/management-ui/config.json
 ```
 
 #### Authorization Port

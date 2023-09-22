@@ -5,11 +5,17 @@ import {dataPortSetting} from '@/ports/data';
 import {inMemoryAuthenticationSettings, keycloakAuthenticationSettings} from '@/adapters/authentication';
 import {apiDataSettings} from '@/adapters/data';
 import type {SettingsPort} from '@/ports/settings';
-import {EnvSettingsAdapter} from '@/adapters/settings';
+import {EnvSettingsAdapter, UrlSettingsAdapter} from '@/adapters/settings';
 import {InvalidAdapterError} from '@/adapters/errors';
+
+interface UrlConfig {
+  configUrl: string;
+  useProxy: boolean;
+}
 
 interface SettingsPortConfig {
   adapter: string;
+  urlConfig: UrlConfig;
 }
 
 interface InMemoryAuthenticationConfig {
@@ -51,6 +57,10 @@ export const useSettingsStore = defineStore('settings', () => {
   const config: Ref<SettingsConfig> = ref({
     settingsPort: {
       adapter: '',
+      urlConfig: {
+        configUrl: '',
+        useProxy: false,
+      },
     },
     authenticationPort: {
       adapter: '',
@@ -82,11 +92,20 @@ export const useSettingsStore = defineStore('settings', () => {
       return;
     }
 
+    // SettingsPort settings
     config.value.settingsPort.adapter = adapterName;
+    config.value.settingsPort.urlConfig.configUrl = import.meta.env.VITE__URL_SETTINGS_ADAPTER__CONFIG_URL ?? '';
+    config.value.settingsPort.urlConfig.useProxy = import.meta.env.VITE__MANAGEMENT_UI__CORS__USE_PROXY === '1';
+
     const settingsAdapter = ((): SettingsPort => {
       switch (adapterName) {
         case 'env':
           return new EnvSettingsAdapter();
+        case 'url':
+          return new UrlSettingsAdapter(
+            config.value.settingsPort.urlConfig.configUrl,
+            config.value.settingsPort.urlConfig.useProxy
+          );
         default:
           throw new InvalidAdapterError(`Invalid settings adapter: ${adapterName}`);
       }
