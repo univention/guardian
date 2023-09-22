@@ -108,6 +108,18 @@ class TestCapabilityEndpoints:
             }
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_get_capabilities_empty(
+        self, client, create_capabilities, sqlalchemy_mixin
+    ):
+        response = client.get(client.app.url_path_for("get_all_capabilities"))
+        assert response.status_code == 200
+        capabilities = response.json()["capabilities"]
+        pagination = response.json()["pagination"]
+        assert pagination == {"offset": 0, "limit": 0, "total_count": 0}
+        assert capabilities == []
+
+    @pytest.mark.asyncio
     async def test_get_capabilities_error(self, client):
         response = client.get(client.app.url_path_for("get_all_capabilities"))
         assert response.status_code == 500
@@ -161,6 +173,27 @@ class TestCapabilityEndpoints:
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")
+    async def test_get_capabilities_by_roles_empty(
+        self, client, create_capabilities, sqlalchemy_mixin
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_capabilities(session, 10, 2)
+        response = client.get(
+            client.app.url_path_for(
+                "get_capabilities_by_role",
+                app_name="foo",
+                namespace_name="bar",
+                name="foo",
+            )
+        )
+        assert response.status_code == 200
+        capabilities = response.json()["capabilities"]
+        pagination = response.json()["pagination"]
+        assert pagination == {"offset": 0, "limit": 0, "total_count": 0}
+        assert capabilities == []
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
     async def test_get_capabilities_by_namespaces(
         self, client, create_capabilities, sqlalchemy_mixin
     ):
@@ -177,6 +210,25 @@ class TestCapabilityEndpoints:
         assert response.status_code == 200
         pagination = response.json()["pagination"]
         assert pagination == {"offset": 0, "limit": 20, "total_count": 20}
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_get_capabilities_by_namespaces_empty(
+        self, client, create_capabilities, sqlalchemy_mixin
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_capabilities(session, 10, 2)
+        response = client.get(
+            client.app.url_path_for(
+                "get_capabilities_by_namespace",
+                app_name="foo",
+                namespace_name="bar",
+            )
+        )
+        assert response.status_code == 200
+        pagination = response.json()["pagination"]
+        assert pagination == {"offset": 0, "limit": 0, "total_count": 0}
+        assert response.json()["capabilities"] == []
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")
