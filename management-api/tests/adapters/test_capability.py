@@ -24,6 +24,12 @@ from guardian_management_api.models.capability import (
 from guardian_management_api.models.condition import ConditionParameterType
 from guardian_management_api.models.permission import Permission
 from guardian_management_api.models.role import Role
+from guardian_management_api.models.routers.capability import (
+    CapabilityCreateData,
+    CapabilityCreateRequest,
+    CapabilityRole,
+    RelationChoices,
+)
 from guardian_management_api.models.sql_persistence import (
     DBCapability,
     DBCapabilityCondition,
@@ -441,3 +447,28 @@ class TestFastAPICapabilityAPIAdapter:
     async def test_to_obj_get_multiple_wrong_request_type(self, adapter):
         with pytest.raises(RuntimeError, match="Wrong request type."):
             await adapter.to_obj_get_multiple(True)
+
+    @pytest.mark.asyncio
+    async def test_to_obj_create(self, adapter):
+        """
+        Relates to https://git.knut.univention.de/univention/components/authorization-engine/guardian/-/issues/141
+
+        This test ensures that generated names always start with `cap-`
+        to prevent the name from beginning with a number. If this is ever
+        changed, make sure to ensure compliance of the name with the rules.
+        """
+        result = await adapter.to_obj_create(
+            CapabilityCreateRequest(
+                app_name="app",
+                namespace_name="namespace",
+                data=CapabilityCreateData(
+                    conditions=[],
+                    permissions=[],
+                    relation=RelationChoices.AND,
+                    role=CapabilityRole(
+                        app_name="app", namespace_name="namespace", name="role"
+                    ),
+                ),
+            )
+        )
+        assert result.name.startswith("cap-")

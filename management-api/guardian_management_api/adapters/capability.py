@@ -516,7 +516,9 @@ class FastAPICapabilityAPIAdapter(
         return Capability(
             app_name=api_request.app_name,
             namespace_name=api_request.namespace_name,
-            name=api_request.data.name if api_request.data.name else str(uuid.uuid4()),
+            name=api_request.data.name
+            if api_request.data.name
+            else f"cap-{str(uuid.uuid4())}",
             display_name=api_request.data.display_name,
             relation=CapabilityConditionRelation.AND
             if api_request.data.relation == RelationChoices.AND
