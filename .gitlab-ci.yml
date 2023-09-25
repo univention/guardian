@@ -203,6 +203,17 @@ build_docker_image_opa:
     CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-opa
     KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
 
+build_docker_image_management_ui:
+  stage: build_docker
+  rules:
+    - changes:
+        - management-ui/**/*
+  extends: .kaniko
+  variables:
+    DOCKERFILE_PATH: "$CI_PROJECT_DIR/management-ui/docker/Dockerfile"
+    CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-management-ui
+    KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
+
 build_docker_image_authz:
   stage: build_docker
   needs:

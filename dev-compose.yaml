@@ -219,6 +219,35 @@ services:
     healthcheck:
       test: ["CMD", "sleep", "0.1"]
 
+  management-ui:
+    container_name: management-ui
+    image: management-ui:dev
+    build:
+      context: ./
+      dockerfile: management-ui/docker/Dockerfile
+      extra_hosts:
+        - git.knut.univention.de:${GITLAB_IP}
+    networks:
+      - proxy-net
+    environment:
+      - VITE__MANAGEMENT_UI__ADAPTER__SETTINGS_PORT=config
+      - VITE__MANAGEMENT_UI__ADAPTER__AUTHENTICATION_PORT
+      - VITE__MANAGEMENT_UI__ADAPTER__DATA_PORT
+      - VITE__MANAGEMENT_UI__TESTING__ENABLE_TEST_ROUTES
+      - VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__SSO_URI
+      - VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__REALM
+      - VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__CLIENT_ID
+      - VITE__IN_MEMORY_AUTHENTICATION_ADAPTER__IS_AUTHENTICATED
+      - VITE__IN_MEMORY_AUTHENTICATION_ADAPTER__USERNAME
+      - VITE__API_DATA_ADAPTER__URI
+
+    labels:
+      traefik.http.routers.management-ui.entrypoints: web
+      traefik.http.routers.management-ui.rule: PathPrefix(`/guardian/management-ui`)
+      traefik.http.routers.management-ui.service: management-ui
+      traefik.http.services.management-ui.loadbalancer.server.port: 80
+
+
 networks:
   proxy-net:
     name: proxy-net

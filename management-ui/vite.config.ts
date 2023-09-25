@@ -10,7 +10,7 @@ import pluginRewriteAll from 'vite-plugin-rewrite-all';
 export default defineConfig(async({mode}) => {
   const config: UserConfig = {
     plugins: [vue(), pluginRewriteAll()],
-    // base: '/univention/ui/guardian/',
+    base: '/guardian/management-ui/',
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
