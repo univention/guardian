@@ -103,7 +103,7 @@ def get_authz_roles_dict() -> dict:
 
 def get_authz_object_dict(id=None, n_roles=3, n_attributes=3) -> dict:
     return {
-        "id": id if id else fake.unique.pystr(),
+        "id": id if id else f"uid={fake.unique.pystr()}",
         "roles": [get_authz_roles_dict() for _ in range(n_roles)],
         "attributes": fake.pydict(n_attributes, value_types=[int, str]),
     }

@@ -12,7 +12,7 @@ class TestPermissionsGetUnittest:
     async def test_get_permissions_with_lookup(self, client, udm_mock, opa_async_mock):
         data = get_authz_permissions_get_request_dict(n_targets=1)
         actor_id = "actor-id"
-        target_id = "target-id"
+        target_id = "uid=target-id"
         data["actor"] = {"id": actor_id}
         data["targets"][0]["old_target"] = {"id": target_id}
         data["targets"][0]["new_target"]["id"] = target_id
@@ -48,7 +48,7 @@ class TestPermissionsGetUnittest:
     ):
         data = get_authz_permissions_get_request_dict(n_targets=1)
         actor_id = "actor-id"
-        target_id = "target-id"
+        target_id = "uid=target-id"
         data["actor"] = {"id": actor_id}
         data["targets"][0]["old_target"] = {"id": target_id}
         data["targets"][0]["new_target"]["id"] = target_id
@@ -115,7 +115,7 @@ class TestPermissionsGetUnittest:
     async def test_permissions_get_opa_errors(self, client, opa_async_mock, udm_mock):
         opa_async_mock.return_value = 1
         actor_id = "actor-id"
-        target_id = "target-id"
+        target_id = "uid=target-id"
         data = get_authz_permissions_get_request_dict(n_targets=1)
         data["actor"] = {"id": actor_id}
         data["targets"][0]["old_target"] = {"id": target_id}
@@ -225,7 +225,7 @@ class TestGetPermissions:
     async def test_get_permissions_randomized_data_with_lookup(self, client, udm_mock):
         data = get_authz_permissions_get_request_dict(n_targets=1)
         actor_id = "actor-id"
-        target_id = "target-id"
+        target_id = "uid=target-id"
         data["actor"] = {"id": actor_id}
         data["targets"][0]["old_target"] = {"id": target_id}
         data["targets"][0]["new_target"]["id"] = target_id
@@ -263,7 +263,7 @@ class TestGetPermissions:
         data = get_authz_permissions_get_request_dict(n_actor_roles=1, n_targets=1)
         data["namespaces"] = [{"app_name": "ucsschool", "name": "users"}]
         actor_id = "actor-id"
-        target_id = "target-id"
+        target_id = "uid=target-id"
         data["actor"] = {"id": actor_id}
         data["targets"][0]["old_target"] = {"id": target_id}
         data["targets"][0]["new_target"]["id"] = target_id
