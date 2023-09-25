@@ -48,9 +48,10 @@ The configuration files can be found in `appcenter-management`. The App ID is `g
 
 ### Guardian Management UI
 
-This is a frontend app that is paired with the Guardian Management UI.
-Currently this is not dockerized or in the app center. Please see the README
-in `management-ui`.
+This app contains the frontend of the Guardian.
+Currently, this is not yet in the app center.
+
+Please see the README in `management-ui` for more information.
 
 ## Development
 
@@ -71,6 +72,10 @@ Start the dev environment:
 
 You get both APIs up and running on port 80, including live reload when editing your local files.
 
+You also get a build of the [Guardian Management UI](#guardian-management-ui) running on port 80
+(Served under http://localhost/guardian/management-ui/). Note: That container is a static compiled build of the frontend.
+To develop the frontend see the README in `management-ui`.
+
 _Note: docker compose uses the environment variables from `.env` by default._
 _Make sure the contents of it are correct or pass `--env-file .env.example` to_
 _use the default values._
@@ -83,6 +88,7 @@ You can now access the following services:
 
 - [authorization-api](http://localhost/guardian/authorization/docs/)
 - [management-api](http://localhost/guardian/management/docs/)
+- [management-ui](http://localhost/guardian/management-ui/)
 
 Secondary services for integration:
 
