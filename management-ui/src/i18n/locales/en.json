@@ -78,6 +78,11 @@
     "creationFailed.role": "The role could not be created",
     "loadAddViewConfigFailed": "The page could not be loaded"
   },
+  "NotFoundView": {
+    "header": "Page Not Found",
+    "body.text": "We are unable to find the page you are looking for.",
+    "button.home": "Home"
+  },
   "ConfirmBackModal": {
     "heading": "Confirmation",
     "description_edit": "There are unsaved changes. Are you sure to cancel?",

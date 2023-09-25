@@ -78,6 +78,11 @@
     "creationFailed.role": "Die Rolle konnte nicht angelegt werden",
     "loadAddViewConfigFailed": "Die Seite konnte nicht geladen werden"
   },
+  "NotFoundView": {
+    "header": "Seite nicht gefunden",
+    "body.text": "Wir konnten die von Ihnen gesuchte Seite nicht finden.",
+    "button.home": "Startseite"
+  },
   "ConfirmBackModal": {
     "heading": "Bestätigung",
     "description_edit": "Einige Änderungen sind noch nicht gespeichert. Möchten Sie abbrechen?",

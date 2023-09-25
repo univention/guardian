@@ -1,6 +1,7 @@
 import {createRouter, createWebHistory} from 'vue-router';
 import ListView from '@/views/ListView.vue';
 import EditView from '@/views/EditView.vue';
+import PageNotFound from '@/views/PageNotFound.vue';
 import TestView from '@/tests/views/TestView.vue';
 import SettingsAdapterTestView from '@/tests/views/SettingsAdapter.vue';
 import AuthenticationAdapterTestView from '@/tests/views/AuthenticationAdapter.vue';
@@ -126,6 +127,10 @@ const router = createRouter({
       props: {action: 'edit', objectType: 'context'},
     },
     ...testRoutes,
+    {
+      path: '/:pathMatch(.*)*',
+      component: PageNotFound,
+    },
   ],
 });
 
