@@ -259,7 +259,7 @@ async def opa_adapter(
     opa_adapter_integrated(),
     reason="Cannot run integration tests for OPA adapter without config",
 )
-@pytest.mark.integration
+@pytest.mark.in_container
 class TestOPAAdapterIntegration:
     @pytest.mark.asyncio
     async def test_get_permissions(

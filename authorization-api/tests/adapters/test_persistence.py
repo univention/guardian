@@ -4,11 +4,9 @@
 
 import json
 import os
-import urllib.parse
 
 import pytest
 import pytest_asyncio
-import requests
 from guardian_authorization_api.adapters.persistence import (
     StaticDataAdapter,
     UDMPersistenceAdapter,
@@ -34,22 +32,17 @@ from guardian_authorization_api.udm_client import (
 from ..mock_classes import MockUdmObject
 
 
-def udm_adapter_not_integrated():
+def ucs_test_disabled():
     url = os.environ.get("UDM_DATA_ADAPTER__URL")
     username = os.environ.get("UDM_DATA_ADAPTER__USERNAME")
     password = os.environ.get("UDM_DATA_ADAPTER__PASSWORD")
+    ucs_test_enabled = os.environ.get("UCS_TEST_ENABLED") == "1"
+    if ((url is None) or (username is None) or (password is None)) and ucs_test_enabled:
+        raise Exception(
+            "UCS integration tests enabled but url, password or username missing"
+        )
 
-    if not (url and username and password):
-        return True
-
-    parse_result = urllib.parse.urlparse(url)
-    udm_url = f"{parse_result.scheme}://{username}:{password}@{parse_result.netloc}{parse_result.path}"
-    try:
-        response = requests.get(udm_url)
-    except (requests.ConnectionError, requests.ConnectTimeout):
-        return True
-
-    return 200 != response.status_code
+    return not ucs_test_enabled
 
 
 @pytest.fixture()
@@ -324,7 +317,7 @@ class TestUDMDataAdapter:
 
 
 @pytest.mark.skipif(
-    udm_adapter_not_integrated(),
+    ucs_test_disabled(),
     reason="Cannot run integration tests for UDM adapter if UDM not available",
 )
 @pytest.mark.integration
