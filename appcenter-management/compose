@@ -5,13 +5,23 @@ services:
     security_opt:
       - seccomp:/etc/docker/seccomp-systemd.json
     environment:
-      GUARDIAN__MANAGEMENT__ADAPTER__SETTINGS_PORT: env
-      GUARDIAN__MANAGEMENT__ADAPTER__APP_PERSISTENCE_PORT: in_memory
       IS_UNIVENTION_APPCENTER: 1
       GUARDIAN__MANAGEMENT__LOGGING__LEVEL: @%@guardian-management-api/logging/level@%@
       GUARDIAN__MANAGEMENT__LOGGING__STRUCTURED: "@%@guardian-management-api/logging/structured@%@"
       GUARDIAN__MANAGEMENT__LOGGING__FORMAT: @%@guardian-management-api/logging/format@%@
-      GUARDIAN__MANAGEMENT__BASE_URL: @!@
+      GUARDIAN__MANAGEMENT__ADAPTER__SETTINGS_PORT: env
+      GUARDIAN__MANAGEMENT__ADAPTER__APP_PERSISTENCE_PORT: sql
+      GUARDIAN__MANAGEMENT__ADAPTER__CONDITION_PERSISTENCE_PORT: sql
+      GUARDIAN__MANAGEMENT__ADAPTER__CONTEXT_PERSISTENCE_PORT: sql
+      GUARDIAN__MANAGEMENT__ADAPTER__NAMESPACE_PERSISTENCE_PORT: sql
+      GUARDIAN__MANAGEMENT__ADAPTER__PERMISSION_PERSISTENCE_PORT: sql
+      GUARDIAN__MANAGEMENT__ADAPTER__ROLE_PERSISTENCE_PORT: sql
+      GUARDIAN__MANAGEMENT__ADAPTER__CAPABILITY_PERSISTENCE_PORT: sql
+      GUARDIAN__MANAGEMENT__ADAPTER__AUTHENTICATION_PORT: fast_api_oauth
+      SQL_PERSISTENCE_ADAPTER__DIALECT: postgres
+      SQL_PERSISTENCE_ADAPTER__DB_NAME: "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
+      GUARDIAN__MANAGEMENT__BASE_URL: @%@guardian-management-api/base_url@%@
+
 ucr = configRegistry
 protocol = ucr.get('guardian-management-api/protocol')
 fqdn = f"{ucr.get('hostname')}.{ucr.get('domainname')}"
