@@ -1,0 +1,109 @@
+{
+  "access": {
+    "configure": true,
+    "manage": true,
+    "view": true
+  },
+  "adminUrl": "",
+  "alwaysDisplayInConsole": false,
+  "attributes": {
+    "backchannel.logout.revoke.offline.tokens": "false",
+    "backchannel.logout.session.required": "true",
+    "client.secret.creation.time": "1695679656",
+    "oauth2.device.authorization.grant.enabled": "false",
+    "oidc.ciba.grant.enabled": "false"
+  },
+  "authenticationFlowBindingOverrides": {},
+  "baseUrl": "",
+  "bearerOnly": false,
+  "clientAuthenticatorType": "client-secret",
+  "clientId": "guardian-cli",
+  "consentRequired": false,
+  "defaultClientScopes": [
+    "web-origins",
+    "acr",
+    "profile",
+    "roles",
+    "email"
+  ],
+  "description": "",
+  "directAccessGrantsEnabled": false,
+  "enabled": true,
+  "frontchannelLogout": true,
+  "fullScopeAllowed": true,
+  "implicitFlowEnabled": false,
+  "name": "",
+  "nodeReRegistrationTimeout": -1,
+  "notBefore": 0,
+  "optionalClientScopes": [
+    "address",
+    "phone",
+    "offline_access",
+    "microprofile-jwt"
+  ],
+  "protocol": "openid-connect",
+  "protocolMappers": [
+    {
+      "config": {
+        "access.token.claim": "true",
+        "claim.name": "client_id",
+        "id.token.claim": "true",
+        "jsonType.label": "String",
+        "user.session.note": "client_id"
+      },
+      "consentRequired": false,
+      "name": "Client ID",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-usersessionmodel-note-mapper"
+    },
+    {
+      "config": {
+        "access.token.claim": "true",
+        "claim.name": "clientHost",
+        "id.token.claim": "true",
+        "jsonType.label": "String",
+        "user.session.note": "clientHost"
+      },
+      "consentRequired": false,
+      "name": "Client Host",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-usersessionmodel-note-mapper"
+    },
+    {
+      "config": {
+        "access.token.claim": "true",
+        "claim.name": "clientAddress",
+        "id.token.claim": "true",
+        "jsonType.label": "String",
+        "user.session.note": "clientAddress"
+      },
+      "consentRequired": false,
+      "name": "Client IP Address",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-usersessionmodel-note-mapper"
+    },
+    {
+      "config": {
+        "access.token.claim": "true",
+        "id.token.claim": "false",
+        "included.client.audience": "guardian"
+      },
+      "consentRequired": false,
+      "name": "guardian",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-audience-mapper"
+    }
+  ],
+  "publicClient": false,
+  "redirectUris": [
+    "/*"
+  ],
+  "rootUrl": "",
+  "secret": "univention",
+  "serviceAccountsEnabled": true,
+  "standardFlowEnabled": false,
+  "surrogateAuthRequired": false,
+  "webOrigins": [
+    "/*"
+  ]
+}

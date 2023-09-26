@@ -78,9 +78,13 @@ class KeycloakConfigurator:
             connection=self.connect(realm_name=self.realm_name)
         )
 
-        # # create client
+        # create clients
         client_config = json.load(
             open("/keycloak/provisioning/guardian_client_config.json", "r")
+        )
+        self.keycloak_admin.create_client(payload=client_config, skip_exists=True)
+        client_config = json.load(
+            open("/keycloak/provisioning/guardian_client_cli_config.json", "r")
         )
         self.keycloak_admin.create_client(payload=client_config, skip_exists=True)
 
