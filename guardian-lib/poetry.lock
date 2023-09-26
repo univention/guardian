@@ -335,20 +335,24 @@ name = "guardian-pytest"
 version = "0.1.0"
 description = "pytest utilities for guardian tests"
 optional = false
-python-versions = "^3.11"
-files = []
-develop = true
+python-versions = ">=3.11,<4.0"
+files = [
+    {file = "guardian_pytest-0.1.0-py3-none-any.whl", hash = "sha256:839cb26a451e7544cec7e4d57eb477b3febde46bfb04c6a5bb8617fa3364e6cb"},
+    {file = "guardian_pytest-0.1.0.tar.gz", hash = "sha256:6652a333912a435e34c399681e1c529aed88bf6a2645efb65fab1df0e2c4b719"},
+]
 
 [package.dependencies]
-cryptography = "^41.0.4"
-guardian-lib = "^1.0.2"
-pyjwt = "^2.8.0"
-pytest = "^7.4.2"
-requests = "^2.31.0"
+cryptography = ">=41.0.4,<42.0.0"
+guardian-lib = ">=1.0.2,<2.0.0"
+port-loader = ">=1.0.1,<2.0.0"
+pyjwt = ">=2.8.0,<3.0.0"
+pytest = ">=7.4.2,<8.0.0"
+requests = ">=2.31.0,<3.0.0"
 
 [package.source]
-type = "directory"
-url = "../guardian-pytest"
+type = "legacy"
+url = "https://git.knut.univention.de/api/v4/projects/830/packages/pypi/simple"
+reference = "guardian"
 
 [[package]]
 name = "idna"
@@ -727,4 +731,4 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "1c4ce31a560d72576ab7a2e5335e834ed2a9a2854499f0d35eea86b7fd169d20"
+content-hash = "a5a3f6e793dd1d21ed3eae88462e79e325935b0888751e4e34a58d03dcdb5151"

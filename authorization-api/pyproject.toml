@@ -46,7 +46,7 @@ pytest-asyncio = "^0.21.0"
 Faker = "^19.6.1"
 httpx = "^0.24.1"
 cryptography = "^41.0.4"
-guardian-pytest = "0.0.0.dev0+124.additional.test.2aefc029"
+guardian-pytest = "0.1.0"
 
 
 [[tool.poetry.source]]

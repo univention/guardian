@@ -26,7 +26,7 @@ pytest-asyncio = "^0.21.1"
 pytest-mock = "^3.11.1"
 pytest-cov = "^4.1.0"
 cryptography = "^41.0.3"
-guardian-pytest = {path = "../guardian-pytest", develop = true}
+guardian-pytest = "0.1.0"
 
 [[tool.poetry.source]]
 name = "guardian"

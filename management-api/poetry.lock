@@ -575,13 +575,13 @@ reference = "guardian"
 
 [[package]]
 name = "guardian-pytest"
-version = "0.0.0.dev0+124.additional.test.2aefc029"
+version = "0.1.0"
 description = "pytest utilities for guardian tests"
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "guardian_pytest-0.0.0.dev0+124.additional.test.2aefc029-py3-none-any.whl", hash = "sha256:0670d59387310e83677d93cd345b4eb3f5e015d71a9e6d28a8eed16d4d139065"},
-    {file = "guardian_pytest-0.0.0.dev0+124.additional.test.2aefc029.tar.gz", hash = "sha256:fa5c749aad9d636a483bc3bf75cc5b9683a2e11b8ff47eb6335a8482355762e1"},
+    {file = "guardian_pytest-0.1.0-py3-none-any.whl", hash = "sha256:839cb26a451e7544cec7e4d57eb477b3febde46bfb04c6a5bb8617fa3364e6cb"},
+    {file = "guardian_pytest-0.1.0.tar.gz", hash = "sha256:6652a333912a435e34c399681e1c529aed88bf6a2645efb65fab1df0e2c4b719"},
 ]
 
 [package.dependencies]
@@ -1351,4 +1351,4 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "324dda17cd61a4d1a20b67e90acfa30666bfe9c032c23203a7890053abe30acc"
+content-hash = "c1e5fb5b92f965d09971dd9d95f2482d4d237403c8b44aa71a3aa36a46f3e2b8"
