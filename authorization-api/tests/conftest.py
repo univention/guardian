@@ -14,7 +14,7 @@ import requests
 from faker import Faker
 from guardian_authorization_api.logging import configure_logger
 from guardian_authorization_api.main import app
-from guardian_authorization_api.models.policies import PolicyObject
+from guardian_authorization_api.models.policies import PolicyObject, Role
 from opa_client import client as opa_client
 from starlette.testclient import TestClient
 
@@ -67,7 +67,7 @@ def opa_async_mock():
 def get_policy_object() -> Callable:
     def _get_policy_object(
         identifier: str,
-        roles: Optional[list[str]] = None,
+        roles: Optional[list[Role]] = None,
         attributes: Optional[dict] = None,
     ):
         roles = [] if roles is None else roles

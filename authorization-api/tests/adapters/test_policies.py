@@ -13,6 +13,7 @@ from guardian_authorization_api.models.policies import (
     CheckPermissionsQuery,
     CheckPermissionsResult,
     CheckResult,
+    Context,
     GetPermissionsQuery,
     Namespace,
     OPAAdapterSettings,
@@ -29,7 +30,21 @@ from guardian_authorization_api.models.policies import (
 @pytest.fixture
 def get_actor_object(get_policy_object) -> Callable:
     def _get_actor_object():
-        return get_policy_object("actor")
+        return get_policy_object(
+            "actor",
+            roles=[
+                PolicyRole(
+                    app_name="ucsschool",
+                    namespace_name="users",
+                    name="teacher",
+                    context=Context(
+                        app_name="ucsschool",
+                        namespace_name="users",
+                        name="school1",
+                    ),
+                )
+            ],
+        )
 
     return _get_actor_object
 
@@ -259,7 +274,7 @@ async def opa_adapter(
     opa_adapter_integrated(),
     reason="Cannot run integration tests for OPA adapter without config",
 )
-@pytest.mark.in_container
+@pytest.mark.in_container_test
 class TestOPAAdapterIntegration:
     @pytest.mark.asyncio
     async def test_get_permissions(
@@ -270,11 +285,73 @@ class TestOPAAdapterIntegration:
             actor=PolicyObject(
                 id="actor",
                 roles=[
-                    {
-                        "app_name": "ucsschool",
-                        "namespace_name": "users",
-                        "name": "teacher",
-                    }
+                    PolicyRole(
+                        app_name="ucsschool",
+                        namespace_name="users",
+                        name="teacher",
+                    )
+                ],
+                attributes={},
+            ),
+            targets=[
+                Target(
+                    old_target=PolicyObject(id="target", roles=[], attributes={}),
+                    new_target=PolicyObject(id="target", roles=[], attributes={}),
+                )
+            ],
+            namespaces=[Namespace(app_name="ucsschool", name="users")],
+            contexts=None,
+            extra_args=None,
+            include_general_permissions=True,
+        )
+        result = await opa_adapter.get_permissions(query=query)
+        assert result
+        assert result.target_permissions
+        assert {
+            Permission(app_name="ucsschool", namespace_name="users", name="export"),
+            Permission(
+                app_name="ucsschool", namespace_name="users", name="read_first_name"
+            ),
+            Permission(
+                app_name="ucsschool", namespace_name="users", name="read_last_name"
+            ),
+            Permission(
+                app_name="ucsschool", namespace_name="users", name="write_password"
+            ),
+        }.issubset(result.target_permissions[0].permissions)
+        assert result.general_permissions
+        assert {
+            Permission(app_name="ucsschool", namespace_name="users", name="export"),
+            Permission(
+                app_name="ucsschool", namespace_name="users", name="read_first_name"
+            ),
+            Permission(
+                app_name="ucsschool", namespace_name="users", name="read_last_name"
+            ),
+            Permission(
+                app_name="ucsschool", namespace_name="users", name="write_password"
+            ),
+        }.issubset(result.general_permissions)
+
+    @pytest.mark.asyncio
+    async def test_get_permissions_with_context(
+        self,
+        opa_adapter: OPAAdapter,
+    ):
+        query = GetPermissionsQuery(
+            actor=PolicyObject(
+                id="actor",
+                roles=[
+                    PolicyRole(
+                        app_name="ucsschool",
+                        namespace_name="users",
+                        name="teacher",
+                        context=Context(
+                            app_name="ucsschool",
+                            namespace_name="users",
+                            name="school1",
+                        ),
+                    ),
                 ],
                 attributes={},
             ),

@@ -53,10 +53,17 @@ class NamespaceMinimal(GuardianBaseModel):
     name: NamespaceName
 
 
+class Context(GuardianBaseModel):
+    app_name: AppName
+    namespace_name: NamespaceName
+    name: ContextName
+
+
 class Role(GuardianBaseModel):
     app_name: AppName
     namespace_name: NamespaceName
     name: AuthzObjectIdentifier
+    context: Optional[Context]
 
 
 class AuthzObject(GuardianBaseModel):
@@ -98,12 +105,6 @@ class TargetLookup(GuardianBaseModel):
 
     old_target: Optional[AuthzObjectLookup]
     new_target: Optional[AuthzObject]
-
-
-class Context(GuardianBaseModel):
-    app_name: AppName
-    namespace_name: NamespaceName
-    name: ContextName
 
 
 class AuthzPermissionsPostRequest(GuardianBaseModel):

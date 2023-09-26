@@ -305,3 +305,137 @@ class TestGetPermissions:
                 "namespace_name": "users",
             },
         ]
+
+    @pytest.mark.asyncio
+    async def test_get_permissions_basic_with_lookup_context(self, client, udm_mock):
+        """
+        - Actor has one role: ucsschool:users:teacher
+        - According to the role-capability-mapping,
+          the actor should always have the checked permissions
+        """
+        data = get_authz_permissions_get_request_dict(n_actor_roles=1, n_targets=1)
+        data["namespaces"] = [{"app_name": "ucsschool", "name": "users"}]
+        actor_id = "actor-id"
+        target_id = "uid=target-id"
+        data["actor"] = {"id": actor_id}
+        data["targets"][0]["old_target"] = {"id": target_id}
+        data["targets"][0]["new_target"]["id"] = target_id
+        users = {
+            target_id: MockUdmObject(
+                dn=target_id,
+                properties={
+                    "guardianRole": ["ucsschool:users:student&ucsschool:users:school1"]
+                },
+            ),
+            actor_id: MockUdmObject(
+                dn=actor_id,
+                properties={
+                    "guardianRole": ["ucsschool:users:teacher&ucsschool:users:school2"]
+                },
+            ),
+        }
+        udm_mock(users=users)
+        response = client.post(
+            client.app.url_path_for("get_permissions_with_lookup"), json=data
+        )
+        assert response.status_code == 200, response.json()
+
+        response_json = response.json()
+        assert response_json["actor_id"] == data["actor"]["id"]
+        assert (
+            response_json["target_permissions"][0]["target_id"]
+            == data["targets"][0]["old_target"]["id"]
+        )
+        assert response_json["target_permissions"][0]["permissions"] == [
+            {"app_name": "ucsschool", "name": "export", "namespace_name": "users"},
+            {
+                "app_name": "ucsschool",
+                "name": "read_first_name",
+                "namespace_name": "users",
+            },
+            {
+                "app_name": "ucsschool",
+                "name": "read_last_name",
+                "namespace_name": "users",
+            },
+            {
+                "app_name": "ucsschool",
+                "name": "write_password",
+                "namespace_name": "users",
+            },
+        ]
+
+    @pytest.mark.parametrize(
+        "target_roles,expected",
+        [
+            (
+                ["ucsschool:users:student&ucsschool:users:school1"],
+                [
+                    {
+                        "app_name": "contextApp",
+                        "namespace_name": "test",
+                        "name": "context_test_permission",
+                    }
+                ],
+            ),
+            (
+                [
+                    "ucsschool:users:student&ucsschool:users:school2",
+                    "ucsschool:users:student&ucsschool:users:school3",
+                ],
+                [
+                    {
+                        "app_name": "contextApp",
+                        "namespace_name": "test",
+                        "name": "context_test_permission",
+                    }
+                ],
+            ),
+            (["ucsschool:users:student"], []),
+            (["ucsschool:users:student&ucsschool:users:school3"], []),
+        ],
+    )
+    @pytest.mark.asyncio
+    async def test_get_permissions_context_compare(
+        self, client, udm_mock, target_roles, expected
+    ):
+        """
+        - Actor has one role: ucsschool:users:teacher
+        - According to the role-capability-mapping,
+          the actor should always have the checked permissions
+        """
+        data = get_authz_permissions_get_request_dict(n_actor_roles=1, n_targets=1)
+        data["namespaces"] = [{"app_name": "contextApp", "name": "test"}]
+        actor_id = "actor-id"
+        target_id = "uid=target-id"
+        data["actor"] = {"id": actor_id}
+        data["targets"][0]["old_target"] = {"id": target_id}
+        data["targets"][0]["new_target"]["id"] = target_id
+        users = {
+            target_id: MockUdmObject(
+                dn=target_id,
+                properties={"guardianRole": target_roles},
+            ),
+            actor_id: MockUdmObject(
+                dn=actor_id,
+                properties={
+                    "guardianRole": [
+                        "ucsschool:users:head_master&ucsschool:users:school1",
+                        "ucsschool:users:head_master&ucsschool:users:school2",
+                    ]
+                },
+            ),
+        }
+        udm_mock(users=users)
+        response = client.post(
+            client.app.url_path_for("get_permissions_with_lookup"), json=data
+        )
+        assert response.status_code == 200, response.json()
+
+        response_json = response.json()
+        assert response_json["actor_id"] == data["actor"]["id"]
+        assert (
+            response_json["target_permissions"][0]["target_id"]
+            == data["targets"][0]["old_target"]["id"]
+        )
+        assert response_json["target_permissions"][0]["permissions"] == expected

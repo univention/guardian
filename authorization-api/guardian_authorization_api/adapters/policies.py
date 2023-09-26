@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 from collections import defaultdict
-from dataclasses import asdict
 from typing import Any, Optional, Type
 
 from opa_client.client import OPAClient
@@ -178,20 +177,18 @@ class OPAAdapter(PolicyPort, AsyncConfiguredAdapterMixin):
                 "Upstream returned faulty data for check_permissions."
             ) from exc
 
-    def _format_roles(self, roles: list[dict[str, str]]) -> list[str]:
-        return [
-            f"{role['app_name']}:{role['namespace_name']}:{role['name']}"
-            for role in roles
-        ]
-
     async def get_permissions(self, query: GetPermissionsQuery) -> GetPermissionsResult:
-        targets: list[dict[str, dict | None]] = (
+        targets: list[dict[str, OPAPolicyObject | None]] = (
             []
             if query.targets is None
             else [
                 {
-                    "old": asdict(target.old_target) if target.old_target else None,
-                    "new": asdict(target.new_target) if target.new_target else None,
+                    "old": OPAPolicyObject.from_policy_object(target.old_target)
+                    if target.old_target
+                    else None,
+                    "new": OPAPolicyObject.from_policy_object(target.new_target)
+                    if target.new_target
+                    else None,
                 }
                 for target in query.targets
             ]
@@ -203,22 +200,10 @@ class OPAAdapter(PolicyPort, AsyncConfiguredAdapterMixin):
         )
         contexts = [] if query.contexts is None else query.contexts
         extra_args = {} if query.extra_args is None else query.extra_args
-        actor = asdict(query.actor)
-        actor["roles"] = self._format_roles(actor["roles"])
-        for target in targets:
-            for key in ["old", "new"]:
-                if target[key]:
-                    target[key]["roles"] = self._format_roles(target[key]["roles"])  # type: ignore
+        actor = OPAPolicyObject.from_policy_object(query.actor)
         if query.include_general_permissions:
             targets = list(targets) + [
-                {
-                    "old": asdict(EMPTY_TARGET.old_target)
-                    if EMPTY_TARGET.old_target
-                    else None,
-                    "new": asdict(EMPTY_TARGET.new_target)
-                    if EMPTY_TARGET.new_target
-                    else None,
-                }
+                {"old": EMPTY_TARGET.old_target, "new": EMPTY_TARGET.new_target}
             ]
         try:
             opa_response = await self.opa_client.check_policy(

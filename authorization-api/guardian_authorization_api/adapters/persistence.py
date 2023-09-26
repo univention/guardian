@@ -15,6 +15,7 @@ from ..models.persistence import (
     StaticDataAdapterSettings,
     UDMPersistenceAdapterSettings,
 )
+from ..models.policies import Context as PoliciesContext
 from ..models.policies import PolicyObject
 from ..models.policies import Role as PoliciesRole
 from ..ports import PersistencePort
@@ -30,7 +31,7 @@ from ..udm_client import (  # type: ignore[attr-defined]
 )
 
 re_split_roles_and_contexts = re.compile(
-    r"^(([a-z0-9-_]+):([a-z0-9-_]+):([a-z0-9-_]+))(&([a-z0-9-_]+):([a-z0-9-_]+):([a-z0-9-_]+))?$"
+    r"^((?P<role_app>[a-z0-9-_]+):(?P<role_namespace>[a-z0-9-_]+):(?P<role_name>[a-z0-9-_]+))(&(?P<context_app>[a-z0-9-_]+):(?P<context_namespace>[a-z0-9-_]+):(?P<context_name>[a-z0-9-_]+))?$"
 )
 
 
@@ -115,25 +116,28 @@ class UDMPersistenceAdapter(PersistencePort, AsyncConfiguredAdapterMixin):
     @staticmethod
     def _to_policy_role(role: str):
         if res := re.search(re_split_roles_and_contexts, role):
-            groups = res.groups()
-            role_app = groups[1]
-            role_namespace = groups[2]
-            role_name = groups[3]
-            # fixme: add context support
-            # if len(groups) == 8:
-            #     context = PoliciesContext(
-            #         name=groups[7], app_name=groups[5], namespace_name=groups[6]
-            #     )
+            groups = res.groupdict()
+            role_app = groups["role_app"]
+            role_namespace = groups["role_namespace"]
+            role_name = groups["role_name"]
+            context = None
+            if groups["context_name"] is not None:
+                context = PoliciesContext(
+                    name=groups["context_name"],
+                    app_name=groups["context_app"],
+                    namespace_name=groups["context_namespace"],
+                )
+
             return PoliciesRole(
                 app_name=role_app,
                 namespace_name=role_namespace,
                 name=role_name,
+                context=context,
             )
         raise PersistenceError(f"Role {role} is malformed.")
 
     @staticmethod
     def _to_policy_object(po: PersistenceObject) -> PolicyObject:
-        # todo in opa adapter include context in role
         roles = []
         for role in po.roles:
             roles.append(UDMPersistenceAdapter._to_policy_role(role))

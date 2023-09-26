@@ -70,6 +70,8 @@ markers = [
     "integration: marks test as requiring services outside of the guardian",
     "in_container_test: marked test is relying on services outside the authzorization-api (e.g.: opa)",
 ]
+# DeprecationWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html
+filterwarnings = ["ignore::DeprecationWarning:gunicorn.util:25"]
 
 [build-system]
 requires = ["poetry-core"]

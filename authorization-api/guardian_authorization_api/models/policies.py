@@ -21,10 +21,8 @@ class NamespacedValue:
     namespace_name: str
     name: str
 
-
-@dataclass(frozen=True)
-class Role(NamespacedValue):
-    ...
+    def __str__(self):
+        return f"{self.app_name}:{self.namespace_name}:{self.name}"
 
 
 @dataclass(frozen=True)
@@ -35,6 +33,17 @@ class Permission(NamespacedValue):
 @dataclass(frozen=True)
 class Context(NamespacedValue):
     ...
+
+
+@dataclass(frozen=True)
+class Role(NamespacedValue):
+    context: Optional[Context] = None
+
+    def __str__(self):
+        if self.context:
+            return f"{super().__str__()}&{self.context}"
+        else:
+            return f"{super().__str__()}"
 
 
 @dataclass(frozen=True)
@@ -57,7 +66,7 @@ class PolicyObject:
     """Actor or target sent to the policy agent to evaluate permissions"""
 
     id: str
-    roles: list["Role"]
+    roles: list[Role]
     attributes: dict[str, Any]
 
 

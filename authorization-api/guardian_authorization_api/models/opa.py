@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any, Optional, Self
 
 from ..models.policies import PolicyObject
 
@@ -22,12 +22,9 @@ class OPAPolicyObject:
     attributes: dict[str, Any]
 
     @classmethod
-    def from_policy_object(cls, obj: PolicyObject) -> "OPAPolicyObject":
-        return OPAPolicyObject(
-            roles=[
-                f"{role.app_name}:{role.namespace_name}:{role.name}"
-                for role in obj.roles
-            ],
+    def from_policy_object(cls, obj: PolicyObject) -> Self:
+        return cls(
+            roles=[f"{role}" for role in obj.roles],
             id=obj.id,
             attributes=obj.attributes,
         )
