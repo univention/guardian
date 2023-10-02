@@ -45,3 +45,11 @@ Description[de] = Definiert das Protokoll der API.
 Group = General
 Scope = outside
 Show = Install,Settings
+
+[guardian-management-api/keycloak/redirect_uris]
+Type = String
+Description = Comma separated list of URIs that Keycloak can redirect to after login. Example: http://FQDN/guardian/management/docs/oauth2-redirect
+Description[de] = Durch Kommata getrennte Liste von URIs, auf die Keycloak nach dem Login umleiten kann. Beispiel: https://FQDN/guardian/management/docs/oauth2-redirect,https://FQDN/guardian/authorization/docs/oauth2-redirect
+Group = General
+Scope = outside
+Show = Install,Settings

@@ -1,0 +1,243 @@
+#!/bin/sh
+
+# Copyright 2023 Univention GmbH
+#
+# http://www.univention.de/
+#
+# All rights reserved.
+#
+# The source code of this program is made available
+# under the terms of the GNU Affero General Public License version 3
+# (GNU AGPL V3) as published by the Free Software Foundation.
+#
+# Binary versions of this program provided by Univention to you as
+# well as other copyrighted, protected or trademarked materials like
+# Logos, graphics, fonts, specific documentations and configurations,
+# cryptographic keys etc. are subject to a license agreement between
+# you and Univention and not subject to the GNU AGPL V3.
+#
+# In the case you use this program under the terms of the GNU AGPL V3,
+# the program is provided in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public
+# License with the Debian GNU/Linux or Univention distribution in file
+# /usr/share/common-licenses/AGPL-3; if not, see
+# <http://www.gnu.org/licenses/>.
+
+cd /app/management-api
+alembic upgrade head
+
+pip install python-keycloak
+mkdir -p /keycloak/provisioning
+cd /keycloak/provisioning
+
+cat <<EOF | tee /keycloak/provisioning/configure.py
+import json
+import logging
+import time
+
+import requests
+
+import keycloak
+
+KEYCLOAK_URL = "http://keycloak:8080/guardian/keycloak/"
+
+logger = None
+
+
+class KeycloakConfigurator:
+    def __init__(self, realm_name, client_name, user_name):
+        self.logger = self.get_logger()
+        self.wait_for_keycloak()
+        self.realm_name = realm_name
+        self.client_name = client_name
+        self.user_name = user_name
+        self.keycloak_admin = keycloak.KeycloakAdmin(
+            connection=self.connect(realm_name="master")
+        )
+
+    def get_logger(
+        self,
+    ):
+        _logger = logging.getLogger()
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter(
+            "%(asctime)s %(levelname)-8s [%(name)-12s] %(message)s"
+        )
+        handler.setFormatter(formatter)
+        _logger.addHandler(handler)
+        _logger.setLevel(logging.DEBUG)
+        return _logger
+
+    def wait_for_keycloak(self):
+        self.logger.info("Waiting for keycloak.")
+        while True:
+            try:
+                res = requests.get(KEYCLOAK_URL, timeout=5)
+                if res.status_code == 200:
+                    break
+            except requests.exceptions.RequestException:
+                pass
+
+            time.sleep(1.0)
+        self.logger.info("Keycloak now accessible.")
+        time.sleep(5.0)
+
+    def connect(self, realm_name=None):
+        return keycloak.KeycloakOpenIDConnection(
+            server_url=KEYCLOAK_URL,
+            username="admin",  # nosec
+            password="admin",  # nosec
+            realm_name=realm_name,
+            user_realm_name="master",
+            verify=False,
+        )
+
+    def configure(self):
+        # create realm
+        self.logger.info(f"Creating Realm: {self.realm_name}")
+
+        # lets keep this simple and always start fresh
+        try:
+            self.keycloak_admin.delete_realm(self.realm_name)
+        except keycloak.exceptions.KeycloakDeleteError:
+            pass
+        self.keycloak_admin.create_realm(
+            payload={"realm": self.realm_name, "enabled": True}, skip_exists=True
+        )
+        time.sleep(1.0)
+
+        # change to new realm
+        self.keycloak_admin = keycloak.KeycloakAdmin(
+            connection=self.connect(realm_name=self.realm_name)
+        )
+
+        # # create client
+        client_config = json.load(
+            open("/keycloak/provisioning/guardian_client_config.json", "r")
+        )
+        self.keycloak_admin.create_client(payload=client_config, skip_exists=True)
+
+        # create user
+        self.logger.info(f"Creating User: {self.user_name}")
+        try:
+            self.keycloak_admin.create_user(
+                {
+                    "username": self.user_name,
+                    "enabled": True,
+                    "credentials": [
+                        {
+                            "value": "univention",
+                            "type": "password",
+                        }
+                    ],
+                }
+            )
+        except Exception as exc:
+            self.logger.info(f"User {self.user_name} already exists!")
+            self.logger.debug(exc)
+
+
+if __name__ == "__main__":
+    configurator = KeycloakConfigurator(
+        realm_name="GuardianDev", client_name="guardian", user_name="dev"
+    )
+    configurator.configure()
+EOF
+
+cat <<EOF | tee /keycloak/provisioning/guardian_client_config.json
+{
+  "access": {
+    "configure": true,
+    "manage": true,
+    "view": true
+  },
+  "adminUrl": "",
+  "alwaysDisplayInConsole": false,
+  "attributes": {
+    "acr.loa.map": "{}",
+    "backchannel.logout.revoke.offline.tokens": "false",
+    "backchannel.logout.session.required": "false",
+    "client_credentials.use_refresh_token": "false",
+    "display.on.consent.screen": "false",
+    "oauth2.device.authorization.grant.enabled": "false",
+    "oidc.ciba.grant.enabled": "false",
+    "pkce.code.challenge.method": "S256",
+    "require.pushed.authorization.requests": "false",
+    "tls.client.certificate.bound.access.tokens": "false",
+    "token.response.type.bearer.lower-case": "false",
+    "use.refresh.tokens": "true"
+  },
+  "authenticationFlowBindingOverrides": {},
+  "baseUrl": "",
+  "bearerOnly": false,
+  "clientAuthenticatorType": "client-secret",
+  "clientId": "guardian",
+  "consentRequired": false,
+  "defaultClientScopes": [
+    "web-origins",
+    "acr",
+    "profile",
+    "roles",
+    "email"
+  ],
+  "description": "",
+  "directAccessGrantsEnabled": false,
+  "enabled": true,
+  "frontchannelLogout": false,
+  "fullScopeAllowed": true,
+  "implicitFlowEnabled": false,
+  "name": "",
+  "nodeReRegistrationTimeout": -1,
+  "notBefore": 0,
+  "optionalClientScopes": [
+    "address",
+    "phone",
+    "offline_access",
+    "microprofile-jwt"
+  ],
+  "protocol": "openid-connect",
+  "protocolMappers": [
+    {
+      "config": {
+        "access.token.claim": "true",
+        "access.tokenResponse.claim": "false",
+        "claim.name": "client_id",
+        "claim.value": "guardian",
+        "id.token.claim": "true",
+        "jsonType.label": "String",
+        "userinfo.token.claim": "true"
+      },
+      "consentRequired": false,
+      "name": "client_id",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-hardcoded-claim-mapper"
+    },
+    {
+      "config": {
+        "access.token.claim": "true",
+        "id.token.claim": "false",
+        "included.client.audience": "guardian"
+      },
+      "consentRequired": false,
+      "name": "guardian",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-audience-mapper"
+    }
+  ],
+  "publicClient": true,
+  "redirectUris": @!@import json; print(json.dumps(configRegistry.get("guardian-management-api/keycloak/redirect-uris").split(",")))@!@,
+  "rootUrl": "",
+  "serviceAccountsEnabled": false,
+  "standardFlowEnabled": true,
+  "surrogateAuthRequired": false,
+  "webOrigins": [
+    "http://localhost"
+  ]
+}
+EOF
+
+python3 /keycloak/provisioning/configure.py
