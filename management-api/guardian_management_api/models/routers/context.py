@@ -39,7 +39,7 @@ class ContextEditRequest(EditBaseRequest):
 
 
 class ContextGetRequest(
-    GuardianBaseModel, AppNamePathMixin, NamespacePathMixin, NamePathMixin
+    GuardianBaseModel, NamePathMixin, NamespacePathMixin, AppNamePathMixin
 ):
     ...
 

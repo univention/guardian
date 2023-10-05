@@ -23,7 +23,7 @@ from .base import (
 
 
 class PermissionGetRequest(
-    GuardianBaseModel, AppNamePathMixin, NamespacePathMixin, NamePathMixin
+    GuardianBaseModel, NamePathMixin, NamespacePathMixin, AppNamePathMixin
 ):
     ...
 

@@ -20,7 +20,7 @@ from .base import (
 #####
 
 
-class NamespaceGetRequest(GuardianBaseModel, AppNamePathMixin, NamePathMixin):
+class NamespaceGetRequest(GuardianBaseModel, NamePathMixin, AppNamePathMixin):
     ...
 
 

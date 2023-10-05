@@ -185,7 +185,7 @@ class GetAllRequest(GuardianBaseModel, PaginationRequestMixin):
 
 
 class GetFullIdentifierRequest(
-    GuardianBaseModel, AppNamePathMixin, NamespacePathMixin, NamePathMixin
+    GuardianBaseModel, NamePathMixin, NamespacePathMixin, AppNamePathMixin
 ):
     """
     Default request model to query for a specific object.
