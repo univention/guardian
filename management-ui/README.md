@@ -81,7 +81,7 @@ The `url` adapter is used in production/docker environments to read a config tha
 If you're doing development against this adapter, you need the following settings:
 
 ```shell
-export VITE__MANAGEMENT_UI__ADAPTER__SETTINGS_PORT=env
+export VITE__MANAGEMENT_UI__ADAPTER__SETTINGS_PORT=url
 export VITE__MANAGEMENT_UI__CORS__USE_PROXY=1
 export VITE__URL_SETTINGS_ADAPTER__CONFIG_URL=http://localhost/guardian/management-ui/config.json
 ```
