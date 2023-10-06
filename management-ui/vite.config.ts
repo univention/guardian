@@ -34,7 +34,7 @@ export default defineConfig(async({mode}) => {
             secure: false,
           },
           [`^${configUrl.pathname}`]: {
-            target: `${configUrl.protocol}//${configUrl.host}`,
+            target: `${configUrl.origin}`,
             changeOrigin: false,
             secure: false,
           },
