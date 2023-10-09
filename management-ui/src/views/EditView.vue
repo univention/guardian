@@ -29,8 +29,8 @@ import {
   createObject,
   updateObject,
   type SaveError,
-  fetchNamespaces,
-  fetchPermissions,
+  fetchNamespacesOptions,
+  fetchPermissionsOptions,
 } from '@/helpers/dataAccess';
 import type {
   Page,
@@ -241,7 +241,7 @@ if (props.action === 'add') {
         async newValue => {
           currentValues.value['namespaceName'] = '';
           field.props.hint = '';
-          field.props.options = await _standby.wrap(() => fetchNamespaces(newValue as string));
+          field.props.options = await _standby.wrap(() => fetchNamespacesOptions(newValue as string, false));
         }
       );
 
@@ -256,7 +256,7 @@ if (props.action === 'add') {
             currentValues.value['permissions'] = [];
             field.props.hint = '';
             (field.props.subElements[0] as FieldComboBox).props.options = await _standby.wrap(() =>
-              fetchPermissions(currentValues.value['appName'] as string, newValue as string)
+              fetchPermissionsOptions(currentValues.value['appName'] as string, newValue as string)
             );
           }
         );
@@ -426,8 +426,7 @@ const save = async (): Promise<void> => {
     console.debug('TODO error handling');
     return;
   }
-  const url = fetchedObject.value.url;
-  const error = await standby.wrap(() => updateObject(props.objectType, url, changedValues.value));
+  const error = await standby.wrap(() => updateObject(props.objectType, currentValues.value));
   console.log('error', error);
   if (error) {
     saveFailedModal.active = true;
@@ -442,7 +441,7 @@ const add = async (): Promise<void> => {
   if (!validate()) {
     return;
   }
-  const result = await standby.wrap(() => createObject(props.objectType, changedValues.value));
+  const result = await standby.wrap(() => createObject(props.objectType, currentValues.value));
 
   if (result.status === 'success') {
     saveSuccessModal.active = true;

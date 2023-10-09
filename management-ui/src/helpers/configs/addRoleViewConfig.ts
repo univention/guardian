@@ -18,16 +18,7 @@ export const addRoleViewConfig: AddViewConfig = {
                   label: 'App name',
                   required: true,
                   access: 'write',
-                  options: [
-                    {
-                      label: 'App 1',
-                      value: 'app1',
-                    },
-                    {
-                      label: 'App 2',
-                      value: 'app2',
-                    },
-                  ],
+                  options: [],
                 },
               },
               {
@@ -55,7 +46,7 @@ export const addRoleViewConfig: AddViewConfig = {
               {
                 type: 'UInputText',
                 props: {
-                  name: 'displayname',
+                  name: 'displayName',
                   label: 'Displayname',
                   required: false,
                   access: 'write',

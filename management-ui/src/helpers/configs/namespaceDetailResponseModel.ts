@@ -1,6 +1,6 @@
 import type {DetailResponseModel} from '@/helpers/models';
 
-export const roleDetailResponseModel: DetailResponseModel = {
+export const namespaceDetailResponseModel: DetailResponseModel = {
   url: '',
   allowedActions: ['save'],
   pages: [
@@ -18,14 +18,6 @@ export const roleDetailResponseModel: DetailResponseModel = {
                 props: {
                   name: 'appName',
                   label: 'App name',
-                  access: 'read',
-                },
-              },
-              {
-                type: 'UInputText',
-                props: {
-                  name: 'namespaceName',
-                  label: 'Namespace name',
                   required: true,
                   access: 'read',
                 },
@@ -44,7 +36,7 @@ export const roleDetailResponseModel: DetailResponseModel = {
               {
                 type: 'UInputText',
                 props: {
-                  name: 'displayname',
+                  name: 'displayName',
                   label: 'Displayname',
                   required: false,
                   access: 'write',
@@ -57,9 +49,8 @@ export const roleDetailResponseModel: DetailResponseModel = {
     },
   ],
   values: {
-    appName: 'App 1',
-    namespaceName: 'Namespace 1',
-    name: 'name',
-    displayname: 'display name',
+    appName: '',
+    name: '',
+    displayName: '',
   },
 };

@@ -1,8 +1,6 @@
-import type {DetailResponseModel} from '@/helpers/models';
+import type {AddViewConfig} from '@/helpers/models';
 
-export const contextDetailResponseModel: DetailResponseModel = {
-  url: '',
-  allowedActions: ['save'],
+export const addNamespaceViewConfig: AddViewConfig = {
   pages: [
     {
       label: 'General',
@@ -14,20 +12,13 @@ export const contextDetailResponseModel: DetailResponseModel = {
           rows: [
             [
               {
-                type: 'UInputText',
+                type: 'UComboBox',
                 props: {
                   name: 'appName',
                   label: 'App name',
-                  access: 'read',
-                },
-              },
-              {
-                type: 'UInputText',
-                props: {
-                  name: 'namespaceName',
-                  label: 'Namespace name',
                   required: true,
-                  access: 'read',
+                  access: 'write',
+                  options: [],
                 },
               },
             ],
@@ -38,13 +29,13 @@ export const contextDetailResponseModel: DetailResponseModel = {
                   name: 'name',
                   label: 'Name',
                   required: true,
-                  access: 'read',
+                  access: 'write',
                 },
               },
               {
                 type: 'UInputText',
                 props: {
-                  name: 'displayname',
+                  name: 'displayName',
                   label: 'Displayname',
                   required: false,
                   access: 'write',
@@ -56,10 +47,4 @@ export const contextDetailResponseModel: DetailResponseModel = {
       ],
     },
   ],
-  values: {
-    appName: 'App 1',
-    namespaceName: 'Namespace 1',
-    name: 'name',
-    displayname: 'display name',
-  },
 };

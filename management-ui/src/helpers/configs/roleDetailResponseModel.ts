@@ -1,6 +1,8 @@
-import type {AddViewConfig} from '@/helpers/models';
+import type {DetailResponseModel} from '@/helpers/models';
 
-export const addNamespaceViewConfig: AddViewConfig = {
+export const roleDetailResponseModel: DetailResponseModel = {
+  url: '',
+  allowedActions: ['save'],
   pages: [
     {
       label: 'General',
@@ -12,22 +14,20 @@ export const addNamespaceViewConfig: AddViewConfig = {
           rows: [
             [
               {
-                type: 'UComboBox',
+                type: 'UInputText',
                 props: {
                   name: 'appName',
                   label: 'App name',
+                  access: 'read',
+                },
+              },
+              {
+                type: 'UInputText',
+                props: {
+                  name: 'namespaceName',
+                  label: 'Namespace name',
                   required: true,
-                  access: 'write',
-                  options: [
-                    {
-                      label: 'App 1',
-                      value: 'app1',
-                    },
-                    {
-                      label: 'App 2',
-                      value: 'app2',
-                    },
-                  ],
+                  access: 'read',
                 },
               },
             ],
@@ -38,13 +38,13 @@ export const addNamespaceViewConfig: AddViewConfig = {
                   name: 'name',
                   label: 'Name',
                   required: true,
-                  access: 'write',
+                  access: 'read',
                 },
               },
               {
                 type: 'UInputText',
                 props: {
-                  name: 'displayname',
+                  name: 'displayName',
                   label: 'Displayname',
                   required: false,
                   access: 'write',
@@ -56,4 +56,10 @@ export const addNamespaceViewConfig: AddViewConfig = {
       ],
     },
   ],
+  values: {
+    appName: '',
+    namespaceName: '',
+    name: '',
+    displayName: '',
+  },
 };

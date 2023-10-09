@@ -44,7 +44,7 @@ export const capabilityDetailResponseModel: DetailResponseModel = {
               {
                 type: 'UInputText',
                 props: {
-                  name: 'displayname',
+                  name: 'displayName',
                   label: 'Displayname',
                   required: false,
                   access: 'write',
@@ -153,12 +153,12 @@ export const capabilityDetailResponseModel: DetailResponseModel = {
     },
   ],
   values: {
-    appName: 'App 1',
-    namespaceName: 'Namespace 1',
-    name: 'name',
-    displayname: 'display name',
-    conditions: [['condition2'], ['condition1', 'text']],
-    relation: 'and',
-    permissions: ['permission1'],
+    appName: '',
+    namespaceName: '',
+    name: '',
+    displayName: '',
+    conditions: [],
+    relation: '',
+    permissions: [],
   },
 };

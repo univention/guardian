@@ -1,33 +1,42 @@
 import type {
-  ListResponseModel,
   AddViewConfig,
-  FormValues,
-  ObjectType,
   DetailResponseModel,
-  ListViewConfigs,
+  FormValues,
   LabeledValue,
+  ListResponseModel,
+  ListViewConfigs,
+  ObjectType,
 } from '@/helpers/models';
-// eslint-disable-next-line
-import {fetchAuthenticated} from '@/helpers/retrieveData';
-// eslint-disable-next-line
-import {useErrorStore} from '@/stores/error';
 import i18next from 'i18next';
 import {
+  fetchMockData,
+} from '@/helpers/mocks';
+import {
+  capabilityDetailResponseModel,
+  contextDetailResponseModel,
+  roleDetailResponseModel,
+  namespaceDetailResponseModel,
   listViewConfig,
   addRoleViewConfig,
   addContextViewConfig,
   addNamespaceViewConfig,
   addCapabilityViewConfig,
-  roleDetailResponseModel,
-  namespaceDetailResponseModel,
-  contextDetailResponseModel,
-  capabilityDetailResponseModel,
-  fetchMockData,
-  getRolesListResponseModels,
-  getNamespacesListResponseModels,
-  getCapabilitiesListResponseModels,
-  getContextsListResponseModels,
-} from '@/helpers/mocks';
+} from '@/helpers/configs';
+import {useSettingsStore} from '@/stores/settings';
+import {useAdapterStore} from '@/stores/adapter';
+import type {WrappedAppsList} from '@/helpers/models/apps';
+import type {WrappedNamespacesList} from '@/helpers/models/namespaces';
+import type {WrappedRolesList} from '@/helpers/models/roles';
+import type {WrappedContextsList} from '@/helpers/models/contexts';
+import type {WrappedCapabilitiesList} from '@/helpers/models/capabilities';
+import type {WrappedRole} from '@/helpers/models/roles';
+import type {WrappedNamespace} from '@/helpers/models/namespaces';
+import type {WrappedContext} from '@/helpers/models/contexts';
+import type {WrappedCapability} from '@/helpers/models/capabilities';
+import type {WrappedPermissionsList} from '@/helpers/models/permissions';
+import type {WrappedConditionsList} from '@/helpers/models/conditions';
+import {SubElement, SubElementProps} from '@univention/univention-veb';
+import type {Option} from '@univention/univention-veb/dist/types/components/form/elements/UComboBox.vue';
 
 const needMock = import.meta.env.VITE_USE_REAL_BACKEND !== 'true';
 
@@ -50,152 +59,322 @@ const getError = async (response: Response): Promise<{detail: unknown} | null> =
   return null;
 };
 
-export const fetchListViewConfig = async (): Promise<ListViewConfigs> => {
-  if (needMock) {
-    return fetchMockData(listViewConfig, 'fetchListViewConfig');
-  }
+const fetchAppsOptions = async (withAllOption: boolean): Promise<LabeledValue<string>[]> => {
+  const settingsStore = useSettingsStore();
+  await settingsStore.init();
+  const adapterStore = useAdapterStore(settingsStore.config);
 
-  console.log('Real backend call not implemented yet. Returning mock data');
-  return fetchMockData(listViewConfig, 'fetchListViewConfig');
-
-  /*
-  const answer = await fetchAuthenticated('/ucsschool/guardian/v1/pageconf/listView');
-  const error = await getError(answer);
-  if (error) {
-    const errorStore = useErrorStore();
-    const title = i18next.t(`dataAccess.fetchListViewConfig.error.title`);
-    errorStore.push({
-      title,
-      message: JSON.stringify(error.detail),
-      unRecoverable: true,
+  const apps: WrappedAppsList = await adapterStore.dataAdapter.fetchApps();
+  const appsOptions = apps.apps.map(app => ({
+    value: app.name,
+    label: app.displayName || app.name,
+  }));
+  if (withAllOption) {
+    appsOptions.unshift({
+      label: 'All',
+      value: '',
     });
-    return Promise.reject(answer);
   }
-  return await answer.json();
-  */
+
+  return appsOptions;
+}
+const fetchConditionSubElement = async (): Promise<SubElementProps[]> => {
+  const settingsStore = useSettingsStore();
+  await settingsStore.init();
+  const adapterStore = useAdapterStore(settingsStore.config);
+
+  const conditions: WrappedConditionsList = await adapterStore.dataAdapter.fetchConditions();
+
+  let extensions: Record<string, any[]> = {};
+  let options: Option[] = [];
+
+
+  conditions.conditions.forEach(condition => {
+    const conditionId = `${condition.appName}:${condition.namespaceName}:${condition.name}`;
+
+    if (condition.parameters.length > 0) {
+      let inputs: {type: any; props: any}[] = [];
+      condition.parameters.forEach(param => {
+        inputs.push({
+          type: SubElement.UInputText,
+          props: {
+            label: `${param.name}`,
+            name: `${conditionId}-${param.name}`,
+            required: true,
+          },
+        });
+      });
+      extensions[conditionId] = inputs;
+    }
+
+    options.push({
+      label: conditionId,
+      value: `${conditionId}`,
+    });
+  });
+
+  return [
+    {
+      type: SubElement.UExtendingInput,
+      props: {
+        name: 'conditions',
+        extensions: extensions,
+        rootElement: {
+          type: SubElement.UComboBox,
+          props: {
+            name: 'condition',
+            label: 'Condition',
+            options: options,
+          },
+        },
+      },
+    },
+  ];
+};
+
+export const fetchListViewConfig = async (): Promise<ListViewConfigs> => {
+  const appsOptions = await fetchAppsOptions(true);
+
+  const config = JSON.parse(JSON.stringify(listViewConfig));
+  for (const role of ['role', 'capability', 'namespace', 'context']) {
+    const appField = config[role].searchForm.find(f => f.props.name === 'appSelection');
+    appField.props.options = appsOptions;
+  }
+
+  return config;
 };
 
 export const fetchAddViewConfig = async (objectType: ObjectType): Promise<AddViewConfig> => {
-  if (needMock) {
-    const config = {
-      role: addRoleViewConfig,
-      context: addContextViewConfig,
-      namespace: addNamespaceViewConfig,
-      capability: addCapabilityViewConfig,
-    }[objectType];
-    return fetchMockData(config, 'fetchAddViewConfig');
-  }
+  const appsOptions = await fetchAppsOptions(false);
 
-  console.log('Real backend call not implemented yet. Returning mock data');
   const config = {
     role: addRoleViewConfig,
     context: addContextViewConfig,
     namespace: addNamespaceViewConfig,
     capability: addCapabilityViewConfig,
   }[objectType];
-  return fetchMockData(config, 'fetchAddViewConfig');
-  /*
-  const answer = await fetchAuthenticated(`/ucsschool/guardian/v1/pageconf/addView${objectType}`);
-  const error = await getError(answer);
-  if (error) {
-    const errorStore = useErrorStore();
-    const title = i18next.t('dataAccess.fetchListViewConfig.error.title');
-    errorStore.push({
-      title,
-      message: JSON.stringify(error.detail),
-    });
-    return Promise.reject(answer);
+
+  switch (objectType) {
+    case 'role':
+    case 'namespace':
+    case 'context':
+      config.pages[0].fieldsets[0].rows[0][0].props.options = appsOptions;
+      break;
+    case 'capability':
+      config.pages[0].fieldsets[0].rows[0][0].props.options = appsOptions;
+      const conditions = await fetchConditionSubElement();
+      config.pages[0].fieldsets[0].rows[2][0].props.subElements = conditions;
+      break;
+    default:
+      break;
   }
 
-  return await answer.json();
-  */
+  return config;
 };
 
 export const fetchObjects = async (
   objectType: ObjectType,
-  // eslint-disable-next-line
   values: FormValues,
+  id: string,
   // eslint-disable-next-line
   limit?: number
 ): Promise<ListResponseModel[] | null> => {
-  if (needMock) {
-    const mockData = {
-      role: getRolesListResponseModels,
-      context: getContextsListResponseModels,
-      namespace: getNamespacesListResponseModels,
-      capability: getCapabilitiesListResponseModels,
-    }[objectType]();
-    return fetchMockData(mockData, 'fetchObjects');
-  }
+  const settingsStore = useSettingsStore();
+  await settingsStore.init();
+  const adapterStore = useAdapterStore(settingsStore.config);
 
-  console.log('Real backend call not implemented yet. Returning mock data');
-  const mockData = {
-    role: getRolesListResponseModels,
-    context: getContextsListResponseModels,
-    namespace: getNamespacesListResponseModels,
-    capability: getCapabilitiesListResponseModels,
-  }[objectType]();
-  return fetchMockData(mockData, 'fetchObjects');
-
-  /*
-  const urlSearchParams = new URLSearchParams({});
-  // TODO add `values` argument to urlSearchParams
-  if (limit) {
-    urlSearchParams.append('limit', `${limit}`);
-  }
-
-  const answer = await fetchAuthenticated(`/ucsschool/guardian/v1/${objectType}?${urlSearchParams.toString()}`);
-  const error = await getError(answer);
-  if (error) {
-    if (typeof error.detail === 'object' && error.detail !== null && 'type' in error.detail) {
-      const detail = error.detail as {type: string};
-      if (detail.type === 'SearchLimitReached') {
-        return null;
+  console.log('values: ', values);
+  console.log(objectType);
+  console.log('id: ', id);
+  switch (objectType) {
+    case 'role': {
+      function getId(url: string): string {
+        const split = url.split('/');
+        return `${split[split.length - 3]}:${split[split.length - 2]}:${split[split.length - 1]}`
       }
+      const data: WrappedRolesList = await adapterStore.dataAdapter.fetchRoles(values.appSelection, values.namespaceSelection);
+      return data.roles.map(role => ({
+        id: getId(role.resourceUrl),
+        allowedActions: ['edit'],
+        attributes: {
+          name: {
+            value: role.name,
+            access: 'read',
+          },
+          displayname: {
+            value: role.displayName,
+            access: 'read',
+          },
+          app: {
+            value: role.appName,
+            access: 'read',
+          },
+          namespace: {
+            value: role.namespaceName,
+            access: 'read',
+          },
+        },
+      }));
     }
-    const errorStore = useErrorStore();
-    const title = i18next.t('dataAccess.fetchObjects.error.title');
-    errorStore.push({
-      title,
-      message: JSON.stringify(error.detail),
-    });
-    return Promise.reject(answer);
+    case 'namespace': {
+      function getId(url: string): string {
+        const split = url.split('/');
+        return `${split[split.length - 2]}:${split[split.length - 1]}`
+      }
+      const data: WrappedNamespacesList = await adapterStore.dataAdapter.fetchNamespaces(values.appSelection);
+      return data.namespaces.map(namespace => ({
+        id: getId(namespace.resourceUrl),
+        allowedActions: ['edit'],
+        attributes: {
+          name: {
+            value: namespace.name,
+            access: 'read',
+          },
+          displayname: {
+            value: namespace.displayName,
+            access: 'read',
+          },
+          app: {
+            value: namespace.appName,
+            access: 'read',
+          },
+        },
+      }));
+    }
+    case 'context': {
+      function getId(url: string): string {
+        const split = url.split('/');
+        return `${split[split.length - 3]}:${split[split.length - 2]}:${split[split.length - 1]}`
+      }
+      const data: WrappedContextsList = await adapterStore.dataAdapter.fetchContexts(values.appSelection, values.namespaceSelection);
+      return data.contexts.map(context => ({
+        id: getId(context.resourceUrl),
+        allowedActions: ['edit'],
+        attributes: {
+          name: {
+            value: context.name,
+            access: 'read',
+          },
+          displayname: {
+            value: context.displayName,
+            access: 'read',
+          },
+          app: {
+            value: context.appName,
+            access: 'read',
+          },
+          namespace: {
+            value: context.namespaceName,
+            access: 'read',
+          },
+        },
+      }));
+    }
+    case 'capability': {
+      const split = id.split(':');
+      const role = {
+        appName: split[0],
+        namespaceName: split[1],
+        name: split[2],
+      };
+      function getId(url: string): string {
+        const split = url.split('/');
+        return `${split[split.length - 3]}:${split[split.length - 2]}:${split[split.length - 1]}`
+      }
+      const data: WrappedCapabilitiesList = await adapterStore.dataAdapter.fetchCapabilities(role, values.appSelection, values.namespaceSelection);
+      return data.capabilities.map(capability => ({
+        id: `${capability.appName}:${capability.namespaceName}:${capability.name}`,
+        allowedActions: ['edit'],
+        attributes: {
+          name: {
+            value: capability.name,
+            access: 'read',
+          },
+          displayname: {
+            value: capability.displayName,
+            access: 'read',
+          },
+          app: {
+            value: capability.appName,
+            access: 'read',
+          },
+          namespace: {
+            value: capability.namespaceName,
+            access: 'read',
+          },
+        },
+      }));
+    }
   }
-  return await answer.json();
-  */
+  return [];
 };
 
 export const fetchObject = async (
   objectType: ObjectType,
-  // eslint-disable-next-line
   id: string
 ): Promise<DetailResponseModel | null> => {
-  if (needMock) {
-    const model = {
-      role: roleDetailResponseModel,
-      context: contextDetailResponseModel,
-      namespace: namespaceDetailResponseModel,
-      capability: capabilityDetailResponseModel,
-    }[objectType];
-    return fetchMockData(model, 'fetchObject');
-  }
+  const settingsStore = useSettingsStore();
+  await settingsStore.init();
+  const adapterStore = useAdapterStore(settingsStore.config);
 
-  console.log('Real backend call not implemented yet. Returning mock data');
-  const model = {
-    role: roleDetailResponseModel,
-    context: contextDetailResponseModel,
-    namespace: namespaceDetailResponseModel,
-    capability: capabilityDetailResponseModel,
-  }[objectType];
-  return fetchMockData(model, 'fetchObject');
-
-  /*
-  const answer = await fetchAuthenticated(`/ucsschool/guardian/v1/${objectType}/${id}`);
-  if (answer.status === 404) {
-    return null;
+  console.log('fetch: ', id);
+  switch (objectType) {
+    case 'role': {
+      const split = id.split(':');
+      const role = {
+        appName: split[0],
+        namespaceName: split[1],
+        name: split[2],
+      };
+      const data: WrappedRole = await adapterStore.dataAdapter.fetchRole(role.appName, role.namespaceName, role.name);
+      const config = JSON.parse(JSON.stringify(roleDetailResponseModel));
+      config.values = data.role;
+      delete config.values.resourceUrl;
+      return config;
+    }
+    case 'namespace': {
+      const split = id.split(':');
+      const namespace = {
+        appName: split[0],
+        name: split[1],
+      };
+      const data: WrappedNamespace = await adapterStore.dataAdapter.fetchNamespace(namespace.appName, namespace.name);
+      const config = JSON.parse(JSON.stringify(namespaceDetailResponseModel));
+      config.values = data.namespace;
+      delete config.values.resourceUrl;
+      return config;
+    }
+    case 'context': {
+      const split = id.split(':');
+      const context = {
+        appName: split[0],
+        namespaceName: split[1],
+        name: split[2],
+      };
+      const data: WrappedContext = await adapterStore.dataAdapter.fetchContext(context.appName, context.namespaceName, context.name);
+      const config = JSON.parse(JSON.stringify(contextDetailResponseModel));
+      config.values = data.context;
+      delete config.values.resourceUrl;
+      return config;
+    }
+    case 'capability': {
+      const split = id.split(':');
+      const capability = {
+        appName: split[0],
+        namespaceName: split[1],
+        name: split[2],
+      };
+      console.log('cap: ', capability);
+      const data: WrappedCapability = await adapterStore.dataAdapter.fetchCapability(capability.appName, capability.namespaceName, capability.name);
+      console.log('data: ', data);
+      const config = JSON.parse(JSON.stringify(capabilityDetailResponseModel));
+      config.values = data.capability;
+      config.values.permissions = [];
+      delete config.values.resourceUrl;
+      console.log('config: ', config);
+      return config;
+    }
   }
-  return await answer.json();
-  */
 };
 
 export type SaveError =
@@ -256,42 +435,27 @@ const getSaveError = async (response: Response, context: SaveContext): Promise<S
   };
 };
 export const updateObject = async (
-  // eslint-disable-next-line
   objectType: ObjectType,
-  // eslint-disable-next-line
-  url: string,
-  // eslint-disable-next-line
   values: FormValues
 ): Promise<SaveError | null> => {
-  if (needMock) {
-    /*
-    return fetchMockData({
-      type: 'fieldErrors',
-      errors: [
-        {
-          field: 'password',
-          message: 'This should be overwritten in EditView',
-        },
-      ],
-    }, 'updateUser');
-    */
-    return fetchMockData(null, 'updateObject');
+  const settingsStore = useSettingsStore();
+  await settingsStore.init();
+  const adapterStore = useAdapterStore(settingsStore.config);
+
+  switch (objectType) {
+    case 'role': {
+      const data: WrappedRole = await adapterStore.dataAdapter.updateRole(values);
+      return null;
+    }
+    case 'namespace': {
+      const data: WrappedNamespace = await adapterStore.dataAdapter.updateNamespace(values);
+      return null;
+    }
+    case 'context': {
+      const data: WrappedContext = await adapterStore.dataAdapter.updateContext(values);
+      return null;
+    }
   }
-
-  console.log('Real backend call not implemented yet. Returning mock data');
-  return fetchMockData(null, 'updateObject');
-
-  /*
-  const fixedProtocolUrl = url.replace(/https?:/, location.protocol);
-  const answer = await fetchAuthenticated(`${fixedProtocolUrl}`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(values),
-  });
-  return await getSaveError(answer, `update${objectType}`);
-  */
 };
 
 interface CreateObjectSuccess {
@@ -305,44 +469,38 @@ interface CreateObjectError {
 type CreateObjectResponse = CreateObjectSuccess | CreateObjectError;
 export const createObject = async (
   objectType: ObjectType,
-  // eslint-disable-next-line
   values: FormValues
 ): Promise<CreateObjectResponse> => {
-  if (needMock) {
-    return {
-      status: 'success',
-      name: objectType,
-    };
+  const settingsStore = useSettingsStore();
+  await settingsStore.init();
+  const adapterStore = useAdapterStore(settingsStore.config);
+
+  switch (objectType) {
+    case 'role': {
+      const data: WrappedRole = await adapterStore.dataAdapter.createRole(values);
+      return {
+        status: 'success',
+        name: data.role.name,
+      };
+    }
+    case 'namespace': {
+      const data: WrappedNamespace = await adapterStore.dataAdapter.createNamespace(values);
+      return {
+        status: 'success',
+        name: data.namespace.name,
+      };
+    }
+    case 'context': {
+      const data: WrappedContext = await adapterStore.dataAdapter.createContext(values);
+      return {
+        status: 'success',
+        name: data.context.name,
+      };
+    }
+    case 'capability': {
+      console.log('create capability: ', values);
+    }
   }
-
-  console.log('Real backend call not implemented yet. Returning mock data');
-  return {
-    status: 'success',
-    name: objectType,
-  };
-
-  /*
-  const answer = await fetchAuthenticated(`/ucsschool/guardian/v1/${objectType}/`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(values),
-  });
-
-  const error = await getSaveError(answer, `create${objectType}`);
-  if (error) {
-    return {
-      status: 'error',
-      error,
-    };
-  }
-
-  return {
-    status: 'success',
-    name: values['name'] as string,
-  };
-  */
 };
 
 export const deleteCapabilities = async (ids: string[]): Promise<{id: string; error: string}[]> => {
@@ -388,23 +546,25 @@ export const deleteCapabilities = async (ids: string[]): Promise<{id: string; er
   */
 };
 
-const fetchNamespacesMock = (appName: string): LabeledValue<string>[] => {
-  const mock: LabeledValue<string>[] = [];
-  for (let x = 0; x < 2; x++) {
-    mock.push({
-      label: `${appName}/Namespace ${x + 1}`,
-      value: `${appName}/namespace${x + 1}`,
+
+export const fetchNamespacesOptions = async (appName: string, withAllOption: boolean): Promise<LabeledValue<string>[]> => {
+  const settingsStore = useSettingsStore();
+  await settingsStore.init();
+  const adapterStore = useAdapterStore(settingsStore.config);
+
+  const namespaces: WrappedNamespacesList = await adapterStore.dataAdapter.fetchNamespaces(appName);
+  const namespacesOptions = namespaces.namespaces.map(namespace => ({
+    value: namespace.name,
+    label: namespace.displayName || namespace.name,
+  }));
+  if (withAllOption) {
+    namespacesOptions.unshift({
+      label: 'All',
+      value: '',
     });
   }
-  return mock;
-};
-export const fetchNamespaces = async (appName: string): Promise<LabeledValue<string>[]> => {
-  if (needMock) {
-    return fetchMockData(fetchNamespacesMock(appName), 'fetchNamespaces');
-  }
 
-  console.log('Real backend call not implemented yet. Returning mock data');
-  return fetchMockData(fetchNamespacesMock(appName), 'fetchNamespaces');
+  return namespacesOptions;
 };
 
 const fetchPermissionsMock = (appName: string, namespaceName: string): LabeledValue<string>[] => {
@@ -417,11 +577,16 @@ const fetchPermissionsMock = (appName: string, namespaceName: string): LabeledVa
   }
   return mock;
 };
-export const fetchPermissions = async (appName: string, namespaceName: string): Promise<LabeledValue<string>[]> => {
-  if (needMock) {
-    return fetchMockData(fetchPermissionsMock(appName, namespaceName), 'fetchNamespaces');
-  }
+export const fetchPermissionsOptions = async (appName: string, namespaceName: string): Promise<LabeledValue<string>[]> => {
+  const settingsStore = useSettingsStore();
+  await settingsStore.init();
+  const adapterStore = useAdapterStore(settingsStore.config);
 
-  console.log('Real backend call not implemented yet. Returning mock data');
-  return fetchMockData(fetchPermissionsMock(appName, namespaceName), 'fetchNamespaces');
+  const permissions: WrappedPermissionsList = await adapterStore.dataAdapter.fetchPermissions(appName, namespaceName);
+  const permissionsOptions = permissions.permissions.map(permission => ({
+    value: permission.name,
+    label: permission.displayName || permission.name,
+  }));
+
+  return permissionsOptions;
 };

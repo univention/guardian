@@ -18,16 +18,7 @@ export const addCapabilityViewConfig: AddViewConfig = {
                   label: 'App name',
                   required: true,
                   access: 'write',
-                  options: [
-                    {
-                      label: 'App 1',
-                      value: 'app1',
-                    },
-                    {
-                      label: 'App 2',
-                      value: 'app2',
-                    },
-                  ],
+                  options: [],
                 },
               },
               {
@@ -75,18 +66,7 @@ export const addCapabilityViewConfig: AddViewConfig = {
                       props: {
                         name: 'conditions2',
                         label: '',
-                        extensions: {
-                          condition1: [
-                            {
-                              type: 'UInputText',
-                              props: {
-                                label: 'Extra param',
-                                name: 'extraparam',
-                                required: true,
-                              },
-                            },
-                          ],
-                        },
+                        extensions: {},
                         rootElement: {
                           type: 'UComboBox',
                           props: {

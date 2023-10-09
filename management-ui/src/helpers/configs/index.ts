@@ -3,3 +3,7 @@ export * from './addRoleViewConfig';
 export * from './addContextViewConfig';
 export * from './addNamespaceViewConfig';
 export * from './addCapabilityViewConfig';
+export * from './roleDetailResponseModel';
+export * from './namespaceDetailResponseModel';
+export * from './contextDetailResponseModel';
+export * from './capabilityDetailResponseModel';

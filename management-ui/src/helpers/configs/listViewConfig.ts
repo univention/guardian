@@ -12,15 +12,7 @@ export const listViewConfig: ListViewConfigs = {
           options: [
             {
               label: 'All',
-              value: 'all',
-            },
-            {
-              label: 'App 1',
-              value: 'app1',
-            },
-            {
-              label: 'App 2',
-              value: 'app2',
+              value: '',
             },
           ],
         },
@@ -33,22 +25,10 @@ export const listViewConfig: ListViewConfigs = {
           options: [], // options fetched in ListView.vue dependent on 'appSelection'
         },
       },
-      /*
-      // Removed for now. The Management API does not support searching in the fields of the roles for now.
-      // And maybe it won't
-      {
-        type: 'UInputText',
-        props: {
-          name: 'freeSearch',
-          label: 'Search',
-        },
-      },
-      */
     ],
     searchFormValues: {
-      appSelection: 'all',
+      appSelection: '',
       namespaceSelection: '', // value will be set in ListView.vue
-      // freeSearch: '',
     },
     columns: [
       {
@@ -81,15 +61,7 @@ export const listViewConfig: ListViewConfigs = {
           options: [
             {
               label: 'All',
-              value: 'all',
-            },
-            {
-              label: 'App 1',
-              value: 'app1',
-            },
-            {
-              label: 'App 2',
-              value: 'app2',
+              value: '',
             },
           ],
         },
@@ -102,20 +74,10 @@ export const listViewConfig: ListViewConfigs = {
           options: [],
         },
       },
-      /*
-      {
-        type: 'UInputText',
-        props: {
-          name: 'freeSearch',
-          label: 'Search',
-        },
-      },
-      */
     ],
     searchFormValues: {
-      appSelection: 'all',
-      namespaceSelection: 'all',
-      // freeSearch: '',
+      appSelection: '',
+      namespaceSelection: '',
     },
     columns: [
       {
@@ -148,32 +110,14 @@ export const listViewConfig: ListViewConfigs = {
           options: [
             {
               label: 'All',
-              value: 'all',
-            },
-            {
-              label: 'App 1',
-              value: 'app1',
-            },
-            {
-              label: 'App 2',
-              value: 'app2',
+              value: '',
             },
           ],
         },
       },
-      /*
-      {
-        type: 'UInputText',
-        props: {
-          name: 'freeSearch',
-          label: 'Search',
-        },
-      },
-      */
     ],
     searchFormValues: {
-      appSelection: 'all',
-      // freeSearch: '',
+      appSelection: '',
     },
     columns: [
       {
@@ -202,15 +146,7 @@ export const listViewConfig: ListViewConfigs = {
           options: [
             {
               label: 'All',
-              value: 'all',
-            },
-            {
-              label: 'App 1',
-              value: 'app1',
-            },
-            {
-              label: 'App 2',
-              value: 'app2',
+              value: '',
             },
           ],
         },
@@ -223,20 +159,10 @@ export const listViewConfig: ListViewConfigs = {
           options: [],
         },
       },
-      /*
-      {
-        type: 'UInputText',
-        props: {
-          name: 'freeSearch',
-          label: 'Search',
-        },
-      },
-      */
     ],
     searchFormValues: {
-      appSelection: 'all',
+      appSelection: '',
       namespaceSelection: 'all',
-      // freeSearch: '',
     },
     columns: [
       {

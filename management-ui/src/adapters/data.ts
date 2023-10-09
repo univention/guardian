@@ -534,7 +534,7 @@ class GenericDataAdapter implements DataPort {
 }
 
 export class InMemoryDataAdapter extends GenericDataAdapter {
-  private readonly _responseTimeout = 1000;
+  private readonly _responseTimeout = 200;
 
   private _db: {
     apps: AppResponseData[];
