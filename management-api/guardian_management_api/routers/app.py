@@ -21,6 +21,7 @@ from ..models.routers.app import (
     AppSingleResponse,
 )
 from ..ports.app import AppAPIPort, AppPersistencePort
+from ..ports.authz import ResourceAuthorizationPort
 from ..ports.bundle_server import BundleServerPort
 from ..ports.capability import CapabilityPersistencePort
 from ..ports.namespace import NamespacePersistencePort
@@ -36,6 +37,9 @@ async def get_app(
         port_dep(AppAPIPort, FastAPIAppAPIAdapter)
     ),
     persistence: AppPersistencePort = Depends(port_dep(AppPersistencePort)),
+    authz_port: ResourceAuthorizationPort = Depends(
+        port_dep(ResourceAuthorizationPort)
+    ),
 ) -> Dict[str, Any]:
     """
     Returns an app identified by `name`
@@ -44,6 +48,7 @@ async def get_app(
         api_request=app_get_request,
         app_api_port=management_app_api,
         persistence_port=persistence,
+        authz_port=authz_port,
     )
     return response.dict()
 
@@ -53,6 +58,9 @@ async def get_all_apps(
     app_get_request: AppsGetRequest = Depends(),
     app_api: FastAPIAppAPIAdapter = Depends(port_dep(AppAPIPort, FastAPIAppAPIAdapter)),
     persistence: AppPersistencePort = Depends(port_dep(AppPersistencePort)),
+    authz_port: ResourceAuthorizationPort = Depends(
+        port_dep(ResourceAuthorizationPort)
+    ),
 ) -> Dict[str, Any]:
     """
     Returns all apps.
@@ -61,6 +69,7 @@ async def get_all_apps(
         api_request=app_get_request,
         app_api_port=app_api,
         persistence_port=persistence,
+        authz_port=authz_port,
     )
 
     return response.dict()
@@ -75,11 +84,15 @@ async def create_app(
     app_create_request: Annotated[AppCreateRequest, Body()],
     app_api: FastAPIAppAPIAdapter = Depends(port_dep(AppAPIPort, FastAPIAppAPIAdapter)),
     persistence: AppPersistencePort = Depends(port_dep(AppPersistencePort)),
+    authz_port: ResourceAuthorizationPort = Depends(
+        port_dep(ResourceAuthorizationPort)
+    ),
 ) -> Dict[str, Any]:
     response: AppSingleResponse = await business_logic.create_app(
         api_request=app_create_request,
         app_api_port=app_api,
         persistence_port=persistence,
+        authz_port=authz_port,
     )
     return response.dict()
 
@@ -99,7 +112,10 @@ async def register_app(
         port_dep(CapabilityPersistencePort)
     ),
     bundle_server_port: BundleServerPort = Depends(port_dep(BundleServerPort)),
-):
+    authz_port: ResourceAuthorizationPort = Depends(
+        port_dep(ResourceAuthorizationPort)
+    ),
+):  # pragma: no cover
     """
     Register an app.
 
@@ -114,6 +130,7 @@ async def register_app(
         role_persistence,
         cap_persistence,
         bundle_server_port,
+        authz_port=authz_port,
     )
     return response.dict()
 
@@ -123,7 +140,10 @@ async def edit_app(
     app_edit_request: AppEditRequest = Depends(),
     app_api: FastAPIAppAPIAdapter = Depends(port_dep(AppAPIPort, FastAPIAppAPIAdapter)),
     persistence: AppPersistencePort = Depends(port_dep(AppPersistencePort)),
-) -> Dict[str, Any]:
+    authz_port: ResourceAuthorizationPort = Depends(
+        port_dep(ResourceAuthorizationPort)
+    ),
+) -> Dict[str, Any]:  # pragma: no cover
     """
     Update an app.
     """
@@ -132,5 +152,6 @@ async def edit_app(
             api_request=app_edit_request,
             app_api_port=app_api,
             persistence_port=persistence,
+            authz_port=authz_port,
         )
     ).dict()

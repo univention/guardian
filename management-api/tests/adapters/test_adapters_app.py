@@ -15,6 +15,7 @@ from guardian_management_api.errors import (
     ObjectExistsError,
     ObjectNotFoundError,
     PersistenceError,
+    UnauthorizedError,
 )
 from guardian_management_api.models.app import (
     App,
@@ -61,6 +62,7 @@ class TestFastAPIAppAdapter:
             (PersistenceError(), 500),
             (ValueError, 500),
             (ObjectExistsError(), 400),
+            (UnauthorizedError(), 403),
         ],
     )
     @pytest.mark.asyncio

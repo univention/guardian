@@ -37,3 +37,19 @@ class BundleGenerationIOError(RuntimeError):
 
 class BundleBuildError(Exception):
     """If the subprocess to build the OPA bundle fails"""
+
+
+class AuthorizationError(Exception):
+    """
+    If there was any unexpected error during authorization operations.
+
+    Usually this should be handled by defaulting to deny authorization.
+    """
+
+
+class UnauthorizedError(Exception):
+    """
+    Raised in the business logic, if an operation is unauthorized.
+
+    This should be handled by the transform_exception method of the incoming ports.
+    """

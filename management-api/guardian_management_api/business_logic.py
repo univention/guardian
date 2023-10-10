@@ -7,6 +7,8 @@ from dataclasses import asdict
 from loguru import logger
 
 from .adapters.namespace import FastAPINamespaceAPIAdapter
+from .errors import UnauthorizedError
+from .models.authz import Actor, OperationType, Resource, ResourceType
 from .models.capability import (
     Capability,
     CapabilityConditionParameter,
@@ -56,6 +58,7 @@ from .ports.app import (
     AppAPIRegisterResponseObject,
     AppPersistencePort,
 )
+from .ports.authz import ResourceAuthorizationPort
 from .ports.bundle_server import BundleServerPort, BundleType
 from .ports.capability import CapabilityAPIPort, CapabilityPersistencePort
 from .ports.condition import (
@@ -93,10 +96,22 @@ async def create_app(
     api_request: AppCreateRequest,
     app_api_port: AppAPIPort,
     persistence_port: AppPersistencePort,
+    authz_port: ResourceAuthorizationPort,
 ) -> AppSingleResponse:
     try:
         query = await app_api_port.to_app_create(api_request)
         app = query.apps[0]
+        allowed = (
+            await authz_port.authorize_operation(
+                Actor(id="test"),
+                OperationType.CREATE_RESOURCE,
+                [Resource(resource_type=ResourceType.APP, name=app.name)],
+            )
+        ).get(app.name, False)
+        if not allowed:
+            raise UnauthorizedError(
+                "The logged in user is not authorized to create this app."
+            )
         created_app = await persistence_port.create(app)
         return await app_api_port.to_api_create_response(created_app)
     except Exception as exc:
@@ -107,10 +122,22 @@ async def get_app(
     api_request: AppGetRequest,
     app_api_port: AppAPIPort,
     persistence_port: AppPersistencePort,
+    authz_port: ResourceAuthorizationPort,
 ) -> AppSingleResponse:
     try:
         query = await app_api_port.to_app_get(api_request)
         app = await persistence_port.read_one(query)
+        allowed = (
+            await authz_port.authorize_operation(
+                Actor(id="test"),
+                OperationType.READ_RESOURCE,
+                [Resource(resource_type=ResourceType.APP, name=app.name)],
+            )
+        ).get(app.name, False)
+        if not allowed:
+            raise UnauthorizedError(
+                "The logged in user is not authorized to read this app."
+            )
         return await app_api_port.to_api_get_response(app)
     except Exception as exc:
         raise (await app_api_port.transform_exception(exc)) from exc
@@ -120,12 +147,26 @@ async def get_apps(
     api_request: AppsGetRequest,
     app_api_port: AppAPIPort,
     persistence_port: AppPersistencePort,
+    authz_port: ResourceAuthorizationPort,
 ) -> AppMultipleResponse:
     try:
         query = await app_api_port.to_apps_get(api_request)
         many_apps = await persistence_port.read_many(query)
+        authz_result = await authz_port.authorize_operation(
+            Actor(id="test"),
+            OperationType.READ_RESOURCE,
+            [
+                Resource(resource_type=ResourceType.APP, name=app.name)
+                for app in many_apps.objects
+            ],
+        )
+        allowed_apps = {
+            resource_id
+            for resource_id in authz_result.keys()
+            if authz_result[resource_id]
+        }
         return await app_api_port.to_api_apps_get_response(
-            apps=list(many_apps.objects),
+            apps=[app for app in many_apps.objects if app.name in allowed_apps],
             query_offset=query.pagination.query_offset,
             query_limit=query.pagination.query_limit
             if query.pagination.query_limit
@@ -211,9 +252,21 @@ async def register_app(
     role_persistence_port: RolePersistencePort,
     cap_persistence_port: CapabilityPersistencePort,
     bundle_server_port: BundleServerPort,
+    authz_port: ResourceAuthorizationPort,
 ) -> AppAPIRegisterResponseObject:
     try:
         query = await app_api_port.to_app_create(api_request)
+        allowed = (
+            await authz_port.authorize_operation(
+                Actor(id="test"),
+                OperationType.CREATE_RESOURCE,
+                [Resource(resource_type=ResourceType.APP, name=query.apps[0].name)],
+            )
+        ).get(query.apps[0].name, False)
+        if not allowed:
+            raise UnauthorizedError(
+                "The logged in user is not authorized to register this app."
+            )
         app = await app_persistence_port.create(query.apps[0])
         app_display = app.display_name if app.display_name else app.name
         default_namespace = await namespace_persistence_port.create(
@@ -311,10 +364,22 @@ async def edit_app(
     api_request: AppEditRequest,
     app_api_port: AppAPIPort,
     persistence_port: AppPersistencePort,
+    authz_port: ResourceAuthorizationPort,
 ) -> AppSingleResponse:
     try:
         query, changed_data = await app_api_port.to_app_edit(api_request)
         old_app = await persistence_port.read_one(query)
+        allowed = (
+            await authz_port.authorize_operation(
+                Actor(id="test"),
+                OperationType.UPDATE_RESOURCE,
+                [Resource(resource_type=ResourceType.APP, name=old_app.name)],
+            )
+        ).get(old_app.name, False)
+        if not allowed:
+            raise UnauthorizedError(
+                "The logged in user is not authorized to edit this app."
+            )
         for key, value in changed_data.items():
             setattr(old_app, key, value)
         updated_app = await persistence_port.update(old_app)
