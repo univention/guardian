@@ -5,6 +5,7 @@
 
 from fastapi import APIRouter, Depends
 from guardian_lib.adapter_registry import port_dep
+from guardian_lib.ports import ActorIdentifierPort
 
 from . import business_logic
 from .adapters.api import (
@@ -58,11 +59,15 @@ async def get_permissions_with_lookup(
     ),
     policy_port: PolicyPort = Depends(port_dep(PolicyPort)),
     persistence_port: PersistencePort = Depends(port_dep(PersistencePort)),
+    actor: ActorIdentifierPort = Depends(
+        port_dep(ActorIdentifierPort).fastapi_dependency
+    ),
 ) -> AuthzPermissionsPostResponse:
     """
     Retrieve a list of permissions for an actor, with optional targets.
     Actor and target objects can be looked up by Guardian using an identifier.
     """
+    raise Exception(actor)
     return await business_logic.get_permissions_with_lookup(
         permissions_with_lookup_request,
         get_permission_api,

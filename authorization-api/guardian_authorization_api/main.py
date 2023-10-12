@@ -29,7 +29,9 @@ async def lifespan(fastapi_app: FastAPI):
     await initialize_adapters(ADAPTER_REGISTRY)
     auth_adapter = await ADAPTER_REGISTRY.request_port(AuthenticationPort)
     fastapi_app.include_router(
-        router, prefix=API_PREFIX, dependencies=[Depends(auth_adapter)]
+        router,
+        prefix=API_PREFIX,
+        dependencies=[Depends(auth_adapter.fastapi_dependency)],
     )
     yield
 

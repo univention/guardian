@@ -47,6 +47,7 @@ Faker = "^19.6.1"
 httpx = "^0.24.1"
 cryptography = "^41.0.4"
 guardian-pytest = "0.1.0"
+guardian-lib = {path = "../guardian-lib", develop = true}
 
 
 [[tool.poetry.source]]

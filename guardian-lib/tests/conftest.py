@@ -5,12 +5,13 @@
 import guardian_lib.adapter_registry as adapter_registry
 import pytest
 from guardian_lib.adapters.authentication import (
+    ActorIdentifierOAuth2,
     FastAPIAlwaysAuthorizedAdapter,
     FastAPINeverAuthorizedAdapter,
     FastAPIOAuth2,
 )
 from guardian_lib.adapters.settings import EnvSettingsAdapter
-from guardian_lib.ports import AuthenticationPort, SettingsPort
+from guardian_lib.ports import ActorIdentifierPort, AuthenticationPort, SettingsPort
 from port_loader import AsyncAdapterRegistry, AsyncAdapterSettingsProvider
 from port_loader.errors import DuplicatePortError
 
@@ -29,6 +30,7 @@ def register_test_adapters(env_settings):
         (AuthenticationPort, FastAPIAlwaysAuthorizedAdapter),
         (AuthenticationPort, FastAPINeverAuthorizedAdapter),
         (AuthenticationPort, FastAPIOAuth2),
+        (ActorIdentifierPort, ActorIdentifierOAuth2),
     ]:
         try:
             adapter_registry.ADAPTER_REGISTRY.register_port(port)

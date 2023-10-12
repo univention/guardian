@@ -584,25 +584,22 @@ name = "guardian-lib"
 version = "1.0.2"
 description = ""
 optional = false
-python-versions = ">=3.11,<4.0"
-files = [
-    {file = "guardian_lib-1.0.2-py3-none-any.whl", hash = "sha256:51bc413f1bfad979f7ebbcf2c40c8b5d3b5d4f09f81f7fe86ba6eae59d5a85ec"},
-    {file = "guardian_lib-1.0.2.tar.gz", hash = "sha256:d41fe044a9baeeb1181cde566d52a70322d3c19ce7bed112deb243a505fe3869"},
-]
+python-versions = "^3.11"
+files = []
+develop = true
 
 [package.dependencies]
-fastapi = ">=0.100.0,<0.101.0"
-lazy-object-proxy = ">=1.9.0,<2.0.0"
-loguru = ">=0.7.0,<0.8.0"
-port-loader = ">=1.0.1,<2.0.0"
-pydantic = ">=1.8.2,<2.0.0"
-pyjwt = ">=2.8.0,<3.0.0"
-requests = ">=2.31.0,<3.0.0"
+fastapi = "^0.100.0"
+lazy-object-proxy = "^1.9.0"
+loguru = "^0.7.0"
+port-loader = "^1.0.1"
+pydantic = "^1.8.2"
+pyjwt = "^2.8.0"
+requests = "^2.31.0"
 
 [package.source]
-type = "legacy"
-url = "https://git.knut.univention.de/api/v4/projects/830/packages/pypi/simple"
-reference = "guardian"
+type = "directory"
+url = "../guardian-lib"
 
 [[package]]
 name = "guardian-pytest"
@@ -1411,4 +1408,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "734c2923dd55f07b322eac1264fdacc8e531089d00c25fbd750ed90601fd3474"
+content-hash = "449faeeacf17760635a192d39604f91720371d7095cca8b15a1c15a9377ae128"

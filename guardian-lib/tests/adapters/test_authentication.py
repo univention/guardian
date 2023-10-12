@@ -8,11 +8,12 @@ import pytest
 import requests
 from fastapi import HTTPException, status
 from guardian_lib.adapters.authentication import (
+    ActorIdentifierOAuth2,
     FastAPIAlwaysAuthorizedAdapter,
     FastAPINeverAuthorizedAdapter,
     FastAPIOAuth2,
 )
-from guardian_lib.ports import AuthenticationPort
+from guardian_lib.ports import ActorIdentifierPort, AuthenticationPort
 from starlette.requests import Request
 
 pytest_plugins = "guardian_pytest.authentication"
@@ -56,7 +57,9 @@ class TestAuthenticationOAuthAdapter:
             }
         )
         assert request.headers.get("Authorization")
-        await auth_adapter_oauth(request)
+        auth_adapter_oauth.fastapi_dependency(
+            await auth_adapter_oauth.fastapi_oauth_dependency(request)
+        )
 
     @pytest.mark.asyncio
     async def test_missing_token(self, auth_adapter_oauth):
@@ -64,7 +67,9 @@ class TestAuthenticationOAuthAdapter:
             scope={"type": "http", "headers": [(b"authorization", b"Bearer")]}
         )
         with pytest.raises(HTTPException) as exc:
-            await auth_adapter_oauth(request)
+            await auth_adapter_oauth.fastapi_dependency(
+                await auth_adapter_oauth.fastapi_oauth_dependency(request)
+            )
             assert exc.status_code == status.HTTP_401_UNAUTHORIZED
 
     @pytest.mark.asyncio
@@ -83,7 +88,9 @@ class TestAuthenticationOAuthAdapter:
         )
         assert request.headers.get("Authorization")
         with pytest.raises(HTTPException) as exc:
-            await auth_adapter_oauth(request)
+            await auth_adapter_oauth.fastapi_dependency(
+                await auth_adapter_oauth.fastapi_oauth_dependency(request)
+            )
             assert exc.status_code == status.HTTP_401_UNAUTHORIZED
 
     @pytest.mark.asyncio
@@ -102,7 +109,9 @@ class TestAuthenticationOAuthAdapter:
         )
         assert request.headers.get("Authorization")
         with pytest.raises(HTTPException) as exc:
-            await auth_adapter_oauth(request)
+            await auth_adapter_oauth.fastapi_dependency(
+                await auth_adapter_oauth.fastapi_oauth_dependency(request)
+            )
             assert exc.status_code == status.HTTP_401_UNAUTHORIZED
 
     @pytest.mark.asyncio
@@ -121,7 +130,9 @@ class TestAuthenticationOAuthAdapter:
         )
         assert request.headers.get("Authorization")
         with pytest.raises(HTTPException) as exc:
-            await auth_adapter_oauth(request)
+            await auth_adapter_oauth.fastapi_dependency(
+                await auth_adapter_oauth.fastapi_oauth_dependency(request)
+            )
             assert exc.status_code == status.HTTP_401_UNAUTHORIZED
 
     @pytest.mark.asyncio
@@ -140,7 +151,9 @@ class TestAuthenticationOAuthAdapter:
         )
         assert request.headers.get("Authorization")
         with pytest.raises(HTTPException) as exc:
-            await auth_adapter_oauth(request)
+            await auth_adapter_oauth.fastapi_dependency(
+                await auth_adapter_oauth.fastapi_oauth_dependency(request)
+            )
             assert exc.status_code == status.HTTP_401_UNAUTHORIZED
 
     @pytest.mark.asyncio
@@ -159,5 +172,28 @@ class TestAuthenticationOAuthAdapter:
         )
         assert request.headers.get("Authorization")
         with pytest.raises(HTTPException) as exc:
-            await auth_adapter_oauth(request)
+            await auth_adapter_oauth.fastapi_dependency(
+                await auth_adapter_oauth.fastapi_oauth_dependency(request)
+            )
             assert exc.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+@pytest.mark.asyncio
+async def test_ActorIdentifierOAuth2(
+    auth_adapter_oauth, register_test_adapters, good_token
+):
+    request = Request(
+        scope={
+            "type": "http",
+            "headers": [(b"authorization", f"Bearer {good_token}".encode("utf-8"))],
+        }
+    )
+    assert request.headers.get("Authorization")
+    actor_adapter = await register_test_adapters.request_adapter(
+        ActorIdentifierPort, ActorIdentifierOAuth2
+    )
+    assert "testi" == actor_adapter.fastapi_dependency(
+        token=auth_adapter_oauth.fastapi_dependency(
+            await auth_adapter_oauth.fastapi_oauth_dependency(request)
+        )
+    )

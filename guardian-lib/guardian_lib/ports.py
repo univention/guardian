@@ -143,3 +143,7 @@ class SettingsPort(BasePort, AsyncAdapterSettingsProvider, ABC):
 
 class AuthenticationPort(BasePort):
     pass
+
+
+class ActorIdentifierPort(BasePort):
+    pass
