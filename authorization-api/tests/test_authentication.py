@@ -5,6 +5,8 @@ from fastapi.routing import APIRoute
 from guardian_authorization_api.main import app
 from guardian_lib.ports import AuthenticationPort
 
+from .conftest import get_authz_permissions_check_request_dict
+
 pytest_plugins = "guardian_pytest.authentication"
 
 
@@ -46,13 +48,19 @@ async def test_all_routes_are_authenticated(client, oauth_authentication):
 
 class TestOauth:
     @pytest.mark.usefixtures("mock_get_jwk_set")
-    def test_success(self, client, oauth_authentication, good_token):
+    def test_success(self, client, oauth_authentication, good_token, opa_async_mock):
+        data = get_authz_permissions_check_request_dict()
+        opa_async_mock.return_value = [
+            {"target_id": "", "result": True},
+            {"target_id": "id1", "result": False},
+            {"target_id": "id2", "result": True},
+        ]
         response = client.post(
-            app.url_path_for("get_permissions"),
-            json={"name": "test_app"},
+            app.url_path_for("check_permissions"),
+            json=data,
             headers={"Authorization": f"Bearer {good_token}"},
         )
-        assert response.status_code == 422  # TODO needs opa mock to get a 200
+        assert response.status_code == 200  # TODO needs opa mock to get a 200
 
     @pytest.mark.usefixtures("mock_get_jwk_set")
     def test_bad_idp(self, client, oauth_authentication, bad_idp_token):

@@ -27,13 +27,14 @@ async def test_simple_AuthenticationAdapter(register_test_adapters, adapter, all
     auth_adapter = await register_test_adapters.request_adapter(
         AuthenticationPort, adapter
     )
-
+    request = Request(scope={"type": "http"})
     if not allowed:
         with pytest.raises(HTTPException) as exc:
-            auth_adapter()
+            auth_adapter(request)
             assert exc.status_code == status.HTTP_401_UNAUTHORIZED
     else:
-        auth_adapter()
+        auth_adapter(request)
+        assert request.state.actor_identifier == "dev"
 
 
 class TestAuthenticationOAuthAdapter:
@@ -57,6 +58,7 @@ class TestAuthenticationOAuthAdapter:
         )
         assert request.headers.get("Authorization")
         await auth_adapter_oauth(request)
+        assert request.state.actor_identifier == "testi"
 
     @pytest.mark.asyncio
     async def test_missing_token(self, auth_adapter_oauth):

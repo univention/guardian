@@ -3,7 +3,9 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 
-from fastapi import APIRouter, Depends
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Request
 from guardian_lib.adapter_registry import port_dep
 
 from . import business_logic
@@ -29,6 +31,10 @@ from .ports import (
 )
 
 router = APIRouter()
+
+
+def get_actor(request: Request):
+    return request.state.actor_identifier
 
 
 @router.post("/permissions")
@@ -74,6 +80,7 @@ async def get_permissions_with_lookup(
 @router.post("/permissions/check")
 async def check_permissions(
     permissions_check_request: AuthzPermissionsCheckPostRequest,
+    actor: Annotated[str, Depends(get_actor)],
     check_permission_api: CheckPermissionsAPIPort = Depends(
         port_dep(CheckPermissionsAPIPort, FastAPICheckPermissionsAPIAdapter)
     ),
