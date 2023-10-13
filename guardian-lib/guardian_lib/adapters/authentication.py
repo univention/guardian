@@ -23,7 +23,8 @@ class FastAPIAlwaysAuthorizedAdapter(AuthenticationPort):
         is_cached = True
         alias = "fast_api_always_authorized"
 
-    def __call__(self) -> None:
+    def __call__(self, request: Request) -> None:
+        request.state.actor_identifier = "dev"
         return
 
 
@@ -34,7 +35,7 @@ class FastAPINeverAuthorizedAdapter(AuthenticationPort):
         is_cached = True
         alias = "fast_api_never_authorized"
 
-    def __call__(self) -> None:
+    def __call__(self, request: Request) -> None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not Authorized",
@@ -84,11 +85,11 @@ class FastAPIOAuth2(
         return FastAPIOAuth2AdapterSettings
 
     async def __call__(self, request: Request) -> None:
-        token = await super().__call__(request)
+        token_encoded = await super().__call__(request)
         try:
-            jwt.decode(
-                token,
-                self.jwks_client.get_signing_key_from_jwt(token).key,
+            token = jwt.decode(
+                token_encoded,
+                self.jwks_client.get_signing_key_from_jwt(token_encoded).key,
                 algorithms=["RS256"],
                 audience="guardian",
                 issuer=self.oauth_settings["issuer"],
@@ -97,8 +98,9 @@ class FastAPIOAuth2(
                 },
             )
         except jwt.exceptions.InvalidTokenError as exc:
-            self.logger.warning(f'Invalid Token: "{exc}"', token=token)
+            self.logger.warning(f'Invalid Token: "{exc}"', token_encoded=token_encoded)
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Not Authorized",
             )
+        request.state.actor_identifier = token["sub"]
