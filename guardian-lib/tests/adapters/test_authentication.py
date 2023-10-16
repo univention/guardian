@@ -161,3 +161,34 @@ class TestAuthenticationOAuthAdapter:
         with pytest.raises(HTTPException) as exc:
             await auth_adapter_oauth(request)
             assert exc.status_code == status.HTTP_401_UNAUTHORIZED
+
+    @pytest.mark.asyncio
+    async def test_get_actor_identifier(self, auth_adapter_oauth, good_token):
+        request = Request(
+            scope={
+                "type": "http",
+                "headers": [(b"authorization", f"Bearer {good_token}".encode("utf-8"))],
+            }
+        )
+        assert request.headers.get("Authorization")
+        result = await auth_adapter_oauth.get_actor_identifier(request)
+        assert result == "testi"
+
+    @pytest.mark.asyncio
+    async def test_get_actor_identifier_bad_token(
+        self,
+        auth_adapter_oauth,
+        expired_token,
+    ):
+        request = Request(
+            scope={
+                "type": "http",
+                "headers": [
+                    (b"authorization", f"Bearer {expired_token}".encode("utf-8"))
+                ],
+            }
+        )
+        assert request.headers.get("Authorization")
+        with pytest.raises(HTTPException) as exc:
+            await auth_adapter_oauth.get_actor_identifier(request)
+            assert exc.status_code == status.HTTP_401_UNAUTHORIZED

@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 from abc import ABC, abstractmethod
-from typing import Optional, Type
+from typing import Generic, Optional, Type, TypeVar
 
 import loguru
 from port_loader import AsyncAdapterSettingsProvider
@@ -141,5 +141,10 @@ class SettingsPort(BasePort, AsyncAdapterSettingsProvider, ABC):
         raise NotImplementedError  # pragma: no cover
 
 
-class AuthenticationPort(BasePort):
-    pass
+RequestObject = TypeVar("RequestObject")
+
+
+class AuthenticationPort(BasePort, Generic[RequestObject]):
+    async def get_actor_identifier(self, request: RequestObject):
+        """Returns the identifier of the actor that is currently authenticated."""
+        raise NotImplementedError  # pragma: no cover
