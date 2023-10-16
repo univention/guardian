@@ -116,5 +116,39 @@
     "button": {
       "confirmation": "OK"
     }
+  },
+  "dataAccess.options.all": "Alle",
+  "configs": {
+    "listView": {
+      "searchForm": {
+        "appSelection": "App",
+        "namespaceSelection": "Namensraum"
+      },
+      "columns": {
+        "name": "Name",
+        "displayName": "Anzeigename",
+        "appName": "App",
+        "namespaceName": "Namensraum"
+      }
+    },
+    "addView": {
+      "page.general": "Generell",
+      "fieldset.basicSettings": "Grundeinstellungen",
+      "field": {
+        "appName": "App",
+        "namespaceName": "Namensraum",
+        "name": "Name",
+        "displayName": "Anzeigename",
+        "conditions": "Konditionen",
+        "condition": "Kondition",
+        "relation": "Beziehung",
+        "permissions": "Berechtigungen"
+      },
+      "hint": {
+        "selectAppFirst": "Zuerst App auswählen",
+        "selectNamespaceFirst": "Zuert Namensraum auswählen",
+        "autoGenerate": "Wird automatisch generiert, wenn leer gelassen"
+      }
+    }
   }
 }

@@ -1,32 +1,29 @@
 <script setup lang="ts">
+import type {UGridContextAction, UGridRow} from '@univention/univention-veb';
 import {
-  UGrid,
-  UInputText,
   UButton,
   UComboBox,
-  UStandbyFullScreen,
-  useStandby,
   UConfirmDialog,
   UExtendingInput,
-  UInputPassword,
+  UGrid,
+  type UGridColumnDefinition,
   UInputCheckbox,
+  UInputClassified,
   UInputDate,
+  UInputPassword,
+  UInputText,
   UMultiInput,
   UMultiObjectSelect,
   UMultiSelect,
   USelect,
-  UInputClassified,
-  type UGridColumnDefinition,
+  useStandby,
+  UStandbyFullScreen,
 } from '@univention/univention-veb';
-import type {UGridContextAction, UGridRow} from '@univention/univention-veb';
-import type {ListResponseModel, GlobalAction, Field, FormValues, ObjectType} from '@/helpers/models';
-import {useRoute} from 'vue-router';
-import {deleteCapabilities, fetchListViewConfig, fetchNamespaces, fetchObjects} from '@/helpers/dataAccess';
-import {ref, onMounted, watch, reactive, toRaw, computed, type ComputedRef} from 'vue';
+import type {Field, FieldComboBox, FormValues, GlobalAction, ListResponseModel, ObjectType} from '@/helpers/models';
+import {useRoute, useRouter} from 'vue-router';
+import {deleteCapabilities, fetchListViewConfig, fetchNamespacesOptions, fetchObjects} from '@/helpers/dataAccess';
+import {computed, type ComputedRef, onMounted, reactive, ref, toRaw, watch} from 'vue';
 import {useTranslation} from 'i18next-vue';
-import {useRouter} from 'vue-router';
-import {config as appConfig} from '@/helpers/config';
-import type {FieldComboBox} from '@/helpers/models';
 
 const props = defineProps<{
   objectType: ObjectType;
@@ -111,25 +108,20 @@ const fetchConfig = async (): Promise<void> => {
     watch(
       () => states.value.role.searchFormValues['appSelection'],
       async newValue => {
-        if (newValue === 'all') {
+        if (newValue === '') {
           field.props.access = 'read';
           field.props.options = [
             {
-              label: 'All',
-              value: 'all',
+              label: t('dataAccess.options.all'),
+              value: '',
             },
           ];
-          states.value.role.searchFormValues['namespaceSelection'] = 'all';
+          states.value.role.searchFormValues['namespaceSelection'] = '';
         } else {
           field.props.access = 'write';
           states.value.role.searchFormValues['namespaceSelection'] = '';
-          const _options = await _standby.wrap(() => fetchNamespaces(newValue as string));
-          _options.unshift({
-            label: 'All',
-            value: 'all',
-          });
-          field.props.options = _options;
-          states.value.role.searchFormValues['namespaceSelection'] = 'all';
+          field.props.options = await _standby.wrap(() => fetchNamespacesOptions(newValue as string, true));
+          states.value.role.searchFormValues['namespaceSelection'] = '';
         }
       }
     );
@@ -147,25 +139,20 @@ const fetchConfig = async (): Promise<void> => {
     watch(
       () => states.value.context.searchFormValues['appSelection'],
       async newValue => {
-        if (newValue === 'all') {
+        if (newValue === '') {
           field.props.access = 'read';
           field.props.options = [
             {
               label: 'All',
-              value: 'all',
+              value: '',
             },
           ];
-          states.value.context.searchFormValues['namespaceSelection'] = 'all';
+          states.value.context.searchFormValues['namespaceSelection'] = '';
         } else {
           field.props.access = 'write';
           states.value.context.searchFormValues['namespaceSelection'] = '';
-          const _options = await _standby.wrap(() => fetchNamespaces(newValue as string));
-          _options.unshift({
-            label: 'All',
-            value: 'all',
-          });
-          field.props.options = _options;
-          states.value.context.searchFormValues['namespaceSelection'] = 'all';
+          field.props.options = await _standby.wrap(() => fetchNamespacesOptions(newValue as string, true));
+          states.value.context.searchFormValues['namespaceSelection'] = '';
         }
       }
     );
@@ -190,25 +177,20 @@ const fetchConfig = async (): Promise<void> => {
     watch(
       () => states.value.capability.searchFormValues['appSelection'],
       async newValue => {
-        if (newValue === 'all') {
+        if (newValue === '') {
           field.props.access = 'read';
           field.props.options = [
             {
               label: 'All',
-              value: 'all',
+              value: '',
             },
           ];
-          states.value.capability.searchFormValues['namespaceSelection'] = 'all';
+          states.value.capability.searchFormValues['namespaceSelection'] = '';
         } else {
           field.props.access = 'write';
           states.value.capability.searchFormValues['namespaceSelection'] = '';
-          const _options = await _standby.wrap(() => fetchNamespaces(newValue as string));
-          _options.unshift({
-            label: 'All',
-            value: 'all',
-          });
-          field.props.options = _options;
-          states.value.capability.searchFormValues['namespaceSelection'] = 'all';
+          field.props.options = await _standby.wrap(() => fetchNamespacesOptions(newValue as string, true));
+          states.value.capability.searchFormValues['namespaceSelection'] = '';
         }
       }
     );
@@ -261,9 +243,9 @@ const states = ref<States>({
 const state = computed(() => states.value[props.objectType]);
 
 const searchLimitReachedModalActive = ref(false);
-const search = async (keepSelection = false, ignoreSearchLimit = false): Promise<void> => {
+const search = async (keepSelection = false): Promise<void> => {
   const fetchResult = await standby.wrap(() =>
-    fetchObjects(props.objectType, state.value.searchFormValues, ignoreSearchLimit ? undefined : appConfig.searchLimit)
+    fetchObjects(props.objectType, state.value.searchFormValues, route.params.id as string)
   );
   if (!fetchResult) {
     searchLimitReachedModalActive.value = true;
@@ -410,8 +392,14 @@ const globalActions = computed(() => {
 });
 
 const heading = computed(() => {
+  function lastIdPart(id: string): string {
+    const split = id.split(':');
+    return split[split.length - 1];
+  }
   if (props.objectType === 'capability') {
-    return `${t(`EditView.heading.edit.role`)} > ${route.params['id']} > ${t('ListView.heading.capability')}`;
+    return `${t(`EditView.heading.edit.role`)} > ${lastIdPart(route.params['id'] as string)} > ${t(
+      'ListView.heading.capability'
+    )}`;
   }
 
   return t(`ListView.heading.${props.objectType}`);
@@ -572,11 +560,11 @@ const heading = computed(() => {
       v-model:active="searchLimitReachedModalActive"
       :title="t('SearchLimitReachedModal.title')"
       :confirmLabel="t('SearchLimitReachedModal.button.confirm')"
-      @confirm="search(false, true)"
+      @confirm="search(false)"
     >
       <template #description>
         <p>
-          {{ t('SearchLimitReachedModal.description', {limit: appConfig.searchLimit}) }}
+          {{ t('SearchLimitReachedModal.description', {limit: 2000}) }}
         </p>
       </template>
     </UConfirmDialog>

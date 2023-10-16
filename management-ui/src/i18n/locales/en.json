@@ -116,5 +116,6 @@
     "button": {
       "confirmation": "OK"
     }
-  }
+  },
+  "dataAccess.options.all": "All"
 }

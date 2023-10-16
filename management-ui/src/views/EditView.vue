@@ -29,8 +29,8 @@ import {
   createObject,
   updateObject,
   type SaveError,
-  fetchNamespaces,
-  fetchPermissions,
+  fetchNamespacesOptions,
+  fetchPermissionsOptions,
 } from '@/helpers/dataAccess';
 import type {
   Page,
@@ -225,7 +225,7 @@ if (props.action === 'add') {
       _origValues[field.props.name] = defaultValue(field.type);
     }
     if (props.objectType === 'capability') {
-      _origValues['relation'] = 'and';
+      _origValues['relation'] = 'AND';
     }
     origValues.value = _origValues;
     currentValues.value = JSON.parse(JSON.stringify(_origValues));
@@ -241,7 +241,7 @@ if (props.action === 'add') {
         async newValue => {
           currentValues.value['namespaceName'] = '';
           field.props.hint = '';
-          field.props.options = await _standby.wrap(() => fetchNamespaces(newValue as string));
+          field.props.options = await _standby.wrap(() => fetchNamespacesOptions(newValue as string, false));
         }
       );
 
@@ -256,7 +256,7 @@ if (props.action === 'add') {
             currentValues.value['permissions'] = [];
             field.props.hint = '';
             (field.props.subElements[0] as FieldComboBox).props.options = await _standby.wrap(() =>
-              fetchPermissions(currentValues.value['appName'] as string, newValue as string)
+              fetchPermissionsOptions(currentValues.value['appName'] as string, newValue as string)
             );
           }
         );
@@ -426,8 +426,14 @@ const save = async (): Promise<void> => {
     console.debug('TODO error handling');
     return;
   }
-  const url = fetchedObject.value.url;
-  const error = await standby.wrap(() => updateObject(props.objectType, url, changedValues.value));
+  let conditionsExtensions: null | Record<string, Field[]> = null;
+  if (props.objectType === 'capability') {
+    // @ts-ignore
+    conditionsExtensions = pages.value[0].fieldsets[0].rows[2][0].props.subElements[0].props.extensions;
+  }
+  const error = await standby.wrap(() =>
+    updateObject(props.objectType, currentValues.value, (route.params.id as string) ?? '', conditionsExtensions)
+  );
   console.log('error', error);
   if (error) {
     saveFailedModal.active = true;
@@ -442,7 +448,15 @@ const add = async (): Promise<void> => {
   if (!validate()) {
     return;
   }
-  const result = await standby.wrap(() => createObject(props.objectType, changedValues.value));
+
+  let conditionsExtensions: null | Record<string, Field[]> = null;
+  if (props.objectType === 'capability') {
+    // @ts-ignore
+    conditionsExtensions = pages.value[0].fieldsets[0].rows[2][0].props.subElements[0].props.extensions;
+  }
+  const result = await standby.wrap(() =>
+    createObject(props.objectType, currentValues.value, (route.params.id as string) ?? '', conditionsExtensions)
+  );
 
   if (result.status === 'success') {
     saveSuccessModal.active = true;
@@ -461,18 +475,22 @@ const add = async (): Promise<void> => {
 };
 
 const heading = computed(() => {
+  function lastIdPart(id: string): string {
+    const split = id.split(':');
+    return split[split.length - 1];
+  }
   if (props.objectType === 'capability') {
     if (props.action === 'edit') {
-      return `${t('EditView.heading.edit.role')} > ${route.params['id']} > ${t(`EditView.heading.edit.capability`)} > ${
-        route.params['id2']
-      }`;
+      return `${t('EditView.heading.edit.role')} > ${lastIdPart(route.params['id'] as string)} > ${t(
+        `EditView.heading.edit.capability`
+      )} > ${lastIdPart(route.params['id2'] as string)}`;
     }
-    return `${t('EditView.heading.edit.role')} > ${route.params['id']} > ${t(
+    return `${t('EditView.heading.edit.role')} > ${lastIdPart(route.params['id'] as string)} > ${t(
       `EditView.heading.add.${props.objectType}`
     )}`;
   }
   if (props.action === 'edit') {
-    return `${t(`EditView.heading.edit.${props.objectType}`)} > ${route.params['id']}`;
+    return `${t(`EditView.heading.edit.${props.objectType}`)} > ${lastIdPart(route.params['id'] as string)}`;
   }
   return `${t(`EditView.heading.add.${props.objectType}`)}`;
 });
