@@ -95,7 +95,7 @@ async def register_app(
         port_dep(CapabilityPersistencePort)
     ),
     bundle_server_port: BundleServerPort = Depends(port_dep(BundleServerPort)),
-):  # pragma: no cover
+):
     """
     Register an app.
 
@@ -119,7 +119,7 @@ async def edit_app(
     app_edit_request: AppEditRequest = Depends(),
     app_api: FastAPIAppAPIAdapter = Depends(port_dep(AppAPIPort, FastAPIAppAPIAdapter)),
     persistence: AppPersistencePort = Depends(port_dep(AppPersistencePort)),
-) -> Dict[str, Any]:  # pragma: no cover
+) -> Dict[str, Any]:
     """
     Update an app.
     """
