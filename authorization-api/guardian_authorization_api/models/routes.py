@@ -119,7 +119,7 @@ class AuthzPermissionsPostRequest(GuardianBaseModel):
 class AuthzPermissionsLookupPostRequest(GuardianBaseModel):
     namespaces: Optional[list[NamespaceMinimal]] = Field(default=None)
     actor: ActorLookup
-    targets: Optional[list[TargetLookup]]
+    targets: Optional[list[Target | TargetLookup]]
     contexts: Optional[list[Context]]
     include_general_permissions: bool = False
     extra_request_data: dict[str, Any]
@@ -138,7 +138,7 @@ class AuthzPermissionsCheckPostRequest(GuardianBaseModel):
 class AuthzPermissionsCheckLookupPostRequest(GuardianBaseModel):
     namespaces: Optional[list[NamespaceMinimal]] = Field(default=None)
     actor: ActorLookup
-    targets: Optional[list[TargetLookup]]
+    targets: Optional[list[Target | TargetLookup]]
     contexts: Optional[list[Context]]
     targeted_permissions_to_check: list[Permission]
     general_permissions_to_check: list[Permission]

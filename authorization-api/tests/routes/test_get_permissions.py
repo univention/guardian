@@ -45,6 +45,48 @@ class TestPermissionsGetUnittest:
         assert response_json["general_permissions"] == []
 
     @pytest.mark.asyncio
+    async def test_get_permissions_with_lookup_partial(
+        self, client, udm_mock, opa_async_mock
+    ):
+        data = get_authz_permissions_get_request_dict(n_targets=2)
+        actor_id = "actor-id"
+        target_id_provided = "uid=target-id"
+        data["actor"] = {"id": actor_id}
+        data["targets"][0]["old_target"]["id"] = target_id_provided
+        data["targets"][0]["new_target"]["id"] = target_id_provided
+        target_lookup_id = "uid=target-lookup-id"
+        data["targets"][1]["old_target"] = {"id": target_lookup_id}
+        data["targets"][1]["new_target"]["id"] = target_lookup_id
+
+        opa_async_mock.return_value = [
+            {"target_id": "", "result": True, "permissions": {}},
+            {"target_id": target_id_provided, "result": False, "permissions": {}},
+            {"target_id": target_lookup_id, "result": False, "permissions": {}},
+        ]
+        users = {
+            actor_id: MockUdmObject(
+                dn=actor_id, properties={"guardianRole": ["ucsschool:users:teacher"]}
+            ),
+            target_lookup_id: MockUdmObject(
+                dn=target_lookup_id,
+                properties={"guardianRole": ["ucsschool:users:student"]},
+            ),
+        }
+        udm_mock(users=users)
+        response = client.post(
+            client.app.url_path_for("get_permissions_with_lookup"), json=data
+        )
+        assert response.status_code == 200, response.json()
+
+        response_json = response.json()
+        assert len(response_json["target_permissions"]) == len(data["targets"])
+        assert {
+            "permissions": [],
+            "target_id": target_id_provided,
+        } in response_json["target_permissions"]
+        assert response_json["general_permissions"] == []
+
+    @pytest.mark.asyncio
     async def test_get_permissions_with_lookup_raises_404_if_object_not_found(
         self, client, udm_mock, opa_async_mock
     ):
@@ -209,7 +251,6 @@ class TestGetPermissions:
             {"app_name": "ucsschool", "namespace_name": "users", "name": "teacher"}
         ]
         data["namespaces"] = [{"app_name": "ucsschool", "name": "users"}]
-
         response = client.post(client.app.url_path_for("get_permissions"), json=data)
         assert response.status_code == 200, response.json()
 
@@ -245,14 +286,17 @@ class TestGetPermissions:
         actor_id = "actor-id"
         target_id = "uid=target-id"
         data["actor"] = {"id": actor_id}
+        data["namespaces"] = [{"app_name": "ucsschool", "name": "users"}]
         data["targets"][0]["old_target"] = {"id": target_id}
         data["targets"][0]["new_target"]["id"] = target_id
         users = {
             target_id: MockUdmObject(
-                dn=target_id, properties={"guardianRole": ["ucsschool:users:student"]}
+                dn=target_id,
+                properties={"guardianRole": ["ucsschool:users:other_user_type"]},
             ),
             actor_id: MockUdmObject(
-                dn=actor_id, properties={"guardianRole": ["ucsschool:users:teacher"]}
+                dn=actor_id,
+                properties={"guardianRole": ["ucsschool:users:some_user_type"]},
             ),
         }
         udm_mock(users=users)
@@ -260,9 +304,7 @@ class TestGetPermissions:
             client.app.url_path_for("get_permissions_with_lookup"), json=data
         )
         assert response.status_code == 200, response.json()
-
         response_json = response.json()
-
         assert len(response_json["target_permissions"]) == len(data["targets"])
         assert {
             "permissions": [],
@@ -323,6 +365,62 @@ class TestGetPermissions:
                 "namespace_name": "users",
             },
         ]
+
+    @pytest.mark.asyncio
+    async def test_get_permissions_basic_with_lookup_partial(self, client, udm_mock):
+        """
+        Same as test_get_permissions_basic_with_lookup but
+            one target is looked up, one is provided.
+        """
+        data = get_authz_permissions_get_request_dict(n_actor_roles=1, n_targets=2)
+        actor_id = "actor-id"
+        target_id_provided = "uid=provided-target-id"
+        data["actor"] = {"id": actor_id}
+        data["namespaces"] = [{"app_name": "ucsschool", "name": "users"}]
+        data["targets"][0]["old_target"]["id"] = target_id_provided
+        data["targets"][0]["new_target"]["id"] = target_id_provided
+        target_lookup_id = "uid=target-lookup-id"
+        data["targets"][1]["old_target"] = {"id": target_lookup_id}
+        data["targets"][1]["new_target"]["id"] = target_lookup_id
+        users = {
+            target_lookup_id: MockUdmObject(
+                dn=target_lookup_id,
+                properties={"guardianRole": ["ucsschool:users:student"]},
+            ),
+            actor_id: MockUdmObject(
+                dn=actor_id, properties={"guardianRole": ["ucsschool:users:teacher"]}
+            ),
+        }
+        udm_mock(users=users)
+        response = client.post(
+            client.app.url_path_for("get_permissions_with_lookup"), json=data
+        )
+        assert response.status_code == 200, response.json()
+        response_json = response.json()
+        assert response_json["actor_id"] == data["actor"]["id"]
+        assert (
+            response_json["target_permissions"][0]["target_id"]
+            == data["targets"][0]["old_target"]["id"]
+        )
+        for permission in response_json["target_permissions"]:
+            assert permission["permissions"] == [
+                {"app_name": "ucsschool", "name": "export", "namespace_name": "users"},
+                {
+                    "app_name": "ucsschool",
+                    "name": "read_first_name",
+                    "namespace_name": "users",
+                },
+                {
+                    "app_name": "ucsschool",
+                    "name": "read_last_name",
+                    "namespace_name": "users",
+                },
+                {
+                    "app_name": "ucsschool",
+                    "name": "write_password",
+                    "namespace_name": "users",
+                },
+            ]
 
     @pytest.mark.asyncio
     async def test_get_permissions_basic_with_lookup_context(self, client, udm_mock):

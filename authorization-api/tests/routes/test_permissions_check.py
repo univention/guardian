@@ -143,6 +143,49 @@ class TestPermissionsCheckUnittest:
         }
 
     @pytest.mark.asyncio
+    async def test_check_permissions_with_lookup_partial(
+        self, client, udm_mock, opa_async_mock
+    ):
+        data = get_authz_permissions_check_request_dict(n_actor_roles=0, n_targets=2)
+        actor_id = "actor-id"
+        target_lookup_id = "uid=target-lookup-id"
+        data["actor"] = {"id": actor_id}
+        data["targets"][0]["old_target"] = {"id": target_lookup_id}
+        data["targets"][0]["new_target"]["id"] = target_lookup_id
+        target_id_provided = "uid=target-id"
+        data["targets"][1]["old_target"]["id"] = target_id_provided
+        data["targets"][1]["new_target"]["id"] = target_id_provided
+
+        opa_async_mock.return_value = [
+            {"target_id": "", "result": True},
+            {"target_id": target_lookup_id, "result": False},
+            {"target_id": target_id_provided, "result": False},
+        ]
+        users = {
+            target_lookup_id: MockUdmObject(
+                dn=target_lookup_id,
+                properties={"guardianRole": ["ucsschool:users:student"]},
+            ),
+            actor_id: MockUdmObject(
+                dn=actor_id, properties={"guardianRole": ["ucsschool:users:teacher"]}
+            ),
+        }
+        udm_mock(users=users)
+        response = client.post(
+            client.app.url_path_for("check_permissions_with_lookup"), json=data
+        )
+        assert response.status_code == 200, response.json()
+        assert response.json() == {
+            "actor_id": "actor-id",
+            "permissions_check_results": [
+                {"target_id": target_lookup_id, "actor_has_permissions": False},
+                {"target_id": target_id_provided, "actor_has_permissions": False},
+            ],
+            "actor_has_all_general_permissions": True,
+            "actor_has_all_targeted_permissions": False,
+        }
+
+    @pytest.mark.asyncio
     async def test_check_permissions_with_lookup_raises_404_if_object_not_found(
         self, client, udm_mock, opa_async_mock
     ):
@@ -472,6 +515,64 @@ class TestPermissionsCheck:
             "permissions_check_results": [
                 {
                     "target_id": target_id,
+                    "actor_has_permissions": True,
+                },
+            ],
+            "actor_has_all_targeted_permissions": True,
+            "actor_has_all_general_permissions": False,
+        }
+
+    @pytest.mark.asyncio
+    async def test_check_permissions_with_lookup_partial_basic(self, client, udm_mock):
+        """
+        Same as test_check_permissions_with_lookup_basic but
+            one of the targets are looked up, one is provided.
+        """
+        data = get_authz_permissions_check_request_dict(n_actor_roles=1, n_targets=2)
+        actor_id = "actor-id"
+        lookup_target_id = "uid=target-lookup-id"
+        users = {
+            lookup_target_id: MockUdmObject(
+                dn=lookup_target_id,
+                properties={"guardianRole": ["ucsschool:users:student"]},
+            ),
+            actor_id: MockUdmObject(
+                dn=actor_id, properties={"guardianRole": ["ucsschool:users:teacher"]}
+            ),
+        }
+        udm_mock(users=users)
+        data["actor"] = {"id": actor_id}
+        data["contexts"] = []
+        data["targeted_permissions_to_check"] = [
+            {
+                "app_name": "ucsschool",
+                "namespace_name": "users",
+                "name": "read_first_name",
+            }
+        ]
+        data["general_permissions_to_check"] = []
+        data["targets"][0]["old_target"] = {"id": lookup_target_id}
+        data["targets"][0]["new_target"]["id"] = lookup_target_id
+        target_id_provided = "uid=target-id"
+        data["targets"][1]["old_target"]["id"] = target_id_provided
+        data["targets"][1]["old_target"]["roles"] = [
+            {"app_name": "ucsschool", "namespace_name": "users", "name": "teacher"}
+        ]
+        data["targets"][1]["new_target"] = data["targets"][1]["old_target"]
+        data["namespaces"] = [{"app_name": "ucsschool", "name": "users"}]
+        response = client.post(
+            client.app.url_path_for("check_permissions_with_lookup"), json=data
+        )
+        assert response.status_code == 200, response.json()
+        assert response.json() == {
+            "actor_id": actor_id,
+            "permissions_check_results": [
+                {
+                    "target_id": target_id_provided,
+                    "actor_has_permissions": True,
+                },
+                {
+                    "target_id": lookup_target_id,
                     "actor_has_permissions": True,
                 },
             ],

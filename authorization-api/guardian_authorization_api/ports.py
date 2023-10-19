@@ -136,7 +136,7 @@ class GetPermissionsAPIPort(
         self,
         api_request: GetPermissionsWithLookupAPIRequestObject,
         actor: PolicyObject,
-        old_targets: list[PolicyObject | None],
+        old_looked_up_targets: list[PolicyObject | None],
     ) -> GetPermissionsQuery:
         ...  # pragma: no cover
 
@@ -182,7 +182,7 @@ class CheckPermissionsAPIPort(
         self,
         api_request: CheckPermissionsWithLookupAPIRequestObject,
         actor: PolicyObject,
-        old_targets: list[PolicyObject | None],
+        old_looked_up_targets: list[PolicyObject | None],
     ) -> CheckPermissionsQuery:
         ...  # pragma: no cover
 

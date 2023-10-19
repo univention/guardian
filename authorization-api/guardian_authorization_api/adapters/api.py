@@ -24,6 +24,7 @@ from ..models.routes import (
     AppName,
     AuthzObject,
     AuthzObjectIdentifier,
+    AuthzObjectLookup,
     AuthzPermissionsCheckLookupPostRequest,
     AuthzPermissionsCheckPostRequest,
     AuthzPermissionsCheckPostResponse,
@@ -38,6 +39,7 @@ from ..models.routes import (
     PermissionName,
     PermissionResult,
     Target,
+    TargetLookup,
 )
 from ..ports import (
     CheckPermissionsAPIPort,
@@ -95,6 +97,40 @@ class FastAPIAdapterUtils:
             old_target=old_target,
             new_target=new_target,
         )
+
+    @staticmethod
+    def api_look_up_target_to_policy_target(
+        old_target: Optional[PolicyObject], request_target: Target | TargetLookup
+    ):
+        # old_target can be either: None or provided by persistence layer or request
+        if isinstance(request_target.old_target, AuthzObject):
+            return FastAPIAdapterUtils.api_target_to_policy_target(request_target)
+        else:
+            return PoliciesTarget(
+                new_target=FastAPIAdapterUtils.authz_to_policy_object(
+                    request_target.new_target
+                )
+                if request_target.new_target
+                else None,
+                old_target=old_target,
+            )
+
+    @staticmethod
+    def api_lookup_targets_to_policy_targets(
+        old_lookup_targets: list[PolicyObject | None],
+        api_request_targets: Optional[list[Target | TargetLookup]],
+    ):
+        targets = []
+        if api_request_targets:
+            for old_target, request_target in zip(
+                old_lookup_targets, api_request_targets
+            ):
+                targets.append(
+                    FastAPIAdapterUtils.api_look_up_target_to_policy_target(
+                        old_target=old_target, request_target=request_target
+                    )
+                )
+        return targets
 
     @staticmethod
     def api_targets_to_policy_targets(
@@ -210,7 +246,7 @@ class FastAPIGetPermissionsAPIAdapter(TransformExceptionMixin, GetPermissionsAPI
         self,
         api_request: AuthzPermissionsLookupPostRequest,
         actor: PolicyObject,
-        old_targets: list[PolicyObject | None],
+        old_looked_up_targets: list[PolicyObject | None],
     ) -> GetPermissionsQuery:
         namespaces = FastAPIAdapterUtils.api_namespaces_to_policy_namespaces(
             api_request.namespaces
@@ -218,19 +254,10 @@ class FastAPIGetPermissionsAPIAdapter(TransformExceptionMixin, GetPermissionsAPI
         contexts = FastAPIAdapterUtils.api_contexts_to_policy_contexts(
             api_request.contexts
         )
-        targets = []
-        if api_request.targets:
-            for old_target, request_target in zip(old_targets, api_request.targets):
-                targets.append(
-                    PoliciesTarget(
-                        new_target=FastAPIAdapterUtils.authz_to_policy_object(
-                            request_target.new_target
-                        )
-                        if request_target.new_target
-                        else None,
-                        old_target=old_target,
-                    )
-                )
+        targets = FastAPIAdapterUtils.api_lookup_targets_to_policy_targets(
+            old_lookup_targets=old_looked_up_targets,
+            api_request_targets=api_request.targets,
+        )
         return GetPermissionsQuery(
             actor=actor,
             targets=targets,
@@ -247,7 +274,9 @@ class FastAPIGetPermissionsAPIAdapter(TransformExceptionMixin, GetPermissionsAPI
         target_ids = []
         if api_request.targets:
             target_ids = [
-                str(target.old_target.id) if target.old_target else None
+                str(target.old_target.id)
+                if isinstance(target.old_target, AuthzObjectLookup)
+                else None
                 for target in api_request.targets
             ]
         return str(api_request.actor.id), target_ids
@@ -333,7 +362,7 @@ class FastAPICheckPermissionsAPIAdapter(
         self,
         api_request: AuthzPermissionsCheckLookupPostRequest,
         actor: PolicyObject,
-        old_targets: list[PolicyObject | None],
+        old_looked_up_targets: list[PolicyObject | None],
     ) -> CheckPermissionsQuery:
         contexts = FastAPIAdapterUtils.api_contexts_to_policy_contexts(
             api_request.contexts
@@ -341,19 +370,10 @@ class FastAPICheckPermissionsAPIAdapter(
         namespaces = FastAPIAdapterUtils.api_namespaces_to_policy_namespaces(
             api_request.namespaces
         )
-        targets = []
-        if api_request.targets:
-            for old_target, request_target in zip(old_targets, api_request.targets):
-                targets.append(
-                    PoliciesTarget(
-                        new_target=FastAPIAdapterUtils.authz_to_policy_object(
-                            request_target.new_target
-                        )
-                        if request_target.new_target
-                        else None,
-                        old_target=old_target,
-                    )
-                )
+        targets = FastAPIAdapterUtils.api_lookup_targets_to_policy_targets(
+            old_lookup_targets=old_looked_up_targets,
+            api_request_targets=api_request.targets,
+        )
         return CheckPermissionsQuery(
             actor=actor,
             contexts=contexts,
@@ -385,7 +405,9 @@ class FastAPICheckPermissionsAPIAdapter(
         target_ids = []
         if api_request.targets:
             target_ids = [
-                str(target.old_target.id) if target.old_target else None
+                str(target.old_target.id)
+                if isinstance(target.old_target, AuthzObjectLookup)
+                else None
                 for target in api_request.targets
             ]
         return str(api_request.actor.id), target_ids
