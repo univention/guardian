@@ -37,7 +37,7 @@ class TestContextEndpoints:
                 "display_name": "test",
             },
         )
-        assert response.status_code == 200, response.json()
+        assert response.status_code == 201, response.json()
         assert response.json() == {
             "context": {
                 "app_name": DEFAULT_TEST_APP,
@@ -327,7 +327,7 @@ class TestContextEndpoints:
             ),
             json={"display_name": changed_display_name},
         )
-        assert response.status_code == 201, response.json()
+        assert response.status_code == 200, response.json()
         assert response.json() == {
             "context": {
                 "app_name": DEFAULT_TEST_APP,

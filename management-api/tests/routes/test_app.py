@@ -27,7 +27,7 @@ class TestAppEndpoints:
         response = client.post(
             app.url_path_for("create_app"), json={"name": "test_app"}
         )
-        assert response.status_code == 200
+        assert response.status_code == 201
         assert response.json() == {
             "app": {
                 "display_name": None,
@@ -57,7 +57,7 @@ class TestAppEndpoints:
             app.url_path_for("create_app"),
             json={"name": "test_app", "display_name": "test_app display_name"},
         )
-        assert response.status_code == 200
+        assert response.status_code == 201
         assert response.json() == {
             "app": {
                 "display_name": "test_app display_name",
@@ -73,7 +73,7 @@ class TestAppEndpoints:
             client.app.url_path_for("register_app"),
             json={"name": "app1", "display_name": "App 1"},
         )
-        assert response.status_code == 200
+        assert response.status_code == 201
         assert (
             response.json()
             == AppRegisterResponse(
@@ -252,7 +252,7 @@ class TestAppEndpoints:
             app.url_path_for("edit_app", name="test_app2"),
             json={"name": "test_app2", "display_name": "expected displayname"},
         )
-        assert response.status_code == 201
+        assert response.status_code == 200
         assert response.json() == {
             "app": {
                 "display_name": "expected displayname",

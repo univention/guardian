@@ -50,7 +50,7 @@ class TestOauth:
             json={"name": "test_app"},
             headers={"Authorization": f"Bearer {good_token}"},
         )
-        assert response.status_code == 200
+        assert response.status_code == 201
 
     @pytest.mark.usefixtures("create_tables", "mock_get_jwk_set")
     def test_bad_idp(self, client, oauth_authentication, bad_idp_token):

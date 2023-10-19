@@ -84,7 +84,9 @@ async def get_namespaces_by_app(
     return response.dict()
 
 
-@router.post("/namespaces/{app_name}", response_model=NamespaceSingleResponse)
+@router.post(
+    "/namespaces/{app_name}", response_model=NamespaceSingleResponse, status_code=201
+)
 async def create_namespace(
     namespace_create_request: NamespaceCreateRequest = Depends(),
     namespace_api: FastAPINamespaceAPIAdapter = Depends(

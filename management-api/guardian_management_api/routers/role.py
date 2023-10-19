@@ -107,7 +107,11 @@ async def get_roles_by_namespace(
     return response.dict()
 
 
-@router.post("/roles/{app_name}/{namespace_name}", response_model=RoleSingleResponse)
+@router.post(
+    "/roles/{app_name}/{namespace_name}",
+    response_model=RoleSingleResponse,
+    status_code=201,
+)
 async def create_role(
     role_create_request: RoleCreateRequest = Depends(),
     management_role_api: RoleAPIPort = Depends(

@@ -120,6 +120,7 @@ async def get_custom_endpoints_by_namespace(
 @router.post(
     "/custom_endpoints/{app_name}/{namespace_name}",
     response_model=CustomEndpointSingleResponse,
+    status_code=201,
 )
 async def create_custom_endpoint(
     custom_endpoint_create_request: CustomEndpointCreateRequest = Depends(),

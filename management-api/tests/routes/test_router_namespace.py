@@ -25,7 +25,7 @@ class TestNamespaceEndpoints:
                 "display_name": "test",
             },
         )
-        assert response.status_code == 200, response.json()
+        assert response.status_code == 201, response.json()
         assert response.json() == {
             "namespace": {
                 "app_name": DEFAULT_TEST_APP,

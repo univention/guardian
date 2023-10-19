@@ -66,7 +66,11 @@ async def get_all_apps(
     return response.dict()
 
 
-@router.post("/apps", response_model=AppSingleResponse)
+@router.post(
+    "/apps",
+    response_model=AppSingleResponse,
+    status_code=201,
+)
 async def create_app(
     app_create_request: Annotated[AppCreateRequest, Body()],
     app_api: FastAPIAppAPIAdapter = Depends(port_dep(AppAPIPort, FastAPIAppAPIAdapter)),
@@ -80,7 +84,7 @@ async def create_app(
     return response.dict()
 
 
-@router.post("/apps/register", response_model=AppRegisterResponse)
+@router.post("/apps/register", response_model=AppRegisterResponse, status_code=201)
 async def register_app(
     request_data: Annotated[AppCreateRequest, Body()],
     api_port: FastAPIAppAPIAdapter = Depends(
@@ -114,7 +118,7 @@ async def register_app(
     return response.dict()
 
 
-@router.patch("/apps/{name}", response_model=AppSingleResponse, status_code=201)
+@router.patch("/apps/{name}", response_model=AppSingleResponse)
 async def edit_app(
     app_edit_request: AppEditRequest = Depends(),
     app_api: FastAPIAppAPIAdapter = Depends(port_dep(AppAPIPort, FastAPIAppAPIAdapter)),

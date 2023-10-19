@@ -87,7 +87,7 @@ async def get_capabilities_by_role(
     )
 
 
-@router.post("/capabilities/{app_name}/{namespace_name}")
+@router.post("/capabilities/{app_name}/{namespace_name}", status_code=201)
 async def create_capability(
     request_data: CapabilityCreateRequest = Depends(),
     api_port: FastAPICapabilityAPIAdapter = Depends(

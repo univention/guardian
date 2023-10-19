@@ -36,7 +36,7 @@ class TestRoleEndpoints:
             json={"name": "test_role", "display_name": "test_role_display_name"},
         )
 
-        assert response.status_code == 200
+        assert response.status_code == 201
         assert response.json() == {
             "role": {
                 "name": "test_role",

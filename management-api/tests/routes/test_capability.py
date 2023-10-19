@@ -277,7 +277,7 @@ class TestCapabilityEndpoints:
             ),
             json=create_data,
         )
-        assert result.status_code == 200, result.json()
+        assert result.status_code == 201, result.json()
         permissions = [asdict(perm) for perm in cap_to_create.permissions]
         role = asdict(cap_to_create.role)
         del role["display_name"]
@@ -309,7 +309,7 @@ class TestCapabilityEndpoints:
             ),
             json={"name": "test", "display_name": "Test role"},
         )
-        assert response.status_code == 200
+        assert response.status_code == 201
         cap_data = {
             "name": "test",
             "display_name": "This is a test",
@@ -336,7 +336,7 @@ class TestCapabilityEndpoints:
             ),
             json=cap_data,
         )
-        assert response.status_code == 200
+        assert response.status_code == 201
         response = client.post(
             client.app.url_path_for(
                 "create_capability",

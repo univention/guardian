@@ -114,7 +114,9 @@ async def get_contexts_by_namespace(
 
 
 @router.post(
-    "/contexts/{app_name}/{namespace_name}", response_model=ContextSingleResponse
+    "/contexts/{app_name}/{namespace_name}",
+    response_model=ContextSingleResponse,
+    status_code=201,
 )
 async def create_context(
     context_create_request: ContextCreateRequest = Depends(),
@@ -139,7 +141,6 @@ async def create_context(
 @router.patch(
     "/contexts/{app_name}/{namespace_name}/{name}",
     response_model=ContextSingleResponse,
-    status_code=201,
 )
 async def edit_context(
     context_edit_request: ContextEditRequest = Depends(),
