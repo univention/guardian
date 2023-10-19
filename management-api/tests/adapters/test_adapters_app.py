@@ -7,7 +7,6 @@ import pytest
 import pytest_asyncio
 from fastapi import HTTPException
 from guardian_management_api.adapters.app import (
-    AppStaticDataAdapter,
     FastAPIAppAPIAdapter,
     SQLAppPersistenceAdapter,
 )
@@ -186,92 +185,6 @@ class TestFastAPIAppAdapter:
         query, changed_data = await adapter.to_app_edit(api_request)
         assert query == AppGetQuery(name="name")
         assert changed_data == {"display_name": "display_name"}
-
-
-class TestAppStaticDataAdapter:
-    @pytest.fixture(autouse=True)
-    def adapter(self):
-        return AppStaticDataAdapter()
-
-    @pytest.mark.asyncio
-    async def test_create(self, adapter):
-        app = App(
-            name="name",
-            display_name="display_name",
-        )
-        result = await adapter.create(app)
-        assert result == app
-        assert app in adapter._data["apps"]
-
-    @pytest.mark.asyncio
-    async def test_read_one(self, adapter):
-        app = App(
-            name="name",
-            display_name="display_name",
-        )
-        adapter._data["apps"].append(app)
-        result = await adapter.read_one(query=AppGetQuery(name=app.name))
-        assert result == app
-
-    @pytest.mark.asyncio
-    async def test_read_one_none(self, adapter):
-        with pytest.raises(ObjectNotFoundError):
-            await adapter.read_one(query=AppGetQuery(name="app"))
-
-    apps = [
-        App(
-            name="name",
-            display_name="display_name",
-        ),
-        App(
-            name="name2",
-            display_name="display_name2",
-        ),
-    ]
-
-    @pytest.mark.parametrize(
-        "query,expected",
-        [
-            (
-                AppsGetQuery(
-                    pagination=PaginationRequest(query_offset=0, query_limit=None),
-                ),
-                PersistenceGetManyResult(objects=apps, total_count=2),
-            ),
-            (
-                AppsGetQuery(
-                    pagination=PaginationRequest(
-                        query_offset=0,
-                        query_limit=1,
-                    ),
-                ),
-                PersistenceGetManyResult(objects=apps[:1], total_count=2),
-            ),
-            (
-                AppsGetQuery(
-                    pagination=PaginationRequest(
-                        query_offset=1,
-                        query_limit=10,
-                    )
-                ),
-                PersistenceGetManyResult(objects=apps[1:], total_count=2),
-            ),
-            (
-                AppsGetQuery(
-                    pagination=PaginationRequest(
-                        query_offset=1,
-                        query_limit=1,
-                    )
-                ),
-                PersistenceGetManyResult(objects=apps[1:2], total_count=2),
-            ),
-        ],
-    )
-    @pytest.mark.asyncio
-    async def test_read_many(self, adapter, query, expected):
-        adapter._data["apps"] = self.apps
-        result = await adapter.read_many(query)
-        assert result == expected
 
 
 class TestSQLAppPersistenceAdapter:

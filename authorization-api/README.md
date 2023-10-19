@@ -19,7 +19,6 @@ These settings are also all required, and do not have any default value!
 The project itself provides the `env` adapter, which can be used.
 
 **GUARDIAN__AUTHZ__ADAPTER__PERSISTENCE_PORT,type=string** Defines which adapter should be used for the persistence port.
-The project itself provides the `static_data` adapter, which can be used.
 
 **GUARDIAN__AUTHZ__ADAPTER__POLICY_PORT,type=string** Defines which adapter should be used for the policy port.
 The project itself provides the `opa` adapter, which can be used.
@@ -53,30 +52,6 @@ The Guardian Authorization API provides some adapters, which are documented here
 The `EnvSettingsAdapter` loads settings exclusively from the environment. To find the correct environment variable
 the setting name, e.g. *some.nested.important-option* is converted to uppercase and all dots are replace with double
 underscores: *SOME__NESTED__IMPORTANT-OPTION*
-
-### StaticDataAdapter
-
-**name**: static_data
-**implements**: PersistencePort
-
-The `StaticDataAdapter` loads the persistent data from a json file. This adapter is very rudimentary and not suitable for
-production!
-
-It requires the setting `static_data_adapter.data_file` to point to a JSON file containing the data. It needs to have
-a format like this:
-
-```json
-{
-  "users": {
-      "USER1": {"attributes": {"A": 1, "B": 2}},
-      "USER2": {"attributes": {}}
-  },
-  "groups": {
-      "GROUP1": {"attributes": {"C": 3, "D": 4}},
-      "GROUP2": {"attributes": {"E": 5, "F": 6}}
-  }
-}
-```
 
 ### UDMPersistenceAdapter
 

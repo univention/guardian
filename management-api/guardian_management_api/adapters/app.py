@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 from dataclasses import asdict
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import Any, List, Optional, Tuple, Type
 
 from port_loader import AsyncConfiguredAdapterMixin
 
@@ -163,64 +163,6 @@ class FastAPIAppAPIAdapter(
                 for app in apps
             ],
         )
-
-
-class AppStaticDataAdapter(AppPersistencePort):
-    class Config:
-        alias = "in_memory"
-
-    _data: Dict[str, Any] = {
-        "apps": [],
-    }
-
-    async def create(
-        self,
-        app: App,
-    ) -> App:
-        self._data["apps"].append(app)
-        return app
-
-    async def read_one(
-        self,
-        query: AppGetQuery,
-    ) -> App:
-        result = next(
-            (app for app in self._data["apps"] if app.name == query.name), None
-        )
-        if result is None:
-            raise ObjectNotFoundError(
-                f"No permission with the identifier '{query.name} could be found"
-            )
-        return result
-
-    async def read_many(
-        self,
-        query: AppsGetQuery,
-    ) -> PersistenceGetManyResult[App]:
-        total_count = len(self._data["apps"])
-        result = []
-
-        if query.pagination.query_limit:
-            result = self._data["apps"][
-                query.pagination.query_offset : query.pagination.query_offset
-                + query.pagination.query_limit
-            ]
-        else:
-            result = self._data["apps"][query.pagination.query_offset :]
-
-        return PersistenceGetManyResult(objects=result, total_count=total_count)
-
-    async def update(
-        self,
-        updated_app: App,
-    ) -> App:  # pragma: no cover  static data adapter is deprecated
-        if not any(app.name == updated_app.name for app in self._data["apps"]):
-            raise ObjectNotFoundError("The app could not be found.")
-        self._data["apps"] = [
-            updated_app if app.name == updated_app.name else app
-            for app in self._data["apps"]
-        ]
-        return updated_app
 
 
 class SQLAppPersistenceAdapter(

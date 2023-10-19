@@ -27,7 +27,6 @@ guardian-lib = "1.1.0"
 "env" = "guardian_lib.adapters.settings:EnvSettingsAdapter"
 
 [tool.poetry.plugins."guardian_authorization_api.PersistencePort"]
-"static_data" = "guardian_authorization_api.adapters.persistence:StaticDataAdapter"
 "udm_data" = "guardian_authorization_api.adapters.persistence:UDMPersistenceAdapter"
 
 [tool.poetry.plugins."guardian_authorization_api.PolicyPort"]

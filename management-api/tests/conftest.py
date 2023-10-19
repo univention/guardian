@@ -9,7 +9,6 @@ from base64 import b64encode
 from pathlib import Path
 from typing import Optional, Tuple
 
-import guardian_lib.adapter_registry as adapter_registry
 import pytest
 import pytest_asyncio
 from guardian_lib.adapters.settings import EnvSettingsAdapter
@@ -37,7 +36,6 @@ from guardian_management_api.adapters.namespace import (
 )
 from guardian_management_api.adapters.permission import (
     FastAPIPermissionAPIAdapter,
-    PermissionStaticDataAdapter,
     SQLPermissionPersistenceAdapter,
 )
 from guardian_management_api.adapters.role import (
@@ -204,26 +202,6 @@ def registry_test_adapters(patch_env):
     registry.set_adapter(AsyncAdapterSettingsProvider, EnvSettingsAdapter)
 
     return registry
-
-
-@pytest_asyncio.fixture(scope="function")
-async def register_test_adapters_static():
-    """Fixture that registers the test adapters.
-
-    In this case:
-      - In-memory app persistence adapter.
-      - Dummy settings adapter.
-    """
-    active_adapter = await adapter_registry.ADAPTER_REGISTRY.request_port(
-        PermissionPersistencePort
-    )
-    adapter_registry.ADAPTER_REGISTRY.set_adapter(
-        PermissionPersistencePort, PermissionStaticDataAdapter
-    )
-    yield
-    adapter_registry.ADAPTER_REGISTRY.set_adapter(
-        PermissionPersistencePort, active_adapter.__class__
-    )
 
 
 @pytest.fixture(scope="session")

@@ -5,7 +5,6 @@ import pytest
 import pytest_asyncio
 from guardian_management_api.adapters.permission import (
     FastAPIPermissionAPIAdapter,
-    PermissionStaticDataAdapter,
 )
 from guardian_management_api.constants import COMPLETE_URL
 from guardian_management_api.models.permission import (
@@ -170,18 +169,3 @@ class TestFastPermissionAppAdapter:
                 resource_url=f"{COMPLETE_URL}/permissions/{app_name}/{namespace_name}/{name}",
             )
         )
-
-
-class TestPermissionStaticDataAdapter:
-    @pytest.fixture(autouse=True)
-    def adapter(self):
-        return PermissionStaticDataAdapter()
-
-    @pytest.mark.asyncio
-    async def test_update(self, adapter):
-        from guardian_management_api.errors import ObjectNotFoundError
-
-        with pytest.raises(ObjectNotFoundError):
-            await adapter.update(
-                Permission(namespace_name="ns1", app_name="a", name="n")
-            )

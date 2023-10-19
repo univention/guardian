@@ -33,7 +33,6 @@ types-pymysql = "^1.1.0.1"
 "env" = "guardian_lib.adapters.settings:EnvSettingsAdapter"
 
 [tool.poetry.plugins."guardian_management_api.AppPersistencePort"]
-"in_memory" = "guardian_management_api.adapters.app:AppStaticDataAdapter"
 "sql" = "guardian_management_api.adapters.app:SQLAppPersistenceAdapter"
 
 [tool.poetry.plugins."guardian_management_api.ConditionPersistencePort"]
@@ -46,7 +45,6 @@ types-pymysql = "^1.1.0.1"
 "sql" = "guardian_management_api.adapters.namespace:SQLNamespacePersistenceAdapter"
 
 [tool.poetry.plugins."guardian_management_api.PermissionPersistencePort"]
-"in_memory" = "guardian_management_api.adapters.permission:PermissionStaticDataAdapter"
 "sql" = "guardian_management_api.adapters.permission:SQLPermissionPersistenceAdapter"
 
 [tool.poetry.plugins."guardian_management_api.RolePersistencePort"]

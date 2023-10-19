@@ -51,16 +51,6 @@ The `EnvSettingsAdapter` loads settings exclusively from the environment. To fin
 the setting name, e.g. *some.nested.important-option* is converted to uppercase and all dots are replace with double
 underscores: *SOME__NESTED__IMPORTANT-OPTION*
 
-### AppStaticDataAdapter
-
-**name**: in_memory
-**implements**: AppPersistencePort
-
-The `AppStaticDataAdapter` stores data in memeory. This adapter is very rudimentary and not suitable for
-production!
-
-It does not require any settings.
-
 ### FastAPIAppAPIAdapter
 
 **name**: fastapi

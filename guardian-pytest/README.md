@@ -15,3 +15,5 @@ If you don't want to wait for a pipeline build you can add this package directly
 ```shell
 poetry add --group=dev --editable "../guardian-pytest/"
 ```
+
+Note: Please take care. This command does manipulate the `pyproject.toml` file.
