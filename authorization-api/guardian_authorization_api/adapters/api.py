@@ -5,6 +5,7 @@ import typing
 from typing import Optional
 
 from fastapi import HTTPException
+from pydantic import ValidationError
 
 from ..errors import ObjectNotFoundError, PersistenceError, PolicyUpstreamError
 from ..models.policies import (
@@ -53,6 +54,8 @@ class TransformExceptionMixin:
             return HTTPException(status_code=500, detail={"message": str(exc)})
         elif isinstance(exc, ObjectNotFoundError):
             return HTTPException(status_code=404, detail={"message": str(exc)})
+        elif isinstance(exc, ValidationError):
+            return HTTPException(status_code=422, detail={"message": str(exc)})
         else:
             return HTTPException(
                 status_code=500, detail={"message": "Internal server error."}

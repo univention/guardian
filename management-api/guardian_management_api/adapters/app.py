@@ -4,12 +4,10 @@
 from dataclasses import asdict
 from typing import Any, Dict, List, Optional, Tuple, Type
 
-from fastapi import HTTPException
 from port_loader import AsyncConfiguredAdapterMixin
-from starlette import status
 
 from ..constants import COMPLETE_URL
-from ..errors import ObjectExistsError, ObjectNotFoundError
+from ..errors import ObjectNotFoundError
 from ..models.app import (
     App,
     AppCreateQuery,
@@ -39,10 +37,16 @@ from ..ports.app import (
     AppAPIPort,
     AppPersistencePort,
 )
+from .fastapi_utils import TransformExceptionMixin
 from .sql_persistence import SQLAlchemyMixin
 
 
+class TransformAppExceptionMixin(TransformExceptionMixin):
+    ...
+
+
 class FastAPIAppAPIAdapter(
+    TransformAppExceptionMixin,
     AppAPIPort[
         AppCreateRequest,
         AppSingleResponse,
@@ -53,26 +57,10 @@ class FastAPIAppAPIAdapter(
         AppMultipleResponse,
         AppEditRequest,
         AppSingleResponse,
-    ]
+    ],
 ):
     class Config:
         alias = "fastapi"
-
-    async def transform_exception(self, exc: Exception) -> Exception:
-        if isinstance(exc, ObjectNotFoundError):
-            return HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail={"message": "App not found."},
-            )
-        if isinstance(exc, ObjectExistsError):
-            return HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail={"message": "App with the same name already exists."},
-            )
-        return HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"message": "Internal Server Error"},
-        )
 
     async def to_app_create(self, api_request: AppCreateRequest) -> AppCreateQuery:
         return AppCreateQuery(

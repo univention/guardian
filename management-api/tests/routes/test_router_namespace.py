@@ -63,7 +63,12 @@ class TestNamespaceEndpoints:
                 "name": DEFAULT_TEST_NAMESPACE,
             },
         )
-        assert response.status_code == 409, response.json()
+        assert response.status_code == 400, response.json()
+        assert response.json() == {
+            "detail": {
+                "message": "An object with the given identifiers already exists."
+            }
+        }
 
     @pytest.mark.asyncio
     async def test_get_namespace(

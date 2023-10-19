@@ -5,12 +5,10 @@
 from dataclasses import asdict
 from typing import List, Optional, Type
 
-from fastapi import HTTPException
 from port_loader import AsyncConfiguredAdapterMixin
-from starlette import status
 
 from ..constants import COMPLETE_URL
-from ..errors import ObjectExistsError, ObjectNotFoundError, ParentNotFoundError
+from ..errors import ObjectNotFoundError, ParentNotFoundError
 from ..models.base import PaginationRequest, PersistenceGetManyResult
 from ..models.namespace import (
     Namespace,
@@ -37,10 +35,16 @@ from ..ports.namespace import (
     NamespaceAPIPort,
     NamespacePersistencePort,
 )
+from .fastapi_utils import TransformExceptionMixin
 from .sql_persistence import SQLAlchemyMixin
 
 
+class TransformNamespaceExceptionMixin(TransformExceptionMixin):
+    ...
+
+
 class FastAPINamespaceAPIAdapter(
+    TransformNamespaceExceptionMixin,
     NamespaceAPIPort[
         NamespaceCreateRequest,
         NamespaceSingleResponse,
@@ -52,29 +56,8 @@ class FastAPINamespaceAPIAdapter(
         NamespaceSingleResponse,
         GetByAppRequest,
         NamespaceMultipleResponse,
-    ]
+    ],
 ):
-    async def transform_exception(self, exc: Exception) -> Exception:
-        if isinstance(exc, ObjectNotFoundError):
-            return HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail={"message": "Namespace not found."},
-            )
-        elif isinstance(exc, ParentNotFoundError):
-            return HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail={"message": "Corresponding App not found."},
-            )
-        elif isinstance(exc, ObjectExistsError):
-            return HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail={"message": "Namespace exists already."},
-            )
-        return HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"message": "Internal Server Error"},
-        )
-
     async def to_namespaces_by_appname_get(
         self, api_request: GetByAppRequest
     ) -> NamespacesGetQuery:

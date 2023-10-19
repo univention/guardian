@@ -22,7 +22,7 @@ class AppName(ConstrainedStr):
     """Name of an application"""
 
     __root__: str = Field(
-        example="ucsschool-kelvin-rest-api", regex=r"[a-z][a-z0-9\-]*", min_length=3
+        example="ucsschool-kelvin-rest-api", regex=r"^[a-z][a-z0-9\-]*$", min_length=3
     )
 
 
@@ -30,7 +30,7 @@ class NamespaceName(ConstrainedStr):
     """Name of a namespace"""
 
     __root__: str = Field(
-        example="kelvin-rest-api", regex=r"[a-z][a-z0-9\-]*", min_length=3
+        example="kelvin-rest-api", regex=r"^[a-z][a-z0-9\-]*$", min_length=3
     )
 
 

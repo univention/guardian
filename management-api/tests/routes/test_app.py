@@ -37,6 +37,21 @@ class TestAppEndpoints:
         }
 
     @pytest.mark.usefixtures("create_tables")
+    def test_post_app_validation_error(self, client):
+        response = client.post(
+            app.url_path_for("create_app"), json={"name": "test app #1"}
+        )
+        assert response.status_code == 422
+        assert response.json() == {
+            "detail": {
+                "message": "1 validation error for App\n"
+                "resource_url\n"
+                "  URL invalid, extra characters found after valid URL: "
+                "' app #1' (type=value_error.url.extra; extra= app #1)"
+            }
+        }
+
+    @pytest.mark.usefixtures("create_tables")
     def test_post_app_all(self, client):
         response = client.post(
             app.url_path_for("create_app"),
@@ -142,6 +157,26 @@ class TestAppEndpoints:
             json={"name": "app1", "display_name": "App 1"},
         )
         assert response.status_code == 400
+
+    @pytest.mark.usefixtures("create_tables")
+    @pytest.mark.asyncio
+    async def test_create_app_validation_error(
+        self, client, sqlalchemy_mixin, create_app
+    ):
+        response = client.post(
+            client.app.url_path_for("register_app"),
+            json={"not_name": "app1"},
+        )
+        assert response.status_code == 422
+        assert response.json() == {
+            "detail": [
+                {
+                    "loc": ["body", "name"],
+                    "msg": "field required",
+                    "type": "value_error.missing",
+                }
+            ]
+        }
 
     @pytest.mark.usefixtures("create_tables")
     @pytest.mark.asyncio

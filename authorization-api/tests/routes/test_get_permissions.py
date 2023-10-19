@@ -1,7 +1,9 @@
 from unittest.mock import patch
 
 import pytest
+from guardian_authorization_api.adapters.policies import OPAAdapter
 from guardian_authorization_api.errors import PersistenceError
+from pydantic import BaseModel, ValidationError
 
 from ..conftest import get_authz_permissions_get_request_dict, opa_is_running
 from ..mock_classes import MockUDMModule, MockUdmObject
@@ -154,6 +156,22 @@ class TestPermissionsGetUnittest:
         assert response.status_code == 500, response.json()
         assert response.json() == {
             "detail": {"message": "Upstream error while getting permissions."}
+        }
+
+    @pytest.mark.asyncio
+    async def test_get_permissions_validation_errors(self, client, udm_mock):
+        data = get_authz_permissions_get_request_dict(n_targets=1)
+        with patch.object(
+            OPAAdapter, "get_permissions", side_effect=ValidationError([], BaseModel)
+        ):
+            response = client.post(
+                client.app.url_path_for("get_permissions"), json=data
+            )
+        assert response.status_code == 422, response.json()
+        # the number 0 is not relevant in this case, we just want to check
+        # that the right status code and message are returned
+        assert response.json() == {
+            "detail": {"message": "0 validation errors for BaseModel\n"}
         }
 
 

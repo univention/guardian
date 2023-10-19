@@ -21,9 +21,12 @@ async def get_permissions(
     get_permission_api_port: GetPermissionsAPIPort,
     policy_port: PolicyPort,
 ) -> GetPermissionsAPIResponseObject:
-    query = await get_permission_api_port.to_policy_query(api_request)
-    policy_result = await policy_port.get_permissions(query)
-    return await get_permission_api_port.to_api_response(policy_result)
+    try:
+        query = await get_permission_api_port.to_policy_query(api_request)
+        policy_result = await policy_port.get_permissions(query)
+        return await get_permission_api_port.to_api_response(policy_result)
+    except Exception as exc:
+        raise (await get_permission_api_port.transform_exception(exc)) from exc
 
 
 async def check_permissions(

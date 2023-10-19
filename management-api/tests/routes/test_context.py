@@ -73,7 +73,12 @@ class TestContextEndpoints:
                 "display_name": "test",
             },
         )
-        assert response.status_code == 409
+        assert response.status_code == 400
+        assert response.json() == {
+            "detail": {
+                "message": "An object with the given identifiers already exists."
+            }
+        }
 
     @pytest.mark.asyncio
     async def test_post_non_existing_app(self, client):

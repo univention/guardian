@@ -182,7 +182,12 @@ class TestRoleEndpoints:
             json={"display_name": display_name},
         )
         assert response.status_code == 404
-        assert response.json() == {"detail": {"message": "App not found."}}
+        assert response.json() == {
+            "detail": {
+                "message": "No role with the identifier "
+                "'test_app:test_namespace:test_role1' could be found."
+            }
+        }
 
     @pytest.mark.usefixtures("create_tables")
     @pytest.mark.asyncio

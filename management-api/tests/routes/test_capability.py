@@ -403,11 +403,9 @@ class TestCapabilityEndpoints:
             ),
             json=create_data,
         )
-        assert result.status_code == 400, result.json()
+        assert result.status_code == 404, result.json()
         assert result.json() == {
-            "detail": {
-                "message": "The role specified for the capability could not be found."
-            }
+            "detail": {"message": "The capabilities role could not be found."}
         }
 
     @pytest.mark.asyncio
@@ -457,10 +455,10 @@ class TestCapabilityEndpoints:
             ),
             json=create_data,
         )
-        assert result.status_code == 400, result.json()
+        assert result.status_code == 404, result.json()
         assert result.json() == {
             "detail": {
-                "message": "One or more conditions specified for the capability do not exist."
+                "message": "Not all conditions specified for the capability could be found."
             }
         }
 
@@ -511,10 +509,10 @@ class TestCapabilityEndpoints:
             ),
             json=create_data,
         )
-        assert result.status_code == 400, result.json()
+        assert result.status_code == 404, result.json()
         assert result.json() == {
             "detail": {
-                "message": "One or more permissions specified for the capability do not exist."
+                "message": "Not all permissions specified for the capability could be found."
             }
         }
 
@@ -567,7 +565,7 @@ class TestCapabilityEndpoints:
         assert result.status_code == 400, result.json()
         assert result.json() == {
             "detail": {
-                "message": "Capability with the same identifiers already exists."
+                "message": "An object with the given identifiers already exists."
             }
         }
 
@@ -614,9 +612,11 @@ class TestCapabilityEndpoints:
             ),
             json=create_data,
         )
-        assert result.status_code == 400, result.json()
+        assert result.status_code == 404, result.json()
         assert result.json() == {
-            "detail": {"message": "The app and or namespace does not exist."}
+            "detail": {
+                "message": "The namespace of the capability to create does not exist."
+            }
         }
 
     @pytest.mark.asyncio

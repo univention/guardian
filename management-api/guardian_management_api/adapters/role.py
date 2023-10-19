@@ -5,9 +5,7 @@
 from dataclasses import asdict
 from typing import Optional, Type, Union
 
-from fastapi import HTTPException
 from port_loader import AsyncConfiguredAdapterMixin
-from starlette import status
 
 from ..constants import COMPLETE_URL
 from ..errors import ObjectNotFoundError, ParentNotFoundError
@@ -41,10 +39,16 @@ from ..ports.role import (
     RoleAPIPort,
     RolePersistencePort,
 )
+from .fastapi_utils import TransformExceptionMixin
 from .sql_persistence import SQLAlchemyMixin
 
 
+class TransformRoleExceptionMixin(TransformExceptionMixin):
+    ...
+
+
 class FastAPIRoleAPIAdapter(
+    TransformRoleExceptionMixin,
     RoleAPIPort[
         RoleCreateRequest,
         RoleSingleResponse,
@@ -52,26 +56,10 @@ class FastAPIRoleAPIAdapter(
         RoleSingleResponse,
         Union[RoleGetAllRequest, RoleGetByAppRequest, RoleGetByNamespaceRequest],
         RoleMultipleResponse,
-    ]
+    ],
 ):
     class Config:
         alias = "fastapi"
-
-    async def transform_exception(self, exc: Exception) -> Exception:
-        if isinstance(exc, ObjectNotFoundError):
-            return HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail={"message": "App not found."},
-            )
-        elif isinstance(exc, ParentNotFoundError):
-            return HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail={"message": str(exc)},
-            )
-        return HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"message": "Internal Server Error"},
-        )
 
     async def to_role_create(self, api_request: RoleCreateRequest) -> RoleCreateQuery:
         return RoleCreateQuery(

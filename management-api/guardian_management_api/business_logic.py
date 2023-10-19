@@ -94,10 +94,13 @@ async def create_app(
     app_api_port: AppAPIPort,
     persistence_port: AppPersistencePort,
 ) -> AppSingleResponse:
-    query = await app_api_port.to_app_create(api_request)
-    app = query.apps[0]
-    created_app = await persistence_port.create(app)
-    return await app_api_port.to_api_create_response(created_app)
+    try:
+        query = await app_api_port.to_app_create(api_request)
+        app = query.apps[0]
+        created_app = await persistence_port.create(app)
+        return await app_api_port.to_api_create_response(created_app)
+    except Exception as exc:
+        raise (await app_api_port.transform_exception(exc)) from exc
 
 
 async def get_app(
@@ -118,16 +121,19 @@ async def get_apps(
     app_api_port: AppAPIPort,
     persistence_port: AppPersistencePort,
 ) -> AppMultipleResponse:
-    query = await app_api_port.to_apps_get(api_request)
-    many_apps = await persistence_port.read_many(query)
-    return await app_api_port.to_api_apps_get_response(
-        apps=list(many_apps.objects),
-        query_offset=query.pagination.query_offset,
-        query_limit=query.pagination.query_limit
-        if query.pagination.query_limit
-        else many_apps.total_count,
-        total_count=many_apps.total_count,
-    )
+    try:
+        query = await app_api_port.to_apps_get(api_request)
+        many_apps = await persistence_port.read_many(query)
+        return await app_api_port.to_api_apps_get_response(
+            apps=list(many_apps.objects),
+            query_offset=query.pagination.query_offset,
+            query_limit=query.pagination.query_limit
+            if query.pagination.query_limit
+            else many_apps.total_count,
+            total_count=many_apps.total_count,
+        )
+    except Exception as exc:
+        raise (await app_api_port.transform_exception(exc)) from exc
 
 
 async def create_namespace(

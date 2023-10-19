@@ -2,6 +2,7 @@ import pytest
 import pytest_asyncio
 from fastapi import HTTPException
 from guardian_management_api.adapters.app import (
+    FastAPIAppAPIAdapter,
     SQLAppPersistenceAdapter,
 )
 from guardian_management_api.adapters.context import (
@@ -13,10 +14,13 @@ from guardian_management_api.adapters.namespace import (
     SQLNamespacePersistenceAdapter,
 )
 from guardian_management_api.business_logic import (
+    create_app,
+    get_apps,
     get_contexts,
     get_namespaces,
     get_namespaces_by_app,
 )
+from guardian_management_api.models.routers.app import AppCreateRequest, AppsGetRequest
 from guardian_management_api.models.routers.base import GetAllRequest, GetByAppRequest
 from guardian_management_api.models.routers.namespace import NamespacesGetRequest
 from guardian_management_api.ports.app import AppPersistencePort
@@ -85,3 +89,33 @@ class TestBusinessLogic:
                 namespace_persistence_port=namespace_sql_adapter,
                 namespace_api_port=FastAPINamespaceAPIAdapter(),
             )
+
+    @pytest.mark.asyncio
+    async def test_create_app_internal_error(self, app_sql_adapter):
+        async def _create():
+            raise Exception()
+
+        app_sql_adapter.create = _create
+        with pytest.raises(HTTPException) as exc_info:
+            await create_app(
+                api_request=AppCreateRequest(name="app"),
+                app_api_port=FastAPIAppAPIAdapter(),
+                persistence_port=app_sql_adapter,
+            )
+        assert exc_info.value.status_code == 500
+        assert exc_info.value.detail == {"message": "Internal Server Error"}
+
+    @pytest.mark.asyncio
+    async def test_get_apps_internal_error(self, app_sql_adapter):
+        async def _read_many():
+            raise Exception()
+
+        app_sql_adapter.read_many = _read_many
+        with pytest.raises(HTTPException) as exc_info:
+            await get_apps(
+                api_request=AppsGetRequest(),
+                app_api_port=FastAPIAppAPIAdapter(),
+                persistence_port=app_sql_adapter,
+            )
+        assert exc_info.value.status_code == 500
+        assert exc_info.value.detail == {"message": "Internal Server Error"}

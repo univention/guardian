@@ -5,12 +5,10 @@
 from dataclasses import asdict
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
-from fastapi import HTTPException
 from port_loader import AsyncConfiguredAdapterMixin
-from starlette import status
 
 from ..constants import COMPLETE_URL
-from ..errors import ObjectExistsError, ObjectNotFoundError, ParentNotFoundError
+from ..errors import ObjectNotFoundError, ParentNotFoundError
 from ..models.base import PaginationRequest, PersistenceGetManyResult
 from ..models.context import (
     Context,
@@ -43,10 +41,16 @@ from ..ports.context import (
     ContextAPIPort,
     ContextPersistencePort,
 )
+from .fastapi_utils import TransformExceptionMixin
 from .sql_persistence import SQLAlchemyMixin
 
 
+class TransformContextExceptionMixin(TransformExceptionMixin):
+    ...
+
+
 class FastAPIContextAPIAdapter(
+    TransformContextExceptionMixin,
     ContextAPIPort[
         ContextCreateRequest,
         ContextSingleResponse,
@@ -56,31 +60,10 @@ class FastAPIContextAPIAdapter(
         ContextMultipleResponse,
         Tuple[ContextGetQuery, Dict[str, Any]],
         ContextSingleResponse,
-    ]
+    ],
 ):
     class Config:
         alias = "fastapi"
-
-    async def transform_exception(self, exc: Exception) -> Exception:
-        if isinstance(exc, ObjectNotFoundError):
-            return HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail={"message": "Context not found."},
-            )
-        if isinstance(exc, ParentNotFoundError):
-            return HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail={"message": "Corresponding App or Namespace not found."},
-            )
-        elif isinstance(exc, ObjectExistsError):
-            return HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail={"message": "Context exists already."},
-            )
-        return HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"message": "Internal Server Error"},
-        )
 
     async def to_api_edit_response(
         self, context_result: Context

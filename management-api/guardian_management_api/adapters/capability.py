@@ -5,13 +5,10 @@ import uuid
 from dataclasses import asdict
 from typing import Optional, Tuple, Type, Union
 
-from fastapi import HTTPException
-from loguru import logger
 from port_loader import AsyncConfiguredAdapterMixin
 from sqlalchemy import select, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.functions import count
-from starlette import status
 
 from guardian_management_api.adapters.sql_persistence import (
     SQLAlchemyMixin,
@@ -19,7 +16,6 @@ from guardian_management_api.adapters.sql_persistence import (
 )
 from guardian_management_api.constants import COMPLETE_URL
 from guardian_management_api.errors import (
-    ObjectExistsError,
     ObjectNotFoundError,
     ParentNotFoundError,
 )
@@ -78,6 +74,12 @@ from guardian_management_api.ports.capability import (
     CapabilityAPIPort,
     CapabilityPersistencePort,
 )
+
+from .fastapi_utils import TransformExceptionMixin
+
+
+class TransformCapabilityExceptionMixin(TransformExceptionMixin):
+    ...
 
 
 class SQLCapabilityPersistenceAdapter(
@@ -349,6 +351,7 @@ class SQLCapabilityPersistenceAdapter(
 
 
 class FastAPICapabilityAPIAdapter(
+    TransformCapabilityExceptionMixin,
     CapabilityAPIPort[
         GetFullIdentifierRequest,
         CapabilitySingleResponse,
@@ -356,7 +359,7 @@ class FastAPICapabilityAPIAdapter(
         CapabilityMultipleResponse,
         CapabilityCreateRequest,
         CapabilityEditRequest,
-    ]
+    ],
 ):
     @staticmethod
     def _cap_to_response_cap(obj: Capability):
@@ -400,51 +403,6 @@ class FastAPICapabilityAPIAdapter(
             resource_url=f"{COMPLETE_URL}/capabilities/{obj.app_name}/{obj.namespace_name}/{obj.name}",
             permissions=permissions,
             conditions=conditions,
-        )
-
-    async def transform_exception(self, exc: Exception):
-        if isinstance(exc, ObjectNotFoundError) and exc.object_type is Capability:
-            return HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail={"message": "Capability not found."},
-            )
-        if isinstance(exc, ObjectNotFoundError) and exc.object_type is Role:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail={
-                    "message": "The role specified for the capability could not be found."
-                },
-            )
-        if isinstance(exc, ObjectNotFoundError) and exc.object_type is Condition:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail={
-                    "message": "One or more conditions specified for the capability do not exist."
-                },
-            )
-        if isinstance(exc, ObjectNotFoundError) and exc.object_type is Permission:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail={
-                    "message": "One or more permissions specified for the capability do not exist."
-                },
-            )
-        if isinstance(exc, ObjectExistsError):
-            return HTTPException(
-                status_code=400,
-                detail={
-                    "message": "Capability with the same identifiers already exists."
-                },
-            )
-        if isinstance(exc, ParentNotFoundError):
-            return HTTPException(
-                status_code=400,
-                detail={"message": "The app and or namespace does not exist."},
-            )
-        logger.exception(exc)
-        return HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"message": "Internal Server Error"},
         )
 
     async def to_obj_get_single(

@@ -2,6 +2,7 @@ from abc import ABC
 from typing import Any
 
 from fastapi import HTTPException
+from pydantic import ValidationError
 from starlette import status
 
 from guardian_management_api.errors import (
@@ -24,6 +25,11 @@ class TransformExceptionMixin(ABC):
         if isinstance(exc, ObjectExistsError):
             return HTTPException(
                 status_code=400,
+                detail={"message": str(exc)},
+            )
+        if isinstance(exc, ValidationError):
+            return HTTPException(
+                status_code=422,
                 detail={"message": str(exc)},
             )
         if isinstance(exc, ParentNotFoundError):
