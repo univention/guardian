@@ -103,9 +103,7 @@ class FastAPIOAuth2(
                 algorithms=["RS256"],
                 audience="guardian",
                 issuer=self.oauth_settings["issuer"],
-                options={
-                    "require": ["exp", "iss", "aud", "sub", "client_id", "iat", "jti"]
-                },
+                options={"require": ["exp", "iss", "aud", "sub", "iat", "jti"]},
             )
         except jwt.exceptions.InvalidTokenError as exc:
             self.logger.warning(f'Invalid Token: "{exc}"', token=token)
