@@ -1,0 +1,7 @@
+version: '3.1'
+services:
+  management-ui:
+    image: gitregistry.knut.univention.de/univention/components/authorization-engine/guardian/guardian-management-ui:latest
+    environment:
+      VITE__MANAGEMENT_UI__ADAPTER__AUTHENTICATION_PORT: in_memory
+      VITE__MANAGEMENT_UI__ADAPTER__DATA_PORT: in_memory

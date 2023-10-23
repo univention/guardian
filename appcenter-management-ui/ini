@@ -1,0 +1,22 @@
+[Application]
+ID = guardian-management-ui
+Code = 4D
+Version = 0.1.0
+Name = Guardian Management UI
+Vendor = Univention
+DockerScriptRestoreDataAfterSetup =
+DockerScriptStoreData =
+DockerScriptUpdateAvailable =
+DockerScriptRestoreDataBeforeSetup =
+DockerScriptUpdatePackages =
+DockerScriptUpdateAppVersion =
+DockerScriptUpdateRelease =
+DockerScriptSetup =
+WebInterface = /guardian/management-ui
+WebInterfaceName = Guardian Management UI
+WebInterfacePortHttps = 80
+DockerMainService = management-ui
+AutoModProxy = True
+WebInterfaceProxyScheme = http
+ServerRole = domaincontroller_master, domaincontroller_backup, domaincontroller_slave
+RequiredAppsInDomain = guardian-management-api, keycloak

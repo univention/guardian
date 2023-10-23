@@ -380,3 +380,21 @@ management_app_to_test_appcenter:
     - sed -i -e "/%GUARDIAN-SYNTAX%/r files/guardian_syntax.py" -e "/%GUARDIAN-SYNTAX%/d" preinst;
     - sed -i -e "/%GUARDIAN-SCHEMA%/r files/guardian.schema" -e "/%GUARDIAN-SCHEMA%/d" preinst;
     - univention-appcenter-control upload "$APP_NAME=$APP_VERSION" compose configure_host ini inst preinst README_UPDATE_DE README_UPDATE_EN settings uinst
+
+management_ui_app_to_test_appcenter:
+  stage: publish
+  image: $APPCENTER_CONTROL_IMAGE
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - appcenter-management-ui/**/*
+  needs: []
+  variables:
+    APP_ID: "guardian-management-ui"
+    APP_DIR: "appcenter-management-ui"
+    APP_NAME: "5.0/$APP_ID"
+  script:
+    - cd "$APP_DIR"
+    - APP_VERSION="$(sed -n 's/^Version\s*=\s*//p' ini)"
+    - echo "updating $APP_NAME=$APP_VERSION"
+    - univention-appcenter-control upload "$APP_NAME=$APP_VERSION" compose configure_host ini inst README_UPDATE_DE README_UPDATE_EN settings uinst
