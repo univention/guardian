@@ -15,29 +15,33 @@ eval "$(ucr shell)" || exit 1
 
 joinscript_init
 
-ucs_registerLDAPExtension "$@" \
-  --packagename "$APP_ID" \
-  --packageversion "$VERSION" \
-  --schema "/var/lib/univention-appcenter/apps/$APP_ID/conf/guardian.schema" \
-  --udm_syntax "/var/lib/univention-appcenter/apps/$APP_ID/conf/guardian_syntax.py" \
-  --ucsversionstart 5.0-0 || die
+if [ $JS_LAST_EXECUTED_VERSION -lt 1 ]; then
+  ucs_registerLDAPExtension "$@" \
+    --packagename "$APP_ID" \
+    --packageversion "$VERSION" \
+    --schema "/var/lib/univention-appcenter/apps/$APP_ID/conf/guardian.schema" \
+    --udm_syntax "/var/lib/univention-appcenter/apps/$APP_ID/conf/guardian_syntax.py" \
+    --ucsversionstart 5.0-0 || die
 
-udm settings/extended_attribute create "$@" --ignore_exists \
-  --position "cn=custom attributes,cn=univention,$ldap_base" \
-  --set name="guardianRole" \
-  --set tabName="Guardian" \
-  --set shortDescription="Roles used by Guardian for access permissions" \
-  --set translationShortDescription='"de_DE" "Die Rollen, welche vom Guardian zur Authorisation genutzt werden."' \
-  --set longDescription="Lowercase ASCII alphanumeric string with underscores or dashes, in the format 'app:namespace:role' or 'app:namespace:role&app:namespace:context'" \
-  --set translationLongDescription="\"de_DE\" \"ASCII alphanumerischer Text in Kleinschrift mit Unter- und Bindestrichen im Format 'app:namespace:role' oder 'app:namespace:role&app:namespace:context'\"" \
-  --set mayChange=1 \
-  --set multivalue=1 \
-  --append module="users/user" \
-  --append module="groups/group" \
-  --set objectClass=univentionGuardianObject \
-  --set syntax=GuardianRole \
-  --set ldapMapping=univentionGuardianRole || die
+  udm settings/extended_attribute create "$@" --ignore_exists \
+    --position "cn=custom attributes,cn=univention,$ldap_base" \
+    --set name="guardianRole" \
+    --set tabName="Guardian" \
+    --set shortDescription="Roles used by Guardian for access permissions" \
+    --set translationShortDescription='"de_DE" "Die Rollen, welche vom Guardian zur Authorisation genutzt werden."' \
+    --set longDescription="Lowercase ASCII alphanumeric string with underscores or dashes, in the format 'app:namespace:role' or 'app:namespace:role&app:namespace:context'" \
+    --set translationLongDescription="\"de_DE\" \"ASCII alphanumerischer Text in Kleinschrift mit Unter- und Bindestrichen im Format 'app:namespace:role' oder 'app:namespace:role&app:namespace:context'\"" \
+    --set mayChange=1 \
+    --set multivalue=1 \
+    --append module="users/user" \
+    --append module="groups/group" \
+    --set objectClass=univentionGuardianObject \
+    --set syntax=GuardianRole \
+    --set ldapMapping=univentionGuardianRole || die
 
+  API_FQDN="$hostname.$domainname"
+  univention-keycloak "$@" oidc/rp create --name Guardian --app-url "https://$API_FQDN" --redirect-uri "https://$API_FQDN/guardian/*" --add-audience-mapper guardian || die
+fi
 
 joinscript_save_current_version
 

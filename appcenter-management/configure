@@ -1,0 +1,11 @@
+#!/bin/sh
+
+action=$1
+
+if [ -n "$action" ] && [ "$action" = "remove" ]; then
+	exit 0
+fi
+
+
+cd /app/management-api || exit 1
+alembic upgrade head || exit 1

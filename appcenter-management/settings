@@ -53,3 +53,11 @@ Description[de] = Definiert das Protokoll der API.
 Group = General
 Scope = outside
 Show = Install,Settings
+
+[guardian-management-api/oauth/metadata-discovery-url]
+Type = String
+Description = URL to the metadata discovery document of the OAuth server for authentication. If unset the joinscript will attempt to set this value automatically.
+Description[de] = URL zum Metadata Discovery Dokument des OAuth Servers, welcher zur Authentifizierung genutzt werden soll. Falls dieser Wert nicht gesetzt wird, versucht das Joinscript diesen Wert automatisch zu ermitteln.
+Group = Authentication
+Scope = outside
+Show = Install,Settings

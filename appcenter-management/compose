@@ -4,11 +4,31 @@ services:
     image: gitregistry.knut.univention.de/univention/components/authorization-engine/guardian/guardian-management-api:latest
     security_opt:
       - seccomp:/etc/docker/seccomp-systemd.json
+    volumes:
+      - /etc/ssl/certs:/etc/ssl/certs:ro
     environment:
+      HOME: /guardian_service_dir
+      REQUESTS_CA_BUNDLE: /etc/ssl/certs/ca-certificates.crt
       GUARDIAN__MANAGEMENT__CORS__ALLOWED_ORIGINS: @%@guardian-management-api/cors/allowed-origins@%@
       GUARDIAN__MANAGEMENT__ADAPTER__SETTINGS_PORT: env
-      GUARDIAN__MANAGEMENT__ADAPTER__APP_PERSISTENCE_PORT: in_memory
+      GUARDIAN__MANAGEMENT__ADAPTER__APP_PERSISTENCE_PORT: sql
+      GUARDIAN__MANAGEMENT__ADAPTER__CONDITION_PERSISTENCE_PORT: sql
+      GUARDIAN__MANAGEMENT__ADAPTER__CONTEXT_PERSISTENCE_PORT: sql
+      GUARDIAN__MANAGEMENT__ADAPTER__NAMESPACE_PERSISTENCE_PORT: sql
+      GUARDIAN__MANAGEMENT__ADAPTER__PERMISSION_PERSISTENCE_PORT: sql
+      GUARDIAN__MANAGEMENT__ADAPTER__ROLE_PERSISTENCE_PORT: sql
+      GUARDIAN__MANAGEMENT__ADAPTER__CAPABILITY_PERSISTENCE_PORT: sql
+      GUARDIAN__MANAGEMENT__ADAPTER__AUTHENTICATION_PORT: fast_api_oauth
       IS_UNIVENTION_APPCENTER: 1
+      SQL_PERSISTENCE_ADAPTER__DIALECT: postgresql
+      SQL_PERSISTENCE_ADAPTER__DB_NAME: "/guardian_service_dir/management.db"
+      OAUTH_ADAPTER__WELL_KNOWN_URL: @!@
+ucr = configRegistry
+url = ucr.get('guardian-management-api/oauth/metadata-discovery-url')
+# Guess default name for keycloak URL, since there is currently no better way.
+if not url:
+    url = f"https://ucs-sso-ng.{ucr.get('domainname')}/realms/ucs/.well-known/openid-configuration"
+print(url)@!@
       GUARDIAN__MANAGEMENT__LOGGING__LEVEL: @%@guardian-management-api/logging/level@%@
       GUARDIAN__MANAGEMENT__LOGGING__STRUCTURED: "@%@guardian-management-api/logging/structured@%@"
       GUARDIAN__MANAGEMENT__LOGGING__FORMAT: @%@guardian-management-api/logging/format@%@
