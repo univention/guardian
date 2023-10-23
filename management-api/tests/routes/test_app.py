@@ -66,9 +66,10 @@ class TestAppEndpoints:
             }
         }
 
-    @pytest.mark.usefixtures("run_alembic_migrations")
     @pytest.mark.asyncio
-    async def test_register_app(self, client, sqlalchemy_mixin):
+    async def test_register_app(
+        self, client, sqlalchemy_mixin, create_tables, run_alembic_migrations
+    ):
         response = client.post(
             client.app.url_path_for("register_app"),
             json={"name": "app1", "display_name": "App 1"},
