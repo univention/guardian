@@ -115,58 +115,6 @@ coverage_guardian_lib:
     - pytest -vv --cov=guardian_lib .
     - coverage report --fail-under="$GUARDIAN_LIB_COVERAGE_LIMIT"  # Variable set in Gitlab UI
 
-test_port_loader:
-  stage: test
-  rules:
-    - changes:
-        - port-loader/**/*
-  image: docker-registry.knut.univention.de/python:3.11-slim
-  script:
-    - cd port-loader
-    - pip install poetry=="$POETRY_VERSION"
-    - poetry config --local virtualenvs.create false
-    - poetry install
-    - pytest -vv .
-
-coverage_port_loader:
-  stage: test
-  rules:
-    - changes:
-        - port-loader/**/*
-  image: docker-registry.knut.univention.de/python:3.11-slim
-  script:
-    - cd port-loader
-    - pip install poetry=="$POETRY_VERSION"
-    - poetry config --local virtualenvs.create false
-    - poetry install
-    - pytest -vv --cov=port_loader .
-    - coverage report --fail-under="$PORT_LOADER_COVERAGE_LIMIT"  # Variable set in Gitlab UI
-
-build_port_loader:
-  stage: build_python
-  needs:
-    - test_port_loader
-    - coverage_port_loader
-  rules:
-    - changes:
-        - port-loader/**/*
-  artifacts:
-    paths:
-      - port-loader/dist/
-    expire_in: 1 week
-  image: docker-registry.knut.univention.de/python:3.11-slim
-  script:
-    - cd port-loader
-    - pip install poetry=="$POETRY_VERSION"
-    - |-
-      if [ "$CI_COMMIT_BRANCH" != "$CI_DEFAULT_BRANCH" ]; then
-        poetry version "0.0.0.dev0+${CI_COMMIT_REF_SLUG//-/.}.$CI_COMMIT_SHORT_SHA"
-      else
-        true
-      fi
-    - poetry config --local virtualenvs.create false
-    - poetry build
-
 build_guardian_lib:
   stage: build_python
   needs:
@@ -241,35 +189,6 @@ build_docker_image_management:
     KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR/management-api"
     CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-management-api
     KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --skip-unused-stages --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
-
-publish_port_loader:
-  stage: publish
-  when: manual
-  rules:
-    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
-      changes:
-        - port-loader/**/*
-      when: manual
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      changes:
-        - port-loader/**/*
-  dependencies:
-    - build_port_loader
-  needs:
-    - build_port_loader
-  image: docker-registry.knut.univention.de/python:3.11-slim
-  script:
-    - cd port-loader
-    - pip install poetry=="$POETRY_VERSION"
-    - |-
-      if [ "$CI_COMMIT_BRANCH" != "$CI_DEFAULT_BRANCH" ]; then
-        poetry version "0.0.0.dev0+${CI_COMMIT_REF_SLUG//-/.}.$CI_COMMIT_SHORT_SHA"
-      else
-        true
-      fi
-    - poetry config --local virtualenvs.create false
-    - poetry config --local repositories.project_local ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi
-    - poetry publish -r project_local --username gitlab-ci-token --password ${CI_JOB_TOKEN}
 
 publish_guardian-lib:
   stage: publish

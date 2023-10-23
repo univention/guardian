@@ -27,12 +27,12 @@ repos:
     rev: 1.7.5
     hooks:
     -   id: bandit
-        exclude: "authorization-api/tests/|port-loader/tests/|management-api/tests|udm_client.py|guardian-lib/tests"
+        exclude: "authorization-api/tests/|management-api/tests|udm_client.py|guardian-lib/tests"
 -   repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.3.0
     hooks:
     -   id: mypy
-        exclude: "docs/|authorization-api/tests/|port-loader/tests/|management-api/tests|guardian-lib/tests"
+        exclude: "docs/|authorization-api/tests/|management-api/tests|guardian-lib/tests"
         args: []
         additional_dependencies: [fastapi==0.95.2, loguru==0.7.0, requests==2.31.0, types-requests==2.31.0, alembic==1.11.3, types-aiofiles, types-pymysql]
 - repo: https://github.com/jackdewinter/pymarkdown
@@ -63,15 +63,11 @@ repos:
     - id: poetry-check
       args: ["-C", "authorization-api"]
     - id: poetry-check
-      args: [ "-C", "port-loader" ]
-    - id: poetry-check
       args: [ "-C", "management-api" ]
     - id: poetry-check
       args: [ "-C", "guardian-lib" ]
     - id: poetry-lock
       args: ["-C", "authorization-api", "--check"]
-    - id: poetry-lock
-      args: [ "-C", "port-loader", "--check" ]
     - id: poetry-lock
       args: [ "-C", "management-api", "--check" ]
     - id: poetry-lock
