@@ -6,9 +6,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 # Changelog
 
-## 1.0.3
+## 1.2.0
 
 * Remove `client_id` claim from list of required claims for OAuth authentication adapter.
+* Merge `guardian-pytest` into `guardian-lib`
 
 ## 1.0.2
 
