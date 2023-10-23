@@ -10,7 +10,7 @@ VERSION=1
 
 APP_ID="guardian-management-api"
 
-. /usr/share/univention-join/joinscripthelper.lib
+. /usr/share/univention-join/joinscripthelper.lib || exit 1
 
 joinscript_init
 

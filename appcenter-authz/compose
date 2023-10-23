@@ -4,13 +4,18 @@ services:
     image: gitregistry.knut.univention.de/univention/components/authorization-engine/guardian/guardian-authorization-api:latest
     security_opt:
       - seccomp:/etc/docker/seccomp-systemd.json
+    volumes:
+      - /etc/ssl/certs:/etc/ssl/certs:ro
     depends_on:
       - opa
     environment:
+      HOME: /guardian_service_dir
+      REQUESTS_CA_BUNDLE: /etc/ssl/certs/ca-certificates.crt
       GUARDIAN__AUTHZ__CORS__ALLOWED_ORIGINS: @%@guardian-authorization-api/cors/allowed-origins@%@
       GUARDIAN__AUTHZ__ADAPTER__SETTINGS_PORT: env
       GUARDIAN__AUTHZ__ADAPTER__PERSISTENCE_PORT: udm_data
       GUARDIAN__AUTHZ__ADAPTER__POLICY_PORT: opa
+      GUARDIAN__AUTHZ__ADAPTER__AUTHENTICATION_PORT: fast_api_oauth
       IS_UNIVENTION_APPCENTER: 1
       UDM_DATA_ADAPTER__URL: @%@guardian-authorization-api/udm_data/url@%@
       UDM_DATA_ADAPTER__USERNAME: @%@guardian-authorization-api/udm_data/username@%@
@@ -19,10 +24,24 @@ services:
       GUARDIAN__AUTHZ__LOGGING__LEVEL: @%@guardian-authorization-api/logging/level@%@
       GUARDIAN__AUTHZ__LOGGING__STRUCTURED: "@%@guardian-authorization-api/logging/structured@%@"
       GUARDIAN__AUTHZ__LOGGING__FORMAT: @%@guardian-authorization-api/logging/format@%@
+      OAUTH_ADAPTER__WELL_KNOWN_URL: @!@
+ucr = configRegistry
+url = ucr.get('guardian-authorization-api/oauth/metadata-discovery-url')
+# Guess default name for keycloak URL, since there is currently no better way.
+if not url:
+    url = f"https://ucs-sso-ng.{ucr.get('domainname')}/realms/ucs/.well-known/openid-configuration"
+print(url)@!@
   opa:
-    image: gitregistry.knut.univention.de/univention/components/authorization-engine/guardian/guardian-opa:branch-9-create-appcenter-apps-for-authz-and-management-api
+    image: gitregistry.knut.univention.de/univention/components/authorization-engine/guardian/guardian-opa:latest
     security_opt:
       - seccomp:/etc/docker/seccomp-systemd.json
+    volumes:
+      - /etc/ssl/certs:/etc/ssl/certs:ro
     environment:
       IS_UNIVENTION_APPCENTER: 1
+      OPA_DATA_BUNDLE: bundles/GuardianDataBundle.tar.gz
+      OPA_POLICY_BUNDLE: bundles/GuardianPolicyBundle.tar.gz
+      OPA_POLLING_MIN_DELAY: 10
+      OPA_POLLING_MAX_DELAY: 15
+      OPA_GUARDIAN_MANAGEMENT_URL: "@%@guardian-authorization-api/bundle_server_url@%@"
 

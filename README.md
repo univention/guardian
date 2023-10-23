@@ -36,15 +36,38 @@ More information can be found [here](opa/README.md)
 
 ## Apps
 
+> If you are using the Management or Authorization API apps from
+> the Appcenter, be aware that you need to provide a `client_secret`
+> if you want to log in via the Swagger UI. On the UCS host that has
+> Keycloak installed, you can get the `client_secret` with the following
+> command: `univention-keycloak oidc/rp secret --client-name guardian`
+
 ### Guardian Authorization API
 
 This app contains the components `Guardian Authorization API` and the OPA service in a docker compose app.
 The configuration files can be found in `appcenter-authz`. The App ID is `guardian-authorization-api`.
 
+This app can be installed via `univention-app install guardian-authorization-api`. It depends on having
+Keycloak and the Guardian Management API installed in the domain.
+
+To work properly it also requires the UDM connection settings on installation time. This is not automated (yet).
+If installed via the UMC, you are prompted to enter them before installation. If you use the terminal:
+
+```shell
+univention-app configure guardian-authorization-api \
+  --set guardian-authorization-api/udm_data/url=$URL \
+  guardian-authorization-api/udm_data/username=$USERNAME \
+  guardian-authorization-api/udm_data/password=$PASSWORD \
+  guardian-authorization-api/bundle_server_url=https://$URL_TO_MANAGEMENT_API
+```
+
 ### Guardian Management API
 
 This app contains the components for `Guardian Management API`.
 The configuration files can be found in `appcenter-management`. The App ID is `guardian-management-api`.
+
+This app can be installed via `univention-app install guardian-management-api`. It depends on having
+Keycloak installed in the domain.
 
 ### Guardian Management UI
 
