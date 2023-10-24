@@ -6,6 +6,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 # Changelog
 
+## 1.2.1
+
+* Update port-loader dependency to use standalone project
+
 ## 1.2.0
 
 * Remove `client_id` claim from list of required claims for OAuth authentication adapter.
