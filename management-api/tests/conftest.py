@@ -240,8 +240,6 @@ async def create_tables(sqlite_url, patch_env, sqlite_db_name, pytestconfig):
             url = f"sqlite+aiosqlite://{sqlite_url}"
     elif dialect == "postgresql":
         url = f"postgresql+asyncpg://{db_url()}"
-    elif dialect == "mysql":
-        url = f"mysql+aiomysql://{db_url()}"
     else:
         raise Exception(f"Unknown dialect: '{dialect}'")
 
@@ -296,15 +294,6 @@ def sqlalchemy_mixin(sqlite_url, pytestconfig):
     elif dialect == "postgresql":
         mixin._db_string = SQLAlchemyMixin.create_db_string(
             "postgresql",
-            os.environ.get("SQL_PERSISTENCE_ADAPTER__HOST"),
-            os.environ.get("SQL_PERSISTENCE_ADAPTER__PORT"),
-            os.environ.get("SQL_PERSISTENCE_ADAPTER__DB_NAME"),
-            os.environ.get("SQL_PERSISTENCE_ADAPTER__USERNAME"),
-            os.environ.get("SQL_PERSISTENCE_ADAPTER__PASSWORD"),
-        )
-    elif dialect == "mysql":
-        mixin._db_string = SQLAlchemyMixin.create_db_string(
-            "mysql",
             os.environ.get("SQL_PERSISTENCE_ADAPTER__HOST"),
             os.environ.get("SQL_PERSISTENCE_ADAPTER__PORT"),
             os.environ.get("SQL_PERSISTENCE_ADAPTER__DB_NAME"),

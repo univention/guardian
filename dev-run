@@ -2,9 +2,6 @@
 if [ "postgres" = "$1" ]
 then
 	COMPOSEFILES="-f dev-compose.yaml -f dev-compose-postgres.yaml"
-elif [ "mariadb" = "$1" ]
-then
-  COMPOSEFILES="-f dev-compose.yaml -f dev-compose-mariadb.yaml"
 else
   COMPOSEFILES="-f dev-compose.yaml"
 fi

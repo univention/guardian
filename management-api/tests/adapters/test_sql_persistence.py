@@ -56,8 +56,6 @@ class TestSQLAlchemyMixin:
             ("sqlite", "a", "b", "c", "d", "e", "sqlite+aiosqlite:///c"),
             ("postgresql", "a", "", "c", "d", "e", "postgresql+asyncpg://d:e@a/c"),
             ("postgresql", "a", "b", "c", "d", "e", "postgresql+asyncpg://d:e@a:b/c"),
-            ("mysql", "a", "", "c", "d", "e", "mysql+aiomysql://d:e@a/c"),
-            ("mysql", "a", "b", "c", "d", "e", "mysql+aiomysql://d:e@a:b/c"),
         ],
     )
     def test_create_db_string(
@@ -74,7 +72,6 @@ class TestSQLAlchemyMixin:
         with pytest.raises(ValueError, match="The dialect FOO is not supported."):
             SQLAlchemyMixin.create_db_string("FOO", "", "", "", "", "")
 
-    @pytest.mark.parametrize("dialect", ["mysql", "postgresql"])
     @pytest.mark.parametrize(
         "host,port,db_name,username,password",
         [
@@ -101,14 +98,14 @@ class TestSQLAlchemyMixin:
         ],
     )
     def test_create_db_string_missing_values(
-        self, dialect, host, port, db_name, username, password
+        self, host, port, db_name, username, password
     ):
         with pytest.raises(
             ValueError,
-            match=f"The dialect {dialect} requires a host, db_name, username and password to connect.",
+            match="The dialect postgresql requires a host, db_name, username and password to connect.",
         ):
             SQLAlchemyMixin.create_db_string(
-                dialect, host, port, db_name, username, password
+                "postgresql", host, port, db_name, username, password
             )
 
     @pytest.mark.usefixtures("create_tables")

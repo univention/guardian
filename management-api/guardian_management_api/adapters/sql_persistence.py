@@ -6,7 +6,6 @@ import sqlite3
 from functools import wraps
 from typing import Optional, Tuple, Type, TypeVar
 
-import pymysql.err
 from sqlalchemy import Engine, event, select
 from sqlalchemy.dialects.postgresql.asyncpg import AsyncAdapt_asyncpg_dbapi
 from sqlalchemy.dialects.sqlite.aiosqlite import AsyncAdapt_aiosqlite_connection
@@ -21,10 +20,6 @@ from sqlalchemy.sql.functions import count
 
 from ..errors import ObjectExistsError, ParentNotFoundError, PersistenceError
 from ..models.sql_persistence import DBApp, DBNamespace
-
-MYSQL_ER_DUP_ENTRY = 1062
-MYSQL_ER_NO_REFERENCED_ROW = 1216
-MYSQL_ER_NO_REFERENCED_ROW_2 = 1452
 
 POSTGRES_ER_FOREIGN_KEY_VIOLATION = "23503"
 POSTGRES_ER_UNIQUE_VIOLATION = "23505"
@@ -78,12 +73,6 @@ class SQLAlchemyMixin:
                     "The dialect postgresql requires a host, db_name, username and password to connect."
                 )
             dialect = "postgresql+asyncpg"
-        elif dialect == "mysql":
-            if not (host and db_name and username and password):
-                raise ValueError(
-                    "The dialect mysql requires a host, db_name, username and password to connect."
-                )
-            dialect = "mysql+aiomysql"
         else:
             raise ValueError(f"The dialect {dialect} is not supported.")
         credentials = f"{username}:{password}@" if username and password else ""
@@ -221,36 +210,21 @@ class SQLAlchemyMixin:
         ) as exc:  # This needs separate handling for each underlying dialect.
             # See univention/components/authorization-engine/guardian#98
             if (
-                (
-                    isinstance(exc.orig, sqlite3.IntegrityError)
-                    and exc.orig.sqlite_errorname == "SQLITE_CONSTRAINT_UNIQUE"
-                )
-                or (
-                    isinstance(exc.orig, AsyncAdapt_asyncpg_dbapi.IntegrityError)
-                    and exc.orig.pgcode == POSTGRES_ER_UNIQUE_VIOLATION  # type: ignore
-                )
-                or (
-                    isinstance(exc.orig, pymysql.err.IntegrityError)
-                    and exc.orig.args[0] == MYSQL_ER_DUP_ENTRY
-                )
+                isinstance(exc.orig, sqlite3.IntegrityError)
+                and exc.orig.sqlite_errorname == "SQLITE_CONSTRAINT_UNIQUE"
+            ) or (
+                isinstance(exc.orig, AsyncAdapt_asyncpg_dbapi.IntegrityError)
+                and exc.orig.pgcode == POSTGRES_ER_UNIQUE_VIOLATION  # type: ignore
             ):
                 raise ObjectExistsError(
                     "An object with the given identifiers already exists."
                 )
             elif (
-                (
-                    isinstance(exc.orig, sqlite3.IntegrityError)
-                    and exc.orig.sqlite_errorname == "SQLITE_CONSTRAINT_FOREIGNKEY"
-                )
-                or (
-                    isinstance(exc.orig, AsyncAdapt_asyncpg_dbapi.IntegrityError)
-                    and exc.orig.pgcode == POSTGRES_ER_FOREIGN_KEY_VIOLATION  # type: ignore
-                )
-                or (
-                    isinstance(exc.orig, pymysql.err.IntegrityError)
-                    and exc.orig.args[0]
-                    in (MYSQL_ER_NO_REFERENCED_ROW, MYSQL_ER_NO_REFERENCED_ROW_2)
-                )
+                isinstance(exc.orig, sqlite3.IntegrityError)
+                and exc.orig.sqlite_errorname == "SQLITE_CONSTRAINT_FOREIGNKEY"
+            ) or (
+                isinstance(exc.orig, AsyncAdapt_asyncpg_dbapi.IntegrityError)
+                and exc.orig.pgcode == POSTGRES_ER_FOREIGN_KEY_VIOLATION  # type: ignore
             ):
                 raise ParentNotFoundError(
                     "The app/namespace of the object to be created does not exist."
