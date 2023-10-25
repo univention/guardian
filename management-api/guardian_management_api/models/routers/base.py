@@ -16,7 +16,7 @@ class GuardianBaseModel(BaseModel):
         allow_population_by_field_name = True
 
 
-MANAGEMENT_OBJECT_NAME_REGEX = r"[a-z][a-z0-9\-_]*"
+MANAGEMENT_OBJECT_NAME_REGEX = r"^[a-z][a-z0-9\-_]*$"
 
 
 class ManagementObjectName(ConstrainedStr):

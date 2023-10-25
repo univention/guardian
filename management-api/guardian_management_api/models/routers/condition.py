@@ -2,9 +2,8 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-from pydantic import BaseModel, ConstrainedStr, Field
+from pydantic import BaseModel, Field
 
-from guardian_management_api.constants import STRING_MAX_LENGTH
 from guardian_management_api.models.condition import ConditionParameterType
 from guardian_management_api.models.routers.base import (
     CreateBaseRequest,
@@ -12,6 +11,7 @@ from guardian_management_api.models.routers.base import (
     DocumentationObjectMixin,
     EditBaseRequest,
     GuardianBaseModel,
+    ManagementObjectName,
     NameObjectMixin,
     NamespacedObjectMixin,
     PaginationObjectMixin,
@@ -24,12 +24,8 @@ from guardian_management_api.models.routers.base import (
 #####
 
 
-class ConditionParameterName(ConstrainedStr):
-    """Name of a conditions parameter"""
-
-    regex = r"[a-z][a-z0-9_]*"
-    min_length = 1
-    max_length = STRING_MAX_LENGTH
+class ConditionParameterName(ManagementObjectName):
+    pass
 
 
 class ConditionParameter(GuardianBaseModel):

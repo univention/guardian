@@ -39,16 +39,18 @@ class TestAppEndpoints:
     @pytest.mark.usefixtures("create_tables")
     def test_post_app_validation_error(self, client):
         response = client.post(
-            app.url_path_for("create_app"), json={"name": "test app #1"}
+            app.url_path_for("create_app"), json={"name": "invalid app #name"}
         )
         assert response.status_code == 422
         assert response.json() == {
-            "detail": {
-                "message": "1 validation error for App\n"
-                "resource_url\n"
-                "  URL invalid, extra characters found after valid URL: "
-                "' app #1' (type=value_error.url.extra; extra= app #1)"
-            }
+            "detail": [
+                {
+                    "loc": ["body", "name"],
+                    "msg": 'string does not match regex "^[a-z][a-z0-9\\-_]*$"',
+                    "type": "value_error.str.regex",
+                    "ctx": {"pattern": "^[a-z][a-z0-9\\-_]*$"},
+                }
+            ]
         }
 
     @pytest.mark.usefixtures("create_tables")

@@ -27,7 +27,7 @@ class TransformExceptionMixin(ABC):
                 status_code=400,
                 detail={"message": str(exc)},
             )
-        if isinstance(exc, ValidationError):
+        if isinstance(exc, ValidationError):  # pragma: no cover
             return HTTPException(
                 status_code=422,
                 detail={"message": str(exc)},
