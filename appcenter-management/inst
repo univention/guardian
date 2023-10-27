@@ -21,7 +21,7 @@ if [ $JS_LAST_EXECUTED_VERSION -lt 1 ]; then
     --packageversion "$VERSION" \
     --schema "/var/lib/univention-appcenter/apps/$APP_ID/conf/guardian.schema" \
     --udm_syntax "/var/lib/univention-appcenter/apps/$APP_ID/conf/guardian_syntax.py" \
-    --umc_syntax_messagecatalog "var/lib/univention-appcenter/apps/$APP_ID/locale/DE/LC_MESSAGES/de.mo"
+    --umc_syntax_messagecatalog "/var/lib/univention-appcenter/apps/$APP_ID/locale/DE/LC_MESSAGES/de.mo" \
     --ucsversionstart 5.0-0 || die
 
   udm settings/extended_attribute create "$@" --ignore_exists \

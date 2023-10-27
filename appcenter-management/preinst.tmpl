@@ -35,7 +35,7 @@ cat <<%EOF >"$guardian_po_path"
 %EOF
 
 echo "Installing Guardian mo file"
-msgfmt $guardian_po_path -o $guardian_mo_path
+msgfmt "$guardian_po_path" -o "$guardian_mo_path"
 
 echo "Removing additional dependencies of Guardian mo file"
-rm $guardian_po_path
+rm "$guardian_po_path"
