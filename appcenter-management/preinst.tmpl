@@ -27,8 +27,15 @@ echo "Installing Guardian schema file"
 chmod 644 "$guardian_schema_path"
 
 # guardian mo file
+guardian_po_path="/var/lib/univention-appcenter/apps/$APP_ID/locale/DE/LC_MESSAGES/de.po"
 guardian_mo_path="/var/lib/univention-appcenter/apps/$APP_ID/locale/DE/LC_MESSAGES/de.mo"
-echo "Installing Guardian mo file"
-cat <<%EOF >"$guardian_mo_path"
-%GUARDIAN-MO%
+echo "Preparing Guardian mo file"
+cat <<%EOF >"$guardian_po_path"
+%GUARDIAN-PO%
 %EOF
+
+echo "Installing Guardian mo file"
+msgfmt $guardian_po_path -o $guardian_mo_path
+
+echo "Removing additional dependencies of Guardian mo file"
+rm $guardian_po_path
