@@ -8,6 +8,7 @@ set -e
 eval "$(ucr shell)"
 
 mkdir -p "/var/lib/univention-appcenter/apps/$APP_ID/conf/"
+mkdir -p "/var/lib/univention-appcenter/apps/$APP_ID/locale/DE/LC_MESSAGES/"
 
 # guardian syntax file
 guardian_syntax_path="/var/lib/univention-appcenter/apps/$APP_ID/conf/guardian_syntax.py"
@@ -24,3 +25,10 @@ echo "Installing Guardian schema file"
 %GUARDIAN-SCHEMA%
 %EOF
 chmod 644 "$guardian_schema_path"
+
+# guardian mo file
+guardian_mo_path="/var/lib/univention-appcenter/apps/$APP_ID/locale/DE/LC_MESSAGES/de.mo"
+echo "Installing Guardian mo file"
+cat <<%EOF >"$guardian_mo_path"
+%GUARDIAN-MO%
+%EOF
