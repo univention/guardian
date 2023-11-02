@@ -9,6 +9,7 @@ from guardian_management_api.errors import (
     ObjectExistsError,
     ObjectNotFoundError,
     ParentNotFoundError,
+    UnauthorizedError,
 )
 
 
@@ -26,6 +27,11 @@ class TransformExceptionMixin(ABC):
             return HTTPException(
                 status_code=400,
                 detail={"message": str(exc)},
+            )
+        if isinstance(exc, UnauthorizedError):
+            return HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={"message": "Not allowed to create app."},
             )
         if isinstance(exc, ValidationError):  # pragma: no cover
             return HTTPException(
