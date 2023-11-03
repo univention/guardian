@@ -26,6 +26,7 @@ from guardian_management_api.models.routers.app import AppCreateRequest, AppsGet
 from guardian_management_api.models.routers.base import GetAllRequest, GetByAppRequest
 from guardian_management_api.models.routers.namespace import NamespacesGetRequest
 from guardian_management_api.ports.app import AppPersistencePort
+from guardian_management_api.ports.authz import ResourceAuthorizationPort
 from guardian_management_api.ports.context import ContextPersistencePort
 from guardian_management_api.ports.namespace import NamespacePersistencePort
 
@@ -51,6 +52,10 @@ class TestBusinessLogic:
     @pytest_asyncio.fixture
     async def app_sql_adapter(self, registry_test_adapters) -> SQLAppPersistenceAdapter:
         return await registry_test_adapters.request_port(AppPersistencePort)
+
+    @pytest_asyncio.fixture
+    async def app_authz_adapter(self, registry_test_adapters):
+        return await registry_test_adapters.request_port(ResourceAuthorizationPort)
 
     @pytest.mark.asyncio
     async def test_get_contexts_internal_error(self, context_sql_adapter):
@@ -97,7 +102,7 @@ class TestBusinessLogic:
             )
 
     @pytest.mark.asyncio
-    async def test_create_app_internal_error(self, app_sql_adapter):
+    async def test_create_app_internal_error(self, app_sql_adapter, app_authz_adapter):
         async def _create():
             raise Exception()
 
@@ -107,12 +112,13 @@ class TestBusinessLogic:
                 api_request=AppCreateRequest(name="app"),
                 app_api_port=FastAPIAppAPIAdapter(),
                 persistence_port=app_sql_adapter,
+                authz_port=app_authz_adapter,
             )
         assert exc_info.value.status_code == 500
         assert exc_info.value.detail == {"message": "Internal Server Error"}
 
     @pytest.mark.asyncio
-    async def test_get_apps_internal_error(self, app_sql_adapter):
+    async def test_get_apps_internal_error(self, app_sql_adapter, app_authz_adapter):
         async def _read_many():
             raise Exception()
 
@@ -122,6 +128,7 @@ class TestBusinessLogic:
                 api_request=AppsGetRequest(),
                 app_api_port=FastAPIAppAPIAdapter(),
                 persistence_port=app_sql_adapter,
+                authz_port=app_authz_adapter,
             )
         assert exc_info.value.status_code == 500
         assert exc_info.value.detail == {"message": "Internal Server Error"}

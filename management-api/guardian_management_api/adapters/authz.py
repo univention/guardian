@@ -2,7 +2,12 @@ import httpx
 from authlib.integrations.httpx_client import AsyncOAuth2Client
 
 from guardian_management_api.errors import AuthorizationError
-from guardian_management_api.models.authz import Actor, OperationType, Resource
+from guardian_management_api.models.authz import (
+    Actor,
+    OperationType,
+    Resource,
+    ResourceType,
+)
 from guardian_management_api.ports.authz import ResourceAuthorizationPort
 
 
@@ -20,7 +25,29 @@ class NeverAuthorizedAdapter(ResourceAuthorizationPort):
         return {resource.id: False for resource in resources}
 
 
-class GuardianAUthorizationAdapter(ResourceAuthorizationPort):
+def _get_resource_target(resource: Resource) -> dict[str, str]:
+    if resource.resource_type == ResourceType.APP:
+        return {
+            "app_name": resource.name,
+            "name": resource.name,
+        }
+    if not resource.app_name:
+        raise RuntimeError("This resource must have an app name.")
+    if resource.resource_type == ResourceType.NAMESPACE:
+        return {
+            "app_name": resource.app_name,
+            "name": resource.name,
+        }
+    if not resource.namespace_name:
+        raise RuntimeError("This resource must have a namespace name.")
+    return {
+        "app_name": resource.app_name,
+        "namespace_name": resource.namespace_name,
+        "name": resource.name,
+    }
+
+
+class GuardianAuthorizationAdapter(ResourceAuthorizationPort):
     async def authorize_operation(
         self,
         actor: Actor,
@@ -35,38 +62,34 @@ class GuardianAUthorizationAdapter(ResourceAuthorizationPort):
         )
 
         # query the Guardian Authorization API with httpx and m2m credentials
-        response = await client.get(
-            "https://guardian-authz-api/api/v1/authorize",
-            params={
+        response = await client.post(
+            "http://localhost/guardian/authorization/permissions/check/with-lookup",
+            json={
                 "actor": {"id": actor.id},
                 "targets": [
                     {
                         "old_target": {
                             "id": resource.id,
-                            "roles": [
-                                {
-                                    "app_name": resource.app_name,
-                                    "namespace_name": resource.namespace_name,
-                                    "name": resource.name,
-                                },
-                            ],
+                            "roles": [],
+                            "attributes": _get_resource_target(resource),
                         },
                         "new_target": {
                             "id": resource.id,
-                            "roles": [
-                                {
-                                    "app_name": resource.app_name,
-                                    "namespace_name": resource.namespace_name,
-                                    "name": resource.name,
-                                },
-                            ],
+                            "roles": [],
+                            "attributes": {},
                         },
                     }
                     for resource in resources
                 ],
                 "targeted_permissions_to_check": [
-                    {"app_name": "string", "namespace_name": "string", "name": "string"}
+                    {
+                        "app_name": "guardian",
+                        "namespace_name": "management-api",
+                        "name": operation_type.value,
+                    }
                 ],
+                "general_permissions_to_check": [],
+                "extra_request_data": {},
             },
         )
         # check the response status code and raise a custom exception if needed

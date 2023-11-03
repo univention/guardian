@@ -17,6 +17,7 @@ from guardian_management_api.adapters.app import (
     FastAPIAppAPIAdapter,
     SQLAppPersistenceAdapter,
 )
+from guardian_management_api.adapters.authz import AlwaysAuthorizedAdapter
 from guardian_management_api.adapters.bundle_server import BundleServerAdapter
 from guardian_management_api.adapters.capability import (
     FastAPICapabilityAPIAdapter,
@@ -62,6 +63,7 @@ from guardian_management_api.ports.app import (
     AppAPIPort,
     AppPersistencePort,
 )
+from guardian_management_api.ports.authz import ResourceAuthorizationPort
 from guardian_management_api.ports.bundle_server import BundleServerPort
 from guardian_management_api.ports.capability import (
     CapabilityAPIPort,
@@ -192,6 +194,7 @@ def registry_test_adapters(patch_env):
         (CapabilityAPIPort, FastAPICapabilityAPIAdapter),
         (RoleAPIPort, FastAPIRoleAPIAdapter),
         (ContextAPIPort, FastAPIContextAPIAdapter),
+        (ResourceAuthorizationPort, AlwaysAuthorizedAdapter),
     ]:
         registry.register_port(port)
         registry.register_adapter(port, adapter_cls=adapter)
