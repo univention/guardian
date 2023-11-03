@@ -1,0 +1,35 @@
+- [ ] Visiting root URL shows the expected page
+- Route: 'listRoles', 'listNamespaces', 'listContexts', 'listCapabilities'
+  - [ ] Tab buttons are correct
+  - Searchform
+    - [ ] App combobox contains expected options
+    - Namespace combobox, if it exists
+      - [ ] Not selectable if 'All' apps are selected
+      - [ ] If app is selected it fetches and contains expected options
+    - [ ] 'Reset' form buttons works
+  - [ ] Searching returns expected results
+  - [ ] Grid configuration is correct (Columns, first column is edit action, actions)
+    - [ ] Grid 'Add' action redirects to correct page
+    - [ ] Grid 'Edit' action redirects to correct page
+- Route: 'addRole', 'addContext', 'addNamespace', 'addCapability'
+  - [ ] Form looks as expected (required fields, fields with options contain exptected options)
+  - [ ] Fields that depend on other fields (Namespace in 'addRole', 'addContext' and 'addCapability' and Permissions in 'addCapability') behave as expected
+  - Header buttons
+    - [ ] 'Create' button does frontend validation before sending request (e.g. required fields)
+    - [ ] 'Reset' button asks if creation process should be canceled if any input was made
+  - [ ] Objects can be created
+  - (Error handling)
+- Route: 'editRole', 'editContext', 'editNamespace', 'editCapability'
+  - [ ] Form looks as expected (required fields, fields with options contain exptected options)
+  - [ ] Fields that depend on other fields (Namespace in 'addRole', 'addContext' and 'addCapability' and Permissions in 'addCapability') behave as expected
+  - [ ] Object to be edited is correctly loaded into form
+  - Header buttons
+    - [ ] 'Save' button does frontend validation before sending request (e.g. required fields)
+    - [ ] 'Reset' button asks if edit process should be canceled if any input was made
+  - [ ] Objects can be saved
+  - (Error handling)
+- Route: 'listCapabilites'
+  - [ ] Capabilities can be deleted
+
+- Add visual comparison tests (https://playwright.dev/docs/test-snapshots)
+- Add code coverage
