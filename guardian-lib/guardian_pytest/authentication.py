@@ -205,6 +205,26 @@ def good_token():
             "client_id": "guardian",
             "iat": "0",
             "jti": "0",
+            "dn": "dn",
+        },
+        private_key,
+        algorithm="RS256",
+        headers={"kid": "1234"},
+    )
+
+
+@pytest.fixture()
+def good_token_wo_dn():
+    future_date = int(datetime.now().timestamp() + 300)
+    return jwt.encode(
+        {
+            "iss": "guardian_idp",
+            "exp": f"{future_date}",
+            "aud": "guardian",
+            "sub": "testi",
+            "client_id": "guardian",
+            "iat": "0",
+            "jti": "0",
         },
         private_key,
         algorithm="RS256",
@@ -224,6 +244,7 @@ def bad_idp_token():
             "client_id": "guardian",
             "iat": "0",
             "jti": "0",
+            "dn": "dn",
         },
         private_key,
         algorithm="RS256",
@@ -243,6 +264,7 @@ def expired_token():
             "client_id": "guardian",
             "iat": "0",
             "jti": "0",
+            "dn": "dn",
         },
         private_key,
         algorithm="RS256",
@@ -262,6 +284,7 @@ def bad_audience_token():
             "client_id": "guardian",
             "iat": "0",
             "jti": "0",
+            "dn": "dn",
         },
         private_key,
         algorithm="RS256",
@@ -281,6 +304,7 @@ def bad_signature_token():
             "client_id": "guardian",
             "iat": "0",
             "jti": "0",
+            "dn": "dn",
         },
         "secret",
         headers={"kid": "1234"},
@@ -299,6 +323,7 @@ def wrong_key_token():
             "client_id": "guardian",
             "iat": "0",
             "jti": "0",
+            "dn": "dn",
         },
         private_key_bad,
         algorithm="RS256",

@@ -119,4 +119,9 @@ class FastAPIOAuth2(
 
     async def get_actor_identifier(self, request: Request) -> str:
         decoded_token = await self._get_decoded_token(request)
-        return decoded_token["sub"]
+        if "dn" not in decoded_token:
+            raise RuntimeError(
+                "The token does not contain a dn. "
+                "Please check the settings of the oauth provider."
+            )
+        return decoded_token["dn"]

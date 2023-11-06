@@ -172,7 +172,7 @@ class TestAuthenticationOAuthAdapter:
         )
         assert request.headers.get("Authorization")
         result = await auth_adapter_oauth.get_actor_identifier(request)
-        assert result == "testi"
+        assert result == "dn"
 
     @pytest.mark.asyncio
     async def test_get_actor_identifier_bad_token(
@@ -192,3 +192,19 @@ class TestAuthenticationOAuthAdapter:
         with pytest.raises(HTTPException) as exc:
             await auth_adapter_oauth.get_actor_identifier(request)
             assert exc.status_code == status.HTTP_401_UNAUTHORIZED
+
+    @pytest.mark.asyncio
+    async def test_get_actor_identifier_good_token_missing_dn(
+        self, auth_adapter_oauth, good_token_wo_dn
+    ):
+        request = Request(
+            scope={
+                "type": "http",
+                "headers": [
+                    (b"authorization", f"Bearer {good_token_wo_dn}".encode("utf-8"))
+                ],
+            }
+        )
+        assert request.headers.get("Authorization")
+        with pytest.raises(RuntimeError):
+            await auth_adapter_oauth.get_actor_identifier(request)
