@@ -4,6 +4,8 @@
 
 from dataclasses import asdict
 
+from fastapi import Request
+from guardian_lib.ports import AuthenticationPort
 from loguru import logger
 
 from .adapters.namespace import FastAPINamespaceAPIAdapter
@@ -96,14 +98,17 @@ async def create_app(
     api_request: AppCreateRequest,
     app_api_port: AppAPIPort,
     persistence_port: AppPersistencePort,
+    authc_port: AuthenticationPort,
     authz_port: ResourceAuthorizationPort,
+    request: Request,
 ) -> AppSingleResponse:
     try:
         query = await app_api_port.to_app_create(api_request)
         app = query.apps[0]
+        actor_id: str = await authc_port.get_actor_identifier(request)
         allowed = (
             await authz_port.authorize_operation(
-                Actor(id="test"),
+                Actor(id=actor_id),
                 OperationType.CREATE_RESOURCE,
                 [Resource(resource_type=ResourceType.APP, name=app.name)],
             )
@@ -122,14 +127,17 @@ async def get_app(
     api_request: AppGetRequest,
     app_api_port: AppAPIPort,
     persistence_port: AppPersistencePort,
+    authc_port: AuthenticationPort,
     authz_port: ResourceAuthorizationPort,
+    request: Request,
 ) -> AppSingleResponse:
     try:
         query = await app_api_port.to_app_get(api_request)
         app = await persistence_port.read_one(query)
+        actor_id: str = await authc_port.get_actor_identifier(request)
         allowed = (
             await authz_port.authorize_operation(
-                Actor(id="test"),
+                Actor(id=actor_id),
                 OperationType.READ_RESOURCE,
                 [Resource(resource_type=ResourceType.APP, name=app.name)],
             )
@@ -147,13 +155,16 @@ async def get_apps(
     api_request: AppsGetRequest,
     app_api_port: AppAPIPort,
     persistence_port: AppPersistencePort,
+    authc_port: AuthenticationPort,
     authz_port: ResourceAuthorizationPort,
+    request: Request,
 ) -> AppMultipleResponse:
     try:
         query = await app_api_port.to_apps_get(api_request)
         many_apps = await persistence_port.read_many(query)
+        actor_id: str = await authc_port.get_actor_identifier(request)
         authz_result = await authz_port.authorize_operation(
-            Actor(id="test"),
+            Actor(id=actor_id),
             OperationType.READ_RESOURCE,
             [
                 Resource(resource_type=ResourceType.APP, name=app.name)
@@ -253,12 +264,15 @@ async def register_app(
     cap_persistence_port: CapabilityPersistencePort,
     bundle_server_port: BundleServerPort,
     authz_port: ResourceAuthorizationPort,
+    authc_port: AuthenticationPort,
+    request: Request,
 ) -> AppAPIRegisterResponseObject:
     try:
         query = await app_api_port.to_app_create(api_request)
+        actor_id: str = await authc_port.get_actor_identifier(request)
         allowed = (
             await authz_port.authorize_operation(
-                Actor(id="test"),
+                Actor(id=actor_id),
                 OperationType.CREATE_RESOURCE,
                 [Resource(resource_type=ResourceType.APP, name=query.apps[0].name)],
             )
@@ -364,14 +378,17 @@ async def edit_app(
     api_request: AppEditRequest,
     app_api_port: AppAPIPort,
     persistence_port: AppPersistencePort,
+    authc_port: AuthenticationPort,
     authz_port: ResourceAuthorizationPort,
+    request: Request,
 ) -> AppSingleResponse:
     try:
         query, changed_data = await app_api_port.to_app_edit(api_request)
         old_app = await persistence_port.read_one(query)
+        actor_id: str = await authc_port.get_actor_identifier(request)
         allowed = (
             await authz_port.authorize_operation(
-                Actor(id="test"),
+                Actor(id=actor_id),
                 OperationType.UPDATE_RESOURCE,
                 [Resource(resource_type=ResourceType.APP, name=old_app.name)],
             )

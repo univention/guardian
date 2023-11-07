@@ -198,7 +198,7 @@ class SQLAppPersistenceAdapter(
         result = await self._get_single_object(DBApp, name=query.name)
         if result is None:
             raise ObjectNotFoundError(
-                f"No permission with the identifier '{query.name} could be found."
+                f"No app with the identifier '{query.name} could be found."
             )
         return SQLAppPersistenceAdapter._db_app_to_app(result)
 

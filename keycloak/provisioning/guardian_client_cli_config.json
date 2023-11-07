@@ -46,6 +46,17 @@
     {
       "config": {
         "access.token.claim": "true",
+        "id.token.claim": "false",
+        "included.client.audience": "guardian"
+      },
+      "consentRequired": false,
+      "name": "guardian",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-audience-mapper"
+    },
+    {
+      "config": {
+        "access.token.claim": "true",
         "claim.name": "client_id",
         "id.token.claim": "true",
         "jsonType.label": "String",
@@ -81,17 +92,6 @@
       "name": "Client IP Address",
       "protocol": "openid-connect",
       "protocolMapper": "oidc-usersessionmodel-note-mapper"
-    },
-    {
-      "config": {
-        "access.token.claim": "true",
-        "id.token.claim": "false",
-        "included.client.audience": "guardian"
-      },
-      "consentRequired": false,
-      "name": "guardian",
-      "protocol": "openid-connect",
-      "protocolMapper": "oidc-audience-mapper"
     }
   ],
   "publicClient": false,

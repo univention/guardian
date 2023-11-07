@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-import sys
 from typing import Any, Type
 
 import jwt
@@ -50,6 +49,18 @@ class FastAPINeverAuthorizedAdapter(AuthenticationPort[Request]):
         )  # pragma: no cover
 
 
+async def get_oauth_settings(well_known_url: str, timeout: int = 10) -> dict[str, Any]:
+    try:
+        oauth_settings = requests.get(
+            well_known_url,
+            timeout=timeout,
+        ).json()
+    except requests.exceptions.RequestException as exc:
+        raise RuntimeError(f'Could not load oauth settings: "{exc}"')
+
+    return oauth_settings
+
+
 class FastAPIOAuth2(
     OAuth2AuthorizationCodeBearer,
     AuthenticationPort[Request],
@@ -70,23 +81,16 @@ class FastAPIOAuth2(
 
     async def configure(self, settings: FastAPIOAuth2AdapterSettings) -> None:
         timeout = 10
-        try:
-            self.oauth_settings = requests.get(
-                settings.well_known_url,
-                timeout=timeout,
-            ).json()
-        except requests.exceptions.RequestException as exc:
-            self.logger.critical(f'SHUTDOWN could not load oauth settings: "{exc}"')
-            sys.exit(1)
+        self.oauth_settings: dict[str, Any] = await get_oauth_settings(
+            settings.well_known_url, timeout=timeout
+        )
         self.logger.debug("Loaded oauth settings", oauth_settings=self.oauth_settings)
         self.jwks_client = jwt.PyJWKClient(
             self.oauth_settings["jwks_uri"], timeout=timeout
         )
-        authorizationUrl = self.oauth_settings["authorization_endpoint"]
-        tokenUrl = self.oauth_settings["token_endpoint"]
         super().__init__(
-            authorizationUrl=authorizationUrl,
-            tokenUrl=tokenUrl,
+            authorizationUrl=self.oauth_settings["authorization_endpoint"],
+            tokenUrl=self.oauth_settings["token_endpoint"],
             scopes={"openid": "scope for openid"},
         )
 

@@ -69,6 +69,29 @@ The configuration files can be found in `appcenter-management`. The App ID is `g
 This app can be installed via `univention-app install guardian-management-api`. It depends on having
 Keycloak installed in the domain.
 
+If you use the `GuardianAuthorizationAdapter` you should use Keycloak on a real UCS system. This is required for some integration tests, such as `TestGuardianAuthorizationAdapterIntegration`, for those tests to not be skipped, the environment variable `UCS_HOST_IP` needs to be set. Then, on your UDM machine, create a user to manage the `guardian` app:
+
+```bash
+udm users/user create \
+  --set username=guardian \
+  --set lastname=app-admin \
+  --set password=univention \
+  --set guardianRole=guardian:builtin:app-admin \
+  --position cn=users,$(ucr get ldap/base)
+```
+
+For Keycloak to have the right configuration, install the Guardian apps from the App Center or manually copy the client
+configuration from the `dev-compose.yml` Keycloak container.
+
+You will need to fetch the `guardian-cli` client secret from Keycloak and set it in the `.env` for development
+(`OAUTH_ADAPTER__M2M_SECRET`).
+
+Additionally, if you don't use `dev-run` and instead run `docker compose up` directly, the variable `UCS_HOST_IP` needs to be set:
+
+```shell
+source .env
+```
+
 ### Guardian Management UI
 
 This app contains the frontend of the Guardian.

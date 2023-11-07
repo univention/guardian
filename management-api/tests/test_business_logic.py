@@ -1,6 +1,7 @@
 import pytest
 import pytest_asyncio
 from fastapi import HTTPException
+from guardian_lib.ports import AuthenticationPort
 from guardian_management_api import business_logic
 from guardian_management_api.adapters.app import (
     FastAPIAppAPIAdapter,
@@ -29,6 +30,7 @@ from guardian_management_api.ports.app import AppPersistencePort
 from guardian_management_api.ports.authz import ResourceAuthorizationPort
 from guardian_management_api.ports.context import ContextPersistencePort
 from guardian_management_api.ports.namespace import NamespacePersistencePort
+from httpx import Request
 
 
 async def transform_exception_identity(exc: Exception):
@@ -52,6 +54,10 @@ class TestBusinessLogic:
     @pytest_asyncio.fixture
     async def app_sql_adapter(self, registry_test_adapters) -> SQLAppPersistenceAdapter:
         return await registry_test_adapters.request_port(AppPersistencePort)
+
+    @pytest_asyncio.fixture
+    async def app_authc_adapter(self, registry_test_adapters):
+        return await registry_test_adapters.request_port(AuthenticationPort)
 
     @pytest_asyncio.fixture
     async def app_authz_adapter(self, registry_test_adapters):
@@ -102,7 +108,9 @@ class TestBusinessLogic:
             )
 
     @pytest.mark.asyncio
-    async def test_create_app_internal_error(self, app_sql_adapter, app_authz_adapter):
+    async def test_create_app_internal_error(
+        self, app_sql_adapter, app_authc_adapter, app_authz_adapter
+    ):
         async def _create():
             raise Exception()
 
@@ -112,13 +120,17 @@ class TestBusinessLogic:
                 api_request=AppCreateRequest(name="app"),
                 app_api_port=FastAPIAppAPIAdapter(),
                 persistence_port=app_sql_adapter,
+                authc_port=app_authc_adapter,
                 authz_port=app_authz_adapter,
+                request=Request("POST", "something"),
             )
         assert exc_info.value.status_code == 500
         assert exc_info.value.detail == {"message": "Internal Server Error"}
 
     @pytest.mark.asyncio
-    async def test_get_apps_internal_error(self, app_sql_adapter, app_authz_adapter):
+    async def test_get_apps_internal_error(
+        self, app_sql_adapter, app_authc_adapter, app_authz_adapter
+    ):
         async def _read_many():
             raise Exception()
 
@@ -128,7 +140,9 @@ class TestBusinessLogic:
                 api_request=AppsGetRequest(),
                 app_api_port=FastAPIAppAPIAdapter(),
                 persistence_port=app_sql_adapter,
+                authc_port=app_authc_adapter,
                 authz_port=app_authz_adapter,
+                request=Request("GET", "something"),
             )
         assert exc_info.value.status_code == 500
         assert exc_info.value.detail == {"message": "Internal Server Error"}
@@ -141,12 +155,19 @@ class TestBusinessLogic:
         persistence_mock = mocker.AsyncMock()
         authz_mock = mocker.AsyncMock()
         authz_mock.authorize_operation = mocker.AsyncMock(return_value={"test": False})
+        authc_mock = mocker.AsyncMock()
+        request = mocker.Mock()
         with pytest.raises(
             UnauthorizedError,
             match="The logged in user is not authorized to create this app.",
         ):
             await business_logic.create_app(
-                api_request_mock, api_port_mock, persistence_mock, authz_mock
+                api_request_mock,
+                api_port_mock,
+                persistence_mock,
+                authc_mock,
+                authz_mock,
+                request,
             )
 
     @pytest.mark.asyncio
@@ -157,12 +178,19 @@ class TestBusinessLogic:
         persistence_mock = mocker.AsyncMock()
         authz_mock = mocker.AsyncMock()
         authz_mock.authorize_operation = mocker.AsyncMock(return_value={"test": False})
+        authc_mock = mocker.AsyncMock()
+        request = mocker.Mock()
         with pytest.raises(
             UnauthorizedError,
             match="The logged in user is not authorized to read this app.",
         ):
             await business_logic.get_app(
-                api_request_mock, api_port_mock, persistence_mock, authz_mock
+                api_request_mock,
+                api_port_mock,
+                persistence_mock,
+                authc_mock,
+                authz_mock,
+                request,
             )
 
     @pytest.mark.asyncio
@@ -175,9 +203,16 @@ class TestBusinessLogic:
         authz_mock.authorize_operation = mocker.AsyncMock(
             side_effect=AuthorizationError()
         )
+        authc_mock = mocker.AsyncMock()
+        request = mocker.Mock()
         with pytest.raises(AuthorizationError):
             await business_logic.get_apps(
-                api_request_mock, api_port_mock, persistence_mock, authz_mock
+                api_request_mock,
+                api_port_mock,
+                persistence_mock,
+                authc_mock,
+                authz_mock,
+                request,
             )
 
     @pytest.mark.asyncio
@@ -187,6 +222,8 @@ class TestBusinessLogic:
         api_port_mock.transform_exception = transform_exception_identity
         authz_mock = mocker.AsyncMock()
         authz_mock.authorize_operation = mocker.AsyncMock(return_value={"test": False})
+        authc_mock = mocker.AsyncMock()
+        request = mocker.Mock()
         with pytest.raises(
             UnauthorizedError,
             match="The logged in user is not authorized to register this app.",
@@ -200,6 +237,8 @@ class TestBusinessLogic:
                 generic_mock,
                 generic_mock,
                 authz_mock,
+                authc_mock,
+                request,
             )
 
     @pytest.mark.asyncio
@@ -211,10 +250,17 @@ class TestBusinessLogic:
         api_port_mock.transform_exception = transform_exception_identity
         authz_mock = mocker.AsyncMock()
         authz_mock.authorize_operation = mocker.AsyncMock(return_value={"test": False})
+        authc_mock = mocker.AsyncMock()
+        request = mocker.Mock()
         with pytest.raises(
             UnauthorizedError,
             match="The logged in user is not authorized to edit this app.",
         ):
             await business_logic.edit_app(
-                api_request_mock, api_port_mock, persistence_mock, authz_mock
+                api_request_mock,
+                api_port_mock,
+                persistence_mock,
+                authc_mock,
+                authz_mock,
+                request,
             )

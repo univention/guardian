@@ -43,6 +43,9 @@ services:
       target: dev
       extra_hosts:
         - git.knut.univention.de:${GITLAB_IP}
+        - ucs-sso-ng.school.test:${UCS_HOST_IP}
+    extra_hosts:
+      - ucs-sso-ng.school.test:${UCS_HOST_IP}
     depends_on:
       opa:
         condition: service_started
@@ -115,6 +118,7 @@ services:
       - GUARDIAN__MANAGEMENT__ADAPTER__ROLE_PERSISTENCE_PORT
       - GUARDIAN__MANAGEMENT__ADAPTER__CAPABILITY_PERSISTENCE_PORT
       - GUARDIAN__MANAGEMENT__ADAPTER__AUTHENTICATION_PORT
+      - GUARDIAN__MANAGEMENT__ADAPTER__RESOURCE_AUTHORIZATION_PORT
       - GUARDIAN__MANAGEMENT__BASE_URL
       - SQL_PERSISTENCE_ADAPTER__DIALECT
       - SQL_PERSISTENCE_ADAPTER__DB_NAME
@@ -133,6 +137,8 @@ services:
       target: dev
       extra_hosts:
         - git.knut.univention.de:${GITLAB_IP}
+    extra_hosts:
+      - ucs-sso-ng.school.test:${UCS_HOST_IP}
     depends_on:
       db_provisioning:
         condition: service_started
@@ -162,10 +168,12 @@ services:
       - GUARDIAN__MANAGEMENT__ADAPTER__ROLE_PERSISTENCE_PORT
       - GUARDIAN__MANAGEMENT__ADAPTER__CAPABILITY_PERSISTENCE_PORT
       - GUARDIAN__MANAGEMENT__ADAPTER__AUTHENTICATION_PORT
+      - GUARDIAN__MANAGEMENT__ADAPTER__RESOURCE_AUTHORIZATION_PORT
       - GUARDIAN__MANAGEMENT__BASE_URL
       - SQL_PERSISTENCE_ADAPTER__DIALECT
       - SQL_PERSISTENCE_ADAPTER__DB_NAME
       - OAUTH_ADAPTER__WELL_KNOWN_URL
+      - OAUTH_ADAPTER__M2M_SECRET
       - REQUESTS_CA_BUNDLE
       - SSL_CERT_FILE
     labels:

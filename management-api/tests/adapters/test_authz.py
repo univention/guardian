@@ -1,6 +1,10 @@
-from unittest.mock import AsyncMock, Mock
+import os
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+import requests
+from guardian_lib.adapters.settings import EnvSettingsAdapter
+from guardian_lib.ports import SettingsPort
 from guardian_management_api.adapters.authz import (
     AlwaysAuthorizedAdapter,
     GuardianAuthorizationAdapter,
@@ -14,7 +18,9 @@ from guardian_management_api.models.authz import (
     Resource,
     ResourceType,
 )
+from guardian_management_api.ports.authz import ResourceAuthorizationPort
 from httpx import Request, Response
+from port_loader import AsyncAdapterRegistry, AsyncAdapterSettingsProvider
 
 
 class TestAlwaysAuthorizedAdapter:
@@ -181,8 +187,90 @@ class TestFunctions:
 
 class TestGuardianAuthorizationAdapter:
     @pytest.mark.asyncio
+    async def test_shutdown_on_config_error(self, monkeypatch):
+        mock_get = Mock(side_effect=requests.exceptions.RequestException("test"))
+        monkeypatch.setattr(requests, "get", mock_get)
+        Settings = GuardianAuthorizationAdapter.get_settings_cls()
+        settings = Settings(well_known_url="http://example.com", m2m_secret="secret")
+        with pytest.raises(RuntimeError) as exc:
+            await GuardianAuthorizationAdapter().configure(settings)
+            assert exc.value.code == 1
+
+    @patch(
+        "guardian_management_api.adapters.authz.get_oauth_settings",
+        return_value={
+            "mtls_endpoint_aliases": {
+                "token_endpoint": "http://traefik/guardian/keycloak/realms/GuardianDev/protocol/openid-connect/token",
+            },
+            "jwks_uri": "http://traefik/guardian/keycloak/realms/GuardianDev/protocol/openid-connect/certs",
+        },
+    )
+    @pytest.mark.asyncio
+    async def test_configure(self, monkeypatch):
+        registry = AsyncAdapterRegistry()
+        registry.register_port(SettingsPort)
+        registry.register_adapter(SettingsPort, adapter_cls=EnvSettingsAdapter)
+        registry.set_adapter(SettingsPort, EnvSettingsAdapter)
+        registry.set_adapter(SettingsPort, EnvSettingsAdapter)
+        registry.register_adapter(
+            AsyncAdapterSettingsProvider, adapter_cls=EnvSettingsAdapter
+        )
+        registry.set_adapter(AsyncAdapterSettingsProvider, EnvSettingsAdapter)
+        registry.register_port(ResourceAuthorizationPort)
+        registry.register_adapter(
+            ResourceAuthorizationPort, adapter_cls=GuardianAuthorizationAdapter
+        )
+        with patch.dict(
+            os.environ,
+            {
+                "OAUTH_ADAPTER__WELL_KNOWN_URL": "http://traefik/guardian/keycloak/realms/GuardianDev/.well-known/openid-configuration",
+                "OAUTH_ADAPTER__M2M_SECRET": "univention",
+            },
+        ):
+            adapter = await registry.request_adapter(
+                ResourceAuthorizationPort, GuardianAuthorizationAdapter
+            )
+
+        assert adapter.oauth_settings
+        assert adapter.oauth_settings["mtls_endpoint_aliases"][
+            "token_endpoint"
+        ].endswith("/protocol/openid-connect/token")
+
+    @patch("guardian_management_api.adapters.authz.AsyncOAuth2Client")
+    @pytest.mark.asyncio
+    async def test_authorize_operation_no_client_passed(self, client_patch):
+        adapter = GuardianAuthorizationAdapter()
+        adapter.oauth_settings = {
+            "mtls_endpoint_aliases": {
+                "token_endpoint": "http://test",
+            }
+        }
+        adapter._settings = Mock()
+        adapter._settings.m2m_secret = "secret"
+        with pytest.raises(Exception):
+            await adapter.authorize_operation(
+                Actor(id="test"),
+                OperationType.READ_RESOURCE,
+                [
+                    Resource(
+                        app_name="app",
+                        namespace_name="namespace",
+                        name="resource",
+                        resource_type=ResourceType.PERMISSION,
+                    )
+                ],
+                client=None,
+            )
+        client_patch.assert_called_once_with("guardian-cli", "secret")
+
+    @pytest.mark.asyncio
     async def test_authorize_operation_actor_not_allowed(self):
         adapter = GuardianAuthorizationAdapter()
+        adapter.oauth_settings = {
+            "mtls_endpoint_aliases": {
+                "token_endpoint": "http://test",
+            }
+        }
         assert await adapter.authorize_operation(
             Actor(id="test"),
             OperationType.READ_RESOURCE,
@@ -218,6 +306,11 @@ class TestGuardianAuthorizationAdapter:
     @pytest.mark.asyncio
     async def test_authorize_operation_actor_allowed(self):
         adapter = GuardianAuthorizationAdapter()
+        adapter.oauth_settings = {
+            "mtls_endpoint_aliases": {
+                "token_endpoint": "http://test",
+            }
+        }
         assert await adapter.authorize_operation(
             Actor(id="test"),
             OperationType.READ_RESOURCE,
@@ -253,6 +346,11 @@ class TestGuardianAuthorizationAdapter:
     @pytest.mark.asyncio
     async def test_authorize_operation_exception(self):
         adapter = GuardianAuthorizationAdapter()
+        adapter.oauth_settings = {
+            "mtls_endpoint_aliases": {
+                "token_endpoint": "http://test",
+            }
+        }
         with pytest.raises(AuthorizationError) as exc:
             await adapter.authorize_operation(
                 Actor(id="test"),
@@ -288,10 +386,21 @@ class TestGuardianAuthorizationAdapter:
 
 
 @pytest.mark.e2e
+@pytest.mark.skipif(
+    "UCS_HOST_IP" not in os.environ,
+    reason="UCS_HOST_IP env var not set",
+)
 class TestGuardianAuthorizationAdapterIntegration:
     @pytest.mark.asyncio
-    async def test_authorize_operation_actor_not_allowed_condition(self):
-        adapter = GuardianAuthorizationAdapter()
+    async def test_authorize_operation_actor_not_allowed_condition(
+        self, registry_test_adapters
+    ):
+        registry_test_adapters.register_adapter(
+            ResourceAuthorizationPort, adapter_cls=GuardianAuthorizationAdapter
+        )
+        adapter = await registry_test_adapters.request_adapter(
+            ResourceAuthorizationPort, GuardianAuthorizationAdapter
+        )
         assert await adapter.authorize_operation(
             Actor(id="uid=guardian,cn=users,dc=school,dc=test"),
             OperationType.DELETE_RESOURCE,
@@ -306,8 +415,15 @@ class TestGuardianAuthorizationAdapterIntegration:
         ) == {"guardian:builtin:actor_does_not_have_role": False}
 
     @pytest.mark.asyncio
-    async def test_authorize_operation_actor_allowed_permission(self):
-        adapter = GuardianAuthorizationAdapter()
+    async def test_authorize_operation_actor_allowed_permission(
+        self, registry_test_adapters
+    ):
+        registry_test_adapters.register_adapter(
+            ResourceAuthorizationPort, adapter_cls=GuardianAuthorizationAdapter
+        )
+        adapter = await registry_test_adapters.request_adapter(
+            ResourceAuthorizationPort, GuardianAuthorizationAdapter
+        )
         assert await adapter.authorize_operation(
             Actor(id="uid=guardian,cn=users,dc=school,dc=test"),
             OperationType.READ_RESOURCE,
@@ -322,8 +438,15 @@ class TestGuardianAuthorizationAdapterIntegration:
         ) == {"guardian:management-api:read_resource": True}
 
     @pytest.mark.asyncio
-    async def test_authorize_operation_actor_not_allowed_app(self):
-        adapter = GuardianAuthorizationAdapter()
+    async def test_authorize_operation_actor_not_allowed_app(
+        self, registry_test_adapters
+    ):
+        registry_test_adapters.register_adapter(
+            ResourceAuthorizationPort, adapter_cls=GuardianAuthorizationAdapter
+        )
+        adapter = await registry_test_adapters.request_adapter(
+            ResourceAuthorizationPort, GuardianAuthorizationAdapter
+        )
         assert await adapter.authorize_operation(
             Actor(id="uid=guardian,cn=users,dc=school,dc=test"),
             OperationType.DELETE_RESOURCE,
@@ -336,8 +459,13 @@ class TestGuardianAuthorizationAdapterIntegration:
         ) == {"guardian": False}
 
     @pytest.mark.asyncio
-    async def test_authorize_operation_actor_allowed_app(self):
-        adapter = GuardianAuthorizationAdapter()
+    async def test_authorize_operation_actor_allowed_app(self, registry_test_adapters):
+        registry_test_adapters.register_adapter(
+            ResourceAuthorizationPort, adapter_cls=GuardianAuthorizationAdapter
+        )
+        adapter = await registry_test_adapters.request_adapter(
+            ResourceAuthorizationPort, GuardianAuthorizationAdapter
+        )
         assert await adapter.authorize_operation(
             Actor(id="uid=guardian,cn=users,dc=school,dc=test"),
             OperationType.READ_RESOURCE,

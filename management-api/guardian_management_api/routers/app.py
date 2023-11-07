@@ -4,9 +4,10 @@
 
 from typing import Annotated, Any, Dict
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.params import Body
 from guardian_lib.adapter_registry import port_dep
+from guardian_lib.ports import AuthenticationPort
 from loguru import logger
 
 from .. import business_logic
@@ -32,11 +33,13 @@ router = APIRouter(tags=["app"])
 
 @router.get("/apps/{name}", response_model=AppSingleResponse)
 async def get_app(
+    request: Request,
     app_get_request: AppGetRequest = Depends(),
     management_app_api: FastAPIAppAPIAdapter = Depends(
         port_dep(AppAPIPort, FastAPIAppAPIAdapter)
     ),
     persistence: AppPersistencePort = Depends(port_dep(AppPersistencePort)),
+    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
     authz_port: ResourceAuthorizationPort = Depends(
         port_dep(ResourceAuthorizationPort)
     ),
@@ -48,16 +51,20 @@ async def get_app(
         api_request=app_get_request,
         app_api_port=management_app_api,
         persistence_port=persistence,
+        authc_port=authc_port,
         authz_port=authz_port,
+        request=request,
     )
     return response.dict()
 
 
 @router.get("/apps", response_model=AppMultipleResponse)
 async def get_all_apps(
+    request: Request,
     app_get_request: AppsGetRequest = Depends(),
     app_api: FastAPIAppAPIAdapter = Depends(port_dep(AppAPIPort, FastAPIAppAPIAdapter)),
     persistence: AppPersistencePort = Depends(port_dep(AppPersistencePort)),
+    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
     authz_port: ResourceAuthorizationPort = Depends(
         port_dep(ResourceAuthorizationPort)
     ),
@@ -69,7 +76,9 @@ async def get_all_apps(
         api_request=app_get_request,
         app_api_port=app_api,
         persistence_port=persistence,
+        authc_port=authc_port,
         authz_port=authz_port,
+        request=request,
     )
 
     return response.dict()
@@ -81,9 +90,11 @@ async def get_all_apps(
     status_code=201,
 )
 async def create_app(
+    request: Request,
     app_create_request: Annotated[AppCreateRequest, Body()],
     app_api: FastAPIAppAPIAdapter = Depends(port_dep(AppAPIPort, FastAPIAppAPIAdapter)),
     persistence: AppPersistencePort = Depends(port_dep(AppPersistencePort)),
+    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
     authz_port: ResourceAuthorizationPort = Depends(
         port_dep(ResourceAuthorizationPort)
     ),
@@ -92,13 +103,16 @@ async def create_app(
         api_request=app_create_request,
         app_api_port=app_api,
         persistence_port=persistence,
+        authc_port=authc_port,
         authz_port=authz_port,
+        request=request,
     )
     return response.dict()
 
 
 @router.post("/apps/register", response_model=AppRegisterResponse, status_code=201)
 async def register_app(
+    request: Request,
     request_data: Annotated[AppCreateRequest, Body()],
     api_port: FastAPIAppAPIAdapter = Depends(
         port_dep(AppAPIPort, FastAPIAppAPIAdapter)
@@ -112,6 +126,7 @@ async def register_app(
         port_dep(CapabilityPersistencePort)
     ),
     bundle_server_port: BundleServerPort = Depends(port_dep(BundleServerPort)),
+    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
     authz_port: ResourceAuthorizationPort = Depends(
         port_dep(ResourceAuthorizationPort)
     ),
@@ -130,16 +145,20 @@ async def register_app(
         role_persistence,
         cap_persistence,
         bundle_server_port,
+        authc_port=authc_port,
         authz_port=authz_port,
+        request=request,
     )
     return response.dict()
 
 
 @router.patch("/apps/{name}", response_model=AppSingleResponse)
 async def edit_app(
+    request: Request,
     app_edit_request: AppEditRequest = Depends(),
     app_api: FastAPIAppAPIAdapter = Depends(port_dep(AppAPIPort, FastAPIAppAPIAdapter)),
     persistence: AppPersistencePort = Depends(port_dep(AppPersistencePort)),
+    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
     authz_port: ResourceAuthorizationPort = Depends(
         port_dep(ResourceAuthorizationPort)
     ),
@@ -152,6 +171,8 @@ async def edit_app(
             api_request=app_edit_request,
             app_api_port=app_api,
             persistence_port=persistence,
+            authc_port=authc_port,
             authz_port=authz_port,
+            request=request,
         )
     ).dict()

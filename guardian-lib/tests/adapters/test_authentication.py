@@ -43,7 +43,7 @@ class TestAuthenticationOAuthAdapter:
         monkeypatch.setattr(requests, "get", mock_get)
         Settings = FastAPIOAuth2.get_settings_cls()
         settings = Settings(well_known_url="http://example.com")
-        with pytest.raises(SystemExit) as exc:
+        with pytest.raises(RuntimeError) as exc:
             await FastAPIOAuth2().configure(settings)
             assert exc.value.code == 1
 

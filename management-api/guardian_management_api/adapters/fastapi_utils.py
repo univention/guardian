@@ -31,7 +31,7 @@ class TransformExceptionMixin(ABC):
         if isinstance(exc, UnauthorizedError):
             return HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail={"message": "Not allowed to create app."},
+                detail={"message": "Not allowed."},
             )
         if isinstance(exc, ValidationError):  # pragma: no cover
             return HTTPException(

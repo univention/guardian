@@ -22,7 +22,6 @@ from guardian_management_api.ports.app import (
     AppPersistencePort,
 )
 
-from .adapters.authz import AlwaysAuthorizedAdapter
 from .adapters.bundle_server import BundleServerAdapter
 from .adapters.capability import FastAPICapabilityAPIAdapter
 from .adapters.condition import FastAPIConditionAPIAdapter
@@ -48,6 +47,7 @@ PORT_CLASSES = (
     RolePersistencePort,
     CapabilityPersistencePort,
     AuthenticationPort,
+    ResourceAuthorizationPort,
 )
 
 
@@ -99,6 +99,11 @@ class AdapterSelection(BaseSettings):
         alias="AuthenticationPort",
         env="GUARDIAN__MANAGEMENT__ADAPTER__AUTHENTICATION_PORT",
     )
+    resource_authorization_port: str = Field(
+        ...,
+        alias="ResourceAuthorizationPort",
+        env="GUARDIAN__MANAGEMENT__ADAPTER__RESOURCE_AUTHORIZATION_PORT",
+    )
 
 
 def configure_registry(adapter_registry: AsyncAdapterRegistry):
@@ -128,7 +133,6 @@ def configure_registry(adapter_registry: AsyncAdapterRegistry):
         (RoleAPIPort, FastAPIRoleAPIAdapter),
         (ContextAPIPort, FastAPIContextAPIAdapter),
         (NamespaceAPIPort, FastAPINamespaceAPIAdapter),
-        (ResourceAuthorizationPort, AlwaysAuthorizedAdapter),
     ]:
         adapter_registry.register_port(port)
         adapter_registry.register_adapter(port, adapter_cls=adapter)

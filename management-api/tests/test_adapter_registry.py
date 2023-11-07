@@ -7,7 +7,6 @@ from guardian_management_api.adapter_registry import (
     configure_registry,
 )
 from guardian_management_api.adapters.app import FastAPIAppAPIAdapter
-from guardian_management_api.adapters.authz import AlwaysAuthorizedAdapter
 from guardian_management_api.adapters.bundle_server import BundleServerAdapter
 from guardian_management_api.adapters.capability import FastAPICapabilityAPIAdapter
 from guardian_management_api.adapters.condition import FastAPIConditionAPIAdapter
@@ -82,6 +81,7 @@ def test_configure_registry(mocker, registry_test_adapters):
         mocker.call(RolePersistencePort, "sql"),
         mocker.call(CapabilityPersistencePort, "sql"),
         mocker.call(AuthenticationPort, "fast_api_always_authorized"),
+        mocker.call(ResourceAuthorizationPort, "always"),
         mocker.call(AsyncAdapterSettingsProvider, "env"),
         mocker.call(AppAPIPort, FastAPIAppAPIAdapter),
         mocker.call(PermissionAPIPort, FastAPIPermissionAPIAdapter),
@@ -91,7 +91,6 @@ def test_configure_registry(mocker, registry_test_adapters):
         mocker.call(RoleAPIPort, FastAPIRoleAPIAdapter),
         mocker.call(ContextAPIPort, FastAPIContextAPIAdapter),
         mocker.call(NamespaceAPIPort, FastAPINamespaceAPIAdapter),
-        mocker.call(ResourceAuthorizationPort, AlwaysAuthorizedAdapter),
     ]
     assert registry_mock.register_port.call_args_list == [
         mocker.call(SettingsPort),
@@ -103,6 +102,7 @@ def test_configure_registry(mocker, registry_test_adapters):
         mocker.call(RolePersistencePort),
         mocker.call(CapabilityPersistencePort),
         mocker.call(AuthenticationPort),
+        mocker.call(ResourceAuthorizationPort),
         mocker.call(AppAPIPort),
         mocker.call(PermissionAPIPort),
         mocker.call(ConditionAPIPort),
@@ -111,7 +111,6 @@ def test_configure_registry(mocker, registry_test_adapters):
         mocker.call(RoleAPIPort),
         mocker.call(ContextAPIPort),
         mocker.call(NamespaceAPIPort),
-        mocker.call(ResourceAuthorizationPort),
     ]
     assert load_from_ep_mock.call_args_list == [
         mocker.call(
@@ -156,6 +155,11 @@ def test_configure_registry(mocker, registry_test_adapters):
             registry_mock,
             AuthenticationPort,
             "guardian_management_api.AuthenticationPort",
+        ),
+        mocker.call(
+            registry_mock,
+            ResourceAuthorizationPort,
+            "guardian_management_api.ResourceAuthorizationPort",
         ),
         mocker.call(
             registry_mock,
