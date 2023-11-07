@@ -1,7 +1,7 @@
 [Application]
 ID = guardian-management-ui
 Code = 4D
-Version = 0.1.0
+Version = 0.2.0
 Name = Guardian Management UI
 Vendor = Univention
 DockerScriptRestoreDataAfterSetup =
@@ -20,3 +20,11 @@ AutoModProxy = True
 WebInterfaceProxyScheme = http
 ServerRole = domaincontroller_master, domaincontroller_backup, domaincontroller_slave
 RequiredAppsInDomain = guardian-management-api, keycloak
+Description = Administration of the rights and roles of objects
+AppCategories = Security
+Logo = logo.svg
+LogoDetailPage = logo_detail_page.svg
+UCSOverviewCategory = False
+
+[de]
+Description = Verwaltung der Rollen und Rechte von Objekten

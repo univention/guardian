@@ -1,7 +1,7 @@
 [Application]
 ID = guardian-management-api
 Code = 49
-Version = 0.1.0
+Version = 0.2.0
 Name = Guardian Management API
 Vendor = Univention
 DockerScriptRestoreDataAfterSetup =
@@ -29,3 +29,4 @@ DockerEnvDatabaseUser = SQL_PERSISTENCE_ADAPTER__USERNAME
 DockerEnvDatabaseName = SQL_PERSISTENCE_ADAPTER__DB_NAME
 DockerEnvDatabasePassword = SQL_PERSISTENCE_ADAPTER__PASSWORD
 RequiredAppsInDomain = keycloak
+UCSOverviewCategory = False

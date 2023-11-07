@@ -8,11 +8,40 @@
 
 VERSION=1
 APP_ID="guardian-management-ui"
+COMPONENT_ID=$(univention-app get $APP_ID component_id | cut -f 2 -d ':' | tr -d '[:space:]')
+ICON_DIR="/usr/share/univention-management-console-frontend/js/dijit/themes/umc/icons/scalable"
+ICON_FILE="$ICON_DIR/apps-$COMPONENT_ID.svg"
 
 . /usr/share/univention-join/joinscripthelper.lib || exit 1
 . /usr/share/univention-appcenter/joinscripthelper.sh || exit 1
 
 joinscript_init
+
+eval "$(ucr shell hostname domainname ldap/base)"
+
+univention-directory-manager portals/entry create "$@" --ignore_exists \
+    --position "cn=entry,cn=portals,cn=univention,${ldap_base:?}" \
+    --set name=$APP_ID \
+    --append displayName='"en_US" "Guardian Management UI"' \
+    --append displayName='"de_DE" "Guardian Management UI"' \
+    --append description='"en_US" "Administration of the rights and roles of objects"' \
+    --append description='"de_DE" "Verwaltung der Rollen und Rechte von Objekten"' \
+    --append link='"en_US" "//'"${hostname:?}.${domainname:?}"'/guardian/management-ui"' \
+    --append allowedGroups="cn=Domain Users,cn=groups,$ldap_base" \
+    --set linkTarget=newwindow || die
+
+# We want this to be under Administration, not Services
+univention-directory-manager portals/category modify "$@" --ignore_not_exists \
+    --dn "cn=domain-admin,cn=category,cn=portals,cn=univention,$ldap_base" \
+    --append entries="cn=$APP_ID,cn=entry,cn=portals,cn=univention,$ldap_base" || die
+
+if [ -f $ICON_FILE ]; then
+    guardian_svg=$(base64 $ICON_FILE)
+
+    univention-directory-manager portals/entry modify "$@" --ignore_not_exists \
+        --dn "cn=guardian-management-ui,cn=entry,cn=portals,cn=univention,$ldap_base" \
+        --set icon="$guardian_svg" || die
+fi
 
 joinscript_save_current_version
 
