@@ -3,7 +3,15 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 
+import os
+from unittest.mock import AsyncMock
+
 import pytest
+import pytest_asyncio
+from guardian_lib.adapter_registry import ADAPTER_REGISTRY
+from guardian_lib.adapters.authentication import FastAPIAlwaysAuthorizedAdapter
+from guardian_lib.ports import AuthenticationPort
+from guardian_management_api.adapters.authz import GuardianAuthorizationAdapter
 from guardian_management_api.constants import COMPLETE_URL
 from guardian_management_api.main import app
 from guardian_management_api.models.capability import CapabilityConditionRelation
@@ -17,6 +25,7 @@ from guardian_management_api.models.routers.base import ManagementObjectName
 from guardian_management_api.models.sql_persistence import (
     DBCapability,
 )
+from guardian_management_api.ports.authz import ResourceAuthorizationPort
 from sqlalchemy import select
 
 
@@ -271,3 +280,106 @@ class TestAppEndpoints:
             json={"name": "non-existing", "display_name": "displayname"},
         )
         assert response.status_code == 404
+
+
+@pytest.mark.e2e
+@pytest.mark.skipif(
+    "UCS_HOST_IP" not in os.environ,
+    reason="UCS_HOST_IP env var not set",
+)
+class TestAppEndpointsAuthorization:
+    @staticmethod
+    @pytest_asyncio.fixture(scope="function", autouse=True)
+    async def set_up_auth():
+        ADAPTER_REGISTRY.set_adapter(
+            ResourceAuthorizationPort, GuardianAuthorizationAdapter
+        )
+        adapter = await ADAPTER_REGISTRY.request_adapter(
+            AuthenticationPort, FastAPIAlwaysAuthorizedAdapter
+        )
+        adapter.get_actor_identifier = AsyncMock(
+            return_value="uid=guardian,cn=users,dc=school,dc=test"
+        )
+
+    @pytest.mark.asyncio
+    async def test_get_guardian_app_allowed(
+        self, client, create_tables, create_app, sqlalchemy_mixin, set_up_auth
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session, "guardian", display_name=None)
+        response = client.get(
+            app.url_path_for("get_app", name="guardian"),
+        )
+        assert response.status_code == 200
+        assert response.json()["app"]["name"] == "guardian"
+
+    @pytest.mark.asyncio
+    async def test_get_other_app_not_allowed(
+        self, client, create_tables, create_app, sqlalchemy_mixin, set_up_auth
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session, "other", display_name=None)
+        response = client.get(
+            app.url_path_for("get_app", name="other"),
+        )
+        assert response.status_code == 403
+
+    @pytest.mark.asyncio
+    async def test_get_all_apps(
+        self, client, create_tables, create_app, sqlalchemy_mixin, set_up_auth
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session, "guardian", display_name=None)
+            await create_app(session, "other", display_name=None)
+        response = client.get(
+            app.url_path_for("get_all_apps"),
+        )
+        assert response.status_code == 200
+        assert any(app["name"] == "guardian" for app in response.json()["apps"])
+        assert not any(app["name"] == "other" for app in response.json()["apps"])
+
+    @pytest.mark.asyncio
+    async def test_patch_guardian_app_allowed(
+        self, client, create_tables, create_app, sqlalchemy_mixin, set_up_auth
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session, "guardian", display_name=None)
+        response = client.patch(
+            app.url_path_for("edit_app", name="guardian"),
+            json={"display_name": "expected displayname"},
+        )
+        assert response.status_code == 200
+        assert response.json()["app"]["name"] == "guardian"
+        assert response.json()["app"]["display_name"] == "expected displayname"
+
+    @pytest.mark.asyncio
+    async def test_patch_other_app_not_allowed(
+        self, client, create_tables, create_app, sqlalchemy_mixin, set_up_auth
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session, "other", display_name=None)
+        response = client.patch(
+            app.url_path_for("edit_app", name="other"),
+            json={"display_name": "expected displayname"},
+        )
+        assert response.status_code == 403
+
+    @pytest.mark.asyncio
+    async def test_create_app_not_allowed(
+        self, client, create_tables, create_app, sqlalchemy_mixin, set_up_auth
+    ):
+        response = client.post(
+            app.url_path_for("create_app"),
+            json={"name": "other", "display_name": "expected displayname"},
+        )
+        assert response.status_code == 403
+
+    @pytest.mark.asyncio
+    async def test_register_app_not_allowed(
+        self, client, create_tables, create_app, sqlalchemy_mixin, set_up_auth
+    ):
+        response = client.post(
+            client.app.url_path_for("register_app"),
+            json={"name": "other", "display_name": "expected displayname"},
+        )
+        assert response.status_code == 403
