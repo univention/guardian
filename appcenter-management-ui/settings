@@ -1,0 +1,25 @@
+[guardian-management-ui/oauth/keycloak-uri]
+Type = String
+Description = Base URI of the Keycloak server for authentication.
+Description[de] = Einheitlicher Basisbezeichner für Ressourcen des Keycloak-Servers zur Authentifizierung.
+Group = Authentication
+Scope = outside
+Show = Install,Settings
+
+[guardian-management-ui/oauth/keycloak-realm]
+Type = String
+InitialValue = ucs
+Description = Keycloak authentication realm.
+Description[de] = Keycloak-Authentifizierungsrealm.
+Group = Authentication
+Scope = outside
+Show = Install,Settings
+
+[guardian-management-ui/oauth/keycloak-client-id]
+Type = String
+InitialValue = guardian
+Description = Keycloak client ID.
+Description[de] = ID des Keycloak-Client.
+Group = Authentication
+Scope = outside
+Show = Install,Settings

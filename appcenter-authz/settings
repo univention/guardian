@@ -59,10 +59,28 @@ Group = UDM
 Scope = outside
 Show = Install,Settings
 
-[guardian-authorization-api/oauth/metadata-discovery-url]
+[guardian-authorization-api/oauth/keycloak-uri]
 Type = String
-Description = URL to the metadata discovery document of the OAuth server for authentication. If unset the joinscript will attempt to set this value automatically.
-Description[de] = URL zum Metadata Discovery Dokument des OAuth Servers, welcher zur Authentifizierung genutzt werden soll. Falls dieser Wert nicht gesetzt wird, versucht das Joinscript diesen Wert automatisch zu ermitteln.
+Description = Base URI of the Keycloak server for authentication. If unset the joinscript will attempt to set this value automatically.
+Description[de] = Basis-URI des Keycloak-Servers zur Authentifizierung. Falls dieser Wert nicht gesetzt wird, versucht das Joinscript diesen Wert automatisch zu ermitteln.
+Group = Authentication
+Scope = outside
+Show = Install,Settings
+
+[guardian-authorization-api/oauth/keycloak-realm]
+Type = String
+InitialValue = ucs
+Description = Keycloak authentication realm.
+Description[de] = Keycloak-Authentifizierungsrealm.
+Group = Authentication
+Scope = outside
+Show = Install,Settings
+
+[guardian-authorization-api/oauth/keycloak-client-id]
+Type = String
+InitialValue = guardian
+Description = Keycloak client ID.
+Description[de] = ID des Keycloak-Client.
 Group = Authentication
 Scope = outside
 Show = Install,Settings

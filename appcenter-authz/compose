@@ -26,11 +26,11 @@ services:
       GUARDIAN__AUTHZ__LOGGING__FORMAT: @%@guardian-authorization-api/logging/format@%@
       OAUTH_ADAPTER__WELL_KNOWN_URL: @!@
 ucr = configRegistry
-url = ucr.get('guardian-authorization-api/oauth/metadata-discovery-url')
-# Guess default name for keycloak URL, since there is currently no better way.
-if not url:
-    url = f"https://ucs-sso-ng.{ucr.get('domainname')}/realms/ucs/.well-known/openid-configuration"
-print(url)@!@
+base_url = ucr.get('guardian-authorization-api/oauth/keycloak-uri')
+if not base_url:
+    base_url = ucr.get('keycloak/server/sso/fqdn', f"https://ucs-sso-ng.{ucr.get('domainname')}")
+realm = ucr.get('guardian-authorization-api/oauth/keycloak-realm')
+print(f"{base_url}/realms/{realm}/.well-known/openid-configuration", end='')@!@
   opa:
     image: gitregistry.knut.univention.de/univention/components/authorization-engine/guardian/guardian-opa:latest
     security_opt:

@@ -5,3 +5,11 @@ services:
     environment:
       VITE__MANAGEMENT_UI__ADAPTER__AUTHENTICATION_PORT: in_memory
       VITE__MANAGEMENT_UI__ADAPTER__DATA_PORT: in_memory
+      VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__SSO_URI: @!@
+ucr = configRegistry
+url = ucr.get('guardian-management-ui/oauth/keycloak-uri')
+if not url:
+    url = ucr.get('keycloak/server/sso/fqdn', f"https://ucs-sso-ng.{ucr.get('domainname')}")
+print(url, end='')@!@
+      VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__REALM: @%@guardian-management-ui/oauth/keycloak-realm@%@
+      VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__CLIENT_ID: @%@guardian-management-ui/oauth/keycloak-client-id@%@
