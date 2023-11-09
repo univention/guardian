@@ -4,7 +4,7 @@
 
 [tool.poetry]
 name = "guardian-lib"
-version = "1.2.0"
+version = "1.2.1"
 description = ""
 authors = ["Ole Schwiegert <schwiegert@univention.de>"]
 readme = "README.md"
@@ -13,7 +13,7 @@ packages = [{include = "guardian_lib"}, {include = "guardian_pytest"}]
 [tool.poetry.dependencies]
 python = "^3.11"
 loguru = "^0.7.0"
-port-loader = "^1.0.1"
+port-loader = "1.0.3"
 lazy-object-proxy = "^1.9.0"
 pydantic = "^1.8.2"
 fastapi = "^0.100.0"
@@ -26,16 +26,22 @@ pytest-asyncio = "^0.21.1"
 pytest-mock = "^3.11.1"
 pytest-cov = "^4.1.0"
 cryptography = "^41.0.3"
-guardian-pytest = "0.1.0"
 
 [[tool.poetry.source]]
 name = "guardian"
 url = "https://git.knut.univention.de/api/v4/projects/830/packages/pypi/simple"
 priority = "supplemental"
 
+
 [[tool.poetry.source]]
 name = "PyPI"
 priority = "primary"
+
+
+[[tool.poetry.source]]
+name = "port-loader"
+url = "https://git.knut.univention.de/api/v4/projects/908/packages/pypi/simple"
+priority = "supplemental"
 
 [build-system]
 requires = ["poetry-core"]
