@@ -96,3 +96,11 @@ Description[de] = Geheimnis des Keycloak-CLI-Clients.
 Group = Authentication
 Scope = outside
 Show = Install,Settings
+
+[guardian-management-api/authorization_api_url]
+Type = String
+Description = URL to the Authorization API.
+Description[de] = URL zum Authorization API.
+Group = Authorization
+Scope = outside
+Show = Install,Settings

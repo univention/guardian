@@ -92,6 +92,8 @@ Additionally, if you don't use `dev-run` and instead run `docker compose up` dir
 source .env
 ```
 
+By default, if started with `dev-compose.yml`, the Authorization API service will be used directly. But when installed from the App Center, it needs to be configured through the app setting `guardian-management-api/authorization_api_url` which sets the environment variable `GUARDIAN__MANAGEMENT__ADAPTER__AUTHORIZATION_API_URL`.
+
 ### Guardian Management UI
 
 This app contains the frontend of the Guardian.

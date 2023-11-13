@@ -191,7 +191,11 @@ class TestGuardianAuthorizationAdapter:
         mock_get = Mock(side_effect=requests.exceptions.RequestException("test"))
         monkeypatch.setattr(requests, "get", mock_get)
         Settings = GuardianAuthorizationAdapter.get_settings_cls()
-        settings = Settings(well_known_url="http://example.com", m2m_secret="secret")
+        settings = Settings(
+            well_known_url="http://example.com",
+            m2m_secret="secret",
+            authorization_api_url="http://test",
+        )
         with pytest.raises(RuntimeError) as exc:
             await GuardianAuthorizationAdapter().configure(settings)
             assert exc.value.code == 1
@@ -225,6 +229,7 @@ class TestGuardianAuthorizationAdapter:
             {
                 "OAUTH_ADAPTER__WELL_KNOWN_URL": "http://traefik/guardian/keycloak/realms/GuardianDev/.well-known/openid-configuration",
                 "OAUTH_ADAPTER__M2M_SECRET": "univention",
+                "GUARDIAN__MANAGEMENT__ADAPTER__AUTHORIZATION_API_URL": "http://test",
             },
         ):
             adapter = await registry.request_adapter(
@@ -247,6 +252,7 @@ class TestGuardianAuthorizationAdapter:
         }
         adapter._settings = Mock()
         adapter._settings.m2m_secret = "secret"
+        adapter._settings.authorization_api_url = "http://test"
         with pytest.raises(Exception):
             await adapter.authorize_operation(
                 Actor(id="test"),
@@ -271,6 +277,8 @@ class TestGuardianAuthorizationAdapter:
                 "token_endpoint": "http://test",
             }
         }
+        adapter._settings = Mock()
+        adapter._settings.authorization_api_url = "http://test"
         assert await adapter.authorize_operation(
             Actor(id="test"),
             OperationType.READ_RESOURCE,
@@ -311,6 +319,8 @@ class TestGuardianAuthorizationAdapter:
                 "token_endpoint": "http://test",
             }
         }
+        adapter._settings = Mock()
+        adapter._settings.authorization_api_url = "http://test"
         assert await adapter.authorize_operation(
             Actor(id="test"),
             OperationType.READ_RESOURCE,
@@ -351,6 +361,8 @@ class TestGuardianAuthorizationAdapter:
                 "token_endpoint": "http://test",
             }
         }
+        adapter._settings = Mock()
+        adapter._settings.authorization_api_url = "http://test"
         with pytest.raises(AuthorizationError) as exc:
             await adapter.authorize_operation(
                 Actor(id="test"),

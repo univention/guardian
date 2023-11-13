@@ -69,6 +69,11 @@ class GuardianAuthorizationAdapterSettings:
     m2m_secret: str = field(
         metadata={SETTINGS_NAME_METADATA: "oauth_adapter.m2m_secret"}
     )
+    authorization_api_url: str = field(
+        metadata={
+            SETTINGS_NAME_METADATA: "guardian.management.adapter.authorization_api_url"
+        }
+    )
 
 
 class GuardianAuthorizationAdapter(
@@ -85,6 +90,7 @@ class GuardianAuthorizationAdapter(
         return GuardianAuthorizationAdapterSettings
 
     async def configure(self, settings: GuardianAuthorizationAdapterSettings) -> None:
+        self._settings = settings
         timeout = 10
         self.oauth_settings: dict[str, Any] = await get_oauth_settings(
             settings.well_known_url, timeout=timeout
@@ -93,6 +99,7 @@ class GuardianAuthorizationAdapter(
         self.jwks_client = jwt.PyJWKClient(
             self.oauth_settings["jwks_uri"], timeout=timeout
         )
+        super().__init__()
 
     async def authorize_operation(
         self,
@@ -113,7 +120,7 @@ class GuardianAuthorizationAdapter(
 
         # query the Guardian Authorization API with httpx and m2m credentials
         response = await client.post(
-            "http://traefik/guardian/authorization/permissions/check/with-lookup",
+            f"{self._settings.authorization_api_url}/permissions/check/with-lookup",
             json={
                 "actor": {"id": actor.id},
                 "targets": [
