@@ -6,8 +6,8 @@ import inspect
 
 import pytest
 from guardian_lib.adapter_registry import initialize_adapters, port_dep
-from guardian_lib.ports import SettingsPort
 from port_loader import AsyncAdapterRegistry
+from port_loader.ports import SettingsPort
 
 
 class TestPort:

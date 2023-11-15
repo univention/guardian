@@ -7,12 +7,12 @@ from dataclasses import dataclass, field
 
 import pytest
 from guardian_lib.adapters.settings import EnvSettingsAdapter
-from guardian_lib.errors import (
+from port_loader.errors import (
     SettingFormatError,
     SettingNotFoundError,
     SettingTypeError,
 )
-from guardian_lib.models.settings import SETTINGS_NAME_METADATA
+from port_loader.models import SETTINGS_NAME_METADATA
 
 
 class TestEnvSettings:

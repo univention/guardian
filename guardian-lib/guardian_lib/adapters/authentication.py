@@ -56,7 +56,7 @@ class FastAPIOAuth2(
     AsyncConfiguredAdapterMixin,
 ):
     """
-    Check an ouath token against the settings loaded from a ".well-known" oauth endpoint.
+    Check an oauth token against the settings loaded from a ".well-known" oauth endpoint.
     OAuth2AuthorizationCodeBearer configures the openapi.json to include the login settings.
     If the openapi.json is configured, it's possible to login on the swagger ui.
     """

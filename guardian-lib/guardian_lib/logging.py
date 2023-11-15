@@ -10,8 +10,7 @@ from typing import Optional
 
 import port_loader
 from loguru import logger
-
-from .ports import SettingsPort
+from port_loader.ports import SettingsPort
 
 
 class LogLevel(StrEnum):

@@ -13,9 +13,10 @@ from guardian_lib.adapters.authentication import (
     FastAPIOAuth2,
 )
 from guardian_lib.adapters.settings import EnvSettingsAdapter
-from guardian_lib.ports import AuthenticationPort, SettingsPort
+from guardian_lib.ports import AuthenticationPort
 from jwt.algorithms import RSAAlgorithm
 from port_loader import AsyncAdapterRegistry, AsyncAdapterSettingsProvider
+from port_loader.ports import SettingsPort
 
 private_key_bad = """
 -----BEGIN RSA PRIVATE KEY-----
