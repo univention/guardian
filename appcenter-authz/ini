@@ -21,6 +21,9 @@ WebInterfaceProxyScheme = http
 DockerScriptConfigure = /tmp/guardian-authorization-api-configure
 RequiredAppsInDomain = guardian-management-api, keycloak
 UCSOverviewCategory = False
+AppCategories = Security
+Logo = logo.svg
+LogoDetailPage = logo_detail_page.svg
 Description = Control instance to check the capabilities of a role.
 LongDescription = <p>This app is part of the UCS product component "Guardian".
 	The Authorization API is used as a control instance to check the capabilities

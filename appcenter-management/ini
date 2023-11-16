@@ -30,6 +30,9 @@ DockerEnvDatabaseName = SQL_PERSISTENCE_ADAPTER__DB_NAME
 DockerEnvDatabasePassword = SQL_PERSISTENCE_ADAPTER__PASSWORD
 RequiredAppsInDomain = keycloak
 UCSOverviewCategory = False
+AppCategories = Security
+Logo = logo.svg
+LogoDetailPage = logo_detail_page.svg
 Description = API to create, delete and edit roles in the product.
 LongDescription = <p>This app is part of the UCS product component "Guardian".
 	The Management API is required to create, delete and edit roles in the
