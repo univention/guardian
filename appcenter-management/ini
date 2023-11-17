@@ -30,3 +30,22 @@ DockerEnvDatabaseName = SQL_PERSISTENCE_ADAPTER__DB_NAME
 DockerEnvDatabasePassword = SQL_PERSISTENCE_ADAPTER__PASSWORD
 RequiredAppsInDomain = keycloak
 UCSOverviewCategory = False
+Description = API to create, delete and edit roles in the product.
+LongDescription = <p>This app is part of the UCS product component "Guardian".
+	The Management API is required to create, delete and edit roles in the
+	product.</p>
+WebsiteMaintainer = https://www.univention.com/
+Maintainer = Univention GmbH
+License = free
+Contact = sales@univention.de
+SupportURL = https://www.univention.com/products/support/enterprise-support/
+SupportType = univention
+
+[de]
+Description = API um Rollen im Produkt anzulegen, zu löschen und zu editieren.
+LongDescription = <p>Diese App ist Teil der UCS Produktkomponente "Guardian".
+	Die Management-API wird benötigt um Rollen im Produkt anzulegen, zu löschen
+	und zu editieren.</p>
+Maintainer = Univention GmbH
+WebsiteMaintainer = https://www.univention.de/
+SupportURL = https://www.univention.de/produkte/support/enterprise-support/

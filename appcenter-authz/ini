@@ -21,3 +21,22 @@ WebInterfaceProxyScheme = http
 DockerScriptConfigure = /tmp/guardian-authorization-api-configure
 RequiredAppsInDomain = guardian-management-api, keycloak
 UCSOverviewCategory = False
+Description = Control instance to check the capabilities of a role.
+LongDescription = <p>This app is part of the UCS product component "Guardian".
+	The Authorization API is used as a control instance to check the capabilities
+	of a role.</p>
+WebsiteMaintainer = https://www.univention.com/
+Maintainer = Univention GmbH
+License = free
+Contact = sales@univention.de
+SupportURL = https://www.univention.com/products/support/enterprise-support/
+SupportType = univention
+
+[de]
+Description = Kontrollinstanz, um die Berechtigungen einer Rolle zu überprüfen.
+LongDescription = <p>Diese App ist Teil der UCS Produktkomponente "Guardian".
+	Die Autorisierungs-API wird als Kontrollinstanz eingesetzt, um die
+	Berechtigungen einer Rolle zu überprüfen.</p>
+Maintainer = Univention GmbH
+WebsiteMaintainer = https://www.univention.de/
+SupportURL = https://www.univention.de/produkte/support/enterprise-support/

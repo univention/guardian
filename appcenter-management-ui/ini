@@ -20,11 +20,26 @@ AutoModProxy = True
 WebInterfaceProxyScheme = http
 ServerRole = domaincontroller_master, domaincontroller_backup, domaincontroller_slave
 RequiredAppsInDomain = guardian-management-api, keycloak
-Description = Administration of the rights and roles of objects
 AppCategories = Security
 Logo = logo.svg
 LogoDetailPage = logo_detail_page.svg
 UCSOverviewCategory = False
+Description = Web interface to administrate the rights and roles of objects.
+LongDescription = <p>This app is part of the UCS product component "Guardian".
+	Via the web interface roles in the product can be created, deleted and
+	edited.</p>
+WebsiteMaintainer = https://www.univention.com/
+Maintainer = Univention GmbH
+License = free
+Contact = sales@univention.de
+SupportURL = https://www.univention.com/products/support/enterprise-support/
+SupportType = univention
 
 [de]
-Description = Verwaltung der Rollen und Rechte von Objekten
+Description = Web-Interface zur Verwaltung der Rollen und Rechte von Objekten.
+LongDescription = <p>Diese App ist Teil der UCS Produktkomponente "Guardian".
+	Über das Web-Interface können Rollen im Produkt angelegt, gelöscht und editiert
+	werden.</p>
+Maintainer = Univention GmbH
+WebsiteMaintainer = https://www.univention.de/
+SupportURL = https://www.univention.de/produkte/support/enterprise-support/
