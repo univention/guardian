@@ -533,18 +533,19 @@ class GenericDataAdapter implements DataPort {
   }
 }
 
+interface InMemoryDB {
+  apps: AppResponseData[];
+  namespaces: NamespaceResponseData[];
+  roles: RoleResponseData[];
+  contexts: ContextResponseData[];
+  permissions: PermissionResponseData[];
+  conditions: ConditionResponseData[];
+  capabilities: CapabilityResponseData[];
+}
 export class InMemoryDataAdapter extends GenericDataAdapter {
   private readonly _responseTimeout = 1000;
 
-  private _db: {
-    apps: AppResponseData[];
-    namespaces: NamespaceResponseData[];
-    roles: RoleResponseData[];
-    contexts: ContextResponseData[];
-    permissions: PermissionResponseData[];
-    conditions: ConditionResponseData[];
-    capabilities: CapabilityResponseData[];
-  } = {
+  private _db: InMemoryDB = {
     apps: [],
     namespaces: [],
     roles: [],
@@ -554,15 +555,19 @@ export class InMemoryDataAdapter extends GenericDataAdapter {
     capabilities: [],
   };
 
-  constructor() {
+  constructor(dbData?: InMemoryDB) {
     super();
-    this._db.apps = makeMockApps();
-    this._db.namespaces = makeMockNamespaces();
-    this._db.roles = makeMockRoles();
-    this._db.contexts = makeMockContexts();
-    this._db.permissions = makeMockPermissions();
-    this._db.conditions = makeMockConditions();
-    this._db.capabilities = makeMockCapabilities();
+    if (dbData) {
+      this._db = dbData;
+    } else {
+      this._db.apps = makeMockApps();
+      this._db.namespaces = makeMockNamespaces();
+      this._db.roles = makeMockRoles();
+      this._db.contexts = makeMockContexts();
+      this._db.permissions = makeMockPermissions();
+      this._db.conditions = makeMockConditions();
+      this._db.capabilities = makeMockCapabilities();
+    }
   }
 
   fetchAppsRequest(): Promise<AppsResponse> {

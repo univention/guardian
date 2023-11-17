@@ -554,16 +554,18 @@ export const deleteCapabilities = async (ids: string[]): Promise<{id: string; er
   await settingsStore.init();
   const adapterStore = useAdapterStore(settingsStore.config);
 
-  const data = await Promise.all(ids.map(id => {
-    const split = id.split(':');
-    const capability = {
-      appName: split[0],
-      namespaceName: split[1],
-      name: split[2],
-    };
-    return adapterStore.dataAdapter.removeCapability(capability.appName, capability.namespaceName, capability.name);
-  }));
-  const errors = data.map(success => success ? null : 'Could not delete'); // FIXME use errors from `removeCapability`
+  const data = await Promise.all(
+    ids.map(id => {
+      const split = id.split(':');
+      const capability = {
+        appName: split[0],
+        namespaceName: split[1],
+        name: split[2],
+      };
+      return adapterStore.dataAdapter.removeCapability(capability.appName, capability.namespaceName, capability.name);
+    })
+  );
+  const errors = data.map(success => (success ? null : 'Could not delete')); // FIXME use errors from `removeCapability`
   const fails: {id: string; error: string}[] = [];
   for (let x = 0; x < data.length; x++) {
     const error = errors[x];
@@ -592,7 +594,7 @@ export const fetchNamespacesOptions = async (
   }));
   if (withAllOption) {
     namespacesOptions.unshift({
-      label: 'All',
+      label: i18next.t('dataAccess.options.all'),
       value: '',
     });
   }
