@@ -95,12 +95,12 @@
     }
   },
   "EditViewSaveFailedModal": {
-    "heading_edit.role": "The role object could not be saved",
-    "heading_edit.context": "The context object could not be saved",
-    "heading_edit.namespace": "The namespace object could not be saved",
-    "heading_add.role": "The role object could not be created",
-    "heading_add.context": "The context object could not be created",
-    "heading_add.namespace": "The namespace object could not be created",
+    "heading.role_edit": "The role object could not be saved",
+    "heading.context_edit": "The context object could not be saved",
+    "heading.namespace_edit": "The namespace object could not be saved",
+    "heading.role_add": "The role object could not be created",
+    "heading.context_add": "The context object could not be created",
+    "heading.namespace_add": "The namespace object could not be created",
     "baseDescription_edit": "An unknown error occurred during saving",
     "baseDescription_add": "An unknown error occurred during creation",
     "fieldErrors.description": "Some fields contain errors:",
@@ -117,5 +117,38 @@
       "confirmation": "OK"
     }
   },
-  "dataAccess.options.all": "All"
+  "dataAccess.options.all": "All",
+  "configs": {
+    "listView": {
+      "searchForm": {
+        "appSelection": "App",
+        "namespaceSelection": "Namespace"
+      },
+      "columns": {
+        "name": "Name",
+        "displayName": "Display Name",
+        "appName": "App",
+        "namespaceName": "Namespace"
+      }
+    },
+    "addView": {
+      "page.general": "General",
+      "fieldset.basicSettings": "Basic Settings",
+      "field": {
+        "appName": "App",
+        "namespaceName": "Namepace",
+        "name": "Name",
+        "displayName": "Display Name",
+        "conditions": "Conditions",
+        "condition": "Condition",
+        "relation": "Relation",
+        "permissions": "Permissions"
+      },
+      "hint": {
+        "selectAppFirst": "Select app first",
+        "selectNamespaceFirst": "Select namespace first",
+        "autoGenerate": "When left blank, this will be automatically generated"
+      }
+    }
+  }
 }

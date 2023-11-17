@@ -16,7 +16,7 @@ export VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__SSO_URI=http://traefik/guardian/ke
 export VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__REALM=GuardianDev
 export VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__CLIENT_ID=guardian
 export VITE__API_DATA_ADAPTER__URI=http://localhost/guardian/management
-export VITE__URL_SETTINGS_ADAPTER__CONFIG_URL=http://localhost/guardian/management-ui/config.json
+export VITE__URL_SETTINGS_ADAPTER__CONFIG_URL=http://localhost/univention/guardian/management-ui/config.json
 ```
 
 Then run the [`dev-run`](../dev-run) script just as you would for other projects.
@@ -59,7 +59,7 @@ Then run the development server:
 yarn dev
 ```
 
-The output of the command will tell you where to view the Management UI, usually at [localhost:5173/guardian/management-ui](http://localhost:5173/guardian/management-ui).
+The output of the command will tell you where to view the Management UI, usually at [localhost:5173/univention/guardian/management-ui](http://localhost:5173/univention/guardian/management-ui).
 
 ### Customizing Development Environment Variables
 
@@ -83,7 +83,7 @@ If you're doing development against this adapter, you need the following setting
 ```shell
 export VITE__MANAGEMENT_UI__ADAPTER__SETTINGS_PORT=url
 export VITE__MANAGEMENT_UI__CORS__USE_PROXY=1
-export VITE__URL_SETTINGS_ADAPTER__CONFIG_URL=http://localhost/guardian/management-ui/config.json
+export VITE__URL_SETTINGS_ADAPTER__CONFIG_URL=http://localhost/univention/guardian/management-ui/config.json
 ```
 
 Note that the config file in this example is being hosted in docker, so you'll also need to run [dev-run](../dev-run) if you're using the `url` adapter.

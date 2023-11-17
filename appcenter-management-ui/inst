@@ -27,7 +27,7 @@ univention-directory-manager portals/entry create "$@" --ignore_exists \
     --append displayName='"de_DE" "Guardian Management UI"' \
     --append description='"en_US" "Administration of the rights and roles of objects"' \
     --append description='"de_DE" "Verwaltung der Rollen und Rechte von Objekten"' \
-    --append link='"en_US" "//'"${hostname:?}.${domainname:?}"'/guardian/management-ui"' \
+    --append link='"en_US" "//'"${hostname:?}.${domainname:?}"'/univention/guardian/management-ui"' \
     --append allowedGroups="cn=Domain Users,cn=groups,$ldap_base" \
     --set linkTarget=newwindow || die
 

@@ -121,7 +121,7 @@ Start the dev environment:
 You get both APIs up and running on port 80, including live reload when editing your local files.
 
 You also get a build of the [Guardian Management UI](#guardian-management-ui) running on port 80
-(Served under http://localhost/guardian/management-ui/). Note: That container is a static compiled build of the frontend.
+(Served under http://localhost/univention/guardian/management-ui/). Note: That container is a static compiled build of the frontend.
 To develop the frontend see the README in `management-ui`.
 
 _Note: docker compose uses the environment variables from `.env` by default._
@@ -136,7 +136,7 @@ You can now access the following services:
 
 - [authorization-api](http://localhost/guardian/authorization/docs/)
 - [management-api](http://localhost/guardian/management/docs/)
-- [management-ui](http://localhost/guardian/management-ui/)
+- [management-ui](http://localhost/univention/guardian/management-ui/)
 
 Secondary services for integration:
 

@@ -253,7 +253,7 @@ services:
 
     labels:
       traefik.http.routers.management-ui.entrypoints: web
-      traefik.http.routers.management-ui.rule: PathPrefix(`/guardian/management-ui`)
+      traefik.http.routers.management-ui.rule: PathPrefix(`/univention/guardian/management-ui`)
       traefik.http.routers.management-ui.service: management-ui
       traefik.http.services.management-ui.loadbalancer.server.port: 80
 

@@ -6,6 +6,7 @@ import TestView from '@/tests/views/TestView.vue';
 import SettingsAdapterTestView from '@/tests/views/SettingsAdapter.vue';
 import AuthenticationAdapterTestView from '@/tests/views/AuthenticationAdapter.vue';
 import DataAdapterTestView from '@/tests/views/DataAdapter.vue';
+import LanguageSelectorTestView from '@/tests/views/LanguageSelector.vue';
 
 const testRoutes = (() => {
   if (import.meta.env.VITE__MANAGEMENT_UI__TESTING__ENABLE_TEST_ROUTES !== '1') {
@@ -32,6 +33,11 @@ const testRoutes = (() => {
       path: '/tests/data-adapter',
       name: 'testsDataAdapter',
       component: DataAdapterTestView,
+    },
+    {
+      path: '/tests/language-selector',
+      name: 'testsLanguageSelector',
+      component: LanguageSelectorTestView,
     },
   ];
 })();
