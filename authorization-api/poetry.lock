@@ -584,13 +584,13 @@ files = [
 
 [[package]]
 name = "guardian-lib"
-version = "1.2.1"
+version = "1.3.0"
 description = ""
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "guardian_lib-1.2.1-py3-none-any.whl", hash = "sha256:f20c7eb44f125681113630e1166fde8320451a5f806246d95a7ae23a387431b6"},
-    {file = "guardian_lib-1.2.1.tar.gz", hash = "sha256:c5abe1e00fef71f47fe64857c514fc397be833a00974392acb98b4bff766e18f"},
+    {file = "guardian_lib-1.3.0-py3-none-any.whl", hash = "sha256:372073a6556091c4d00bcd4a05e604aa4e1e1c055872608abb20a7fe23b42465"},
+    {file = "guardian_lib-1.3.0.tar.gz", hash = "sha256:3600b551bd033e6d652b806bcd05ebeeb774c3acd163934325fcb584246a51c3"},
 ]
 
 [package.dependencies]
@@ -1380,4 +1380,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "e18958d4c5418053d0ef7d4c163bc2cf0606117ad4d2badb142bd287e9451683"
+content-hash = "15943262641b6e8054f34dfbbd84fa9176c69810701e4d4a172fea03f045f29c"
