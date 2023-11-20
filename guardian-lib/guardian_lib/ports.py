@@ -7,9 +7,8 @@ from typing import Generic, Optional, Type, TypeVar
 
 import loguru
 from port_loader import AsyncAdapterSettingsProvider
-
-from .errors import SettingFormatError, SettingTypeError
-from .models.settings import SettingType
+from port_loader.errors import SettingFormatError, SettingTypeError
+from port_loader.models import SettingType
 
 
 class BasePort(ABC):
