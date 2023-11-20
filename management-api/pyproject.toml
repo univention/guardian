@@ -58,6 +58,11 @@ authlib = "^1.2.1"
 "fast_api_never_authorized" = "guardian_lib.adapters.authentication:FastAPINeverAuthorizedAdapter"
 "fast_api_oauth2" = "guardian_lib.adapters.authentication:FastAPIOAuth2"
 
+[tool.poetry.plugins."guardian_management_api.ResourceAuthorizationPort"]
+"always" = "guardian_management_api.adapters.authz:AlwaysAuthorizedAdapter"
+"never" = "guardian_management_api.adapters.authz:NeverAuthorizedAdapter"
+"guardian" = "guardian_management_api.adapters.authz:GuardianAuthorizationAdapter"
+
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
 pytest-cov = "^4.1.0"
