@@ -5,7 +5,7 @@
 from dataclasses import dataclass, field
 from typing import Optional
 
-from guardian_lib.models.settings import SETTINGS_NAME_METADATA
+from port_loader.models import SETTINGS_NAME_METADATA
 from sqlalchemy import (
     JSON,
     Column,

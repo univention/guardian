@@ -5,8 +5,8 @@ import httpx
 import jwt
 from authlib.integrations.httpx_client import AsyncOAuth2Client
 from guardian_lib.adapters.authentication import get_oauth_settings
-from guardian_lib.models.settings import SETTINGS_NAME_METADATA
 from port_loader import AsyncConfiguredAdapterMixin
+from port_loader.models import SETTINGS_NAME_METADATA
 
 from guardian_management_api.errors import AuthorizationError
 from guardian_management_api.models.authz import (

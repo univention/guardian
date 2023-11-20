@@ -10,8 +10,8 @@ import aiofiles.os
 import aioshutil
 import loguru
 import orjson
-from guardian_lib.models.settings import SETTINGS_NAME_METADATA
 from port_loader import AsyncConfiguredAdapterMixin
+from port_loader.models import SETTINGS_NAME_METADATA
 
 from guardian_management_api.constants import DEFAULT_BUNDLE_SERVER_BASE_DIR
 from guardian_management_api.errors import BundleBuildError, BundleGenerationIOError

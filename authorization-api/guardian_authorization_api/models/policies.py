@@ -5,7 +5,7 @@
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
-from guardian_lib.models.settings import SETTINGS_NAME_METADATA
+from port_loader.models import SETTINGS_NAME_METADATA
 
 OPA_URL_SETTING_NAME = "opa_adapter.url"
 

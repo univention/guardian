@@ -5,9 +5,9 @@
 from typing import Optional, Type
 
 import pytest
-from guardian_lib.errors import SettingFormatError, SettingTypeError
 from guardian_lib.ports import BasePort, SettingsPort
 from port_loader import Settings
+from port_loader.errors import SettingFormatError, SettingTypeError
 
 
 class BaseAdapter(BasePort):

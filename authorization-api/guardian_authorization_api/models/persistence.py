@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from guardian_lib.models.settings import SETTINGS_NAME_METADATA
+from port_loader.models import SETTINGS_NAME_METADATA
 
 # Used with UDMPersistenceAdapter
 UDM_URL_SETTINGS_NAME = "udm_data_adapter.url"
