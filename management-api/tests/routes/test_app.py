@@ -4,14 +4,8 @@
 
 
 import os
-from unittest.mock import AsyncMock
 
 import pytest
-import pytest_asyncio
-from guardian_lib.adapter_registry import ADAPTER_REGISTRY
-from guardian_lib.adapters.authentication import FastAPIAlwaysAuthorizedAdapter
-from guardian_lib.ports import AuthenticationPort
-from guardian_management_api.adapters.authz import GuardianAuthorizationAdapter
 from guardian_management_api.constants import COMPLETE_URL
 from guardian_management_api.main import app
 from guardian_management_api.models.capability import CapabilityConditionRelation
@@ -25,7 +19,6 @@ from guardian_management_api.models.routers.base import ManagementObjectName
 from guardian_management_api.models.sql_persistence import (
     DBCapability,
 )
-from guardian_management_api.ports.authz import ResourceAuthorizationPort
 from sqlalchemy import select
 
 
@@ -288,19 +281,6 @@ class TestAppEndpoints:
     reason="UCS_HOST_IP env var not set",
 )
 class TestAppEndpointsAuthorization:
-    @staticmethod
-    @pytest_asyncio.fixture(scope="function", autouse=True)
-    async def set_up_auth():
-        ADAPTER_REGISTRY.set_adapter(
-            ResourceAuthorizationPort, GuardianAuthorizationAdapter
-        )
-        adapter = await ADAPTER_REGISTRY.request_adapter(
-            AuthenticationPort, FastAPIAlwaysAuthorizedAdapter
-        )
-        adapter.get_actor_identifier = AsyncMock(
-            return_value="uid=guardian,cn=users,dc=school,dc=test"
-        )
-
     @pytest.mark.asyncio
     async def test_get_guardian_app_allowed(
         self, client, create_tables, create_app, sqlalchemy_mixin, set_up_auth

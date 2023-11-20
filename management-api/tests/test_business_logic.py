@@ -22,7 +22,7 @@ from guardian_management_api.business_logic import (
     get_namespaces,
     get_namespaces_by_app,
 )
-from guardian_management_api.errors import AuthorizationError, UnauthorizedError
+from guardian_management_api.errors import UnauthorizedError
 from guardian_management_api.models.routers.app import AppCreateRequest, AppsGetRequest
 from guardian_management_api.models.routers.base import GetAllRequest, GetByAppRequest
 from guardian_management_api.models.routers.namespace import NamespacesGetRequest
@@ -194,26 +194,24 @@ class TestBusinessLogic:
             )
 
     @pytest.mark.asyncio
-    async def test_get_apps_authorization_error(self, mocker):
+    async def test_get_apps_none_authorized(self, mocker):
         api_request_mock = mocker.MagicMock()
         api_port_mock = mocker.AsyncMock()
         api_port_mock.transform_exception = transform_exception_identity
         persistence_mock = mocker.AsyncMock()
         authz_mock = mocker.AsyncMock()
-        authz_mock.authorize_operation = mocker.AsyncMock(
-            side_effect=AuthorizationError()
-        )
+        authz_mock.authorize_operation = mocker.AsyncMock(return_value={"test": False})
         authc_mock = mocker.AsyncMock()
         request = mocker.Mock()
-        with pytest.raises(AuthorizationError):
-            await business_logic.get_apps(
-                api_request_mock,
-                api_port_mock,
-                persistence_mock,
-                authc_mock,
-                authz_mock,
-                request,
-            )
+        await business_logic.get_apps(
+            api_request_mock,
+            api_port_mock,
+            persistence_mock,
+            authc_mock,
+            authz_mock,
+            request,
+        )
+        assert api_port_mock.to_api_apps_get_response.call_args.kwargs["apps"] == []
 
     @pytest.mark.asyncio
     async def test_register_app_unauthorized_error(self, mocker):
@@ -259,6 +257,127 @@ class TestBusinessLogic:
             await business_logic.edit_app(
                 api_request_mock,
                 api_port_mock,
+                persistence_mock,
+                authc_mock,
+                authz_mock,
+                request,
+            )
+
+    @pytest.mark.asyncio
+    async def test_get_capability_unauthorized_error(self, mocker):
+        api_request_mock = mocker.MagicMock()
+        api_port_mock = mocker.AsyncMock()
+        api_port_mock.transform_exception = transform_exception_identity
+        persistence_mock = mocker.AsyncMock()
+        authz_mock = mocker.AsyncMock()
+        authz_mock.authorize_operation = mocker.AsyncMock(return_value={"test": False})
+        authc_mock = mocker.AsyncMock()
+        request = mocker.Mock()
+        with pytest.raises(
+            UnauthorizedError,
+            match="The logged in user is not authorized to read this capability.",
+        ):
+            await business_logic.get_capability(
+                api_request_mock,
+                api_port_mock,
+                persistence_mock,
+                authc_mock,
+                authz_mock,
+                request,
+            )
+
+    @pytest.mark.asyncio
+    async def test_get_capabilities_unauthorized_error(self, mocker):
+        api_request_mock = mocker.MagicMock()
+        api_port_mock = mocker.AsyncMock()
+        api_port_mock.transform_exception = transform_exception_identity
+        persistence_mock = mocker.AsyncMock()
+        authz_mock = mocker.AsyncMock()
+        authz_mock.authorize_operation = mocker.AsyncMock(return_value={"test": False})
+        authc_mock = mocker.AsyncMock()
+        request = mocker.Mock()
+        await business_logic.get_capabilities(
+            api_request_mock,
+            api_port_mock,
+            persistence_mock,
+            authc_mock,
+            authz_mock,
+            request,
+        )
+        assert api_port_mock.to_api_get_multiple_response.call_args.args[0] == []
+
+    @pytest.mark.asyncio
+    async def test_create_capability_unauthorized_error(self, mocker):
+        api_request_mock = mocker.MagicMock()
+        persistence_mock = mocker.AsyncMock()
+        api_port_mock = mocker.AsyncMock()
+        api_port_mock.to_capability.return_value = (None, None)
+        api_port_mock.transform_exception = transform_exception_identity
+        bundle_server_mock = mocker.AsyncMock()
+        authz_mock = mocker.AsyncMock()
+        authz_mock.authorize_operation = mocker.AsyncMock(return_value={"test": False})
+        authc_mock = mocker.AsyncMock()
+        request = mocker.Mock()
+        with pytest.raises(
+            UnauthorizedError,
+            match="The logged in user is not authorized to create this capability.",
+        ):
+            await business_logic.create_capability(
+                api_request_mock,
+                api_port_mock,
+                bundle_server_mock,
+                persistence_mock,
+                authc_mock,
+                authz_mock,
+                request,
+            )
+
+    @pytest.mark.asyncio
+    async def test_update_capability_unauthorized_error(self, mocker):
+        api_request_mock = mocker.MagicMock()
+        persistence_mock = mocker.AsyncMock()
+        api_port_mock = mocker.AsyncMock()
+        api_port_mock.to_capability.return_value = (None, None)
+        api_port_mock.transform_exception = transform_exception_identity
+        bundle_server_mock = mocker.AsyncMock()
+        authz_mock = mocker.AsyncMock()
+        authz_mock.authorize_operation = mocker.AsyncMock(return_value={"test": False})
+        authc_mock = mocker.AsyncMock()
+        request = mocker.Mock()
+        with pytest.raises(
+            UnauthorizedError,
+            match="The logged in user is not authorized to update this capability.",
+        ):
+            await business_logic.update_capability(
+                api_request_mock,
+                api_port_mock,
+                bundle_server_mock,
+                persistence_mock,
+                authc_mock,
+                authz_mock,
+                request,
+            )
+
+    @pytest.mark.asyncio
+    async def test_delete_capability_unauthorized_error(self, mocker):
+        api_request_mock = mocker.MagicMock()
+        persistence_mock = mocker.AsyncMock()
+        api_port_mock = mocker.AsyncMock()
+        api_port_mock.to_capability.return_value = (None, None)
+        api_port_mock.transform_exception = transform_exception_identity
+        bundle_server_mock = mocker.AsyncMock()
+        authz_mock = mocker.AsyncMock()
+        authz_mock.authorize_operation = mocker.AsyncMock(return_value={"test": False})
+        authc_mock = mocker.AsyncMock()
+        request = mocker.Mock()
+        with pytest.raises(
+            UnauthorizedError,
+            match="The logged in user is not authorized to delete this capability.",
+        ):
+            await business_logic.delete_capability(
+                api_request_mock,
+                api_port_mock,
+                bundle_server_mock,
                 persistence_mock,
                 authc_mock,
                 authz_mock,

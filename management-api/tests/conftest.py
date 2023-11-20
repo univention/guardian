@@ -8,9 +8,11 @@ import subprocess
 from base64 import b64encode
 from pathlib import Path
 from typing import Optional, Tuple
+from unittest.mock import AsyncMock
 
 import pytest
 import pytest_asyncio
+from guardian_lib.adapter_registry import ADAPTER_REGISTRY
 from guardian_lib.adapters.authentication import FastAPIAlwaysAuthorizedAdapter
 from guardian_lib.adapters.settings import EnvSettingsAdapter
 from guardian_lib.ports import AuthenticationPort, SettingsPort
@@ -18,7 +20,10 @@ from guardian_management_api.adapters.app import (
     FastAPIAppAPIAdapter,
     SQLAppPersistenceAdapter,
 )
-from guardian_management_api.adapters.authz import AlwaysAuthorizedAdapter
+from guardian_management_api.adapters.authz import (
+    AlwaysAuthorizedAdapter,
+    GuardianAuthorizationAdapter,
+)
 from guardian_management_api.adapters.bundle_server import BundleServerAdapter
 from guardian_management_api.adapters.capability import (
     FastAPICapabilityAPIAdapter,
@@ -720,3 +725,66 @@ def create_capabilities(
         return caps
 
     return _create_capabilities
+
+
+@pytest.fixture
+def create_capability(
+    create_app, create_namespace, create_condition, create_permission, create_role
+):
+    async def _create_capability(
+        session: AsyncSession,
+        name: str = "capability",
+        display_name: str = "Capability",
+        app_name: str = "app",
+        namespace_name: str = "namespace",
+    ) -> DBCapability:
+        await create_app(session=session, name=app_name)
+        namespace = await create_namespace(
+            session=session, app_name=app_name, name=namespace_name
+        )
+        condition = await create_condition(
+            session=session, app_name=app_name, namespace_name=namespace_name
+        )
+        permission = await create_permission(
+            session=session, app_name=app_name, namespace_name=namespace_name
+        )
+        role = await create_role(
+            session=session, app_name=app_name, namespace_name=namespace_name
+        )
+        async with session.begin():
+            capability = DBCapability(
+                namespace_id=namespace.id,
+                role_id=role.id,
+                name=name,
+                display_name=display_name,
+                relation=CapabilityConditionRelation.AND,
+                permissions={permission},
+                conditions={
+                    DBCapabilityCondition(
+                        condition_id=condition.id,
+                        kwargs=[
+                            {"name": "a", "value": True},
+                            {"name": "b", "value": 1},
+                        ],
+                    )
+                },
+            )
+            session.add(capability)
+        async with session.begin():
+            await session.refresh(capability, attribute_names=["namespace"])
+        return capability
+
+    return _create_capability
+
+
+@pytest_asyncio.fixture(scope="function")
+async def set_up_auth():
+    ADAPTER_REGISTRY.set_adapter(
+        ResourceAuthorizationPort, GuardianAuthorizationAdapter
+    )
+    adapter = await ADAPTER_REGISTRY.request_adapter(
+        AuthenticationPort, FastAPIAlwaysAuthorizedAdapter
+    )
+    adapter.get_actor_identifier = AsyncMock(
+        return_value="uid=guardian,cn=users,dc=school,dc=test"
+    )

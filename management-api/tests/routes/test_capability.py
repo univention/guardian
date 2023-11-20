@@ -1,6 +1,7 @@
 # Copyright (C) 2023 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
+import os
 from dataclasses import asdict
 from urllib.parse import urljoin
 
@@ -8,7 +9,10 @@ import pytest
 from guardian_management_api.adapters.capability import SQLCapabilityPersistenceAdapter
 from guardian_management_api.adapters.role import SQLRolePersistenceAdapter
 from guardian_management_api.constants import BASE_URL, COMPLETE_URL
-from guardian_management_api.models.sql_persistence import DBCapability
+from guardian_management_api.main import app
+from guardian_management_api.models.sql_persistence import (
+    DBCapability,
+)
 from sqlalchemy import select
 from sqlalchemy.sql.functions import count
 
@@ -735,3 +739,308 @@ class TestCapabilityEndpoints:
             )
         )
         assert result.status_code == 404, result.json()
+
+
+@pytest.mark.e2e
+@pytest.mark.skipif(
+    "UCS_HOST_IP" not in os.environ,
+    reason="UCS_HOST_IP env var not set",
+)
+class TestCapabilityEndpointsAuthorization:
+    @pytest.mark.asyncio
+    async def test_get_guardian_capability_allowed(
+        self, client, create_tables, create_capability, sqlalchemy_mixin, set_up_auth
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_capability(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="guardian",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for(
+                "get_capability",
+                name="test",
+                namespace_name="namespace",
+                app_name="guardian",
+            ),
+        )
+        assert response.status_code == 200
+        assert response.json()["capability"]["name"] == "test"
+
+    @pytest.mark.asyncio
+    async def test_get_other_capability_not_allowed(
+        self, client, create_tables, create_capability, sqlalchemy_mixin, set_up_auth
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_capability(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="other",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for(
+                "get_capability",
+                name="test",
+                namespace_name="namespace",
+                app_name="other",
+            ),
+        )
+        assert response.status_code == 403
+
+    @pytest.mark.asyncio
+    async def test_get_all_capabilities(
+        self, client, create_tables, create_capability, sqlalchemy_mixin, set_up_auth
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_capability(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="guardian",
+                namespace_name="namespace",
+            )
+        async with sqlalchemy_mixin.session() as session:
+            await create_capability(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="other",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for("get_all_capabilities"),
+        )
+        assert response.status_code == 200
+        assert any(
+            capability["name"] == "test"
+            for capability in response.json()["capabilities"]
+        )
+        assert not any(
+            capability["name"] == "other"
+            for capability in response.json()["capabilities"]
+        )
+
+    @pytest.mark.asyncio
+    async def test_put_guardian_capability_allowed(
+        self, client, create_tables, create_capability, sqlalchemy_mixin, set_up_auth
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_capability(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="guardian",
+                namespace_name="namespace",
+            )
+        response = client.put(
+            app.url_path_for(
+                "update_capability",
+                name="test",
+                namespace_name="namespace",
+                app_name="guardian",
+            ),
+            json={
+                "display_name": "expected displayname",
+                "permissions": [],
+                "conditions": [],
+                "relation": "AND",
+                "role": {
+                    "app_name": "guardian",
+                    "namespace_name": "namespace",
+                    "name": "role",
+                },
+            },
+        )
+        assert response.status_code == 200
+        assert response.json()["capability"]["name"] == "test"
+        assert response.json()["capability"]["display_name"] == "expected displayname"
+
+    @pytest.mark.asyncio
+    async def test_put_other_capability_not_allowed(
+        self, client, create_tables, create_capability, sqlalchemy_mixin, set_up_auth
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_capability(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="other",
+                namespace_name="namespace",
+            )
+        response = client.put(
+            app.url_path_for(
+                "update_capability",
+                name="test",
+                namespace_name="namespace",
+                app_name="other",
+            ),
+            json={
+                "display_name": "expected displayname",
+                "permissions": [],
+                "conditions": [],
+                "relation": "AND",
+                "role": {
+                    "app_name": "other",
+                    "namespace_name": "namespace",
+                    "name": "role",
+                },
+            },
+        )
+        assert response.status_code == 403
+
+        # check that the capability was not updated in the database
+        async with sqlalchemy_mixin.session() as session:
+            db_cap = (
+                (await session.execute(select(DBCapability).filter_by(name="test")))
+                .unique()
+                .scalar_one_or_none()
+            )
+            assert db_cap.display_name is None
+
+    @pytest.mark.asyncio
+    async def test_create_capability_not_allowed(
+        self, client, create_tables, create_capability, sqlalchemy_mixin, set_up_auth
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            # easiest way to setup app, namespace, roles...
+            await create_capability(
+                session=session,
+                name="test2",
+                display_name=None,
+                app_name="other",
+                namespace_name="namespace",
+            )
+        response = client.post(
+            app.url_path_for(
+                "create_capability", namespace_name="namespace", app_name="other"
+            ),
+            json={
+                "name": "test3",
+                "display_name": "expected displayname",
+                "permissions": [],
+                "conditions": [],
+                "relation": "AND",
+                "role": {
+                    "app_name": "other",
+                    "namespace_name": "namespace",
+                    "name": "role",
+                },
+            },
+        )
+        assert response.status_code == 403
+
+        # check that the capability was not created in the database
+        async with sqlalchemy_mixin.session() as session:
+            db_cap = (
+                (await session.execute(select(DBCapability).filter_by(name="test3")))
+                .unique()
+                .scalar_one_or_none()
+            )
+            assert db_cap is None
+
+    @pytest.mark.asyncio
+    async def test_delete_guardian_capability_allowed(
+        self, client, create_tables, create_capability, sqlalchemy_mixin, set_up_auth
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_capability(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="guardian",
+                namespace_name="namespace",
+            )
+        response = client.delete(
+            app.url_path_for(
+                "delete_capability",
+                name="test",
+                namespace_name="namespace",
+                app_name="guardian",
+            ),
+        )
+        assert response.status_code == 204
+
+    @pytest.mark.asyncio
+    async def test_delete_other_capability_not_allowed(
+        self, client, create_tables, create_capability, sqlalchemy_mixin, set_up_auth
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_capability(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="other",
+                namespace_name="namespace",
+            )
+        response = client.delete(
+            app.url_path_for(
+                "delete_capability",
+                name="test",
+                namespace_name="namespace",
+                app_name="other",
+            ),
+        )
+        assert response.status_code == 403
+
+    @pytest.mark.asyncio
+    async def test_get_capabilities_by_role(
+        self, client, create_tables, create_capability, sqlalchemy_mixin, set_up_auth
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_capability(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="guardian",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for(
+                "get_capabilities_by_role",
+                namespace_name="namespace",
+                app_name="guardian",
+                name="role",
+            ),
+        )
+        assert response.status_code == 200
+        assert any(
+            capability["name"] == "test"
+            for capability in response.json()["capabilities"]
+        )
+        assert not any(
+            capability["name"] == "other"
+            for capability in response.json()["capabilities"]
+        )
+
+    @pytest.mark.asyncio
+    async def test_get_capabilities_by_role_not_allowed(
+        self, client, create_tables, create_capability, sqlalchemy_mixin, set_up_auth
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_capability(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="other",
+                namespace_name="namespace",
+            )
+
+        response = client.get(
+            app.url_path_for(
+                "get_capabilities_by_role",
+                namespace_name="namespace",
+                app_name="other",
+                name="role",
+            ),
+        )
+
+        assert response.status_code == 200
+        assert not any(
+            capability["name"] == "test"
+            for capability in response.json()["capabilities"]
+        )

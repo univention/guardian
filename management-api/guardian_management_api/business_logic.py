@@ -698,9 +698,30 @@ async def get_capability(
     api_request: APIGetSingleRequestObject,
     api_port: CapabilityAPIPort,
     persistence_port: CapabilityPersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
 ):
     try:
         query = await api_port.to_obj_get_single(api_request)
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        resource: Resource = Resource(
+            resource_type=ResourceType.CAPABILITY,
+            name=query.name,
+            namespace_name=query.namespace_name,
+            app_name=query.app_name,
+        )
+        allowed = (
+            await authz_port.authorize_operation(
+                Actor(id=actor_id),
+                OperationType.READ_RESOURCE,
+                [resource],
+            )
+        ).get(resource.id, False)
+        if not allowed:
+            raise UnauthorizedError(
+                "The logged in user is not authorized to read this capability."
+            )
         capability = await persistence_port.read_one(query)
         return await api_port.to_api_get_single_response(capability)
     except Exception as exc:
@@ -711,12 +732,44 @@ async def get_capabilities(
     api_request: APIGetMultipleRequestObject,
     api_port: CapabilityAPIPort,
     persistence_port: CapabilityPersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
 ) -> APIGetMultipleResponseObject:
     try:
         query = await api_port.to_obj_get_multiple(api_request)
         many_capabilities = await persistence_port.read_many(query)
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        authz_result = await authz_port.authorize_operation(
+            Actor(id=actor_id),
+            OperationType.READ_RESOURCE,
+            [
+                Resource(
+                    resource_type=ResourceType.CAPABILITY,
+                    name=capability.name,
+                    namespace_name=capability.namespace_name,
+                    app_name=capability.app_name,
+                )
+                for capability in many_capabilities.objects
+            ],
+        )
+        allowed_capabilities = {
+            resource_id
+            for resource_id in authz_result.keys()
+            if authz_result[resource_id]
+        }
         return await api_port.to_api_get_multiple_response(
-            list(many_capabilities.objects),
+            [
+                capability
+                for capability in many_capabilities.objects
+                if Resource(
+                    resource_type=ResourceType.CAPABILITY,
+                    name=capability.name,
+                    namespace_name=capability.namespace_name,
+                    app_name=capability.app_name,
+                ).id
+                in allowed_capabilities
+            ],
             query.pagination.query_offset,
             query.pagination.query_limit,
             many_capabilities.total_count,
@@ -730,9 +783,30 @@ async def create_capability(
     api_port: CapabilityAPIPort,
     bundle_server_port: BundleServerPort,
     persistence_port: CapabilityPersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
 ):
     try:
         query = await api_port.to_obj_create(api_request)
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        resource: Resource = Resource(
+            resource_type=ResourceType.CAPABILITY,
+            name=query.name,
+            namespace_name=query.namespace_name,
+            app_name=query.app_name,
+        )
+        allowed = (
+            await authz_port.authorize_operation(
+                Actor(id=actor_id),
+                OperationType.CREATE_RESOURCE,
+                [resource],
+            )
+        ).get(resource.id, False)
+        if not allowed:
+            raise UnauthorizedError(
+                "The logged in user is not authorized to create this capability."
+            )
         capability = await persistence_port.create(query)
         await bundle_server_port.schedule_bundle_build(BundleType.data)
         return await api_port.to_api_get_single_response(capability)
@@ -745,9 +819,30 @@ async def update_capability(
     api_port: CapabilityAPIPort,
     bundle_server_port: BundleServerPort,
     persistence_port: CapabilityPersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
 ):
     try:
         edited_capability = await api_port.to_obj_edit(api_request)
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        resource: Resource = Resource(
+            resource_type=ResourceType.CAPABILITY,
+            name=edited_capability.name,
+            namespace_name=edited_capability.namespace_name,
+            app_name=edited_capability.app_name,
+        )
+        allowed = (
+            await authz_port.authorize_operation(
+                Actor(id=actor_id),
+                OperationType.UPDATE_RESOURCE,
+                [resource],
+            )
+        ).get(resource.id, False)
+        if not allowed:
+            raise UnauthorizedError(
+                "The logged in user is not authorized to update this capability."
+            )
         capability = await persistence_port.update(edited_capability)
         await bundle_server_port.schedule_bundle_build(BundleType.data)
         return await api_port.to_api_get_single_response(capability)
@@ -760,9 +855,31 @@ async def delete_capability(
     api_port: CapabilityAPIPort,
     bundle_server_port: BundleServerPort,
     persistence_port: CapabilityPersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
 ):
     try:
         query = await api_port.to_obj_get_single(api_request)
+        capability = await persistence_port.read_one(query)
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        resource: Resource = Resource(
+            resource_type=ResourceType.CAPABILITY,
+            name=capability.name,
+            namespace_name=capability.namespace_name,
+            app_name=capability.app_name,
+        )
+        allowed = (
+            await authz_port.authorize_operation(
+                Actor(id=actor_id),
+                OperationType.DELETE_RESOURCE,
+                [resource],
+            )
+        ).get(resource.id, False)
+        if not allowed:
+            raise UnauthorizedError(
+                "The logged in user is not authorized to delete this capability."
+            )
         await persistence_port.delete(query)
         await bundle_server_port.schedule_bundle_build(BundleType.data)
         return None
