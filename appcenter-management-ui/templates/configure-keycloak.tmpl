@@ -1,0 +1,66 @@
+def update_guardian_ui_client(
+    keycloak_session: KeycloakAdmin,
+    client_name: str,
+    web_host: str,
+) -> int:
+    """
+    Update the client used with the Swagger UI.
+
+    This entails:
+
+    * Adding guardian audience mapper.
+    * Adding the 'dn' mapper.
+    * Ensuring PKCE support.
+    * Updating webOrigins and redirectUris.
+    * Making the client public.
+    """
+
+    errors = []
+
+    try:
+        add_dn(keycloak_session, client_name)
+    except Exception as exc:
+        errors.append(f"Unable to add dn protocol mapper to {client_name} client: {exc}")
+
+    try:
+        add_audience(keycloak_session, client_name, "guardian")
+    except Exception as exc:
+        errors.append(f"Unable to add guardian audience to {client_name} client: {exc}")
+
+    try:
+        add_pkce_support(keycloak_session, client_name)
+    except Exception as exc:
+        errors.append(f"Unable to add PKCE support to {client_name} client: {exc}")
+
+    try:
+        update_redirect_uris_and_web_origins(
+            keycloak_session,
+            client_name,
+            web_host,
+            redirect_url_base="univention/guardian",
+        )
+    except Exception as exc:
+        errors.append(f"Unable to add {web_host} to redirectUris and webOrigins for {client_name} client: {exc}")
+
+    try:
+        fix_web_origins(keycloak_session, client_name)
+    except Exception as exc:
+        errors.append(f"Unable to fix webOrigins to {client_name} client: {exc}")
+
+    try:
+        make_public_client(keycloak_session, client_name)
+    except Exception as exc:
+        errors.append(f"Unable to make {client_name} client public: {exc}")
+
+    if errors:
+        for error in errors:
+            print(f"ERROR: {error}")
+        return 1
+
+    return 0
+
+
+def configure_keycloak(keycloak_session: KeycloakAdmin, ucr: ConfigRegistry) -> int:
+    client_name = ucr.get(KEYCLOAK_CLIENT_ID_SETTING)
+    web_host = get_web_host(ucr)
+    return update_guardian_ui_client(keycloak_session, client_name, web_host)

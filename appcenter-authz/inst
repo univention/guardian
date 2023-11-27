@@ -8,11 +8,23 @@
 
 VERSION=1
 APP_ID="guardian-authorization-api"
+APP_DIR="/var/lib/univention-appcenter/apps/$APP_ID"
 
 . /usr/share/univention-join/joinscripthelper.lib || exit 1
 . /usr/share/univention-appcenter/joinscripthelper.sh || exit 1
 
 joinscript_init
+
+# This client is also created by the Management API,
+# but we want to ensure apps are self-sufficient.
+# Creating and configuring the Keycloak clients is safe to rerun multiple times.
+API_FQDN="$hostname.$domainname"
+univention-keycloak "$@" oidc/rp create \
+    --name guardian \
+    --app-url "https://$API_FQDN" \
+    --redirect-uri "https://$API_FQDN/guardian/*" \
+    --add-audience-mapper guardian || die
+$APP_DIR/scripts/configure-keycloak "$@"
 
 joinscript_save_current_version
 

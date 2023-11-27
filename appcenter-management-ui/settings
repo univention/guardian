@@ -17,7 +17,7 @@ Show = Install,Settings
 
 [guardian-management-ui/oauth/keycloak-client-id]
 Type = String
-InitialValue = guardian
+InitialValue = guardian-ui
 Description = Keycloak client ID.
 Description[de] = ID des Keycloak-Client.
 Group = Authentication

@@ -1,0 +1,20 @@
+#!/bin/bash
+# This file is used to autogenerate the preinst script during the authz_app_to_test_appcenter job.
+# This is necessary for installing some files on the host system.
+
+APP_ID="guardian-authorization-api"
+APP_DIR="/var/lib/univention-appcenter/apps/$APP_ID"
+
+set -e
+eval "$(ucr shell)"
+
+SCRIPTS_DIR="$APP_DIR/scripts"
+mkdir -p $SCRIPTS_DIR
+
+# keycloak client configuration script
+guardian_keycloak_script_path="$SCRIPTS_DIR/configure-keycloak"
+echo "Installing Guardian Authorization API keycloak configuration script"
+cat <<%EOF >"$guardian_keycloak_script_path"
+%GUARDIAN-KEYCLOAK%
+%EOF
+chmod 755 "$guardian_keycloak_script_path"

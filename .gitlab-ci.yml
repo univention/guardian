@@ -237,7 +237,8 @@ authz_app_to_test_appcenter:
     - cd "$APP_DIR"
     - APP_VERSION="$(sed -n 's/^Version\s*=\s*//p' ini)"
     - echo "updating $APP_NAME=$APP_VERSION"
-    - univention-appcenter-control upload "$APP_NAME=$APP_VERSION" compose configure_host inst ini README_UPDATE_DE README_UPDATE_EN settings uinst
+    - ./scripts/generate-preinst
+    - univention-appcenter-control upload "$APP_NAME=$APP_VERSION" compose configure_host inst ini preinst README_UPDATE_DE README_UPDATE_EN settings uinst
 
 management_app_to_test_appcenter:
   stage: publish
@@ -255,10 +256,7 @@ management_app_to_test_appcenter:
     - cd "$APP_DIR"
     - APP_VERSION="$(sed -n 's/^Version\s*=\s*//p' ini)"
     - echo "updating $APP_NAME=$APP_VERSION"
-    - cp preinst.tmpl preinst
-    - sed -i -e "/%GUARDIAN-SYNTAX%/r files/guardian_syntax.py" -e "/%GUARDIAN-SYNTAX%/d" preinst;
-    - sed -i -e "/%GUARDIAN-SCHEMA%/r files/guardian.schema" -e "/%GUARDIAN-SCHEMA%/d" preinst;
-    - sed -i -e "/%GUARDIAN-PO%/r locale/DE/LC_MESSAGES/de.po" -e "/%GUARDIAN-PO%/d" preinst;
+    - ./scripts/generate-preinst
     - univention-appcenter-control upload "$APP_NAME=$APP_VERSION" compose configure configure_host ini inst preinst README_UPDATE_DE README_UPDATE_EN settings uinst
 
 management_ui_app_to_test_appcenter:
@@ -277,7 +275,8 @@ management_ui_app_to_test_appcenter:
     - cd "$APP_DIR"
     - APP_VERSION="$(sed -n 's/^Version\s*=\s*//p' ini)"
     - echo "updating $APP_NAME=$APP_VERSION"
-    - univention-appcenter-control upload "$APP_NAME=$APP_VERSION" compose configure_host ini inst README_UPDATE_DE README_UPDATE_EN settings uinst
+    - ./scripts/generate-preinst
+    - univention-appcenter-control upload "$APP_NAME=$APP_VERSION" compose configure_host ini inst preinst README_UPDATE_DE README_UPDATE_EN settings uinst
 
 ucs_test_deb_lint:
   stage: lint

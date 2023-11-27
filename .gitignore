@@ -10,4 +10,7 @@ dist/
 *.db
 management_service_dir/
 .yarn
+*.temp
+appcenter-authz/preinst
 appcenter-management/preinst
+appcenter-management-ui/preinst

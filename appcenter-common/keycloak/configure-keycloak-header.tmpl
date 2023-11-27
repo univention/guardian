@@ -1,0 +1,11 @@
+%COMMENT% | Header for the `configure-keycloak` script.                       |
+%COMMENT% | See `generate-configure-keycloak.sh` in this directory.           |
+#!/usr/bin/env python3
+"""
+Modify the keycloak clients created by univention-keycloak.
+
+The univention-keycloak script is currently missing several features that
+are needed for using the Guardian Management API with Keycloak.
+This script updates the Keycloak clients used by the Guardian to include
+those missing features.
+"""

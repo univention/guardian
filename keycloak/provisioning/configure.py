@@ -87,6 +87,10 @@ class KeycloakConfigurator:
             open("/keycloak/provisioning/guardian_client_cli_config.json", "r")
         )
         self.keycloak_admin.create_client(payload=client_config, skip_exists=True)
+        client_config = json.load(
+            open("/keycloak/provisioning/guardian_client_ui_config.json", "r")
+        )
+        self.keycloak_admin.create_client(payload=client_config, skip_exists=True)
 
         # create user
         self.logger.info(f"Creating User: {self.user_name}")

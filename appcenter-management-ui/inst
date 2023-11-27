@@ -8,6 +8,7 @@
 
 VERSION=1
 APP_ID="guardian-management-ui"
+APP_DIR="/var/lib/univention-appcenter/apps/$APP_ID"
 COMPONENT_ID=$(univention-app get $APP_ID component_id | cut -f 2 -d ':' | tr -d '[:space:]')
 ICON_DIR="/usr/share/univention-management-console-frontend/js/dijit/themes/umc/icons/scalable"
 ICON_FILE="$ICON_DIR/apps-$COMPONENT_ID.svg"
@@ -42,6 +43,15 @@ if [ -f $ICON_FILE ]; then
         --dn "cn=guardian-management-ui,cn=entry,cn=portals,cn=univention,$ldap_base" \
         --set icon="$guardian_svg" || die
 fi
+
+# Creating and configuring the Keycloak client is safe to rerun multiple times
+API_FQDN="$hostname.$domainname"
+univention-keycloak "$@" oidc/rp create \
+    --name guardian-ui \
+    --app-url "https://$API_FQDN" \
+    --redirect-uri "https://$API_FQDN/univention/guardian/*" \
+    --add-audience-mapper guardian-ui || die
+$APP_DIR/scripts/configure-keycloak "$@"
 
 joinscript_save_current_version
 

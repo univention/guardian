@@ -1,0 +1,40 @@
+%COMMENT% | Footer for the `configure-keycloak` script.                       |
+%COMMENT% | See `generate-configure-keycloak.sh` in this directory.           |
+def main(admin_username: str, admin_password: str) -> int:
+    ucr = ConfigRegistry()
+    ucr.load()
+
+    keycloak_session = KeycloakAdmin(
+        server_url=get_keycloak_url(ucr),
+        realm_name=get_keycloak_realm(ucr),
+        user_realm_name=DEFAULT_REALM,
+        username=admin_username,
+        password=admin_password,
+        verify=True,
+    )
+    return configure_keycloak(keycloak_session, ucr)
+
+
+def parse_opts(args: List[str]) -> Namespace:
+    parser = ArgumentParser(description=__doc__)
+    parser.add_argument("--binddn", default="")
+    parser.add_argument("--binduser", default="admin")
+    parser.add_argument("--bindpwd", default="")
+    parser.add_argument("--bindpwdfile", default="/etc/keycloak.secret")
+
+    opts = parser.parse_args(sys.argv[1:])
+    if opts.binddn:
+        opts.binduser = explode_rdn(opts.binddn, 1)[0]
+    if not os.path.exists(opts.bindpwdfile):
+        if not opts.bindpwd:
+            parser.error(f"Passwordfile {opts.bindpwdfile} for user {opts.binduser} does not exist.")
+    else:
+        with open(opts.bindpwdfile) as fd:
+            opts.bindpwd = fd.read().strip()
+
+    return opts
+
+
+if __name__ == "__main__":
+    opts = parse_opts(sys.argv[1:])
+    sys.exit(main(admin_username=opts.binduser, admin_password=opts.bindpwd))

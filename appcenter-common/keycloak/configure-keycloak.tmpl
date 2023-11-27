@@ -1,0 +1,47 @@
+%COMMENT% | Main template for generating the `configure-keycloak` script.     |
+%COMMENT% | See `generate-configure-keycloak.sh` in this directory.           |
+%COMMENT% |                                                                   |
+%COMMENT% | This script is intended to be customized with app-specific code   |
+%COMMENT% | that updates the Guardian Keycloak clients for the app.           |
+%COMMENT% | See `configure-keycloak-helpers.tmpl` for a list of functions     |
+%COMMENT% | that are available.                                               |
+%COMMENT% |                                                                   |
+%COMMENT% | In order to use this template, you need to define a               |
+%COMMENT% | `configure-keycloak` function in your custom code that takes a    |
+%COMMENT% | KeycloakAdmin object and a ucr ConfigRegistry object.             |
+%COMMENT% | The function should return 0 if it succeeds,                      |
+%COMMENT% | and 1 (or another positive integer) if it fails.                  |
+%COMMENT% | This code will be inserted in the
+%KEYCLOAK-HEADER%
+
+%COPYRIGHT%
+
+%KEYCLOAK-HELPERS%
+
+
+%CUSTOM-CODE%
+%COMMENT% | Example:                                                          |
+%COMMENT% |                                                                   |
+%COMMENT% | def configure_keycloak(                                           |
+%COMMENT% |     keycloak_session: KeycloakAdmin,                              |
+%COMMENT% |     ucr: ConfigRegistry,                                          |
+%COMMENT% | ) -> int:                                                         |
+%COMMENT% |     client_name = ucr.get(KEYCLOAK_CLIENT_ID_SETTING)             |
+%COMMENT% |     web_host = get_web_host(ucr)                                  |
+%COMMENT% |                                                                   |
+%COMMENT% |     try:                                                          |
+%COMMENT% |         update_redirect_uris_and_web_origins(                     |
+%COMMENT% |             keycloak_session,                                     |
+%COMMENT% |             client_name,                                          |
+%COMMENT% |             web_host,                                             |
+%COMMENT% |         )                                                         |
+%COMMENT% |     except Exception as exc:                                      |
+%COMMENT% |         print(                                                    |
+%COMMENT% |             f"Unable to add {web_host} to redirectUris and "      |
+%COMMENT% |             f"webOrigins for {client_name} client: {exc}")        |
+%COMMENT% |         return 1                                                  |
+%COMMENT% |                                                                   |
+%COMMENT% |     return 0                                                      |
+
+
+%KEYCLOAK-FOOTER%

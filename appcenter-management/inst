@@ -8,6 +8,7 @@
 
 VERSION=1
 APP_ID="guardian-management-api"
+APP_DIR="/var/lib/univention-appcenter/apps/$APP_ID"
 
 . /usr/share/univention-join/joinscripthelper.lib || exit 1
 . /usr/share/univention-appcenter/joinscripthelper.sh || exit 1
@@ -39,10 +40,21 @@ if [ $JS_LAST_EXECUTED_VERSION -lt 1 ]; then
     --set objectClass=univentionGuardianObject \
     --set syntax=GuardianRole \
     --set ldapMapping=univentionGuardianRole || die
-
-  API_FQDN="$hostname.$domainname"
-  univention-keycloak "$@" oidc/rp create --name Guardian --app-url "https://$API_FQDN" --redirect-uri "https://$API_FQDN/guardian/*" --add-audience-mapper guardian || die
 fi
+
+# Creating and configuring the Keycloak clients is safe to rerun multiple times
+API_FQDN="$hostname.$domainname"
+univention-keycloak "$@" oidc/rp create \
+    --name guardian \
+    --app-url "https://$API_FQDN" \
+    --redirect-uri "https://$API_FQDN/guardian/*" \
+    --add-audience-mapper guardian || die
+univention-keycloak "$@" oidc/rp create \
+    --name guardian-cli \
+    --app-url "https://$API_FQDN" \
+    --redirect-uri "https://$API_FQDN/guardian/*" \
+    --add-audience-mapper guardian-cli || die
+$APP_DIR/scripts/configure-keycloak "$@"
 
 joinscript_save_current_version
 

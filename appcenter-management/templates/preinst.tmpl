@@ -3,15 +3,21 @@
 # This is necessary for installing some files on the host system.
 
 APP_ID="guardian-management-api"
+APP_DIR="/var/lib/univention-appcenter/apps/$APP_ID"
 
 set -e
 eval "$(ucr shell)"
 
-mkdir -p "/var/lib/univention-appcenter/apps/$APP_ID/conf/"
-mkdir -p "/var/lib/univention-appcenter/apps/$APP_ID/locale/DE/LC_MESSAGES/"
+CONF_DIR="$APP_DIR/conf"
+SCRIPTS_DIR="$APP_DIR/scripts"
+LOCALE_DIR="$APP_DIR/locale/DE/LC_MESSAGES"
+
+mkdir -p $CONF_DIR
+mkdir -p $SCRIPTS_DIR
+mkdir -p $LOCALE_DIR
 
 # guardian syntax file
-guardian_syntax_path="/var/lib/univention-appcenter/apps/$APP_ID/conf/guardian_syntax.py"
+guardian_syntax_path="$CONF_DIR/guardian_syntax.py"
 echo "Installing Guardian syntax file"
 	cat <<%EOF >"$guardian_syntax_path"
 %GUARDIAN-SYNTAX%
@@ -19,7 +25,7 @@ echo "Installing Guardian syntax file"
 chmod 644 "$guardian_syntax_path"
 
 # guardian schema file
-guardian_schema_path="/var/lib/univention-appcenter/apps/$APP_ID/conf/guardian.schema"
+guardian_schema_path="$CONF_DIR/guardian.schema"
 echo "Installing Guardian schema file"
 	cat <<%EOF >"$guardian_schema_path"
 %GUARDIAN-SCHEMA%
@@ -27,8 +33,8 @@ echo "Installing Guardian schema file"
 chmod 644 "$guardian_schema_path"
 
 # guardian mo file
-guardian_po_path="/var/lib/univention-appcenter/apps/$APP_ID/locale/DE/LC_MESSAGES/de.po"
-guardian_mo_path="/var/lib/univention-appcenter/apps/$APP_ID/locale/DE/LC_MESSAGES/de.mo"
+guardian_po_path="$LOCALE_DIR/de.po"
+guardian_mo_path="$LOCALE_DIR/de.mo"
 echo "Preparing Guardian mo file"
 cat <<%EOF >"$guardian_po_path"
 %GUARDIAN-PO%
@@ -39,3 +45,11 @@ msgfmt "$guardian_po_path" -o "$guardian_mo_path"
 
 echo "Removing additional dependencies of Guardian mo file"
 rm "$guardian_po_path"
+
+# keycloak client configuration script
+guardian_keycloak_script_path="$SCRIPTS_DIR/configure-keycloak"
+echo "Installing Guardian Management API keycloak configuration script"
+cat <<%EOF >"$guardian_keycloak_script_path"
+%GUARDIAN-KEYCLOAK%
+%EOF
+chmod 755 "$guardian_keycloak_script_path"

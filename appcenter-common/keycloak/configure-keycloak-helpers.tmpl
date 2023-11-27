@@ -1,0 +1,205 @@
+%COMMENT% | Helper functions for the `configure-keycloak` script.             |
+%COMMENT% | See `generate-configure-keycloak.sh` in this directory.           |
+import os
+import sys
+from argparse import ArgumentParser, Namespace
+from typing import Dict, List
+from urllib.parse import urljoin, urlparse
+
+from keycloak import KeycloakAdmin
+from ldap.dn import explode_rdn
+from univention.config_registry import ConfigRegistry
+
+
+KEYCLOAK_URI_SETTING = "%APP%/oauth/keycloak-uri"
+KEYCLOAK_REALM_SETTING = "%APP%/oauth/keycloak-realm"
+KEYCLOAK_CLIENT_ID_SETTING = "%APP%/oauth/keycloak-client-id"
+KEYCLOAK_CLI_CLIENT_ID_SETTING = "%APP%/oauth/keycloak-cli-client-id"
+
+DEFAULT_REALM = "master"
+DEFAULT_UCS_REALM = "ucs"
+
+
+class ClientNotFoundError(Exception):
+    """Indicates the expected Keycloak client does not exist"""
+
+    pass
+
+
+def get_keycloak_url(ucr: ConfigRegistry) -> str:
+    """
+    Guess the URL for the keycloak server.
+
+    Checks in order:
+
+    1. Guardian Keycloak URI setting (may not be set at install time).
+    2. The UCR settings for Keycloak.
+    3. Defaults to ucs-sso-ng.<domainname>.
+    """
+
+    base_url = ucr.get(KEYCLOAK_URI_SETTING)
+    if not base_url:
+        base_url = ucr.get("keycloak/server/sso/fqdn", f"ucs-sso-ng.{ucr.get('domainname')}")
+        keycloak_url = f"https://{base_url}"
+        keycloak_sso_path = ucr.get("keycloak/server/sso/path", "/")
+        keycloak_url = urljoin(keycloak_url, keycloak_sso_path)
+    else:
+        keycloak_url = f"https://{base_url}/"
+
+    if not keycloak_url.endswith("/"):
+        keycloak_url = f"{keycloak_url}/"
+    return keycloak_url
+
+
+def get_keycloak_realm(ucr: ConfigRegistry) -> str:
+    """Guess the realm for the Keycloak server"""
+
+    realm = ucr.get(KEYCLOAK_REALM_SETTING, DEFAULT_UCS_REALM)
+    return realm
+
+
+def get_client_config_and_id(keycloak_session: KeycloakAdmin, client_name: str) -> Dict[str, any]:
+    """
+    Gets the specified Keycloak client configuration dict.
+
+    :raises: ClientNotFoundError
+    """
+
+    client_id = keycloak_session.get_client_id(client_name)
+    if not client_id:
+        raise ClientNotFoundError(f"Client {client_name} not found")
+    client_config = keycloak_session.get_client(client_id)
+    return client_config, client_id
+
+
+def get_web_host(ucr: ConfigRegistry) -> str:
+    web_host = f"{ucr.get('hostname')}.{ucr.get('domainname')}"
+    return web_host
+
+
+def add_audience(keycloak_session: KeycloakAdmin, client_name: str, audience: str):
+    """Add an audience mapper to the specified client"""
+
+    client_config, client_id = get_client_config_and_id(keycloak_session, client_name)
+
+    mapper_name = f"{audience}-audience"
+    mapper_config = {
+        "name": mapper_name,
+        "protocol": "openid-connect",
+        "protocolMapper": "oidc-audience-mapper",
+        "consentRequired": False,
+        "config": {
+            "included.client.audience": audience,
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+        },
+    }
+    existing_mapper = list(
+        filter(
+            lambda mapper: mapper["name"] == mapper_name,
+            client_config["protocolMappers"],
+        )
+    )
+    if not existing_mapper:
+        client_config["protocolMappers"].append(mapper_config)
+        keycloak_session.update_client(client_id, client_config)
+    else:
+        print(f"INFO: Audience mapper for {audience} already exists on {client_name} client. Skipping.")
+
+
+def add_dn(keycloak_session: KeycloakAdmin, client_name: str):
+    """Include the dn of the LDAP user"""
+
+    client_config, client_id = get_client_config_and_id(keycloak_session, client_name)
+
+    mapper_name = "dn"
+    mapper_config = {
+      "name": mapper_name,
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-usermodel-attribute-mapper",
+      "consentRequired": False,
+      "config": {
+        "aggregate.attrs": "false",
+        "multivalued": "false",
+        "userinfo.token.claim": "false",
+        "user.attribute": "LDAP_ENTRY_DN",
+        "id.token.claim": "false",
+        "access.token.claim": "true",
+        "claim.name": mapper_name,
+        "jsonType.label": "String"
+      }
+    }
+    existing_mapper = list(
+        filter(
+            lambda mapper: mapper["name"] == mapper_name,
+            client_config["protocolMappers"],
+        )
+    )
+    if not existing_mapper:
+        client_config["protocolMappers"].append(mapper_config)
+        keycloak_session.update_client(client_id, client_config)
+    else:
+        print(f"INFO: dn protocol mapper already exists on {client_name} client. Skipping.")
+
+
+def add_pkce_support(keycloak_session: KeycloakAdmin, client_name: str):
+    """
+    Add PKCE support to the client
+
+    This is a fix for https://forge.univention.org/bugzilla/show_bug.cgi?id=56812
+    """
+
+    client_config, client_id = get_client_config_and_id(keycloak_session, client_name)
+    client_config["attributes"]["pkce.code.challenge.method"] = "S256"
+    keycloak_session.update_client(client_id, client_config)
+
+
+def fix_web_origins(keycloak_session: KeycloakAdmin, client_name: str):
+    """
+    Fix webOrigins to only have domains.
+
+    This is a fix for https://forge.univention.org/bugzilla/show_bug.cgi?id=56814
+    """
+
+    client_config, client_id = get_client_config_and_id(keycloak_session, client_name)
+
+    web_origins = client_config["webOrigins"]
+    cleaned_origins = []
+    for origin in web_origins:
+        url = urlparse(origin)
+        hostname = f"{url.scheme}://{url.hostname}"
+        if url.port:
+            hostname = f"{hostname}:{url.port}"
+        cleaned_origins.append(hostname)
+
+    client_config["webOrigins"] = list(set(cleaned_origins))
+    keycloak_session.update_client(client_id, client_config)
+
+
+def update_redirect_uris_and_web_origins(
+    keycloak_session: KeycloakAdmin,
+    client_name: str,
+    host: str,
+    redirect_url_base: str = "guardian",
+):
+    """Make sure current server is part of the redirectUris and webOrigins"""
+
+    client_config, client_id = get_client_config_and_id(keycloak_session, client_name)
+
+    host_url = f"https://{host}"
+    if host_url not in client_config["webOrigins"]:
+        client_config["webOrigins"].append(host_url)
+
+    redirect_url = f"{host_url}/{redirect_url_base}/*"
+    if redirect_url not in client_config["redirectUris"]:
+        client_config["redirectUris"].append(redirect_url)
+
+    keycloak_session.update_client(client_id, client_config)
+
+
+def make_public_client(keycloak_session: KeycloakAdmin, client_name: str):
+    """Turn client into a public client (i.e., no secret)"""
+
+    client_config, client_id = get_client_config_and_id(keycloak_session, client_name)
+    client_config["publicClient"] = True
+    keycloak_session.update_client(client_id, client_config)
