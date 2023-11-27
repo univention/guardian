@@ -79,18 +79,18 @@
     {
       "config": {
         "access.token.claim": "true",
-        "aggregate.attrs": "false",
+        "access.tokenResponse.claim": "false",
         "claim.name": "dn",
-        "id.token.claim": "true",
+        "claim.value": "dn=fake",
+        "id.token.claim": "false",
+        "introspection.token.claim": "true",
         "jsonType.label": "String",
-        "multivalued": "false",
-        "user.attribute": "LDAP_ENTRY_DN",
         "userinfo.token.claim": "true"
       },
       "consentRequired": false,
       "name": "dn",
       "protocol": "openid-connect",
-      "protocolMapper": "oidc-usermodel-attribute-mapper"
+      "protocolMapper": "oidc-hardcoded-claim-mapper"
     }
   ],
   "publicClient": true,
