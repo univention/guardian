@@ -19,7 +19,15 @@ services:
       GUARDIAN__MANAGEMENT__ADAPTER__ROLE_PERSISTENCE_PORT: sql
       GUARDIAN__MANAGEMENT__ADAPTER__CAPABILITY_PERSISTENCE_PORT: sql
       GUARDIAN__MANAGEMENT__ADAPTER__AUTHENTICATION_PORT: fast_api_oauth
-      GUARDIAN__MANAGEMENT__ADAPTER__AUTHORIZATION_API_URL: @%@guardian-management-api/authorization_api_url@%@
+      GUARDIAN__MANAGEMENT__ADAPTER__AUTHORIZATION_API_URL: @!@
+ucr = configRegistry
+authorization_url = ucr.get('guardian-management-api/authorization_api_url')
+if not authorization_url:
+    authorization_url = f"https://{ucr.get('hostname')}.{ucr.get('domainname')}/guardian/authorization"
+if not authorization_url.startswith("http"):
+    authorization_url = f"https://{authorization_url}"
+print(authorization_url, end='')@!@
+      GUARDIAN__MANAGEMENT__ADAPTER__RESOURCE_AUTHORIZATION_PORT: guardian
       IS_UNIVENTION_APPCENTER: 1
       SQL_PERSISTENCE_ADAPTER__DIALECT: postgresql
       SQL_PERSISTENCE_ADAPTER__DB_NAME: "/guardian_service_dir/management.db"
@@ -27,7 +35,9 @@ services:
 ucr = configRegistry
 base_url = ucr.get('guardian-management-api/oauth/keycloak-uri')
 if not base_url:
-    base_url = ucr.get('keycloak/server/sso/fqdn', f"https://ucs-sso-ng.{ucr.get('domainname')}")
+    base_url = ucr.get('keycloak/server/sso/fqdn', f"ucs-sso-ng.{ucr.get('domainname')}")
+if not base_url.startswith("http"):
+    base_url = f"https://{base_url}"
 realm = ucr.get('guardian-management-api/oauth/keycloak-realm')
 print(f"{base_url}/realms/{realm}/.well-known/openid-configuration", end='')@!@
       OAUTH_ADAPTER__M2M_SECRET: @%@guardian-management-api/oauth/keycloak-cli-client-secret@%@

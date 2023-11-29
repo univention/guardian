@@ -45,6 +45,7 @@ Show = Install,Settings
 
 [guardian-management-api/protocol]
 Type = List
+Required = True
 InitialValue = https
 Values = https, http
 Labels = https, http
@@ -64,6 +65,7 @@ Show = Install,Settings
 
 [guardian-management-api/oauth/keycloak-realm]
 Type = String
+Required = True
 InitialValue = ucs
 Description = Keycloak authentication realm.
 Description[de] = Keycloak-Authentifizierungsrealm.
@@ -73,6 +75,7 @@ Show = Install,Settings
 
 [guardian-management-api/oauth/keycloak-client-id]
 Type = String
+Required = True
 InitialValue = guardian
 Description = Keycloak client ID.
 Description[de] = ID des Keycloak-Client.
@@ -82,6 +85,7 @@ Show = Install,Settings
 
 [guardian-management-api/oauth/keycloak-cli-client-id]
 Type = String
+Required = True
 InitialValue = guardian-cli
 Description = Keycloak CLI client ID.
 Description[de] = ID des Keycloak-CLI-Client.
@@ -91,6 +95,8 @@ Show = Install,Settings
 
 [guardian-management-api/oauth/keycloak-cli-client-secret]
 Type = String
+Required = True
+InitialValue = changeme
 Description = Keycloak CLI client secret.
 Description[de] = Geheimnis des Keycloak-CLI-Clients.
 Group = Authentication
@@ -99,8 +105,8 @@ Show = Install,Settings
 
 [guardian-management-api/authorization_api_url]
 Type = String
-Description = URL to the Authorization API.
-Description[de] = URL zum Authorization API.
+Description = URL to the Authorization API. If not set, the url is generated from hostname and domainname.
+Description[de] = URL zum Authorization API. Wenn nicht gesetzt, wird die URL aus Hostname und Domainname generiert.
 Group = Authorization
 Scope = outside
 Show = Install,Settings
