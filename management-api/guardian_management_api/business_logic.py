@@ -192,67 +192,160 @@ async def create_namespace(
     api_request: NamespaceCreateRequest,
     namespace_api_port: FastAPINamespaceAPIAdapter,
     namespace_persistence_port: NamespacePersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
 ) -> NamespaceSingleResponse:
-    query = await namespace_api_port.to_namespace_create(api_request)
     try:
+        query = await namespace_api_port.to_namespace_create(api_request)
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        resource: Resource = Resource(
+            resource_type=ResourceType.NAMESPACE,
+            name=query.name,
+            app_name=query.app_name,
+        )
+        allowed = (
+            await authz_port.authorize_operation(
+                Actor(id=actor_id),
+                OperationType.CREATE_RESOURCE,
+                [resource],
+            )
+        ).get(resource.id, False)
+        if not allowed:
+            raise UnauthorizedError(
+                "The logged in user is not authorized to create this namespace."
+            )
         created_namespace = await namespace_persistence_port.create(query)
         logger.bind(query=query, created_namespace=created_namespace).debug(
             "Created Namespace."
         )
+        return await namespace_api_port.to_api_create_response(created_namespace)
     except Exception as exc:
         raise (await namespace_api_port.transform_exception(exc)) from exc
-    return await namespace_api_port.to_api_create_response(created_namespace)
 
 
 async def edit_namespace(
     api_request: NamespaceEditRequest,
     namespace_api_port: FastAPINamespaceAPIAdapter,
     namespace_persistence_port: NamespacePersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
 ):
-    query = await namespace_api_port.to_namespace_edit(api_request)
     try:
+        query = await namespace_api_port.to_namespace_edit(api_request)
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        resource: Resource = Resource(
+            resource_type=ResourceType.NAMESPACE,
+            name=query.name,
+            app_name=query.app_name,
+            namespace_name=query.name,
+        )
+        allowed = (
+            await authz_port.authorize_operation(
+                Actor(id=actor_id),
+                OperationType.UPDATE_RESOURCE,
+                [resource],
+            )
+        ).get(resource.id, False)
+        if not allowed:
+            raise UnauthorizedError(
+                "The logged in user is not authorized to update this namespace."
+            )
         updated_namespace = await namespace_persistence_port.update(query)
         logger.bind(query=query, updated_namespace=updated_namespace).debug(
             "Updated Namespace."
         )
+        return await namespace_api_port.to_api_edit_response(updated_namespace)
     except Exception as exc:
         raise (await namespace_api_port.transform_exception(exc)) from exc
-    return await namespace_api_port.to_api_edit_response(updated_namespace)
 
 
 async def get_namespace(
     api_request: NamespaceGetRequest,
     namespace_api_port: FastAPINamespaceAPIAdapter,
     namespace_persistence_port: NamespacePersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
 ):
-    query = await namespace_api_port.to_namespace_get(api_request)
     try:
+        query = await namespace_api_port.to_namespace_get(api_request)
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        resource: Resource = Resource(
+            resource_type=ResourceType.NAMESPACE,
+            name=query.name,
+            app_name=query.app_name,
+        )
+        allowed = (
+            await authz_port.authorize_operation(
+                Actor(id=actor_id),
+                OperationType.READ_RESOURCE,
+                [resource],
+            )
+        ).get(resource.id, False)
+        if not allowed:
+            raise UnauthorizedError(
+                "The logged in user is not authorized to read this namespace."
+            )
         namespace = await namespace_persistence_port.read_one(query)
         logger.bind(query=query, namespace=namespace).debug("Retrieved Namespace.")
+        return await namespace_api_port.to_api_get_response(namespace)
     except Exception as exc:
         raise (await namespace_api_port.transform_exception(exc)) from exc
-    return await namespace_api_port.to_api_get_response(namespace)
 
 
 async def get_namespaces(
     api_request: NamespacesGetRequest,
     namespace_api_port: FastAPINamespaceAPIAdapter,
     namespace_persistence_port: NamespacePersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
 ) -> NamespaceMultipleResponse:
-    query = await namespace_api_port.to_namespaces_get(api_request)
     try:
-        result = await namespace_persistence_port.read_many(query)
-        logger.bind(query=query, namespaces=result).debug("Retrieved Namespaces.")
+        query = await namespace_api_port.to_namespaces_get(api_request)
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        namespaces_persistence = await namespace_persistence_port.read_many(query)
+        logger.bind(query=query, namespaces=namespaces_persistence).debug(
+            "Retrieved Namespaces."
+        )
+        authz_result = await authz_port.authorize_operation(
+            Actor(id=actor_id),
+            OperationType.READ_RESOURCE,
+            [
+                Resource(
+                    resource_type=ResourceType.NAMESPACE,
+                    name=namespace.name,
+                    app_name=namespace.app_name,
+                )
+                for namespace in namespaces_persistence.objects
+            ],
+        )
+        allowed_namespaces = {
+            resource_id
+            for resource_id in authz_result.keys()
+            if authz_result[resource_id]
+        }
+        return await namespace_api_port.to_api_namespaces_get_response(
+            namespaces=[
+                ns
+                for ns in namespaces_persistence.objects
+                if Resource(
+                    resource_type=ResourceType.NAMESPACE,
+                    name=ns.name,
+                    app_name=ns.app_name,
+                ).id
+                in allowed_namespaces
+            ],
+            query_offset=query.pagination.query_offset,
+            query_limit=query.pagination.query_limit
+            if query.pagination.query_limit
+            else namespaces_persistence.total_count,
+            total_count=namespaces_persistence.total_count,
+        )
     except Exception as exc:
         raise (await namespace_api_port.transform_exception(exc)) from exc
-    return await namespace_api_port.to_api_namespaces_get_response(
-        namespaces=list(result.objects),
-        query_offset=query.pagination.query_offset,
-        query_limit=query.pagination.query_limit
-        if query.pagination.query_limit
-        else result.total_count,
-        total_count=result.total_count,
-    )
 
 
 async def register_app(
@@ -675,23 +768,55 @@ async def get_namespaces_by_app(
     api_request: GetByAppRequest,
     namespace_api_port: FastAPINamespaceAPIAdapter,
     namespace_persistence_port: NamespacePersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
 ):
-    query = await namespace_api_port.to_namespaces_by_appname_get(api_request)
     try:
-        result = await namespace_persistence_port.read_many(query)
-        logger.bind(query=query, namespaces=result).debug("Retrieved Namespaces.")
+        query = await namespace_api_port.to_namespaces_by_appname_get(api_request)
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        namespaces_persistence = await namespace_persistence_port.read_many(query)
+        logger.bind(query=query, namespaces=namespaces_persistence).debug(
+            "Retrieved Namespaces."
+        )
+        authz_result = await authz_port.authorize_operation(
+            Actor(id=actor_id),
+            OperationType.READ_RESOURCE,
+            [
+                Resource(
+                    resource_type=ResourceType.NAMESPACE,
+                    name=namespace.name,
+                    app_name=namespace.app_name,
+                )
+                for namespace in namespaces_persistence.objects
+            ],
+        )
+        allowed_namespaces = {
+            resource_id
+            for resource_id in authz_result.keys()
+            if authz_result[resource_id]
+        }
+        return await namespace_api_port.to_api_namespaces_get_response(
+            namespaces=[
+                ns
+                for ns in namespaces_persistence.objects
+                if Resource(
+                    resource_type=ResourceType.NAMESPACE,
+                    name=ns.name,
+                    app_name=ns.app_name,
+                ).id
+                in allowed_namespaces
+            ],
+            query_offset=query.pagination.query_offset,
+            query_limit=query.pagination.query_limit
+            if query.pagination.query_limit
+            else namespaces_persistence.total_count,
+            total_count=namespaces_persistence.total_count,
+        )
     except Exception as exc:
         raise (
             await namespace_api_port.transform_exception(exc)
         ) from exc  # pragma: no cover
-    return await namespace_api_port.to_api_namespaces_get_response(
-        namespaces=list(result.objects),
-        query_offset=query.pagination.query_offset,
-        query_limit=query.pagination.query_limit
-        if query.pagination.query_limit
-        else result.total_count,
-        total_count=result.total_count,
-    )
 
 
 async def get_capability(

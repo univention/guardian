@@ -95,6 +95,7 @@ class TestFunctions:
                 {
                     "app_name": "app",
                     "name": "namespace",
+                    "namespace_name": "namespace",
                 },
             ),
             (

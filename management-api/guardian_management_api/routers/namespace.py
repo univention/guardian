@@ -2,8 +2,9 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from guardian_lib.adapter_registry import port_dep
+from guardian_lib.ports import AuthenticationPort
 
 from .. import business_logic
 from ..adapters.namespace import FastAPINamespaceAPIAdapter
@@ -16,6 +17,7 @@ from ..models.routers.namespace import (
     NamespacesGetRequest,
     NamespaceSingleResponse,
 )
+from ..ports.authz import ResourceAuthorizationPort
 from ..ports.namespace import NamespaceAPIPort, NamespacePersistencePort
 
 router = APIRouter(tags=["namespace"])
@@ -23,12 +25,17 @@ router = APIRouter(tags=["namespace"])
 
 @router.get("/namespaces/{app_name}/{name}", response_model=NamespaceSingleResponse)
 async def get_namespace(
+    request: Request,
     namespace_get_request: NamespaceGetRequest = Depends(),
     namespace_api: FastAPINamespaceAPIAdapter = Depends(
         port_dep(NamespaceAPIPort, FastAPINamespaceAPIAdapter)
     ),
     namespace_persistence: NamespacePersistencePort = Depends(
         port_dep(NamespacePersistencePort)
+    ),
+    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
+    authz_port: ResourceAuthorizationPort = Depends(
+        port_dep(ResourceAuthorizationPort)
     ),
 ):
     """
@@ -38,18 +45,26 @@ async def get_namespace(
         api_request=namespace_get_request,
         namespace_api_port=namespace_api,
         namespace_persistence_port=namespace_persistence,
+        authc_port=authc_port,
+        authz_port=authz_port,
+        request=request,
     )
     return response.dict()
 
 
 @router.get("/namespaces", response_model=NamespaceMultipleResponse)
 async def get_all_namespaces(
+    request: Request,
     namespaces_get_request: NamespacesGetRequest = Depends(),
     namespace_api: FastAPINamespaceAPIAdapter = Depends(
         port_dep(NamespaceAPIPort, FastAPINamespaceAPIAdapter)
     ),
     namespace_persistence: NamespacePersistencePort = Depends(
         port_dep(NamespacePersistencePort)
+    ),
+    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
+    authz_port: ResourceAuthorizationPort = Depends(
+        port_dep(ResourceAuthorizationPort)
     ),
 ):
     """
@@ -59,18 +74,26 @@ async def get_all_namespaces(
         api_request=namespaces_get_request,
         namespace_api_port=namespace_api,
         namespace_persistence_port=namespace_persistence,
+        authc_port=authc_port,
+        authz_port=authz_port,
+        request=request,
     )
     return response.dict()
 
 
 @router.get("/namespaces/{app_name}", response_model=NamespaceMultipleResponse)
 async def get_namespaces_by_app(
+    request: Request,
     namespaces_by_app_get_request: GetByAppRequest = Depends(),
     namespace_api: FastAPINamespaceAPIAdapter = Depends(
         port_dep(NamespaceAPIPort, FastAPINamespaceAPIAdapter)
     ),
     namespace_persistence: NamespacePersistencePort = Depends(
         port_dep(NamespacePersistencePort)
+    ),
+    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
+    authz_port: ResourceAuthorizationPort = Depends(
+        port_dep(ResourceAuthorizationPort)
     ),
 ):
     """
@@ -80,6 +103,9 @@ async def get_namespaces_by_app(
         api_request=namespaces_by_app_get_request,
         namespace_api_port=namespace_api,
         namespace_persistence_port=namespace_persistence,
+        authc_port=authc_port,
+        authz_port=authz_port,
+        request=request,
     )
     return response.dict()
 
@@ -88,12 +114,17 @@ async def get_namespaces_by_app(
     "/namespaces/{app_name}", response_model=NamespaceSingleResponse, status_code=201
 )
 async def create_namespace(
+    request: Request,
     namespace_create_request: NamespaceCreateRequest = Depends(),
     namespace_api: FastAPINamespaceAPIAdapter = Depends(
         port_dep(NamespaceAPIPort, FastAPINamespaceAPIAdapter)
     ),
     namespace_persistence: NamespacePersistencePort = Depends(
         port_dep(NamespacePersistencePort)
+    ),
+    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
+    authz_port: ResourceAuthorizationPort = Depends(
+        port_dep(ResourceAuthorizationPort)
     ),
 ):
     """
@@ -103,6 +134,9 @@ async def create_namespace(
         api_request=namespace_create_request,
         namespace_api_port=namespace_api,
         namespace_persistence_port=namespace_persistence,
+        authc_port=authc_port,
+        authz_port=authz_port,
+        request=request,
     )
     return response.dict()
 
@@ -113,12 +147,17 @@ async def create_namespace(
     status_code=201,
 )
 async def edit_namespace(
+    request: Request,
     namespace_edit_request: NamespaceEditRequest = Depends(),
     namespace_api: FastAPINamespaceAPIAdapter = Depends(
         port_dep(NamespaceAPIPort, FastAPINamespaceAPIAdapter)
     ),
     namespace_persistence: NamespacePersistencePort = Depends(
         port_dep(NamespacePersistencePort)
+    ),
+    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
+    authz_port: ResourceAuthorizationPort = Depends(
+        port_dep(ResourceAuthorizationPort)
     ),
 ):
     """
@@ -128,5 +167,8 @@ async def edit_namespace(
         api_request=namespace_edit_request,
         namespace_api_port=namespace_api,
         namespace_persistence_port=namespace_persistence,
+        authc_port=authc_port,
+        authz_port=authz_port,
+        request=request,
     )
     return response.dict()

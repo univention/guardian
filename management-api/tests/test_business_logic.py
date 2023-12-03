@@ -77,21 +77,33 @@ class TestBusinessLogic:
             )
 
     @pytest.mark.asyncio
-    async def test_get_namespaces_internal_error(self, namespace_sql_adapter):
+    async def test_get_namespaces_internal_error(self, namespace_sql_adapter, mocker):
         async def _read_many():
             raise Exception()
 
         namespace_sql_adapter.read_many = _read_many
+        authz_mock = mocker.AsyncMock()
+        authz_mock.authorize_operation = mocker.AsyncMock(return_value={"test": False})
+        authc_mock = mocker.AsyncMock()
+        request = mocker.Mock()
         with pytest.raises(HTTPException):
             await get_namespaces(
                 api_request=NamespacesGetRequest(),
                 namespace_persistence_port=namespace_sql_adapter,
                 namespace_api_port=FastAPINamespaceAPIAdapter(),
+                authc_port=authc_mock,
+                authz_port=authz_mock,
+                request=request,
             )
 
     @pytest.mark.asyncio
     async def test_get_namespaces_by_appname_internal_error(
-        self, create_app, sqlalchemy_mixin, namespace_sql_adapter, app_sql_adapter
+        self,
+        create_app,
+        sqlalchemy_mixin,
+        namespace_sql_adapter,
+        app_sql_adapter,
+        mocker,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session)
@@ -100,11 +112,18 @@ class TestBusinessLogic:
             raise Exception()
 
         namespace_sql_adapter.read_many = _read_many
+        authz_mock = mocker.AsyncMock()
+        authz_mock.authorize_operation = mocker.AsyncMock(return_value={"test": False})
+        authc_mock = mocker.AsyncMock()
+        request = mocker.Mock()
         with pytest.raises(HTTPException):
             await get_namespaces_by_app(
                 api_request=GetByAppRequest(app_name="app"),
                 namespace_persistence_port=namespace_sql_adapter,
                 namespace_api_port=FastAPINamespaceAPIAdapter(),
+                authc_port=authc_mock,
+                authz_port=authz_mock,
+                request=request,
             )
 
     @pytest.mark.asyncio
@@ -378,6 +397,101 @@ class TestBusinessLogic:
                 api_request_mock,
                 api_port_mock,
                 bundle_server_mock,
+                persistence_mock,
+                authc_mock,
+                authz_mock,
+                request,
+            )
+
+    @pytest.mark.asyncio
+    async def test_get_namespace_unauthorized_error(self, mocker):
+        api_request_mock = mocker.MagicMock()
+        api_port_mock = mocker.AsyncMock()
+        api_port_mock.transform_exception = transform_exception_identity
+        persistence_mock = mocker.AsyncMock()
+        persistence_mock.read_one = mocker.AsyncMock(return_value={"test": "test"})
+        authz_mock = mocker.AsyncMock()
+        authz_mock.authorize_operation = mocker.AsyncMock(return_value={"test": False})
+        authc_mock = mocker.AsyncMock()
+        request = mocker.Mock()
+        with pytest.raises(
+            UnauthorizedError,
+            match="The logged in user is not authorized to read this namespace.",
+        ):
+            await business_logic.get_namespace(
+                api_request_mock,
+                api_port_mock,
+                persistence_mock,
+                authc_mock,
+                authz_mock,
+                request,
+            )
+
+    @pytest.mark.asyncio
+    async def test_get_namespaces_unauthorized(self, mocker):
+        api_request_mock = mocker.MagicMock()
+        api_port_mock = mocker.AsyncMock()
+        api_port_mock.transform_exception = transform_exception_identity
+        persistence_mock = mocker.AsyncMock()
+        authz_mock = mocker.AsyncMock()
+        authz_mock.authorize_operation = mocker.AsyncMock(return_value={"test": False})
+        authc_mock = mocker.AsyncMock()
+        request = mocker.Mock()
+        await business_logic.get_namespaces(
+            api_request_mock,
+            api_port_mock,
+            persistence_mock,
+            authc_mock,
+            authz_mock,
+            request,
+        )
+        assert (
+            api_port_mock.to_api_namespaces_get_response.call_args.kwargs["namespaces"]
+            == []
+        )
+
+    @pytest.mark.asyncio
+    async def test_create_namespace_unauthorized_error(self, mocker):
+        api_request_mock = mocker.MagicMock()
+        persistence_mock = mocker.AsyncMock()
+        api_port_mock = mocker.AsyncMock()
+        api_port_mock.to_namespace.return_value = (None, None)
+        api_port_mock.transform_exception = transform_exception_identity
+        authz_mock = mocker.AsyncMock()
+        authz_mock.authorize_operation = mocker.AsyncMock(return_value={"test": False})
+        authc_mock = mocker.AsyncMock()
+        request = mocker.Mock()
+        with pytest.raises(
+            UnauthorizedError,
+            match="The logged in user is not authorized to create this namespace.",
+        ):
+            await business_logic.create_namespace(
+                api_request_mock,
+                api_port_mock,
+                persistence_mock,
+                authc_mock,
+                authz_mock,
+                request,
+            )
+
+    @pytest.mark.asyncio
+    async def test_edit_namespace_unauthorized_error(self, mocker):
+        api_request_mock = mocker.MagicMock()
+        persistence_mock = mocker.AsyncMock()
+        api_port_mock = mocker.AsyncMock()
+        api_port_mock.to_namespace.return_value = (None, None)
+        api_port_mock.transform_exception = transform_exception_identity
+        authz_mock = mocker.AsyncMock()
+        authz_mock.authorize_operation = mocker.AsyncMock(return_value={"test": False})
+        authc_mock = mocker.AsyncMock()
+        request = mocker.Mock()
+        with pytest.raises(
+            UnauthorizedError,
+            match="The logged in user is not authorized to update this namespace.",
+        ):
+            await business_logic.edit_namespace(
+                api_request_mock,
+                api_port_mock,
                 persistence_mock,
                 authc_mock,
                 authz_mock,

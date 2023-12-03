@@ -3,9 +3,15 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 
+import os
+
 import pytest
 from guardian_management_api.constants import COMPLETE_URL
 from guardian_management_api.main import app
+from guardian_management_api.models.sql_persistence import (
+    DBNamespace,
+)
+from sqlalchemy import select
 
 DEFAULT_TEST_APP = "app"
 DEFAULT_TEST_NAMESPACE = "namespace"
@@ -296,3 +302,324 @@ class TestNamespaceEndpoints:
             json={"display_name": changed_display_name},
         )
         assert response.status_code == 404, response.json()
+
+
+@pytest.mark.e2e
+@pytest.mark.skipif(
+    "UCS_HOST_IP" not in os.environ,
+    reason="UCS_HOST_IP env var not set",
+)
+class TestNamespaceEndpointsAuthorization:
+    @pytest.mark.asyncio
+    async def test_get_guardian_namespace_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(
+                session=session,
+                name="guardian",
+            )
+            await create_namespace(
+                session=session,
+                display_name=None,
+                app_name="guardian",
+                name="namespace",
+            )
+        response = client.get(
+            app.url_path_for(
+                "get_namespace",
+                name="namespace",
+                app_name="guardian",
+            ),
+        )
+        assert response.status_code == 200
+        assert response.json()["namespace"]["name"] == "namespace"
+
+    @pytest.mark.asyncio
+    async def test_get_other_namespace_not_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(
+                session=session,
+                name="other",
+            )
+            await create_namespace(
+                session=session,
+                display_name=None,
+                app_name="other",
+                name="namespace",
+            )
+        response = client.get(
+            app.url_path_for(
+                "get_namespace",
+                name="namespace",
+                app_name="other",
+            ),
+        )
+        assert response.status_code == 403
+
+    @pytest.mark.asyncio
+    async def test_get_all_namespaces(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(
+                session=session,
+                name="guardian",
+            )
+            await create_namespace(
+                session=session,
+                display_name=None,
+                app_name="guardian",
+                name="namespace",
+            )
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(
+                session=session,
+                name="other",
+            )
+            await create_namespace(
+                session=session,
+                display_name=None,
+                app_name="other",
+                name="namespace",
+            )
+        response = client.get(
+            app.url_path_for("get_all_namespaces"),
+        )
+        assert response.status_code == 200
+        assert any(
+            namespace["name"] == "namespace"
+            for namespace in response.json()["namespaces"]
+        )
+        assert not any(
+            namespace["name"] == "other" for namespace in response.json()["namespaces"]
+        )
+
+    @pytest.mark.asyncio
+    async def test_patch_guardian_namespace_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(
+                session=session,
+                name="guardian",
+            )
+            await create_namespace(
+                session=session,
+                display_name=None,
+                app_name="guardian",
+                name="namespace",
+            )
+        response = client.patch(
+            app.url_path_for(
+                "edit_namespace",
+                name="namespace",
+                app_name="guardian",
+            ),
+            json={
+                "display_name": "expected displayname",
+                "permissions": [],
+                "conditions": [],
+                "relation": "AND",
+                "role": {
+                    "app_name": "guardian",
+                    "namespace_name": "namespace",
+                    "name": "role",
+                },
+            },
+        )
+        assert response.status_code == 201
+        assert response.json()["namespace"]["name"] == "namespace"
+        assert response.json()["namespace"]["display_name"] == "expected displayname"
+
+    @pytest.mark.asyncio
+    async def test_patch_other_namespace_not_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(
+                session=session,
+                name="other",
+            )
+            await create_namespace(
+                session=session,
+                display_name=None,
+                app_name="other",
+                name="namespace",
+            )
+        response = client.patch(
+            app.url_path_for(
+                "edit_namespace",
+                name="namespace",
+                app_name="other",
+            ),
+            json={
+                "display_name": "expected displayname",
+                "permissions": [],
+                "relation": "AND",
+                "role": {
+                    "app_name": "other",
+                    "namespace_name": "namespace",
+                    "name": "role",
+                },
+            },
+        )
+        assert response.status_code == 403
+
+        # check that the namespace was not updated in the database
+        async with sqlalchemy_mixin.session() as session:
+            db_cap = (
+                (await session.execute(select(DBNamespace).filter_by(name="namespace")))
+                .unique()
+                .scalar_one_or_none()
+            )
+            assert db_cap.display_name is None
+
+    @pytest.mark.asyncio
+    async def test_create_namespace_not_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(
+                session=session,
+                name="other",
+            )
+            # easiest way to setup app, namespace, roles...
+            await create_namespace(
+                session=session,
+                name="test2",
+                display_name=None,
+                app_name="other",
+            )
+        response = client.post(
+            app.url_path_for("create_namespace", app_name="other"),
+            json={
+                "name": "test3",
+                "display_name": "expected displayname",
+                "permissions": [],
+                "conditions": [],
+                "relation": "AND",
+                "role": {
+                    "app_name": "other",
+                    "namespace_name": "namespace",
+                    "name": "role",
+                },
+            },
+        )
+        assert response.status_code == 403
+
+        # check that the namespace was not created in the database
+        async with sqlalchemy_mixin.session() as session:
+            db_cap = (
+                (await session.execute(select(DBNamespace).filter_by(name="test3")))
+                .unique()
+                .scalar_one_or_none()
+            )
+            assert db_cap is None
+
+    @pytest.mark.asyncio
+    async def test_get_namespaces_by_app(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(
+                session=session,
+                name="guardian",
+            )
+            await create_namespace(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="guardian",
+            )
+        response = client.get(
+            app.url_path_for(
+                "get_namespaces_by_app",
+                app_name="guardian",
+            ),
+        )
+        assert response.status_code == 200
+        assert any(
+            namespace["name"] == "test" for namespace in response.json()["namespaces"]
+        )
+        assert not any(
+            namespace["name"] == "other" for namespace in response.json()["namespaces"]
+        )
+
+    @pytest.mark.asyncio
+    async def test_get_namespaces_by_app_not_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(
+                session=session,
+                name="other",
+            )
+            await create_namespace(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="other",
+            )
+
+        response = client.get(
+            app.url_path_for(
+                "get_namespaces_by_app",
+                app_name="other",
+            ),
+        )
+
+        assert response.status_code == 200
+        assert not any(
+            namespace["name"] == "test" for namespace in response.json()["namespaces"]
+        )
