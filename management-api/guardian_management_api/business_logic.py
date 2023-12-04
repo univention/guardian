@@ -133,19 +133,18 @@ async def get_app(
 ) -> AppSingleResponse:
     try:
         query = await app_api_port.to_app_get(api_request)
-        app = await persistence_port.read_one(query)
         actor_id: str = await authc_port.get_actor_identifier(request)
+        resource = Resource(resource_type=ResourceType.APP, name=query.name)
         allowed = (
             await authz_port.authorize_operation(
-                Actor(id=actor_id),
-                OperationType.READ_RESOURCE,
-                [Resource(resource_type=ResourceType.APP, name=app.name)],
+                Actor(id=actor_id), OperationType.READ_RESOURCE, [resource]
             )
-        ).get(app.name, False)
+        ).get(resource.id, False)
         if not allowed:
             raise UnauthorizedError(
                 "The logged in user is not authorized to read this app."
             )
+        app = await persistence_port.read_one(query)
         return await app_api_port.to_api_get_response(app)
     except Exception as exc:
         raise (await app_api_port.transform_exception(exc)) from exc
@@ -177,7 +176,12 @@ async def get_apps(
             if authz_result[resource_id]
         }
         return await app_api_port.to_api_apps_get_response(
-            apps=[app for app in many_apps.objects if app.name in allowed_apps],
+            apps=[
+                app
+                for app in many_apps.objects
+                if Resource(resource_type=ResourceType.APP, name=app.name).id
+                in allowed_apps
+            ],
             query_offset=query.pagination.query_offset,
             query_limit=query.pagination.query_limit
             if query.pagination.query_limit
@@ -363,13 +367,12 @@ async def register_app(
     try:
         query = await app_api_port.to_app_create(api_request)
         actor_id: str = await authc_port.get_actor_identifier(request)
+        resource = Resource(resource_type=ResourceType.APP, name=query.apps[0].name)
         allowed = (
             await authz_port.authorize_operation(
-                Actor(id=actor_id),
-                OperationType.CREATE_RESOURCE,
-                [Resource(resource_type=ResourceType.APP, name=query.apps[0].name)],
+                Actor(id=actor_id), OperationType.CREATE_RESOURCE, [resource]
             )
-        ).get(query.apps[0].name, False)
+        ).get(resource.id, False)
         if not allowed:
             raise UnauthorizedError(
                 "The logged in user is not authorized to register this app."
@@ -477,19 +480,20 @@ async def edit_app(
 ) -> AppSingleResponse:
     try:
         query, changed_data = await app_api_port.to_app_edit(api_request)
-        old_app = await persistence_port.read_one(query)
         actor_id: str = await authc_port.get_actor_identifier(request)
+        resource = Resource(resource_type=ResourceType.APP, name=query.name)
         allowed = (
             await authz_port.authorize_operation(
                 Actor(id=actor_id),
                 OperationType.UPDATE_RESOURCE,
-                [Resource(resource_type=ResourceType.APP, name=old_app.name)],
+                [resource],
             )
-        ).get(old_app.name, False)
+        ).get(resource.id, False)
         if not allowed:
             raise UnauthorizedError(
                 "The logged in user is not authorized to edit this app."
             )
+        old_app = await persistence_port.read_one(query)
         for key, value in changed_data.items():
             setattr(old_app, key, value)
         updated_app = await persistence_port.update(old_app)

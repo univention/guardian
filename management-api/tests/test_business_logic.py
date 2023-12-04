@@ -270,7 +270,7 @@ class TestBusinessLogic:
         api_request_mock = mocker.MagicMock()
         persistence_mock = mocker.AsyncMock()
         api_port_mock = mocker.AsyncMock()
-        api_port_mock.to_app_edit.return_value = (None, None)
+        api_port_mock.to_app_edit.return_value = (mocker.Mock(), None)
         api_port_mock.transform_exception = transform_exception_identity
         authz_mock = mocker.AsyncMock()
         authz_mock.authorize_operation = mocker.AsyncMock(return_value={"test": False})

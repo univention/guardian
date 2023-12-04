@@ -43,6 +43,7 @@ def _get_resource_target(resource: Resource) -> dict[str, str]:
         return {
             # we need the app_name because the current OPA model relies on it
             "app_name": resource.name,
+            "namespace_name": "",
             "name": resource.name,
         }
     if not resource.app_name:
@@ -50,6 +51,7 @@ def _get_resource_target(resource: Resource) -> dict[str, str]:
     if resource.resource_type == ResourceType.NAMESPACE:
         return {
             "app_name": resource.app_name,
+            "namespace_name": resource.name,
             "name": resource.name,
             "namespace_name": resource.name,
         }
