@@ -4,8 +4,9 @@
 
 from typing import Any, Dict
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from guardian_lib.adapter_registry import port_dep
+from guardian_lib.ports import AuthenticationPort
 
 from guardian_management_api import business_logic
 
@@ -20,6 +21,7 @@ from ..models.routers.role import (
     RoleMultipleResponse,
     RoleSingleResponse,
 )
+from ..ports.authz import ResourceAuthorizationPort
 from ..ports.role import RoleAPIPort, RolePersistencePort
 
 router = APIRouter(tags=["role"])
@@ -29,11 +31,16 @@ router = APIRouter(tags=["role"])
     "/roles/{app_name}/{namespace_name}/{name}", response_model=RoleSingleResponse
 )
 async def get_role(
+    request: Request,
     role_get_request: RoleGetFullIdentifierRequest = Depends(),
     management_role_api: RoleAPIPort = Depends(
         port_dep(RoleAPIPort, FastAPIRoleAPIAdapter)
     ),
     persistence: RolePersistencePort = Depends(port_dep(RolePersistencePort)),
+    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
+    authz_port: ResourceAuthorizationPort = Depends(
+        port_dep(ResourceAuthorizationPort)
+    ),
 ) -> Dict[str, Any]:
     """
     Returns a role object identified by `app_name`, `namespace_name` and `name`.
@@ -42,6 +49,9 @@ async def get_role(
         api_request=role_get_request,
         role_api_port=management_role_api,
         persistence_port=persistence,
+        authc_port=authc_port,
+        authz_port=authz_port,
+        request=request,
     )
 
     return response.dict()
@@ -49,11 +59,16 @@ async def get_role(
 
 @router.get("/roles", response_model=RoleMultipleResponse)
 async def get_all_roles(
+    request: Request,
     role_get_request: RoleGetAllRequest = Depends(),
     management_role_api: RoleAPIPort = Depends(
         port_dep(RoleAPIPort, FastAPIRoleAPIAdapter)
     ),
     persistence: RolePersistencePort = Depends(port_dep(RolePersistencePort)),
+    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
+    authz_port: ResourceAuthorizationPort = Depends(
+        port_dep(ResourceAuthorizationPort)
+    ),
 ) -> Dict[str, Any]:
     """
     Returns a list of all roles.
@@ -62,6 +77,9 @@ async def get_all_roles(
         api_request=role_get_request,
         role_api_port=management_role_api,
         persistence_port=persistence,
+        authc_port=authc_port,
+        authz_port=authz_port,
+        request=request,
     )
 
     return response.dict()
@@ -69,11 +87,16 @@ async def get_all_roles(
 
 @router.get("/roles/{app_name}", response_model=RoleMultipleResponse)
 async def get_roles_by_app(
+    request: Request,
     role_get_request: RoleGetByAppRequest = Depends(),
     management_role_api: RoleAPIPort = Depends(
         port_dep(RoleAPIPort, FastAPIRoleAPIAdapter)
     ),
     persistence: RolePersistencePort = Depends(port_dep(RolePersistencePort)),
+    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
+    authz_port: ResourceAuthorizationPort = Depends(
+        port_dep(ResourceAuthorizationPort)
+    ),
 ) -> Dict[str, Any]:
     """
     Returns a list of all roles that belong to `app_name`.
@@ -82,6 +105,9 @@ async def get_roles_by_app(
         api_request=role_get_request,
         role_api_port=management_role_api,
         persistence_port=persistence,
+        authc_port=authc_port,
+        authz_port=authz_port,
+        request=request,
     )
 
     return response.dict()
@@ -89,11 +115,16 @@ async def get_roles_by_app(
 
 @router.get("/roles/{app_name}/{namespace_name}", response_model=RoleMultipleResponse)
 async def get_roles_by_namespace(
+    request: Request,
     role_get_request: RoleGetByNamespaceRequest = Depends(),
     management_role_api: RoleAPIPort = Depends(
         port_dep(RoleAPIPort, FastAPIRoleAPIAdapter)
     ),
     persistence: RolePersistencePort = Depends(port_dep(RolePersistencePort)),
+    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
+    authz_port: ResourceAuthorizationPort = Depends(
+        port_dep(ResourceAuthorizationPort)
+    ),
 ) -> Dict[str, Any]:
     """
     Returns a list of all roles that belong to `namespace_name` under `app_name`.
@@ -102,6 +133,9 @@ async def get_roles_by_namespace(
         api_request=role_get_request,
         role_api_port=management_role_api,
         persistence_port=persistence,
+        authc_port=authc_port,
+        authz_port=authz_port,
+        request=request,
     )
 
     return response.dict()
@@ -113,11 +147,16 @@ async def get_roles_by_namespace(
     status_code=201,
 )
 async def create_role(
+    request: Request,
     role_create_request: RoleCreateRequest = Depends(),
     management_role_api: RoleAPIPort = Depends(
         port_dep(RoleAPIPort, FastAPIRoleAPIAdapter)
     ),
     persistence: RolePersistencePort = Depends(port_dep(RolePersistencePort)),
+    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
+    authz_port: ResourceAuthorizationPort = Depends(
+        port_dep(ResourceAuthorizationPort)
+    ),
 ) -> Dict[str, Any]:
     """
     Create a role.
@@ -126,6 +165,9 @@ async def create_role(
         api_request=role_create_request,
         role_api_port=management_role_api,
         persistence_port=persistence,
+        authc_port=authc_port,
+        authz_port=authz_port,
+        request=request,
     )
     return response.dict()
 
@@ -134,11 +176,16 @@ async def create_role(
     "/roles/{app_name}/{namespace_name}/{name}", response_model=RoleSingleResponse
 )
 async def edit_role(
+    request: Request,
     role_edit_request: RoleEditRequest = Depends(),
     management_role_api: RoleAPIPort = Depends(
         port_dep(RoleAPIPort, FastAPIRoleAPIAdapter)
     ),
     persistence: RolePersistencePort = Depends(port_dep(RolePersistencePort)),
+    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
+    authz_port: ResourceAuthorizationPort = Depends(
+        port_dep(ResourceAuthorizationPort)
+    ),
 ) -> Dict[str, Any]:
     """
     Update a role.
@@ -147,6 +194,9 @@ async def edit_role(
         api_request=role_edit_request,
         role_api_port=management_role_api,
         persistence_port=persistence,
+        authc_port=authc_port,
+        authz_port=authz_port,
+        request=request,
     )
 
     return response.dict()

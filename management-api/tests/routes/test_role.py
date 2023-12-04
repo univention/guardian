@@ -2,12 +2,15 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
+import os
 from urllib.parse import urljoin
 
 import pytest
 from guardian_management_api.adapters.role import SQLRolePersistenceAdapter
 from guardian_management_api.constants import BASE_URL, COMPLETE_URL
+from guardian_management_api.main import app
 from guardian_management_api.models.sql_persistence import DBRole
+from sqlalchemy import select
 
 
 @pytest.mark.e2e
@@ -507,3 +510,313 @@ class TestRoleEndpoints:
                 "display_name": orig_role.display_name,
                 "resource_url": urljoin(BASE_URL, resource),
             }
+
+
+@pytest.mark.e2e
+@pytest.mark.skipif(
+    "UCS_HOST_IP" not in os.environ,
+    reason="UCS_HOST_IP env var not set",
+)
+class TestRoleEndpointsAuthorization:
+    @pytest.mark.asyncio
+    async def test_get_guardian_role_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_role,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="guardian", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="guardian",
+            )
+            await create_role(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="guardian",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for(
+                "get_role",
+                name="test",
+                namespace_name="namespace",
+                app_name="guardian",
+            ),
+        )
+        assert response.status_code == 200
+        assert response.json()["role"]["name"] == "test"
+
+    @pytest.mark.asyncio
+    async def test_get_other_role_not_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_role,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="other", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="other",
+            )
+            await create_role(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="other",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for(
+                "get_role",
+                name="test",
+                namespace_name="namespace",
+                app_name="other",
+            ),
+        )
+        assert response.status_code == 403
+
+    @pytest.mark.asyncio
+    async def test_get_all_roles(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_role,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="guardian", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="guardian",
+            )
+            await create_role(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="guardian",
+                namespace_name="namespace",
+            )
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="other", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="other",
+            )
+            await create_role(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="other",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for("get_all_roles"),
+        )
+        assert response.status_code == 200
+        assert any(role["name"] == "test" for role in response.json()["roles"])
+        assert not any(role["name"] == "other" for role in response.json()["roles"])
+
+    @pytest.mark.asyncio
+    async def test_create_role_not_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_role,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="other", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="other",
+            )
+        response = client.post(
+            app.url_path_for(
+                "create_role", namespace_name="namespace", app_name="other"
+            ),
+            json={
+                "name": "test3",
+                "display_name": "expected displayname",
+                "permissions": [],
+                "conditions": [],
+                "relation": "AND",
+                "role": {
+                    "app_name": "other",
+                    "namespace_name": "namespace",
+                    "name": "role",
+                },
+            },
+        )
+        assert response.status_code == 403
+
+        # check that the role was not created in the database
+        async with sqlalchemy_mixin.session() as session:
+            db_cap = (
+                (await session.execute(select(DBRole).filter_by(name="test3")))
+                .unique()
+                .scalar_one_or_none()
+            )
+            assert db_cap is None
+
+    # get roles by app
+    @pytest.mark.asyncio
+    async def test_get_roles_by_app_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_role,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="guardian", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="guardian",
+            )
+            await create_role(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="guardian",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for("get_roles_by_app", app_name="guardian"),
+        )
+        assert response.status_code == 200
+        assert any(role["name"] == "test" for role in response.json()["roles"])
+
+    @pytest.mark.asyncio
+    async def test_get_roles_by_app_not_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_role,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="other", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="other",
+            )
+            await create_role(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="other",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for("get_roles_by_app", app_name="other"),
+        )
+        assert response.json()["roles"] == []
+
+    @pytest.mark.asyncio
+    async def test_get_roles_by_namespace_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_role,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="guardian", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="guardian",
+            )
+            await create_role(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="guardian",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for(
+                "get_roles_by_namespace",
+                app_name="guardian",
+                namespace_name="namespace",
+            ),
+        )
+        assert response.status_code == 200
+        assert any(role["name"] == "test" for role in response.json()["roles"])
+
+    @pytest.mark.asyncio
+    async def test_get_roles_by_namespace_not_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_role,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="other", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="other",
+            )
+            await create_role(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="other",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for(
+                "get_roles_by_namespace",
+                app_name="other",
+                namespace_name="namespace",
+            ),
+        )
+        assert response.json()["roles"] == []

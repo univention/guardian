@@ -636,9 +636,30 @@ async def get_role(
     api_request: RoleGetFullIdentifierRequest,
     role_api_port: RoleAPIPort,
     persistence_port: RolePersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
 ) -> RoleSingleResponse:
     try:
         query = await role_api_port.to_role_get(api_request)
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        resource: Resource = Resource(
+            resource_type=ResourceType.CAPABILITY,
+            name=query.name,
+            namespace_name=query.namespace_name,
+            app_name=query.app_name,
+        )
+        allowed = (
+            await authz_port.authorize_operation(
+                Actor(id=actor_id),
+                OperationType.READ_RESOURCE,
+                [resource],
+            )
+        ).get(resource.id, False)
+        if not allowed:
+            raise UnauthorizedError(
+                "The logged in user is not authorized to read this role."
+            )
         role = await persistence_port.read_one(query)
         return await role_api_port.to_role_get_response(role)
     except Exception as exc:
@@ -649,12 +670,44 @@ async def get_roles(
     api_request: RoleGetAllRequest | RoleGetByAppRequest | RoleGetByNamespaceRequest,
     role_api_port: RoleAPIPort,
     persistence_port: RolePersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
 ) -> RoleMultipleResponse:
     try:
         query = await role_api_port.to_roles_get(api_request)
+        actor_id: str = await authc_port.get_actor_identifier(request)
         many_roles = await persistence_port.read_many(query)
+        authz_result = await authz_port.authorize_operation(
+            Actor(id=actor_id),
+            OperationType.READ_RESOURCE,
+            [
+                Resource(
+                    resource_type=ResourceType.ROLE,
+                    name=role.name,
+                    namespace_name=role.namespace_name,
+                    app_name=role.app_name,
+                )
+                for role in many_roles.objects
+            ],
+        )
+        allowed_roles = {
+            resource_id
+            for resource_id in authz_result.keys()
+            if authz_result[resource_id]
+        }
         return await role_api_port.to_roles_get_response(
-            roles=list(many_roles.objects),
+            roles=[
+                role
+                for role in many_roles.objects
+                if Resource(
+                    resource_type=ResourceType.ROLE,
+                    name=role.name,
+                    namespace_name=role.namespace_name,
+                    app_name=role.app_name,
+                ).id
+                in allowed_roles
+            ],
             query_offset=query.pagination.query_offset,
             query_limit=query.pagination.query_limit
             if query.pagination.query_limit
@@ -669,10 +722,31 @@ async def create_role(
     api_request: RoleCreateRequest,
     role_api_port: RoleAPIPort,
     persistence_port: RolePersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
 ) -> RoleSingleResponse:
     try:
         query = await role_api_port.to_role_create(api_request)
+        actor_id: str = await authc_port.get_actor_identifier(request)
         role = query.roles[0]
+        resource: Resource = Resource(
+            resource_type=ResourceType.ROLE,
+            name=role.name,
+            namespace_name=role.namespace_name,
+            app_name=role.app_name,
+        )
+        allowed = (
+            await authz_port.authorize_operation(
+                Actor(id=actor_id),
+                OperationType.CREATE_RESOURCE,
+                [resource],
+            )
+        ).get(resource.id, False)
+        if not allowed:
+            raise UnauthorizedError(
+                "The logged in user is not authorized to create this role."
+            )
         created_role = await persistence_port.create(role)
         return await role_api_port.to_role_create_response(created_role)
     except Exception as exc:
@@ -683,9 +757,30 @@ async def edit_role(
     api_request: RoleEditRequest,
     role_api_port: RoleAPIPort,
     persistence_port: RolePersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
 ) -> RoleSingleResponse:
     try:
         query = await role_api_port.to_role_get(api_request)
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        resource: Resource = Resource(
+            resource_type=ResourceType.ROLE,
+            name=query.name,
+            namespace_name=query.namespace_name,
+            app_name=query.app_name,
+        )
+        allowed = (
+            await authz_port.authorize_operation(
+                Actor(id=actor_id),
+                OperationType.UPDATE_RESOURCE,
+                [resource],
+            )
+        ).get(resource.id, False)
+        if not allowed:
+            raise UnauthorizedError(
+                "The logged in user is not authorized to edit this role."
+            )
         role = await persistence_port.read_one(query)
         role = await role_api_port.to_role_edit(
             old_role=role, display_name=api_request.data.display_name

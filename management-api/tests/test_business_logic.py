@@ -497,3 +497,95 @@ class TestBusinessLogic:
                 authz_mock,
                 request,
             )
+
+    @pytest.mark.asyncio
+    async def test_get_role_unauthorized_error(self, mocker):
+        api_request_mock = mocker.MagicMock()
+        api_port_mock = mocker.AsyncMock()
+        api_port_mock.transform_exception = transform_exception_identity
+        persistence_mock = mocker.AsyncMock()
+        persistence_mock.read_one = mocker.AsyncMock(return_value={"test": "test"})
+        authz_mock = mocker.AsyncMock()
+        authz_mock.authorize_operation = mocker.AsyncMock(return_value={"test": False})
+        authc_mock = mocker.AsyncMock()
+        request_mock = mocker.Mock()
+        with pytest.raises(
+            UnauthorizedError,
+            match="The logged in user is not authorized to read this role.",
+        ):
+            await business_logic.get_role(
+                api_request_mock,
+                api_port_mock,
+                persistence_mock,
+                authc_mock,
+                authz_mock,
+                request_mock,
+            )
+
+    @pytest.mark.asyncio
+    async def test_get_roles_unauthorized(self, mocker):
+        api_request_mock = mocker.MagicMock()
+        api_port_mock = mocker.AsyncMock()
+        api_port_mock.transform_exception = transform_exception_identity
+        persistence_mock = mocker.AsyncMock()
+        authz_mock = mocker.AsyncMock()
+        authz_mock.authorize_operation = mocker.AsyncMock(return_value={"test": False})
+        authc_mock = mocker.AsyncMock()
+        request_mock = mocker.Mock()
+        await business_logic.get_roles(
+            api_request_mock,
+            api_port_mock,
+            persistence_mock,
+            authc_mock,
+            authz_mock,
+            request_mock,
+        )
+        assert api_port_mock.to_roles_get_response.call_args.kwargs["roles"] == []
+
+    @pytest.mark.asyncio
+    async def test_create_role_unauthorized_error(self, mocker):
+        api_request_mock = mocker.MagicMock()
+        persistence_mock = mocker.AsyncMock()
+        api_port_mock = mocker.AsyncMock()
+        api_port_mock.to_role.return_value = (None, None)
+        api_port_mock.transform_exception = transform_exception_identity
+        authz_mock = mocker.AsyncMock()
+        authz_mock.authorize_operation = mocker.AsyncMock(return_value={})
+        authc_mock = mocker.AsyncMock()
+        request_mock = mocker.Mock()
+        with pytest.raises(
+            UnauthorizedError,
+            match="The logged in user is not authorized to create this role.",
+        ):
+            await business_logic.create_role(
+                api_request_mock,
+                api_port_mock,
+                persistence_mock,
+                authc_mock,
+                authz_mock,
+                request_mock,
+            )
+
+    @pytest.mark.asyncio
+    async def test_edit_role_unauthorized_error(self, mocker):
+        api_request_mock = mocker.MagicMock()
+        persistence_mock = mocker.AsyncMock()
+        api_port_mock = mocker.AsyncMock()
+        api_port_mock.to_role.return_value = (None, None)
+        api_port_mock.transform_exception = transform_exception_identity
+        authz_mock = mocker.AsyncMock()
+        authz_mock.authorize_operation = mocker.AsyncMock(return_value={})
+        authc_mock = mocker.AsyncMock()
+        request_mock = mocker.Mock()
+        with pytest.raises(
+            UnauthorizedError,
+            match="The logged in user is not authorized to edit this role.",
+        ):
+            await business_logic.edit_role(
+                api_request_mock,
+                api_port_mock,
+                persistence_mock,
+                authc_mock,
+                authz_mock,
+                request_mock,
+            )
