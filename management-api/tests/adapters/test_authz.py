@@ -83,6 +83,7 @@ class TestFunctions:
                 ),
                 {
                     "app_name": "app",
+                    "namespace_name": "",
                     "name": "app",
                 },
             ),
@@ -94,6 +95,7 @@ class TestFunctions:
                 ),
                 {
                     "app_name": "app",
+                    "namespace_name": "namespace",
                     "name": "namespace",
                 },
             ),
@@ -464,11 +466,11 @@ class TestGuardianAuthorizationAdapterIntegration:
             OperationType.DELETE_RESOURCE,
             [
                 Resource(
-                    name="guardian",
+                    name="other",
                     resource_type=ResourceType.APP,
                 )
             ],
-        ) == {"guardian": False}
+        ) == {"other": False}
 
     @pytest.mark.asyncio
     async def test_authorize_operation_actor_allowed_app(self, registry_test_adapters):
