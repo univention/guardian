@@ -662,10 +662,31 @@ async def create_permission(
     api_request: PermissionAPICreateRequestObject,
     api_port: PermissionAPIPort,
     persistence_port: PermissionPersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
 ) -> PermissionAPIGetSingleResponseObject:
     try:
         query = await api_port.to_obj_create(api_request)
         permission = query.permissions[0]
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        resource: Resource = Resource(
+            resource_type=ResourceType.PERMISSION,
+            name=permission.name,
+            namespace_name=permission.namespace_name,
+            app_name=permission.app_name,
+        )
+        allowed = (
+            await authz_port.authorize_operation(
+                Actor(id=actor_id),
+                OperationType.CREATE_RESOURCE,
+                [resource],
+            )
+        ).get(resource.id, False)
+        if not allowed:
+            raise UnauthorizedError(
+                "The logged in user is not authorized to create this permission."
+            )
         created_permission = await persistence_port.create(permission)
         return await api_port.to_api_get_single_response(created_permission)
     except Exception as exc:
@@ -676,9 +697,30 @@ async def get_permission(
     api_request: PermissionAPIGetSingleRequestObject,
     api_port: PermissionAPIPort,
     persistence_port: PermissionPersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
 ) -> PermissionAPIGetSingleResponseObject:
     try:
         query = await api_port.to_obj_get_single(api_request)
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        resource: Resource = Resource(
+            resource_type=ResourceType.PERMISSION,
+            name=query.name,
+            namespace_name=query.namespace_name,
+            app_name=query.app_name,
+        )
+        allowed = (
+            await authz_port.authorize_operation(
+                Actor(id=actor_id),
+                OperationType.READ_RESOURCE,
+                [resource],
+            )
+        ).get(resource.id, False)
+        if not allowed:
+            raise UnauthorizedError(
+                "The logged in user is not authorized to read this permission."
+            )
         permission = await persistence_port.read_one(query)
         return await api_port.to_api_get_single_response(permission)
     except Exception as exc:
@@ -689,12 +731,44 @@ async def get_permissions(
     api_request: PermissionAPIGetMultipleRequestObject,
     api_port: PermissionAPIPort,
     persistence_port: PermissionPersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
 ) -> PermissionAPIGetMultipleResponseObject:
     try:
         query = await api_port.to_obj_get_multiple(api_request)
         many_permissions = await persistence_port.read_many(query)
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        authz_result = await authz_port.authorize_operation(
+            Actor(id=actor_id),
+            OperationType.READ_RESOURCE,
+            [
+                Resource(
+                    resource_type=ResourceType.PERMISSION,
+                    name=permission.name,
+                    namespace_name=permission.namespace_name,
+                    app_name=permission.app_name,
+                )
+                for permission in many_permissions.objects
+            ],
+        )
+        allowed_permissions = {
+            resource_id
+            for resource_id in authz_result.keys()
+            if authz_result[resource_id]
+        }
         return await api_port.to_api_get_multiple_response(
-            objs=list(many_permissions.objects),
+            [
+                permission
+                for permission in many_permissions.objects
+                if Resource(
+                    resource_type=ResourceType.PERMISSION,
+                    name=permission.name,
+                    namespace_name=permission.namespace_name,
+                    app_name=permission.app_name,
+                ).id
+                in allowed_permissions
+            ],
             query_offset=query.pagination.query_offset,
             query_limit=query.pagination.query_limit
             if query.pagination.query_limit
@@ -709,9 +783,30 @@ async def edit_permission(
     api_request: PermissionAPIEditRequestObject,
     api_port: PermissionAPIPort,
     persistence_port: PermissionPersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
 ) -> PermissionAPIGetSingleResponseObject:
     try:
         query, changed_values = await api_port.to_obj_edit(api_request)
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        resource: Resource = Resource(
+            resource_type=ResourceType.PERMISSION,
+            name=query.name,
+            namespace_name=query.namespace_name,
+            app_name=query.app_name,
+        )
+        allowed = (
+            await authz_port.authorize_operation(
+                Actor(id=actor_id),
+                OperationType.UPDATE_RESOURCE,
+                [resource],
+            )
+        ).get(resource.id, False)
+        if not allowed:
+            raise UnauthorizedError(
+                "The logged in user is not authorized to edit this permission."
+            )
         old_permission = await persistence_port.read_one(query)
         vals = asdict(old_permission)
         vals.update(changed_values)

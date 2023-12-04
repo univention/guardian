@@ -1,11 +1,14 @@
+import os
 from dataclasses import asdict
 from urllib.parse import urljoin
 
 import pytest
 from guardian_management_api.adapters.permission import SQLPermissionPersistenceAdapter
 from guardian_management_api.constants import BASE_URL, COMPLETE_URL
+from guardian_management_api.main import app
 from guardian_management_api.models.permission import Permission
 from guardian_management_api.models.sql_persistence import DBPermission
+from sqlalchemy import select
 
 
 @pytest.mark.e2e
@@ -251,3 +254,428 @@ class TestPermissionEndpoints:
             json=new_values,
         )
         assert result.status_code == 500, result.json()
+
+
+@pytest.mark.e2e
+@pytest.mark.skipif(
+    "UCS_HOST_IP" not in os.environ,
+    reason="UCS_HOST_IP env var not set",
+)
+class TestPermissionEndpointsAuthorization:
+    @pytest.mark.asyncio
+    async def test_get_guardian_permission_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_permission,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="guardian", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="guardian",
+            )
+            await create_permission(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="guardian",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for(
+                "get_permission",
+                name="test",
+                namespace_name="namespace",
+                app_name="guardian",
+            ),
+        )
+        assert response.status_code == 200
+        assert response.json()["permission"]["name"] == "test"
+
+    @pytest.mark.asyncio
+    async def test_get_other_permission_not_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_permission,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="other", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="other",
+            )
+            await create_permission(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="other",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for(
+                "get_permission",
+                name="test",
+                namespace_name="namespace",
+                app_name="other",
+            ),
+        )
+        assert response.status_code == 403
+
+    @pytest.mark.asyncio
+    async def test_edit_guardian_permission_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_permission,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="guardian", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="guardian",
+            )
+            await create_permission(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="guardian",
+                namespace_name="namespace",
+            )
+        response = client.patch(
+            app.url_path_for(
+                "edit_permission",
+                name="test",
+                namespace_name="namespace",
+                app_name="guardian",
+            ),
+            json={
+                "name": "test",
+                "display_name": "expected displayname",
+                "permissions": [],
+                "relation": "AND",
+                "permission": {
+                    "app_name": "guardian",
+                    "namespace_name": "namespace",
+                    "name": "permission",
+                },
+            },
+        )
+        assert response.status_code == 200
+        assert response.json()["permission"]["display_name"] == "expected displayname"
+
+    @pytest.mark.asyncio
+    async def test_edit_other_permission_not_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_permission,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="other", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="other",
+            )
+            await create_permission(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="other",
+                namespace_name="namespace",
+            )
+        response = client.patch(
+            app.url_path_for(
+                "edit_permission",
+                name="test",
+                namespace_name="namespace",
+                app_name="other",
+            ),
+            json={
+                "name": "test",
+                "display_name": "expected displayname",
+                "permissions": [],
+                "relation": "AND",
+                "permission": {
+                    "app_name": "other",
+                    "namespace_name": "namespace",
+                    "name": "permission",
+                },
+            },
+        )
+        assert response.status_code == 403
+
+        async with sqlalchemy_mixin.session() as session:
+            db_cap = (
+                (await session.execute(select(DBPermission).filter_by(name="test")))
+                .unique()
+                .scalar_one_or_none()
+            )
+            assert db_cap is not None
+            assert db_cap.display_name != "expected displayname"
+
+    @pytest.mark.asyncio
+    async def test_get_all_permissions(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_permission,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="guardian", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="guardian",
+            )
+            await create_permission(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="guardian",
+                namespace_name="namespace",
+            )
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="other", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="other",
+            )
+            await create_permission(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="other",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for("get_all_permissions"),
+        )
+        assert response.status_code == 200
+        assert any(
+            permission["name"] == "test"
+            for permission in response.json()["permissions"]
+        )
+        assert not any(
+            permission["name"] == "other"
+            for permission in response.json()["permissions"]
+        )
+
+    @pytest.mark.asyncio
+    async def test_create_permission_not_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_permission,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="other", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="other",
+            )
+        response = client.post(
+            app.url_path_for(
+                "create_permission", namespace_name="namespace", app_name="other"
+            ),
+            json={
+                "name": "test3",
+                "display_name": "expected displayname",
+                "permissions": [],
+                "relation": "AND",
+                "permission": {
+                    "app_name": "other",
+                    "namespace_name": "namespace",
+                    "name": "permission",
+                },
+            },
+        )
+        assert response.status_code == 403
+
+        # check that the permission was not created in the database
+        async with sqlalchemy_mixin.session() as session:
+            db_cap = (
+                (await session.execute(select(DBPermission).filter_by(name="test3")))
+                .unique()
+                .scalar_one_or_none()
+            )
+            assert db_cap is None
+
+    # get permissions by app
+    @pytest.mark.asyncio
+    async def test_get_permissions_by_app_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_permission,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="guardian", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="guardian",
+            )
+            await create_permission(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="guardian",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for("get_permissions_by_app", app_name="guardian"),
+        )
+        assert response.status_code == 200
+        assert any(
+            permission["name"] == "test"
+            for permission in response.json()["permissions"]
+        )
+
+    @pytest.mark.asyncio
+    async def test_get_permissions_by_app_not_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_permission,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="other", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="other",
+            )
+            await create_permission(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="other",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for("get_permissions_by_app", app_name="other"),
+        )
+        assert response.json()["permissions"] == []
+
+    @pytest.mark.asyncio
+    async def test_get_permissions_by_namespace_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_permission,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="guardian", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="guardian",
+            )
+            await create_permission(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="guardian",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for(
+                "get_permissions_by_namespace",
+                app_name="guardian",
+                namespace_name="namespace",
+            ),
+        )
+        assert response.status_code == 200
+        assert any(
+            permission["name"] == "test"
+            for permission in response.json()["permissions"]
+        )
+
+    @pytest.mark.asyncio
+    async def test_get_permissions_by_namespace_not_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_permission,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="other", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="other",
+            )
+            await create_permission(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="other",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for(
+                "get_permissions_by_namespace",
+                app_name="other",
+                namespace_name="namespace",
+            ),
+        )
+        assert response.json()["permissions"] == []

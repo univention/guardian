@@ -4,8 +4,9 @@
 
 from typing import Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from guardian_lib.adapter_registry import port_dep
+from guardian_lib.ports import AuthenticationPort
 
 from .. import business_logic
 from ..adapters.permission import FastAPIPermissionAPIAdapter
@@ -21,6 +22,7 @@ from ..models.routers.permission import (
     PermissionMultipleResponse,
     PermissionSingleResponse,
 )
+from ..ports.authz import ResourceAuthorizationPort
 from ..ports.permission import PermissionAPIPort, PermissionPersistencePort
 
 router = APIRouter(tags=["permission"])
@@ -31,6 +33,7 @@ router = APIRouter(tags=["permission"])
     response_model=PermissionSingleResponse,
 )
 async def get_permission(
+    request: Request,
     permission_get_request: PermissionGetRequest = Depends(),
     api_port: FastAPIPermissionAPIAdapter = Depends(
         port_dep(PermissionAPIPort, FastAPIPermissionAPIAdapter)
@@ -38,17 +41,27 @@ async def get_permission(
     persistence_port: PermissionPersistencePort = Depends(
         port_dep(PermissionPersistencePort)
     ),
+    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
+    authz_port: ResourceAuthorizationPort = Depends(
+        port_dep(ResourceAuthorizationPort)
+    ),
 ) -> PermissionSingleResponse:
     """
     Returns a permission object identified by `app_name`, `namespace_name` and `name`.
     """
     return await business_logic.get_permission(
-        permission_get_request, api_port, persistence_port
+        api_request=permission_get_request,
+        api_port=api_port,
+        persistence_port=persistence_port,
+        authc_port=authc_port,
+        authz_port=authz_port,
+        request=request,
     )
 
 
 @router.get("/permissions", response_model=PermissionMultipleResponse)
 async def get_all_permissions(
+    request: Request,
     permission_get_request: GetAllRequest = Depends(),
     api_port: FastAPIPermissionAPIAdapter = Depends(
         port_dep(PermissionAPIPort, FastAPIPermissionAPIAdapter)
@@ -56,17 +69,27 @@ async def get_all_permissions(
     persistence_port: PermissionPersistencePort = Depends(
         port_dep(PermissionPersistencePort)
     ),
+    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
+    authz_port: ResourceAuthorizationPort = Depends(
+        port_dep(ResourceAuthorizationPort)
+    ),
 ) -> PermissionMultipleResponse:
     """
     Returns a list of all permissions.
     """
     return await business_logic.get_permissions(
-        permission_get_request, api_port, persistence_port
+        api_request=permission_get_request,
+        api_port=api_port,
+        persistence_port=persistence_port,
+        authc_port=authc_port,
+        authz_port=authz_port,
+        request=request,
     )
 
 
 @router.get("/permissions/{app_name}", response_model=PermissionMultipleResponse)
 async def get_permissions_by_app(
+    request: Request,
     permission_get_request: GetByAppRequest = Depends(),
     api_port: FastAPIPermissionAPIAdapter = Depends(
         port_dep(PermissionAPIPort, FastAPIPermissionAPIAdapter)
@@ -74,12 +97,21 @@ async def get_permissions_by_app(
     persistence_port: PermissionPersistencePort = Depends(
         port_dep(PermissionPersistencePort)
     ),
+    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
+    authz_port: ResourceAuthorizationPort = Depends(
+        port_dep(ResourceAuthorizationPort)
+    ),
 ) -> PermissionMultipleResponse:
     """
     Returns a list of all permissions.
     """
     return await business_logic.get_permissions(
-        permission_get_request, api_port, persistence_port
+        api_request=permission_get_request,
+        api_port=api_port,
+        persistence_port=persistence_port,
+        authc_port=authc_port,
+        authz_port=authz_port,
+        request=request,
     )
 
 
@@ -88,6 +120,7 @@ async def get_permissions_by_app(
     response_model=PermissionMultipleResponse,
 )
 async def get_permissions_by_namespace(
+    request: Request,
     permission_get_request: GetByNamespaceRequest = Depends(),
     api_port: FastAPIPermissionAPIAdapter = Depends(
         port_dep(PermissionAPIPort, FastAPIPermissionAPIAdapter)
@@ -95,12 +128,21 @@ async def get_permissions_by_namespace(
     persistence_port: PermissionPersistencePort = Depends(
         port_dep(PermissionPersistencePort)
     ),
+    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
+    authz_port: ResourceAuthorizationPort = Depends(
+        port_dep(ResourceAuthorizationPort)
+    ),
 ) -> PermissionMultipleResponse:
     """
     Returns a list of all permissions that belong to `namespace_name` under `app_name`.
     """
     return await business_logic.get_permissions(
-        permission_get_request, api_port, persistence_port
+        api_request=permission_get_request,
+        api_port=api_port,
+        persistence_port=persistence_port,
+        authc_port=authc_port,
+        authz_port=authz_port,
+        request=request,
     )
 
 
@@ -110,12 +152,17 @@ async def get_permissions_by_namespace(
     status_code=201,
 )
 async def create_permission(
+    request: Request,
     permission_create_request: PermissionCreateRequest = Depends(),
     permission_api: FastAPIPermissionAPIAdapter = Depends(
         port_dep(PermissionAPIPort, FastAPIPermissionAPIAdapter)
     ),
     persistence: PermissionPersistencePort = Depends(
         port_dep(PermissionPersistencePort)
+    ),
+    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
+    authz_port: ResourceAuthorizationPort = Depends(
+        port_dep(ResourceAuthorizationPort)
     ),
 ) -> dict[str, Any]:
     """
@@ -125,6 +172,9 @@ async def create_permission(
         api_request=permission_create_request,
         api_port=permission_api,
         persistence_port=persistence,
+        authc_port=authc_port,
+        authz_port=authz_port,
+        request=request,
     )
     return response.dict()
 
@@ -134,12 +184,17 @@ async def create_permission(
     response_model=PermissionSingleResponse,
 )
 async def edit_permission(
+    request: Request,
     permission_edit_request: PermissionEditRequest = Depends(),
     permission_api: FastAPIPermissionAPIAdapter = Depends(
         port_dep(PermissionAPIPort, FastAPIPermissionAPIAdapter)
     ),
     persistence: PermissionPersistencePort = Depends(
         port_dep(PermissionPersistencePort)
+    ),
+    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
+    authz_port: ResourceAuthorizationPort = Depends(
+        port_dep(ResourceAuthorizationPort)
     ),
 ):
     """
@@ -149,5 +204,8 @@ async def edit_permission(
         api_request=permission_edit_request,
         api_port=permission_api,
         persistence_port=persistence,
+        authc_port=authc_port,
+        authz_port=authz_port,
+        request=request,
     )
     return response.dict()
