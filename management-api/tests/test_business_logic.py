@@ -64,16 +64,23 @@ class TestBusinessLogic:
         return await registry_test_adapters.request_port(ResourceAuthorizationPort)
 
     @pytest.mark.asyncio
-    async def test_get_contexts_internal_error(self, context_sql_adapter):
+    async def test_get_contexts_internal_error(self, context_sql_adapter, mocker):
         async def _read_many():
             raise Exception()
 
         context_sql_adapter.read_many = _read_many
+        authz_mock = mocker.AsyncMock()
+        authz_mock.authorize_operation = mocker.AsyncMock(return_value={"test": False})
+        authc_mock = mocker.AsyncMock()
+        request = mocker.Mock()
         with pytest.raises(HTTPException):
             await get_contexts(
                 api_request=GetAllRequest(),
                 persistence_port=context_sql_adapter,
                 api_port=FastAPIContextAPIAdapter(),
+                authc_port=authc_mock,
+                authz_port=authz_mock,
+                request=request,
             )
 
     @pytest.mark.asyncio
@@ -768,6 +775,97 @@ class TestBusinessLogic:
             match="The logged in user is not authorized to edit this permission.",
         ):
             await business_logic.edit_permission(
+                api_request_mock,
+                api_port_mock,
+                persistence_mock,
+                authc_mock,
+                authz_mock,
+                request_mock,
+            )
+
+    @pytest.mark.asyncio
+    async def test_get_context_unauthorized_error(self, mocker):
+        api_request_mock = mocker.MagicMock()
+        persistence_mock = mocker.AsyncMock()
+        persistence_mock.read_one = mocker.AsyncMock(return_value={"test": "test"})
+        api_port_mock = mocker.AsyncMock()
+        api_port_mock.transform_exception = transform_exception_identity
+        authz_mock = mocker.AsyncMock()
+        authz_mock.authorize_operation = mocker.AsyncMock(return_value={})
+        authc_mock = mocker.AsyncMock()
+        request_mock = mocker.Mock()
+        with pytest.raises(
+            UnauthorizedError,
+            match="The logged in user is not authorized to read this context.",
+        ):
+            await business_logic.get_context(
+                api_request_mock,
+                api_port_mock,
+                persistence_mock,
+                authc_mock,
+                authz_mock,
+                request_mock,
+            )
+
+    @pytest.mark.asyncio
+    async def test_get_contexts_unauthorized(self, mocker):
+        api_request_mock = mocker.MagicMock()
+        api_port_mock = mocker.AsyncMock()
+        api_port_mock.transform_exception = transform_exception_identity
+        persistence_mock = mocker.AsyncMock()
+        authz_mock = mocker.AsyncMock()
+        authz_mock.authorize_operation = mocker.AsyncMock(return_value={})
+        authc_mock = mocker.AsyncMock()
+        request_mock = mocker.Mock()
+        await business_logic.get_contexts(
+            api_request_mock,
+            api_port_mock,
+            persistence_mock,
+            authc_mock,
+            authz_mock,
+            request_mock,
+        )
+        assert api_port_mock.to_api_contexts_get_response.call_args.args[0] == []
+
+    @pytest.mark.asyncio
+    async def test_create_context_unauthorized_error(self, mocker):
+        api_request_mock = mocker.MagicMock()
+        persistence_mock = mocker.AsyncMock()
+        api_port_mock = mocker.AsyncMock()
+        api_port_mock.transform_exception = transform_exception_identity
+        authz_mock = mocker.AsyncMock()
+        authz_mock.authorize_operation = mocker.AsyncMock(return_value={})
+        authc_mock = mocker.AsyncMock()
+        request_mock = mocker.Mock()
+        with pytest.raises(
+            UnauthorizedError,
+            match="The logged in user is not authorized to create this context.",
+        ):
+            await business_logic.create_context(
+                api_request_mock,
+                persistence_mock,
+                api_port_mock,
+                authc_mock,
+                authz_mock,
+                request_mock,
+            )
+
+    @pytest.mark.asyncio
+    async def test_edit_context_unauthorized_error(self, mocker):
+        api_request_mock = mocker.MagicMock()
+        persistence_mock = mocker.AsyncMock()
+        api_port_mock = mocker.AsyncMock()
+        api_port_mock.to_context_edit.return_value = (mocker.Mock(), None)
+        api_port_mock.transform_exception = transform_exception_identity
+        authz_mock = mocker.AsyncMock()
+        authz_mock.authorize_operation = mocker.AsyncMock(return_value={})
+        authc_mock = mocker.AsyncMock()
+        request_mock = mocker.Mock()
+        with pytest.raises(
+            UnauthorizedError,
+            match="The logged in user is not authorized to edit this context.",
+        ):
+            await business_logic.edit_context(
                 api_request_mock,
                 api_port_mock,
                 persistence_mock,

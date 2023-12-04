@@ -2,10 +2,13 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
+import os
 
 import pytest
 from guardian_management_api.constants import COMPLETE_URL
 from guardian_management_api.main import app
+from guardian_management_api.models.sql_persistence import DBContext
+from sqlalchemy import select
 
 DEFAULT_TEST_APP = "app"
 DEFAULT_TEST_NAMESPACE = "namespace"
@@ -400,3 +403,421 @@ class TestContextEndpoints:
             json={"display_name": changed_display_name},
         )
         assert response.status_code == 404, response.json()
+
+
+@pytest.mark.e2e
+@pytest.mark.skipif(
+    "UCS_HOST_IP" not in os.environ,
+    reason="UCS_HOST_IP env var not set",
+)
+class TestContextEndpointsAuthorization:
+    @pytest.mark.asyncio
+    async def test_get_guardian_context_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_context,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="guardian", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="guardian",
+            )
+            await create_context(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="guardian",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for(
+                "get_context",
+                name="test",
+                namespace_name="namespace",
+                app_name="guardian",
+            ),
+        )
+        assert response.status_code == 200
+        assert response.json()["context"]["name"] == "test"
+
+    @pytest.mark.asyncio
+    async def test_get_other_context_not_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_context,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="other", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="other",
+            )
+            await create_context(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="other",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for(
+                "get_context",
+                name="test",
+                namespace_name="namespace",
+                app_name="other",
+            ),
+        )
+        assert response.status_code == 403
+
+    @pytest.mark.asyncio
+    async def test_edit_guardian_context_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_context,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="guardian", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="guardian",
+            )
+            await create_context(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="guardian",
+                namespace_name="namespace",
+            )
+        response = client.patch(
+            app.url_path_for(
+                "edit_context",
+                name="test",
+                namespace_name="namespace",
+                app_name="guardian",
+            ),
+            json={
+                "name": "test",
+                "display_name": "expected displayname",
+                "permissions": [],
+                "contexts": [],
+                "relation": "AND",
+                "context": {
+                    "app_name": "guardian",
+                    "namespace_name": "namespace",
+                    "name": "context",
+                },
+            },
+        )
+        assert response.status_code == 200
+        assert response.json()["context"]["display_name"] == "expected displayname"
+
+    @pytest.mark.asyncio
+    async def test_edit_other_context_not_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_context,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="other", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="other",
+            )
+            await create_context(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="other",
+                namespace_name="namespace",
+            )
+        response = client.patch(
+            app.url_path_for(
+                "edit_context",
+                name="test",
+                namespace_name="namespace",
+                app_name="other",
+            ),
+            json={
+                "name": "test",
+                "display_name": "expected displayname",
+                "permissions": [],
+                "contexts": [],
+                "relation": "AND",
+                "context": {
+                    "app_name": "other",
+                    "namespace_name": "namespace",
+                    "name": "context",
+                },
+            },
+        )
+        assert response.status_code == 403
+
+        async with sqlalchemy_mixin.session() as session:
+            db_cap = (
+                (await session.execute(select(DBContext).filter_by(name="test")))
+                .unique()
+                .scalar_one_or_none()
+            )
+            assert db_cap is not None
+            assert db_cap.display_name != "expected displayname"
+
+    @pytest.mark.asyncio
+    async def test_get_all_contexts(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_context,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="guardian", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="guardian",
+            )
+            await create_context(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="guardian",
+                namespace_name="namespace",
+            )
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="other", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="other",
+            )
+            await create_context(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="other",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for("get_all_contexts"),
+        )
+        assert response.status_code == 200
+        assert any(context["name"] == "test" for context in response.json()["contexts"])
+        assert not any(
+            context["name"] == "other" for context in response.json()["contexts"]
+        )
+
+    @pytest.mark.asyncio
+    async def test_create_context_not_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_context,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="other", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="other",
+            )
+        response = client.post(
+            app.url_path_for(
+                "create_context", namespace_name="namespace", app_name="other"
+            ),
+            json={
+                "name": "test3",
+                "display_name": "expected displayname",
+                "permissions": [],
+                "contexts": [],
+                "relation": "AND",
+                "context": {
+                    "app_name": "other",
+                    "namespace_name": "namespace",
+                    "name": "context",
+                },
+            },
+        )
+        assert response.status_code == 403
+
+        # check that the context was not created in the database
+        async with sqlalchemy_mixin.session() as session:
+            db_cap = (
+                (await session.execute(select(DBContext).filter_by(name="test3")))
+                .unique()
+                .scalar_one_or_none()
+            )
+            assert db_cap is None
+
+    # get contexts by app
+    @pytest.mark.asyncio
+    async def test_get_contexts_by_app_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_context,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="guardian", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="guardian",
+            )
+            await create_context(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="guardian",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for("get_contexts_by_app", app_name="guardian"),
+        )
+        assert response.status_code == 200
+        assert any(context["name"] == "test" for context in response.json()["contexts"])
+
+    @pytest.mark.asyncio
+    async def test_get_contexts_by_app_not_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_context,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="other", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="other",
+            )
+            await create_context(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="other",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for("get_contexts_by_app", app_name="other"),
+        )
+        assert response.json()["contexts"] == []
+
+    @pytest.mark.asyncio
+    async def test_get_contexts_by_namespace_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_context,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="guardian", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="guardian",
+            )
+            await create_context(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="guardian",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for(
+                "get_contexts_by_namespace",
+                app_name="guardian",
+                namespace_name="namespace",
+            ),
+        )
+        assert response.status_code == 200
+        assert any(context["name"] == "test" for context in response.json()["contexts"])
+
+    @pytest.mark.asyncio
+    async def test_get_contexts_by_namespace_not_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_context,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="other", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="other",
+            )
+            await create_context(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="other",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for(
+                "get_contexts_by_namespace",
+                app_name="other",
+                namespace_name="namespace",
+            ),
+        )
+        assert response.json()["contexts"] == []

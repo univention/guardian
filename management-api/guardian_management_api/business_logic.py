@@ -985,25 +985,63 @@ async def create_context(
     api_request: ContextCreateRequest,
     persistence_port: ContextPersistencePort,
     api_port: ContextAPIPort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
 ):
-    query = await api_port.to_context_create(api_request)
     try:
+        query = await api_port.to_context_create(api_request)
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        resource: Resource = Resource(
+            resource_type=ResourceType.CONTEXT,
+            name=query.name,
+            namespace_name=query.namespace_name,
+            app_name=query.app_name,
+        )
+        allowed = (
+            await authz_port.authorize_operation(
+                Actor(id=actor_id), OperationType.CREATE_RESOURCE, [resource]
+            )
+        ).get(resource.id, False)
+        if not allowed:
+            raise UnauthorizedError(
+                "The logged in user is not authorized to create this context."
+            )
         created_context = await persistence_port.create(query)
         logger.bind(query=query, created_context=created_context).debug(
             "Context created."
         )
+        return await api_port.to_api_create_response(created_context)
     except Exception as exc:
         raise (await api_port.transform_exception(exc)) from exc
-    return await api_port.to_api_create_response(created_context)
 
 
 async def get_context(
     api_request: ContextGetRequest,
     api_port: ContextAPIPort,
     persistence_port: ContextPersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
 ) -> ContextSingleResponse:
     try:
         query = await api_port.to_context_get(api_request)
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        resource: Resource = Resource(
+            resource_type=ResourceType.CONTEXT,
+            name=query.name,
+            namespace_name=query.namespace_name,
+            app_name=query.app_name,
+        )
+        allowed = (
+            await authz_port.authorize_operation(
+                Actor(id=actor_id), OperationType.READ_RESOURCE, [resource]
+            )
+        ).get(resource.id, False)
+        if not allowed:
+            raise UnauthorizedError(
+                "The logged in user is not authorized to read this context."
+            )
         context = await persistence_port.read_one(query)
         logger.bind(query=query, context=context).debug("Retrieved context.")
         return await api_port.to_api_get_response(context)
@@ -1015,15 +1053,49 @@ async def get_contexts(
     api_request: ContextsAPIGetRequestObject,
     api_port: ContextAPIPort,
     persistence_port: ContextPersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
 ) -> ContextMultipleResponse:
     try:
         query = await api_port.to_contexts_get(api_request)
         contexts = await persistence_port.read_many(query)
         logger.bind(query=query, contexts=contexts).debug("Retrieved contexts.")
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        authz_result = await authz_port.authorize_operation(
+            Actor(id=actor_id),
+            OperationType.READ_RESOURCE,
+            [
+                Resource(
+                    resource_type=ResourceType.CONTEXT,
+                    name=context.name,
+                    namespace_name=context.namespace_name,
+                    app_name=context.app_name,
+                )
+                for context in contexts.objects
+            ],
+        )
+        allowed_contexts = {
+            resource_id
+            for resource_id in authz_result.keys()
+            if authz_result[resource_id]
+        }
         return await api_port.to_api_contexts_get_response(
-            list(contexts.objects),
+            [
+                context
+                for context in contexts.objects
+                if Resource(
+                    resource_type=ResourceType.CONTEXT,
+                    name=context.name,
+                    namespace_name=context.namespace_name,
+                    app_name=context.app_name,
+                ).id
+                in allowed_contexts
+            ],
             query.pagination.query_offset,
-            query.pagination.query_limit,
+            query.pagination.query_limit
+            if query.pagination.query_limit
+            else contexts.total_count,
             contexts.total_count,
         )
     except Exception as exc:
@@ -1034,9 +1106,28 @@ async def edit_context(
     api_request: ContextEditRequest,
     api_port: ContextAPIPort,
     persistence_port: ContextPersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
 ):
     try:
         query, changed_values = await api_port.to_context_edit(api_request)
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        resource: Resource = Resource(
+            resource_type=ResourceType.CONTEXT,
+            name=query.name,
+            namespace_name=query.namespace_name,
+            app_name=query.app_name,
+        )
+        allowed = (
+            await authz_port.authorize_operation(
+                Actor(id=actor_id), OperationType.UPDATE_RESOURCE, [resource]
+            )
+        ).get(resource.id, False)
+        if not allowed:
+            raise UnauthorizedError(
+                "The logged in user is not authorized to edit this context."
+            )
         obj = await persistence_port.read_one(query)
         for key, value in changed_values.items():
             setattr(obj, key, value)
@@ -1044,9 +1135,9 @@ async def edit_context(
         logger.bind(query=query, updated_context=updated_context).debug(
             "Updated context."
         )
+        return await api_port.to_api_edit_response(updated_context)
     except Exception as exc:
         raise (await api_port.transform_exception(exc)) from exc
-    return await api_port.to_api_edit_response(updated_context)
 
 
 async def get_namespaces_by_app(
