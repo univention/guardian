@@ -37,14 +37,16 @@ Show = Install,Settings
 
 [guardian-authorization-api/udm_data/url]
 Type = String
-Description = The URL of the UDM REST API for data queries.
-Description[de] = Die URL der UDM REST API, welche zum Abrufen von Daten genutzt wird.
+Description = The URL of the UDM REST API for data queries. If not set, the url is generated from hostname and domainname.
+Description[de] = Die URL der UDM REST API, welche zum Abrufen von Daten genutzt wird. Wenn nicht gesetzt, wird die URL aus Hostname und Domainname generiert.
 Group = UDM
 Scope = outside
 Show = Install,Settings
 
 [guardian-authorization-api/udm_data/username]
 Type = String
+Required = True
+InitialValue = Administrator
 Description = Username for authenticating against the UDM REST API
 Description[de] = Der Nutzername, um gegen die UDM REST API zu authentifizieren.
 Group = UDM
@@ -53,6 +55,8 @@ Show = Install,Settings
 
 [guardian-authorization-api/udm_data/password]
 Type = String
+Required = True
+InitialValue = changeme
 Description = Password for authenticating against the UDM REST API
 Description[de] = Das Password, um gegen die UDM REST API zu authentifizieren.
 Group = UDM
@@ -69,6 +73,7 @@ Show = Install,Settings
 
 [guardian-authorization-api/oauth/keycloak-realm]
 Type = String
+Required = True
 InitialValue = ucs
 Description = Keycloak authentication realm.
 Description[de] = Keycloak-Authentifizierungsrealm.
@@ -78,6 +83,7 @@ Show = Install,Settings
 
 [guardian-authorization-api/oauth/keycloak-client-id]
 Type = String
+Required = True
 InitialValue = guardian
 Description = Keycloak client ID.
 Description[de] = ID des Keycloak-Client.
@@ -87,7 +93,7 @@ Show = Install,Settings
 
 [guardian-authorization-api/bundle_server_url]
 Type = String
-Description = URL to the bundle server, that should be contacted for downloading the policy bundles.
-Description[de] = URL zum Bundle Server, von dem die Policy Bundles heruntergeladen werden sollen.
+Description = URL to the bundle server, that should be contacted for downloading the policy bundles. If not set, the url is generated from hostname and domainname.
+Description[de] = URL zum Bundle Server, von dem die Policy Bundles heruntergeladen werden sollen. Wenn nicht gesetzt, wird die URL aus Hostname und Domainname generiert.
 Scope = outside
 Show = Install,Settings
