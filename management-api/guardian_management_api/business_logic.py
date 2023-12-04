@@ -502,9 +502,30 @@ async def get_condition(
     api_request: APIGetSingleRequestObject,
     api_port: ConditionAPIPort,
     persistence_port: ConditionPersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
 ) -> APIGetSingleResponseObject:
     try:
         query = await api_port.to_obj_get_single(api_request)
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        resource: Resource = Resource(
+            resource_type=ResourceType.CONDITION,
+            name=query.name,
+            namespace_name=query.namespace_name,
+            app_name=query.app_name,
+        )
+        allowed = (
+            await authz_port.authorize_operation(
+                Actor(id=actor_id),
+                OperationType.READ_RESOURCE,
+                [resource],
+            )
+        ).get(resource.id, False)
+        if not allowed:
+            raise UnauthorizedError(
+                "The logged in user is not authorized to read this condition."
+            )
         condition = await persistence_port.read_one(query)
         return await api_port.to_api_get_single_response(condition)
     except Exception as exc:
@@ -515,12 +536,44 @@ async def get_conditions(
     api_request: APIGetMultipleRequestObject,
     api_port: ConditionAPIPort,
     persistence_port: ConditionPersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
 ) -> APIGetMultipleResponseObject:
     try:
         query = await api_port.to_obj_get_multiple(api_request)
         many_conditions = await persistence_port.read_many(query)
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        authz_result = await authz_port.authorize_operation(
+            Actor(id=actor_id),
+            OperationType.READ_RESOURCE,
+            [
+                Resource(
+                    resource_type=ResourceType.CONDITION,
+                    name=condition.name,
+                    namespace_name=condition.namespace_name,
+                    app_name=condition.app_name,
+                )
+                for condition in many_conditions.objects
+            ],
+        )
+        allowed_conditions = {
+            resource_id
+            for resource_id in authz_result.keys()
+            if authz_result[resource_id]
+        }
         return await api_port.to_api_get_multiple_response(
-            list(many_conditions.objects),
+            [
+                condition
+                for condition in many_conditions.objects
+                if Resource(
+                    resource_type=ResourceType.CONDITION,
+                    name=condition.name,
+                    namespace_name=condition.namespace_name,
+                    app_name=condition.app_name,
+                ).id
+                in allowed_conditions
+            ],
             query.pagination.query_offset,
             query.pagination.query_limit,
             many_conditions.total_count,
@@ -534,9 +587,30 @@ async def create_condition(
     api_port: ConditionAPIPort,
     bundle_server_port: BundleServerPort,
     persistence_port: ConditionPersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
 ):
     try:
         query = await api_port.to_obj_create(api_request)
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        resource: Resource = Resource(
+            resource_type=ResourceType.CONDITION,
+            name=query.name,
+            namespace_name=query.namespace_name,
+            app_name=query.app_name,
+        )
+        allowed = (
+            await authz_port.authorize_operation(
+                Actor(id=actor_id),
+                OperationType.CREATE_RESOURCE,
+                [resource],
+            )
+        ).get(resource.id, False)
+        if not allowed:
+            raise UnauthorizedError(
+                "The logged in user is not authorized to create this condition."
+            )
         condition = await persistence_port.create(query)
         await bundle_server_port.schedule_bundle_build(BundleType.policies)
         return await api_port.to_api_get_single_response(condition)
@@ -549,9 +623,30 @@ async def update_condition(
     api_port: ConditionAPIPort,
     bundle_server_port: BundleServerPort,
     persistence_port: ConditionPersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
 ):
     try:
         query, changed_values = await api_port.to_obj_edit(api_request)
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        resource: Resource = Resource(
+            resource_type=ResourceType.CONDITION,
+            name=query.name,
+            namespace_name=query.namespace_name,
+            app_name=query.app_name,
+        )
+        allowed = (
+            await authz_port.authorize_operation(
+                Actor(id=actor_id),
+                OperationType.UPDATE_RESOURCE,
+                [resource],
+            )
+        ).get(resource.id, False)
+        if not allowed:
+            raise UnauthorizedError(
+                "The logged in user is not authorized to update this condition."
+            )
         old_condition = await persistence_port.read_one(query)
         for key, value in changed_values.items():
             setattr(old_condition, key, value)

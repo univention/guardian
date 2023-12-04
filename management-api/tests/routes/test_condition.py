@@ -2,18 +2,21 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
+import os
 from dataclasses import asdict
 from urllib.parse import urljoin
 
 import pytest
 from guardian_management_api.adapters.condition import SQLConditionPersistenceAdapter
 from guardian_management_api.constants import BASE_URL, COMPLETE_URL
+from guardian_management_api.main import app
 from guardian_management_api.models.condition import Condition, ConditionParameterType
 from guardian_management_api.models.routers.condition import (
     ConditionParameter,
     ConditionParameterName,
 )
 from guardian_management_api.models.sql_persistence import DBCondition
+from sqlalchemy import select
 
 
 @pytest.mark.e2e
@@ -297,3 +300,427 @@ class TestConditionEndpoints:
             json=new_values,
         )
         assert result.status_code == 500, result.json()
+
+
+@pytest.mark.e2e
+@pytest.mark.skipif(
+    "UCS_HOST_IP" not in os.environ,
+    reason="UCS_HOST_IP env var not set",
+)
+class TestConditionEndpointsAuthorization:
+    @pytest.mark.asyncio
+    async def test_get_guardian_condition_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_condition,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="guardian", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="guardian",
+            )
+            await create_condition(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="guardian",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for(
+                "get_condition",
+                name="test",
+                namespace_name="namespace",
+                app_name="guardian",
+            ),
+        )
+        assert response.status_code == 200
+        assert response.json()["condition"]["name"] == "test"
+
+    @pytest.mark.asyncio
+    async def test_get_other_condition_not_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_condition,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="other", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="other",
+            )
+            await create_condition(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="other",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for(
+                "get_condition",
+                name="test",
+                namespace_name="namespace",
+                app_name="other",
+            ),
+        )
+        assert response.status_code == 403
+
+    @pytest.mark.asyncio
+    async def test_edit_guardian_condition_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_condition,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="guardian", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="guardian",
+            )
+            await create_condition(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="guardian",
+                namespace_name="namespace",
+            )
+        response = client.patch(
+            app.url_path_for(
+                "edit_condition",
+                name="test",
+                namespace_name="namespace",
+                app_name="guardian",
+            ),
+            json={
+                "name": "test",
+                "display_name": "expected displayname",
+                "permissions": [],
+                "conditions": [],
+                "relation": "AND",
+                "condition": {
+                    "app_name": "guardian",
+                    "namespace_name": "namespace",
+                    "name": "condition",
+                },
+            },
+        )
+        assert response.status_code == 200
+        assert response.json()["condition"]["display_name"] == "expected displayname"
+
+    @pytest.mark.asyncio
+    async def test_edit_other_condition_not_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_condition,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="other", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="other",
+            )
+            await create_condition(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="other",
+                namespace_name="namespace",
+            )
+        response = client.patch(
+            app.url_path_for(
+                "edit_condition",
+                name="test",
+                namespace_name="namespace",
+                app_name="other",
+            ),
+            json={
+                "name": "test",
+                "display_name": "expected displayname",
+                "permissions": [],
+                "conditions": [],
+                "relation": "AND",
+                "condition": {
+                    "app_name": "other",
+                    "namespace_name": "namespace",
+                    "name": "condition",
+                },
+            },
+        )
+        assert response.status_code == 403
+
+        async with sqlalchemy_mixin.session() as session:
+            db_cap = (
+                (await session.execute(select(DBCondition).filter_by(name="test")))
+                .unique()
+                .scalar_one_or_none()
+            )
+            assert db_cap is not None
+            assert db_cap.display_name != "expected displayname"
+
+    @pytest.mark.asyncio
+    async def test_get_all_conditions(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_condition,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="guardian", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="guardian",
+            )
+            await create_condition(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="guardian",
+                namespace_name="namespace",
+            )
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="other", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="other",
+            )
+            await create_condition(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="other",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for("get_all_conditions"),
+        )
+        assert response.status_code == 200
+        assert any(
+            condition["name"] == "test" for condition in response.json()["conditions"]
+        )
+        assert not any(
+            condition["name"] == "other" for condition in response.json()["conditions"]
+        )
+
+    @pytest.mark.asyncio
+    async def test_create_condition_not_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_condition,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="other", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="other",
+            )
+        response = client.post(
+            app.url_path_for(
+                "create_condition", namespace_name="namespace", app_name="other"
+            ),
+            json={
+                "name": "test3",
+                "display_name": "expected displayname",
+                "permissions": [],
+                "conditions": [],
+                "relation": "AND",
+                "condition": {
+                    "app_name": "other",
+                    "namespace_name": "namespace",
+                    "name": "condition",
+                },
+            },
+        )
+        assert response.status_code == 403
+
+        # check that the condition was not created in the database
+        async with sqlalchemy_mixin.session() as session:
+            db_cap = (
+                (await session.execute(select(DBCondition).filter_by(name="test3")))
+                .unique()
+                .scalar_one_or_none()
+            )
+            assert db_cap is None
+
+    # get conditions by app
+    @pytest.mark.asyncio
+    async def test_get_conditions_by_app_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_condition,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="guardian", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="guardian",
+            )
+            await create_condition(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="guardian",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for("get_conditions_by_app", app_name="guardian"),
+        )
+        assert response.status_code == 200
+        assert any(
+            condition["name"] == "test" for condition in response.json()["conditions"]
+        )
+
+    @pytest.mark.asyncio
+    async def test_get_conditions_by_app_not_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_condition,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="other", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="other",
+            )
+            await create_condition(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="other",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for("get_conditions_by_app", app_name="other"),
+        )
+        assert response.json()["conditions"] == []
+
+    @pytest.mark.asyncio
+    async def test_get_conditions_by_namespace_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_condition,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="guardian", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="guardian",
+            )
+            await create_condition(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="guardian",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for(
+                "get_conditions_by_namespace",
+                app_name="guardian",
+                namespace_name="namespace",
+            ),
+        )
+        assert response.status_code == 200
+        assert any(
+            condition["name"] == "test" for condition in response.json()["conditions"]
+        )
+
+    @pytest.mark.asyncio
+    async def test_get_conditions_by_namespace_not_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_condition,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="other", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="other",
+            )
+            await create_condition(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="other",
+                namespace_name="namespace",
+            )
+        response = client.get(
+            app.url_path_for(
+                "get_conditions_by_namespace",
+                app_name="other",
+                namespace_name="namespace",
+            ),
+        )
+        assert response.json()["conditions"] == []
