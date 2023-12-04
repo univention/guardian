@@ -53,7 +53,6 @@ def _get_resource_target(resource: Resource) -> dict[str, str]:
             "app_name": resource.app_name,
             "namespace_name": resource.name,
             "name": resource.name,
-            "namespace_name": resource.name,
         }
     if not resource.namespace_name:
         raise RuntimeError("This resource must have a namespace name.")

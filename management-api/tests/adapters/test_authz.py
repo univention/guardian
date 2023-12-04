@@ -97,7 +97,6 @@ class TestFunctions:
                     "app_name": "app",
                     "namespace_name": "namespace",
                     "name": "namespace",
-                    "namespace_name": "namespace",
                 },
             ),
             (
