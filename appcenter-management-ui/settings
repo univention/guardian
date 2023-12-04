@@ -1,13 +1,14 @@
 [guardian-management-ui/oauth/keycloak-uri]
 Type = String
-Description = Base URI of the Keycloak server for authentication.
-Description[de] = Einheitlicher Basisbezeichner für Ressourcen des Keycloak-Servers zur Authentifizierung.
+Description = Base URI of the Keycloak server for authentication. If unset the joinscript will attempt to set this value automatically.
+Description[de] = Basis-URI des Keycloak-Servers zur Authentifizierung. Falls dieser Wert nicht gesetzt wird, versucht das Joinscript diesen Wert automatisch zu ermitteln.
 Group = Authentication
 Scope = outside
 Show = Install,Settings
 
 [guardian-management-ui/oauth/keycloak-realm]
 Type = String
+Required = True
 InitialValue = ucs
 Description = Keycloak authentication realm.
 Description[de] = Keycloak-Authentifizierungsrealm.
@@ -18,8 +19,16 @@ Show = Install,Settings
 [guardian-management-ui/oauth/keycloak-client-id]
 Type = String
 InitialValue = guardian-ui
+Required = True
 Description = Keycloak client ID.
 Description[de] = ID des Keycloak-Client.
 Group = Authentication
+Scope = outside
+Show = Install,Settings
+
+[guardian-management-ui/management-api-url]
+Type = String
+Description = URL for the Guardian Management API. If not set, the url is generated from hostname and domainname.
+Description[de] = Die URL der Guardian Management API. Wenn nicht gesetzt, wird die URL aus Hostname und Domainname generiert.
 Scope = outside
 Show = Install,Settings

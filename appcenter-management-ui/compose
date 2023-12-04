@@ -3,13 +3,24 @@ services:
   management-ui:
     image: gitregistry.knut.univention.de/univention/components/authorization-engine/guardian/guardian-management-ui:latest
     environment:
-      VITE__MANAGEMENT_UI__ADAPTER__AUTHENTICATION_PORT: in_memory
-      VITE__MANAGEMENT_UI__ADAPTER__DATA_PORT: in_memory
+      VITE__MANAGEMENT_UI__ADAPTER__AUTHENTICATION_PORT: keycloak
+      VITE__MANAGEMENT_UI__ADAPTER__DATA_PORT: api
+      VITE__API_DATA_ADAPTER__URI: @!@
+ucr = configRegistry
+api_url = ucr.get(
+    'guardian-management-ui/management-api-url',
+    f"https://{ucr.get('hostname')}.{ucr.get('domainname')}/guardian/management",
+)
+if not api_url.startswith('http'):
+    api_url = f"https://{api_url}"
+print(api_url, end='')@!@
       VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__SSO_URI: @!@
 ucr = configRegistry
 url = ucr.get('guardian-management-ui/oauth/keycloak-uri')
 if not url:
     url = ucr.get('keycloak/server/sso/fqdn', f"https://ucs-sso-ng.{ucr.get('domainname')}")
+if not url.startswith('http'):
+    url = f'https://{url}'
 print(url, end='')@!@
       VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__REALM: @%@guardian-management-ui/oauth/keycloak-realm@%@
       VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__CLIENT_ID: @%@guardian-management-ui/oauth/keycloak-client-id@%@
