@@ -779,12 +779,19 @@ def create_capability(
 
 @pytest_asyncio.fixture(scope="function")
 async def set_up_auth():
+    _original_resource_authorization_adapter = AlwaysAuthorizedAdapter
     ADAPTER_REGISTRY.set_adapter(
         ResourceAuthorizationPort, GuardianAuthorizationAdapter
     )
     adapter = await ADAPTER_REGISTRY.request_adapter(
         AuthenticationPort, FastAPIAlwaysAuthorizedAdapter
     )
+    _original_get_actor_identifier = adapter.get_actor_identifier
     adapter.get_actor_identifier = AsyncMock(
         return_value="uid=guardian,cn=users,dc=school,dc=test"
     )
+    yield
+    ADAPTER_REGISTRY.set_adapter(
+        ResourceAuthorizationPort, _original_resource_authorization_adapter
+    )
+    adapter.get_actor_identifier = _original_get_actor_identifier
