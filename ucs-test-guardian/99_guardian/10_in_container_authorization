@@ -1,0 +1,25 @@
+#!/usr/share/ucs-test/runner bash
+# SPDX-FileCopyrightText: 2023 Univention GmbH
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+## desc: run unit tests in container
+## tags: [guardian, guardian-authorization-api]
+## exposure: dangerous
+## packages: []
+## bugs: []
+## external-junit: /tmp/guardian-in_container_authorization_api.xml
+
+
+APP="guardian-authorization-api"
+
+declare -a CMD=(sh -c "
+cd /app/tests &&
+python3 -m pytest --junit-xml=/tmp/junit.xml --junit-prefix=99_guardian.10_in_container_authorization_api")
+
+
+echo "Running in container: ${CMD[@]}"
+
+univention-app shell "$APP" "${CMD[@]}" || (rv=$?; pkill -f '^/usr/bin/python.*pytest$'; exit $rv)
+rm -f /tmp/guardian-in_container_authorization_api.xml
+univention-app shell "$APP" cat /tmp/junit.xml > /tmp/guardian-in_container_authorization_api.xml

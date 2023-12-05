@@ -11,6 +11,12 @@ include:
 variables:
   APPCENTER_CONTROL_IMAGE: "docker-registry.knut.univention.de/knut/univention-appcenter-control"
   POETRY_VERSION: "1.5.1"
+  UCS_VERSION: "505"
+  UCS_RELEASE: "5.0"
+  DEB_IMAGE: docker-registry.knut.univention.de/phahn/ucs-debbase:$UCS_VERSION
+  UCSLINT_IMAGE: gitregistry.knut.univention.de/univention/ucs
+  UCS_TEST_PACKAGE: "ucs-test-guardian"
+  SCOPE: "guardian"
 
 workflow:
   rules:
@@ -24,6 +30,7 @@ stages:
   - build_docker
   - publish
   - lint
+  - build
 
 run_pre_commit:
   stage: lint
@@ -271,3 +278,77 @@ management_ui_app_to_test_appcenter:
     - APP_VERSION="$(sed -n 's/^Version\s*=\s*//p' ini)"
     - echo "updating $APP_NAME=$APP_VERSION"
     - univention-appcenter-control upload "$APP_NAME=$APP_VERSION" compose configure_host ini inst README_UPDATE_DE README_UPDATE_EN settings uinst
+
+ucs_test_deb_lint:
+  stage: lint
+  rules:
+    - changes:
+      - $UCS_TEST_PACKAGE/**/*
+  image:
+    name: $UCSLINT_IMAGE
+    entrypoint: [""]
+  script:
+    - cd $UCS_TEST_PACKAGE && ucslint -j ucslint.xml
+  artifacts:
+    reports:
+      junit: $UCS_TEST_PACKAGE/ucslint.xml
+
+ucs_test_deb_build_git:
+  stage: build
+  image: $DEB_IMAGE
+  rules:
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      changes:
+        - $UCS_TEST_PACKAGE/**/*
+  script:
+    - apt-get update
+    - cd $UCS_TEST_PACKAGE
+    - apt-get -q --assume-yes build-dep .
+    - dpkg-buildpackage -us -uc
+    - install -d -m 755 build
+    - mv ../*.tar.*z ../*.dsc ../*.deb ../*.buildinfo ../*.changes build/
+  artifacts:
+    paths:
+      - $UCS_TEST_PACKAGE/build/
+
+
+ucs_test_deb_repo_import:
+  stage: build
+  variables:
+    GIT_STRATEGY: none
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - $UCS_TEST_PACKAGE/debian/changelog
+  tags:
+    - omar
+  script:
+    - >
+      repo_admin.py
+      -G $CI_REPOSITORY_URL
+      -b $CI_COMMIT_BRANCH
+      -P $UCS_TEST_PACKAGE
+      -r ${UCS_RELEASE}-0-0
+      -s $SCOPE
+      -p $UCS_TEST_PACKAGE
+
+ucs_test_deb_repo_build:
+  stage: build
+  needs:
+    - job: ucs_test_deb_repo_import
+      artifacts: false
+  variables:
+    GIT_STRATEGY: none
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - $UCS_TEST_PACKAGE/debian/changelog
+  tags:
+    - ladda
+  script:
+    - >
+      build-package-ng
+      --no-pbuilder-update
+      -r ${UCS_RELEASE}-0-0
+      -s $SCOPE
+      -p $UCS_TEST_PACKAGE
