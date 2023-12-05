@@ -40,7 +40,7 @@ def read_version_from_ci() -> str:
 
     import yaml
 
-    with open("../.gitlab-ci.yml", "r") as f:
+    with open("../../.gitlab-ci.yml", "r") as f:
         ci = yaml.safe_load(f)
         return ci.get("variables", {"DOC_TARGET_VERSION": "1.0.0"}).get(
             "DOC_TARGET_VERSION"
@@ -50,7 +50,7 @@ def read_version_from_ci() -> str:
 release = read_version_from_ci()
 version = release
 
-project = "Guardian Administration Manual {}".format(release)
+project = "Guardian Manual {}".format(release)
 copyright = "{}, Univention GmbH".format(date.today().year)
 author = "Univention GmbH"
 language = "en"
@@ -60,7 +60,7 @@ html_title = project
 # The doc_basename must match the documents root directory name on the public
 # target location. Otherwise the PDF link on the overview page will point to
 # the wrong file.
-doc_basename = "administration-manual"
+doc_basename = "guardian-manual"
 
 # -- General configuration ---------------------------------------------------
 
@@ -96,12 +96,13 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # a list of builtin themes.
 #
 html_theme = "univention_sphinx_book_theme"
-
-
-html_context = {
+html_theme_options = {
     "pdf_download_filename": f"{doc_basename}.pdf",
+    "show_source_license": True,
+    "typesense_search": True,
+    "typesense_document": doc_basename,
+    "typesense_document_version": version,  # or "latest"
 }
-
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -109,12 +110,11 @@ html_context = {
 html_static_path = ["_static"]
 
 
-html_last_updated_fmt = "%a, %d. %b %Y at %H:%m (UTC%z)"
-
-
 numfig = True
 
+
 suppress_warnings = ["git.too_shallow"]
+git_last_updated_timezone = "Europe/Berlin"
 
 if "spelling" in sys.argv:
     spelling_lang = "en"
@@ -129,6 +129,7 @@ latex_show_urls = "footnote"
 latex_documents = [(root_doc, f"{doc_basename}.tex", project, author, "manual", False)]
 latex_elements = {
     "papersize": "a4paper",
+    "babel": "\\usepackage{babel}",
 }
 
 # Sitemap, see https://github.com/jdillard/sphinx-sitemap
@@ -137,12 +138,12 @@ html_baseurl = ""
 
 
 # Configure Univention feedback link
-# See
-# https://git.knut.univention.de/univention/documentation/univention_sphinx_extension#univention_feedback
+# See https://git.knut.univention.de/univention/documentation/univention_sphinx_extension#univention_feedback
 
 # Deactivated per default. To activate, set it to True.
 
 univention_feedback = True
 
 
-univention_doc_basename = "administration-manual"
+univention_doc_basename = "guardian_docs"
+univention_pdf_show_source_license = True
