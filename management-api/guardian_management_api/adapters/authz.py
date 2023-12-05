@@ -41,6 +41,7 @@ class NeverAuthorizedAdapter(ResourceAuthorizationPort):
 def _get_resource_target(resource: Resource) -> dict[str, str]:
     if resource.resource_type == ResourceType.APP:
         return {
+            "resource_type": resource.resource_type.value,
             # we need the app_name because the current OPA model relies on it
             "app_name": resource.name,
             "namespace_name": "",
@@ -50,6 +51,7 @@ def _get_resource_target(resource: Resource) -> dict[str, str]:
         raise RuntimeError("This resource must have an app name.")
     if resource.resource_type == ResourceType.NAMESPACE:
         return {
+            "resource_type": resource.resource_type.value,
             "app_name": resource.app_name,
             "namespace_name": resource.name,
             "name": resource.name,
@@ -57,6 +59,7 @@ def _get_resource_target(resource: Resource) -> dict[str, str]:
     if not resource.namespace_name:
         raise RuntimeError("This resource must have a namespace name.")
     return {
+        "resource_type": resource.resource_type.value,
         "app_name": resource.app_name,
         "namespace_name": resource.namespace_name,
         "name": resource.name,

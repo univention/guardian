@@ -720,7 +720,7 @@ class TestRoleEndpointsAuthorization:
         assert any(role["name"] == "test" for role in response.json()["roles"])
 
     @pytest.mark.asyncio
-    async def test_get_roles_by_app_not_allowed(
+    async def test_get_roles_by_app_other_allowed(
         self,
         client,
         create_tables,
@@ -748,7 +748,8 @@ class TestRoleEndpointsAuthorization:
         response = client.get(
             app.url_path_for("get_roles_by_app", app_name="other"),
         )
-        assert response.json()["roles"] == []
+        assert response.status_code == 200
+        assert any(role["name"] == "test" for role in response.json()["roles"])
 
     @pytest.mark.asyncio
     async def test_get_roles_by_namespace_allowed(
@@ -787,7 +788,7 @@ class TestRoleEndpointsAuthorization:
         assert any(role["name"] == "test" for role in response.json()["roles"])
 
     @pytest.mark.asyncio
-    async def test_get_roles_by_namespace_not_allowed(
+    async def test_get_roles_by_namespace_other_allowed(
         self,
         client,
         create_tables,
@@ -819,4 +820,5 @@ class TestRoleEndpointsAuthorization:
                 namespace_name="namespace",
             ),
         )
-        assert response.json()["roles"] == []
+        assert response.status_code == 200
+        assert any(role["name"] == "test" for role in response.json()["roles"])

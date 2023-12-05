@@ -11,13 +11,13 @@ class OperationType(StrEnum):
 
 
 class ResourceType(StrEnum):
-    APP = "APP"
-    NAMESPACE = "NAMESPACE"
-    ROLE = "ROLE"
-    CONTEXT = "CONTEXT"
-    PERMISSION = "PERMISSION"
-    CONDITION = "CONDITION"
-    CAPABILITY = "CAPABILITY"
+    APP = "app"
+    NAMESPACE = "namespace"
+    ROLE = "role"
+    CONTEXT = "context"
+    PERMISSION = "permission"
+    CONDITION = "condition"
+    CAPABILITY = "capability"
 
 
 @dataclass

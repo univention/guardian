@@ -346,7 +346,7 @@ class TestConditionEndpointsAuthorization:
         assert response.json()["condition"]["name"] == "test"
 
     @pytest.mark.asyncio
-    async def test_get_other_condition_not_allowed(
+    async def test_get_other_condition_allowed(
         self,
         client,
         create_tables,
@@ -379,7 +379,8 @@ class TestConditionEndpointsAuthorization:
                 app_name="other",
             ),
         )
-        assert response.status_code == 403
+        assert response.status_code == 200
+        assert response.json()["condition"]["name"] == "test"
 
     @pytest.mark.asyncio
     async def test_edit_guardian_condition_allowed(
@@ -622,7 +623,7 @@ class TestConditionEndpointsAuthorization:
         )
 
     @pytest.mark.asyncio
-    async def test_get_conditions_by_app_not_allowed(
+    async def test_get_conditions_by_app_other_allowed(
         self,
         client,
         create_tables,
@@ -650,7 +651,10 @@ class TestConditionEndpointsAuthorization:
         response = client.get(
             app.url_path_for("get_conditions_by_app", app_name="other"),
         )
-        assert response.json()["conditions"] == []
+        assert response.status_code == 200
+        assert any(
+            condition["name"] == "test" for condition in response.json()["conditions"]
+        )
 
     @pytest.mark.asyncio
     async def test_get_conditions_by_namespace_allowed(
@@ -691,7 +695,7 @@ class TestConditionEndpointsAuthorization:
         )
 
     @pytest.mark.asyncio
-    async def test_get_conditions_by_namespace_not_allowed(
+    async def test_get_conditions_by_namespace_other_allowed(
         self,
         client,
         create_tables,
@@ -723,4 +727,7 @@ class TestConditionEndpointsAuthorization:
                 namespace_name="namespace",
             ),
         )
-        assert response.json()["conditions"] == []
+        assert response.status_code == 200
+        assert any(
+            condition["name"] == "test" for condition in response.json()["conditions"]
+        )

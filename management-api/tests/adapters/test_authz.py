@@ -71,6 +71,7 @@ class TestFunctions:
                     resource_type=ResourceType.PERMISSION,
                 ),
                 {
+                    "resource_type": "permission",
                     "app_name": "app",
                     "namespace_name": "namespace",
                     "name": "resource",
@@ -82,6 +83,7 @@ class TestFunctions:
                     resource_type=ResourceType.APP,
                 ),
                 {
+                    "resource_type": "app",
                     "app_name": "app",
                     "namespace_name": "",
                     "name": "app",
@@ -94,6 +96,7 @@ class TestFunctions:
                     resource_type=ResourceType.NAMESPACE,
                 ),
                 {
+                    "resource_type": "namespace",
                     "app_name": "app",
                     "namespace_name": "namespace",
                     "name": "namespace",
@@ -107,6 +110,7 @@ class TestFunctions:
                     resource_type=ResourceType.ROLE,
                 ),
                 {
+                    "resource_type": "role",
                     "app_name": "app",
                     "namespace_name": "namespace",
                     "name": "role",
@@ -120,6 +124,7 @@ class TestFunctions:
                     resource_type=ResourceType.CONTEXT,
                 ),
                 {
+                    "resource_type": "context",
                     "app_name": "app",
                     "namespace_name": "namespace",
                     "name": "context",
@@ -133,6 +138,7 @@ class TestFunctions:
                     resource_type=ResourceType.CONDITION,
                 ),
                 {
+                    "resource_type": "condition",
                     "app_name": "app",
                     "namespace_name": "namespace",
                     "name": "condition",
@@ -146,6 +152,7 @@ class TestFunctions:
                     resource_type=ResourceType.CAPABILITY,
                 ),
                 {
+                    "resource_type": "capability",
                     "app_name": "app",
                     "namespace_name": "namespace",
                     "name": "capability",
