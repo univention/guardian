@@ -203,3 +203,11 @@ def make_public_client(keycloak_session: KeycloakAdmin, client_name: str):
     client_config, client_id = get_client_config_and_id(keycloak_session, client_name)
     client_config["publicClient"] = True
     keycloak_session.update_client(client_id, client_config)
+
+
+def enable_service_accounts(keycloak_session: KeycloakAdmin, client_name: str):
+    """Enable the client to use service accounts, not just login accounts"""
+
+    client_config, client_id = get_client_config_and_id(keycloak_session, client_name)
+    client_config["serviceAccountsEnabled"] = True
+    keycloak_session.update_client(client_id, client_config)

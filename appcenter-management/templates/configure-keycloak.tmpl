@@ -62,6 +62,7 @@ def update_guardian_cli_client(
     * Adding the 'dn' mapper.
     * Ensuring PKCE support.
     * Updating webOrigins and redirectUris.
+    * Enable service accounts.
     """
 
     errors = []
@@ -90,6 +91,11 @@ def update_guardian_cli_client(
         fix_web_origins(keycloak_session, client_name)
     except Exception as exc:
         errors.append(f"Unable to fix webOrigins to {client_name} client: {exc}")
+
+    try:
+        enable_service_accounts(keycloak_session, client_name)
+    except Exception as exc:
+        errors.append(f"Unable to enable service accounts on {client_name} client: {exc}")
 
     if errors:
         for error in errors:
