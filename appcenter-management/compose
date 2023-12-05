@@ -9,6 +9,7 @@ services:
     environment:
       HOME: /guardian_service_dir
       REQUESTS_CA_BUNDLE: /etc/ssl/certs/ca-certificates.crt
+      SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
       GUARDIAN__MANAGEMENT__CORS__ALLOWED_ORIGINS: @%@guardian-management-api/cors/allowed-origins@%@
       GUARDIAN__MANAGEMENT__ADAPTER__SETTINGS_PORT: env
       GUARDIAN__MANAGEMENT__ADAPTER__APP_PERSISTENCE_PORT: sql
