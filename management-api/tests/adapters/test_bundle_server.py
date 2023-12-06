@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 from unittest.mock import call
@@ -5,11 +6,17 @@ from unittest.mock import call
 import orjson
 import pytest
 import pytest_asyncio
+from asyncpg.exceptions import UndefinedTableError
 from guardian_management_api.adapters.bundle_server import (
     BundleServerAdapter,
     BundleServerAdapterSettings,
 )
-from guardian_management_api.errors import BundleBuildError, BundleGenerationIOError
+from guardian_management_api.adapters.sql_persistence import error_guard
+from guardian_management_api.errors import (
+    BundleBuildError,
+    BundleGenerationIOError,
+    PersistenceError,
+)
 from guardian_management_api.models.base import PersistenceGetManyResult
 from guardian_management_api.models.capability import (
     Capability,
@@ -20,6 +27,7 @@ from guardian_management_api.models.capability import (
 from guardian_management_api.models.permission import Permission
 from guardian_management_api.models.role import Role
 from guardian_management_api.ports.bundle_server import BundleType
+from sqlalchemy.exc import SQLAlchemyError
 
 
 class TestBundleServerAdapter:
@@ -179,6 +187,51 @@ class TestBundleServerAdapter:
             await adapter._build_bundle(
                 BundleType.data, mocker.AsyncMock(), mocker.AsyncMock()
             )
+
+    @pytest.mark.asyncio
+    async def test__build_bundle_raises_io_errors(
+        self, adapter: BundleServerAdapter, mocker
+    ):
+        mock_cond_persistence_port = mocker.AsyncMock()
+        mock_cond_persistence_port.read_many.side_effect = PersistenceError("Random")
+        with pytest.raises(BundleGenerationIOError):
+            await adapter._build_bundle(
+                BundleType.policies, mock_cond_persistence_port, mocker.AsyncMock()
+            )
+
+    @pytest.mark.asyncio
+    async def test__build_bundle_catches_undefined_table_error_without_raising(
+        self, adapter: BundleServerAdapter, mocker, caplog
+    ):
+        @error_guard
+        async def _raise_sql_error(*args, **kwargs):
+            # This is to simulate a postgres error being caught and thrown
+            # by the sql adapter
+            try:
+                raise UndefinedTableError('relation "condition" does not exist')
+            except Exception as exc:
+                raise SQLAlchemyError("Random") from exc
+
+        mock_cond_persistence_port = mocker.AsyncMock()
+        mock_cond_persistence_port.read_many = _raise_sql_error
+        try:
+            with caplog.at_level(logging.INFO):
+                await adapter._build_bundle(
+                    BundleType.policies, mock_cond_persistence_port, mocker.AsyncMock()
+                )
+                warnings = list(
+                    filter(
+                        lambda log: log.levelno == logging.WARNING,
+                        caplog.records,
+                    )
+                )
+                assert len(warnings) == 1
+                assert (
+                    warnings[0].msg
+                    == "Database is not yet configured, so OPA bundle can't be generated."
+                )
+        except BundleGenerationIOError:
+            assert False, "UndefinedTableError not caught"
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(

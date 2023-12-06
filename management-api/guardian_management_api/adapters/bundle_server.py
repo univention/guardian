@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import traceback
 from asyncio import Lock, Queue, QueueEmpty, QueueFull
 from collections import defaultdict
 from dataclasses import asdict, dataclass, field
@@ -173,7 +174,9 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
         )
 
     async def _dump_conditions(
-        self, persistence: ConditionPersistencePort, bundle_build_dir: Path
+        self,
+        persistence: ConditionPersistencePort,
+        bundle_build_dir: Path,
     ):
         """
         Writes all conditions to rego files in the build directory.
@@ -271,9 +274,22 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
                 cap_persistence_port, base_dir / "build" / bundle_name
             )
         elif bundle_type == BundleType.policies:
-            await self._dump_conditions(
-                cond_persistence_port, base_dir / "build" / bundle_name
-            )
+            try:
+                await self._dump_conditions(
+                    cond_persistence_port, base_dir / "build" / bundle_name
+                )
+            except BundleGenerationIOError:
+                if "UndefinedTableError" in traceback.format_exc():
+                    # This can happen when alembic is still running migrations
+                    # before the server is fully started.
+                    # We'll log this, in case this doesn't resolve in a few seconds,
+                    # but we don't need to fill the log with the chain of tracebacks.
+                    local_logger.warning(
+                        "Database is not yet configured, so OPA bundle can't be generated."
+                    )
+                    return
+                else:
+                    raise
         build_cmd = (
             f"opa build -b {base_dir / 'build' / bundle_name} -o "
             f"{base_dir / 'bundles' / bundle_name}.tar.gz"

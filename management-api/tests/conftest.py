@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 import asyncio
+import logging
 import os
 import subprocess
 from base64 import b64encode
@@ -12,6 +13,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 import pytest_asyncio
+from _pytest.logging import caplog as _caplog  # noqa: F401
 from guardian_lib.adapter_registry import ADAPTER_REGISTRY
 from guardian_lib.adapters.authentication import FastAPIAlwaysAuthorizedAdapter
 from guardian_lib.adapters.settings import EnvSettingsAdapter
@@ -92,6 +94,7 @@ from guardian_management_api.ports.role import (
     RoleAPIPort,
     RolePersistencePort,
 )
+from loguru import logger
 from port_loader import AsyncAdapterRegistry, AsyncAdapterSettingsProvider
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -795,3 +798,19 @@ async def set_up_auth():
         ResourceAuthorizationPort, _original_resource_authorization_adapter
     )
     adapter.get_actor_identifier = _original_get_actor_identifier
+
+
+@pytest.fixture
+def caplog(_caplog):  # noqa: F811 -- pytest is actually using _caplog imported above
+    """
+    Allows pytest's caplog to capture loguru input.
+
+    Solution: https://github.com/Delgan/loguru/issues/59#issuecomment-466591978
+    """
+
+    class PropagateHandler(logging.Handler):
+        def emit(self, record):
+            logging.getLogger(record.name).handle(record)
+
+    logger.add(PropagateHandler(), format="{message}")
+    yield _caplog
