@@ -24,6 +24,10 @@ const i18nParameters = ((): {lng: string; fallbackLng: string[]} => {
 export const i18nInitialized = i18next.init({
   defaultNS: 'management-ui',
   interpolation: {
+    // WARNING: If you use i18next translation with interpolations inside v-html or manually insert them in the dom,
+    // enable `escapeValue` for that translation to prevent potential XSS.
+    // Vue templates/render functions already escape the content. Having both will double escape the content.
+    escapeValue: false,
     skipOnVariables: false,
   },
   debug: true,

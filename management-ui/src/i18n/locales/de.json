@@ -31,6 +31,9 @@
     }
   },
   "ListView": {
+    "fetchConfig.error": "Beim Laden der Seite ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut oder wenden Sie sich an Ihren Systemadministrator: {{msg}}",
+    "fetchNamespacesOptions.error": "Die Namensräume für die App {{app}} konnten nicht geladen werden: {{msg}}",
+    "fetchObjects.error": "Die Suche ist fehlgeschlagen: {{msg}}",
     "heading": {
       "role": "Rollen",
       "context": "Contexts",
@@ -50,6 +53,9 @@
     }
   },
   "EditView": {
+    "fetchAddViewConfig.error": "Beim Laden der Seite ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut oder wenden Sie sich an Ihren Systemadministrator: {{msg}}",
+    "fetchPermissionsOptions.error": "Die Berechtigungen für die App und den Namensraum {{app}}:{{namespace}} konnten nicht geladen werden: {{msg}}",
+    "fetchObject.error": "Beim Laden des Objekts ist ein Fehler aufgetreten: {{msg}}",
     "heading": {
       "add.role": "Rolle anlegen",
       "add.context": "Context anlegen",
@@ -75,6 +81,7 @@
     "notFound.role": "Das Rollen-Object existiert nicht",
     "notFound.context": "Das Context-Object existiert nicht",
     "notFound.namespace": "Das Namespace-Object existiert nicht",
+    "notFound.capability": "Das Berechtigungen-Object existiert nicht",
     "creationFailed.role": "Die Rolle konnte nicht angelegt werden",
     "loadAddViewConfigFailed": "Die Seite konnte nicht geladen werden"
   },
@@ -95,12 +102,19 @@
     }
   },
   "EditViewSaveFailedModal": {
+    "objectNotFound": "Das Objekt existiert nicht mehr",
+    "objectNotFound_role": "Die Rolle existiert nicht mehr",
+    "objectNotFound_context": "Der Context existiert nicht mehr",
+    "objectNotFound_namespace": "Der Namensraum existiert nicht mehr",
+    "objectNotFound_capability": "Die Capability existiert nicht mehr",
     "heading.role_edit": "Das Rollen-Objekt konnte nicht gespeichert werden",
     "heading.context_edit": "Das Context-Objekt konnte nicht gespeichert werden",
     "heading.namespace_edit": "Das Namespace-Objekt konnte nicht gespeichert werden",
+    "heading.capability_edit": "Das Capability-Objekt konnte nicht gespeichert werden",
     "heading.role_add": "Das Rollen-Objekt konnte nicht angelegt werden",
     "heading.context_add": "Das Context-Objekt konnte nicht angelegt werden",
     "heading.namespace_add": "Das Namespace-Objekt konnte nicht angelegt werden",
+    "heading.capability_add": "Das Capability-Objekt konnte nicht angelegt werden",
     "baseDescription_edit": "Beim Speichern ist ein unbekannter Fehler aufgetreten",
     "baseDescription_add": "Beim Anlegen ist ein unbekannter Fehler aufgetreten",
     "fieldErrors.description": "Einige Felder enthalten Fehler:",
@@ -117,7 +131,16 @@
       "confirmation": "OK"
     }
   },
-  "dataAccess.options.all": "Alle",
+  "dataAccess": {
+    "options.all": "Alle",
+    "conditionsExtensionsEmptyError": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut oder wenden Sie sich and ihren Systemadministrator: (Conditions should not be empty)"
+  },
+  "dataAdapter": {
+    "create.nameTaken": "Der Name ist bereits vergeben",
+    "fetchFailed": "Befehl ist fehlgeschlagen: {{msg}}",
+    "unknownError": "Unbekannter fehler",
+    "jsonError": "Invalides JSON Format erhalten: {{msg}}"
+  },
   "configs": {
     "listView": {
       "searchForm": {
@@ -150,5 +173,8 @@
         "autoGenerate": "Wird automatisch generiert, wenn leer gelassen"
       }
     }
+  },
+  "validators": {
+    "validateName": "Der Name muss mit einem Kleinbuchstaben beginnen und darf nur Kleinbuchstaben (\"a-z\"), Zahlen (\"0-9\"), Bindestrich (\"-\") und Unterstrich (\"_\") enthalten"
   }
 }

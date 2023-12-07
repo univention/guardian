@@ -31,7 +31,6 @@ export const getNamespaceDetailResponseModel = (values: FormValues): DetailRespo
                   props: {
                     name: 'name',
                     label: i18next.t('configs.addView.field.name'),
-                    required: true,
                     access: 'read',
                   },
                 },

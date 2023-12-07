@@ -24,6 +24,7 @@ import {useRoute, useRouter} from 'vue-router';
 import {deleteCapabilities, fetchListViewConfig, fetchNamespacesOptions, fetchObjects} from '@/helpers/dataAccess';
 import {computed, type ComputedRef, onMounted, reactive, ref, toRaw, watch} from 'vue';
 import {useTranslation} from 'i18next-vue';
+import {useErrorStore} from '@/stores/error';
 
 const props = defineProps<{
   objectType: ObjectType;
@@ -92,71 +93,29 @@ const configs = ref<Configs>({
   },
 });
 const config = computed(() => configs.value[props.objectType]);
+const errorStore = useErrorStore();
 
 const fetchConfig = async (): Promise<void> => {
-  const listViewConfig = await fetchListViewConfig();
+  const result = await fetchListViewConfig();
+  if (!result.ok) {
+    errorStore.push({
+      title: t('ErrorModal.heading'),
+      message: t('ListView.fetchConfig.error', {msg: result.error}),
+      unRecoverable: true,
+    });
+    return;
+  }
+  const listViewConfig = result.value;
 
   configs.value.role.allowedGlobalActions = listViewConfig.role.allowedGlobalActions;
   configs.value.role.searchForm = listViewConfig.role.searchForm;
   configs.value.role.searchFormOrigValues = structuredClone(listViewConfig.role.searchFormValues);
   configs.value.role.columns = listViewConfig.role.columns;
-  {
-    const field = configs.value.role.searchForm.find(f => f.props.name === 'namespaceSelection') as FieldComboBox;
-    const _standby = reactive(useStandby());
-    field.props.standby = computed(() => _standby.active);
-
-    watch(
-      () => states.value.role.searchFormValues['appSelection'],
-      async newValue => {
-        if (newValue === '') {
-          field.props.access = 'read';
-          field.props.options = [
-            {
-              label: t('dataAccess.options.all'),
-              value: '',
-            },
-          ];
-          states.value.role.searchFormValues['namespaceSelection'] = '';
-        } else {
-          field.props.access = 'write';
-          states.value.role.searchFormValues['namespaceSelection'] = '';
-          field.props.options = await _standby.wrap(() => fetchNamespacesOptions(newValue as string, true));
-          states.value.role.searchFormValues['namespaceSelection'] = '';
-        }
-      }
-    );
-  }
 
   configs.value.context.allowedGlobalActions = listViewConfig.context.allowedGlobalActions;
   configs.value.context.searchForm = listViewConfig.context.searchForm;
   configs.value.context.searchFormOrigValues = structuredClone(listViewConfig.context.searchFormValues);
   configs.value.context.columns = listViewConfig.context.columns;
-  {
-    const field = configs.value.context.searchForm.find(f => f.props.name === 'namespaceSelection') as FieldComboBox;
-    const _standby = reactive(useStandby());
-    field.props.standby = computed(() => _standby.active);
-
-    watch(
-      () => states.value.context.searchFormValues['appSelection'],
-      async newValue => {
-        if (newValue === '') {
-          field.props.access = 'read';
-          field.props.options = [
-            {
-              label: 'All',
-              value: '',
-            },
-          ];
-          states.value.context.searchFormValues['namespaceSelection'] = '';
-        } else {
-          field.props.access = 'write';
-          states.value.context.searchFormValues['namespaceSelection'] = '';
-          field.props.options = await _standby.wrap(() => fetchNamespacesOptions(newValue as string, true));
-          states.value.context.searchFormValues['namespaceSelection'] = '';
-        }
-      }
-    );
-  }
 
   configs.value.namespace.allowedGlobalActions = listViewConfig.namespace.allowedGlobalActions;
   configs.value.namespace.searchForm = listViewConfig.namespace.searchForm;
@@ -167,30 +126,58 @@ const fetchConfig = async (): Promise<void> => {
   configs.value.capability.searchForm = listViewConfig.capability.searchForm;
   configs.value.capability.searchFormOrigValues = structuredClone(listViewConfig.capability.searchFormValues);
   configs.value.capability.columns = listViewConfig.capability.columns;
-  {
-    configs.value.capability.searchFormOrigValues['roleName'] = route.params['id'];
 
-    const field = configs.value.capability.searchForm.find(f => f.props.name === 'namespaceSelection') as FieldComboBox;
+  // setup watching of 'appSelection' field to fill 'namespaceSelection'
+  const listViewsToWatchNamespace = [
+    {
+      config: configs.value.role,
+      state: states.value.role,
+    },
+    {
+      config: configs.value.context,
+      state: states.value.context,
+    },
+    {
+      config: configs.value.capability,
+      state: states.value.capability,
+    },
+  ];
+  for (const o of listViewsToWatchNamespace) {
+    const field = o.config.searchForm.find(f => f.props.name === 'namespaceSelection') as FieldComboBox;
     const _standby = reactive(useStandby());
     field.props.standby = computed(() => _standby.active);
 
     watch(
-      () => states.value.capability.searchFormValues['appSelection'],
+      () => o.state.searchFormValues['appSelection'],
       async newValue => {
         if (newValue === '') {
           field.props.access = 'read';
           field.props.options = [
             {
-              label: 'All',
+              label: t('dataAccess.options.all'),
               value: '',
             },
           ];
-          states.value.capability.searchFormValues['namespaceSelection'] = '';
+          o.state.searchFormValues['namespaceSelection'] = '';
         } else {
           field.props.access = 'write';
-          states.value.capability.searchFormValues['namespaceSelection'] = '';
-          field.props.options = await _standby.wrap(() => fetchNamespacesOptions(newValue as string, true));
-          states.value.capability.searchFormValues['namespaceSelection'] = '';
+          o.state.searchFormValues['namespaceSelection'] = '';
+          const result = await _standby.wrap(() => fetchNamespacesOptions(newValue as string, true));
+          if (!result.ok) {
+            errorStore.push({
+              title: t('ErrorModal.heading'),
+              message: t('ListView.fetchNamespacesOptions.error', {app: newValue, msg: result.error}),
+            });
+            field.props.options = [
+              {
+                label: t('dataAccess.options.all'),
+                value: '',
+              },
+            ];
+          } else {
+            field.props.options = result.value;
+          }
+          o.state.searchFormValues['namespaceSelection'] = '';
         }
       }
     );
@@ -244,15 +231,18 @@ const state = computed(() => states.value[props.objectType]);
 
 const searchLimitReachedModalActive = ref(false);
 const search = async (keepSelection = false): Promise<void> => {
-  const fetchResult = await standby.wrap(() =>
+  const result = await standby.wrap(() =>
     fetchObjects(props.objectType, state.value.searchFormValues, route.params.id as string)
   );
-  if (!fetchResult) {
-    searchLimitReachedModalActive.value = true;
+  if (!result.ok) {
+    errorStore.push({
+      title: t('ErrorModal.heading'),
+      message: t('ListView.fetchObjects.error', {msg: result.error}),
+    });
     return;
   }
-  if (fetchResult) {
-    states.value[props.objectType].rows = fetchResult;
+  if (result.value) {
+    states.value[props.objectType].rows = result.value;
   }
   if (keepSelection) {
     const rowIds = new Set(state.value.rows.map(row => row.id));
@@ -551,7 +541,7 @@ const heading = computed(() => {
             {{ t('DeleteModalError.description') }}
           </p>
           <ul>
-            <li v-for="fail in deleteModalError.failedCapabilities" :key="fail.id">{{ fail.id }}: {{ fail.error }}</li>
+            <li v-for="fail in deleteModalError.failedCapabilities" :key="fail.id">{{ fail.id }} - {{ fail.error }}</li>
           </ul>
         </div>
       </template>

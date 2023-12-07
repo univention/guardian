@@ -61,6 +61,7 @@ export interface FieldInputText {
     hint?: string;
     required?: boolean;
     access?: 'write' | 'read' | 'none';
+    validators?: ((value: string) => string)[];
   };
 }
 export interface FieldInputDate {

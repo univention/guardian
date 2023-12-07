@@ -1,18 +1,18 @@
 <script setup lang="ts">
-import {computed, type ComputedRef, ref, type Ref, onMounted, watch} from 'vue';
+import {computed, type ComputedRef, onMounted, type Ref, ref, watch} from 'vue';
 import {
   SubElement,
   type SubElementProps,
   UButton,
   UComboBox,
   UGrid,
+  type UGridColumnDefinition,
+  type UGridRow,
   UInputText,
   UMultiInput,
-  type UGridRow,
-  type UGridColumnDefinition,
 } from '@univention/univention-veb';
 import type {DataPort} from '@/ports/data';
-import {ApiDataAdapter, InMemoryDataAdapter} from '@/adapters/data';
+import {ApiDataAdapter, type FetchObjectError, InMemoryDataAdapter, type SaveError} from '@/adapters/data';
 import {InMemoryAuthenticationAdapter} from '@/adapters/authentication';
 import type {DisplayApp} from '@/helpers/models/apps';
 import type {DisplayNamespace} from '@/helpers/models/namespaces';
@@ -93,6 +93,7 @@ interface FilterState {
   role: string;
 }
 
+type Relation = 'AND' | 'OR';
 interface EditFormValues {
   app: string;
   namespace: string;
@@ -100,7 +101,7 @@ interface EditFormValues {
   displayName: string;
   role: string;
   conditions: string[][];
-  relation: string;
+  relation: Relation;
   permissions: string[];
 }
 
@@ -166,7 +167,7 @@ const makeDefaultState = (): State => {
           displayName: '',
           role: '',
           conditions: [],
-          relation: '',
+          relation: 'AND',
           permissions: [],
         },
       },
@@ -670,7 +671,6 @@ const config: Ref<Config> = ref({
           return (
             currentAdapter.value.state.capabilities.editForm.values.app === '' ||
             currentAdapter.value.state.capabilities.editForm.values.namespace === '' ||
-            currentAdapter.value.state.capabilities.editForm.values.relation === '' ||
             currentAdapter.value.state.capabilities.editForm.values.permissions.length === 0
           );
         }),
@@ -682,7 +682,6 @@ const config: Ref<Config> = ref({
             currentAdapter.value.state.capabilities.editForm.values.app === '' ||
             currentAdapter.value.state.capabilities.editForm.values.namespace === '' ||
             currentAdapter.value.state.capabilities.editForm.values.name === '' ||
-            currentAdapter.value.state.capabilities.editForm.values.relation === '' ||
             currentAdapter.value.state.capabilities.editForm.values.permissions.length === 0
           );
         }),
@@ -1016,6 +1015,10 @@ const relationEditForm: Option[] = [
 // if we need that data
 const fetchPermissions = async () => {
   const currentTab = currentAdapter.value.currentTab;
+  const currentState = currentAdapter.value.state[currentTab];
+
+  currentState.error = '';
+
   if (!config.value[currentTab].editForm?.permissions.show) {
     return;
   }
@@ -1029,8 +1032,12 @@ const fetchPermissions = async () => {
     return;
   }
 
-  let permissionData = await currentAdapter.value.adapter.fetchPermissions(app, namespace);
-  permissions.value = permissionData.permissions ?? [];
+  const permissionData = await currentAdapter.value.adapter.fetchPermissions(app, namespace);
+  if (!permissionData.ok) {
+    currentState.error = `Fetching permissions failed: ${permissionData.error}`;
+    return;
+  }
+  permissions.value = permissionData.value.permissions;
 };
 const filterApp = computed(() => {
   return currentAdapter.value.state[currentAdapter.value.currentTab].filters.app;
@@ -1070,7 +1077,7 @@ const defaultEditFormValues: EditFormValues = {
   displayName: '',
   role: '',
   conditions: [],
-  relation: '',
+  relation: 'AND',
   permissions: [],
 };
 const resetEditForm = () => {
@@ -1098,27 +1105,48 @@ const switchToApiAdapter = () => {
 
 const setupFormData = async () => {
   const currentConfig = config.value[currentAdapter.value.currentTab];
+  currentAdapter.value.state[currentAdapter.value.currentTab].error = '';
 
   // For namespaces only, we want to get all apps.
   // For other tabs that use namespaces, we only show apps that have namespaces.
   if (currentAdapter.value.currentTab == 'namespaces') {
     let appData = await currentAdapter.value.adapter.fetchApps();
-    apps.value = appData.apps ?? [];
+    if (!appData.ok) {
+      currentAdapter.value.state[currentAdapter.value.currentTab].error = `Fetching apps failed: ${appData.error}`;
+      return;
+    }
+    apps.value = appData.value.apps;
   }
 
   if (currentConfig.filters.namespace.show || currentConfig.editForm?.namespace.show) {
     let namespaceData = await currentAdapter.value.adapter.fetchNamespaces();
-    namespaces.value = namespaceData.namespaces ?? [];
+    if (!namespaceData.ok) {
+      currentAdapter.value.state[
+        currentAdapter.value.currentTab
+      ].error = `Fetching namespaces failed: ${namespaceData.error}`;
+      return;
+    }
+    namespaces.value = namespaceData.value.namespaces ?? [];
   }
 
   if (currentConfig.filters.role.show) {
     let roleData = await currentAdapter.value.adapter.fetchRoles();
-    roles.value = roleData.roles ?? [];
+    if (!roleData.ok) {
+      currentAdapter.value.state[currentAdapter.value.currentTab].error = `Fetching roles failed: ${roleData.error}`;
+      return;
+    }
+    roles.value = roleData.value.roles ?? [];
   }
 
   if (currentConfig.editForm?.conditions.show) {
     let conditionData = await currentAdapter.value.adapter.fetchConditions();
-    conditions.value = conditionData.conditions ?? [];
+    if (!conditionData.ok) {
+      currentAdapter.value.state[
+        currentAdapter.value.currentTab
+      ].error = `Fetching conditions failed: ${conditionData.error}`;
+      return;
+    }
+    conditions.value = conditionData.value.conditions ?? [];
   }
 };
 const switchToApps = async () => {
@@ -1306,50 +1334,75 @@ const getMany = async () => {
   currentState.all = [];
   currentState.selection = [];
 
-  let data: any[] = [];
-  try {
-    data = await (async () => {
-      let response: any = {};
-      let role: string[] = ['', '', ''];
-      switch (currentAdapter.value.currentTab) {
-        case 'apps':
-          response = await adapter.fetchApps();
-          return response.apps ?? [];
-        case 'namespaces':
-          response = await adapter.fetchNamespaces(currentState.filters.app);
-          return response.namespaces ?? [];
-        case 'roles':
-          response = await adapter.fetchRoles(currentState.filters.app, currentState.filters.namespace);
-          return response.roles ?? [];
-        case 'contexts':
-          response = await adapter.fetchContexts(currentState.filters.app, currentState.filters.namespace);
-          return response.contexts ?? [];
-        case 'permissions':
-          response = await adapter.fetchPermissions(currentState.filters.app, currentState.filters.namespace);
-          return response.permissions ?? [];
-        case 'conditions':
-          response = await adapter.fetchConditions();
-          return formatConditions(response.conditions);
-        case 'capabilities':
-          role = currentState.filters.role.split(':');
-          response = await adapter.fetchCapabilities(
-            {
-              appName: role[0],
-              namespaceName: role[1],
-              name: role[2],
-            },
-            currentState.filters.app,
-            currentState.filters.namespace
-          );
-          return formatCapabilities(response.capabilities);
-        default:
-          return [];
-      }
-    })();
-  } catch (error) {
-    currentState.error = error?.toString() ?? 'Unknown error';
-    return;
+  function handleError(error: string): any[] {
+    currentState.error = error;
+    return [];
   }
+
+  let data = await (async (): Promise<any[]> => {
+    switch (currentAdapter.value.currentTab) {
+      case 'apps': {
+        const result = await adapter.fetchApps();
+        if (!result.ok) {
+          return handleError(result.error);
+        }
+        return result.value.apps;
+      }
+      case 'namespaces': {
+        const result = await adapter.fetchNamespaces(currentState.filters.app);
+        if (!result.ok) {
+          return handleError(result.error);
+        }
+        return result.value.namespaces;
+      }
+      case 'roles': {
+        const result = await adapter.fetchRoles(currentState.filters.app, currentState.filters.namespace);
+        if (!result.ok) {
+          return handleError(result.error);
+        }
+        return result.value.roles;
+      }
+      case 'contexts': {
+        const result = await adapter.fetchContexts(currentState.filters.app, currentState.filters.namespace);
+        if (!result.ok) {
+          return handleError(result.error);
+        }
+        return result.value.contexts;
+      }
+      case 'permissions': {
+        const result = await adapter.fetchPermissions(currentState.filters.app, currentState.filters.namespace);
+        if (!result.ok) {
+          return handleError(result.error);
+        }
+        return result.value.permissions;
+      }
+      case 'conditions': {
+        const result = await adapter.fetchConditions();
+        if (!result.ok) {
+          return handleError(result.error);
+        }
+        return formatConditions(result.value.conditions);
+      }
+      case 'capabilities': {
+        const role = currentState.filters.role.split(':');
+        const result = await adapter.fetchCapabilities(
+          {
+            appName: role[0],
+            namespaceName: role[1],
+            name: role[2],
+          },
+          currentState.filters.app,
+          currentState.filters.namespace
+        );
+        if (!result.ok) {
+          return handleError(result.error);
+        }
+        return formatCapabilities(result.value.capabilities);
+      }
+      default:
+        return [];
+    }
+  })();
 
   setListDisplay(data);
   switchEditModeToCreate();
@@ -1363,45 +1416,66 @@ const getOne = async () => {
   currentState.all = [];
   currentState.selection = [];
 
-  let data: any = {};
-  try {
-    data = await (async () => {
-      let response: any = {};
-      switch (currentAdapter.value.currentTab) {
-        case 'namespaces':
-          response = await adapter.fetchNamespace(currentState.filters.app, currentState.filters.name);
-          return response.namespace ?? {};
-        case 'roles':
-          response = await adapter.fetchRole(
-            currentState.filters.app,
-            currentState.filters.namespace,
-            currentState.filters.name
-          );
-          return response.role ?? {};
-        case 'contexts':
-          response = await adapter.fetchContext(
-            currentState.filters.app,
-            currentState.filters.namespace,
-            currentState.filters.name
-          );
-          return response.context ?? {};
-        case 'capabilities':
-          response = await adapter.fetchCapability(
-            currentState.filters.app,
-            currentState.filters.namespace,
-            currentState.filters.name
-          );
-          return formatCapability(response.capability);
-        default:
-          return {};
+  function handleError(error: FetchObjectError): any[] {
+    currentState.error = (() => {
+      switch (error.type) {
+        case 'objectNotFound':
+          return '404: Object does not exist';
+        case 'generic':
+          return error.message;
       }
     })();
-  } catch (error) {
-    currentState.error = error?.toString() ?? 'Unknown error';
-    return;
+    return [];
   }
 
-  setListDisplay([data]);
+  const data = await (async (): Promise<any[]> => {
+    switch (currentAdapter.value.currentTab) {
+      case 'namespaces': {
+        const result = await adapter.fetchNamespace(currentState.filters.app, currentState.filters.name);
+        if (!result.ok) {
+          return handleError(result.error);
+        }
+        return [result.value.namespace];
+      }
+      case 'roles': {
+        const result = await adapter.fetchRole(
+          currentState.filters.app,
+          currentState.filters.namespace,
+          currentState.filters.name
+        );
+        if (!result.ok) {
+          return handleError(result.error);
+        }
+        return [result.value.role];
+      }
+      case 'contexts': {
+        const result = await adapter.fetchContext(
+          currentState.filters.app,
+          currentState.filters.namespace,
+          currentState.filters.name
+        );
+        if (!result.ok) {
+          return handleError(result.error);
+        }
+        return [result.value.context];
+      }
+      case 'capabilities': {
+        const result = await adapter.fetchCapability(
+          currentState.filters.app,
+          currentState.filters.namespace,
+          currentState.filters.name
+        );
+        if (!result.ok) {
+          return handleError(result.error);
+        }
+        return [formatCapability(result.value.capability)];
+      }
+      default:
+        return [];
+    }
+  })();
+
+  setListDisplay(data);
   switchEditModeToUpdate();
 };
 
@@ -1415,105 +1489,122 @@ const editOne = async () => {
   currentState.all = [];
   currentState.selection = [];
 
-  let data: any = {};
-  try {
-    data = await (async () => {
-      let response: any = {};
-      let editFunc = (obj: any) => {
-        return obj;
-      };
-      let outgoingRole: string[] = [];
-      let outgoingConditions: any[] = [];
-      let outgoingPermissions: any[] = [];
-
-      switch (currentAdapter.value.currentTab) {
-        case 'namespaces':
-          editFunc = mode === 'update' ? adapter.updateNamespace.bind(adapter) : adapter.createNamespace.bind(adapter);
-          response = await editFunc({
-            appName: formValues.app,
-            name: formValues.name,
-            displayName: formValues.displayName,
-          });
-          return response.namespace ?? {};
-        case 'roles':
-          editFunc = mode === 'update' ? adapter.updateRole.bind(adapter) : adapter.createRole.bind(adapter);
-          response = await editFunc({
-            appName: formValues.app,
-            namespaceName: formValues.namespace,
-            name: formValues.name,
-            displayName: formValues.displayName,
-          });
-          return response.role ?? {};
-        case 'contexts':
-          editFunc = mode === 'update' ? adapter.updateContext.bind(adapter) : adapter.createContext.bind(adapter);
-          response = await editFunc({
-            appName: formValues.app,
-            namespaceName: formValues.namespace,
-            name: formValues.name,
-            displayName: formValues.displayName,
-          });
-          return response.context ?? {};
-        case 'capabilities':
-          editFunc =
-            mode === 'update' ? adapter.updateCapability.bind(adapter) : adapter.createCapability.bind(adapter);
-
-          outgoingRole = formValues.role.split(':');
-          formValues.conditions.forEach(conditionData => {
-            let conditionParts = conditionData[0].split(':');
-            let condition = conditions.value.filter(cond => {
-              return (
-                cond.appName === conditionParts[0] &&
-                cond.namespaceName === conditionParts[1] &&
-                cond.name === conditionParts[2]
-              );
-            })[0];
-            let parameters: any[] = [];
-            for (let i = 1; i < conditionData.length; i++) {
-              parameters.push({
-                name: condition.parameters[i - 1].name,
-                value: conditionData[i],
-              });
-            }
-            outgoingConditions.push({
-              appName: condition.appName,
-              namespaceName: condition.namespaceName,
-              name: condition.name,
-              parameters: parameters,
-            });
-          });
-          formValues.permissions.forEach(permData => {
-            let permissionParts = permData.split(':');
-            outgoingPermissions.push({
-              appName: permissionParts[0],
-              namespaceName: permissionParts[1],
-              name: permissionParts[2],
-            });
-          });
-          response = await editFunc({
-            appName: formValues.app,
-            namespaceName: formValues.namespace,
-            name: formValues.name,
-            displayName: formValues.displayName,
-            role: {
-              appName: outgoingRole[0],
-              namespaceName: outgoingRole[1],
-              name: outgoingRole[2],
-            },
-            conditions: outgoingConditions,
-            relation: formValues.relation,
-            permissions: outgoingPermissions,
-          });
-          return formatCapability(response.capability);
-        default:
-          return {};
-      }
-    })();
-  } catch (error) {
-    currentState.error = error?.toString() ?? 'Unknown error';
-    return;
+  function handleError(error: SaveError): any[] {
+    switch (error.type) {
+      case 'generic':
+        currentState.error = error.message;
+        break;
+      case 'fieldErrors':
+        currentState.error = 'Some fields are invalid. See in dev console';
+        console.error(error);
+        break;
+    }
+    return [];
   }
+  const data = await (async (): Promise<any[]> => {
+    switch (currentAdapter.value.currentTab) {
+      case 'namespaces': {
+        const editFunc =
+          mode === 'update' ? adapter.updateNamespace.bind(adapter) : adapter.createNamespace.bind(adapter);
+        const result = await editFunc({
+          appName: formValues.app,
+          name: formValues.name,
+          displayName: formValues.displayName,
+        });
+        if (!result.ok) {
+          return handleError(result.error);
+        }
+        return [result.value.namespace];
+      }
+      case 'roles': {
+        const editFunc = mode === 'update' ? adapter.updateRole.bind(adapter) : adapter.createRole.bind(adapter);
+        const result = await editFunc({
+          appName: formValues.app,
+          namespaceName: formValues.namespace,
+          name: formValues.name,
+          displayName: formValues.displayName,
+        });
+        if (!result.ok) {
+          return handleError(result.error);
+        }
+        return [result.value.role];
+      }
+      case 'contexts': {
+        const editFunc = mode === 'update' ? adapter.updateContext.bind(adapter) : adapter.createContext.bind(adapter);
+        const result = await editFunc({
+          appName: formValues.app,
+          namespaceName: formValues.namespace,
+          name: formValues.name,
+          displayName: formValues.displayName,
+        });
+        if (!result.ok) {
+          return handleError(result.error);
+        }
+        return [result.value.context];
+      }
+      case 'capabilities': {
+        const editFunc =
+          mode === 'update' ? adapter.updateCapability.bind(adapter) : adapter.createCapability.bind(adapter);
 
-  setListDisplay([data]);
+        const outgoingRole = formValues.role.split(':');
+        const outgoingConditions: any[] = [];
+        const outgoingPermissions: any[] = [];
+        formValues.conditions.forEach(conditionData => {
+          let conditionParts = conditionData[0].split(':');
+          let condition = conditions.value.filter(cond => {
+            return (
+              cond.appName === conditionParts[0] &&
+              cond.namespaceName === conditionParts[1] &&
+              cond.name === conditionParts[2]
+            );
+          })[0];
+          let parameters: any[] = [];
+          for (let i = 1; i < conditionData.length; i++) {
+            parameters.push({
+              name: condition.parameters[i - 1].name,
+              value: conditionData[i],
+            });
+          }
+          outgoingConditions.push({
+            appName: condition.appName,
+            namespaceName: condition.namespaceName,
+            name: condition.name,
+            parameters: parameters,
+          });
+        });
+        formValues.permissions.forEach(permData => {
+          let permissionParts = permData.split(':');
+          outgoingPermissions.push({
+            appName: permissionParts[0],
+            namespaceName: permissionParts[1],
+            name: permissionParts[2],
+          });
+        });
+        const result = await editFunc({
+          appName: formValues.app,
+          namespaceName: formValues.namespace,
+          name: formValues.name,
+          displayName: formValues.displayName,
+          role: {
+            appName: outgoingRole[0],
+            namespaceName: outgoingRole[1],
+            name: outgoingRole[2],
+          },
+          conditions: outgoingConditions,
+          relation: formValues.relation,
+          permissions: outgoingPermissions,
+        });
+        if (!result.ok) {
+          return handleError(result.error);
+        }
+        return [formatCapability(result.value.capability)];
+      }
+      default:
+        return [];
+    }
+  })();
+
+  setListDisplay(data);
   switchEditModeToUpdate();
 };
 
@@ -1527,15 +1618,13 @@ const deleteOne = async () => {
 
   currentState.error = '';
 
-  try {
-    await currentAdapter.value.adapter.removeCapability(
-      currentState.filters.app,
-      currentState.filters.namespace,
-      currentState.filters.name
-    );
-  } catch (error) {
-    currentState.error = error?.toString() ?? 'Unknown error';
-    return;
+  const result = await currentAdapter.value.adapter.removeCapability(
+    currentState.filters.app,
+    currentState.filters.namespace,
+    currentState.filters.name
+  );
+  if (!result.ok) {
+    currentState.error = result.error;
   }
 
   resetListDisplay();

@@ -1,6 +1,7 @@
 import type {AddViewConfig} from '@/helpers/models';
 import type {LabeledValue} from '@/helpers/models';
 import i18next from 'i18next';
+import {validateName} from '@/helpers/validators';
 
 export const getAddContextViewConfig = (appsOptions: LabeledValue<string>[]): AddViewConfig => {
   return {
@@ -44,6 +45,7 @@ export const getAddContextViewConfig = (appsOptions: LabeledValue<string>[]): Ad
                     label: i18next.t('configs.addView.field.name'),
                     required: true,
                     access: 'write',
+                    validators: [v => validateName(v)],
                   },
                 },
                 {

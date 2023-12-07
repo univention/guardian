@@ -31,6 +31,9 @@
     }
   },
   "ListView": {
+    "fetchConfig.error": "An error occurred while loading the page. Please try again or contact your system administrator: {{msg}}",
+    "fetchNamespacesOptions.error": "The namespaces for the app {{app}} could not be loaded: {{msg}}",
+    "fetchObjects.error": "The search has failed: {{msg}}",
     "heading": {
       "role": "Roles",
       "context": "Contexts",
@@ -50,6 +53,9 @@
     }
   },
   "EditView": {
+    "fetchAddViewConfig.error": "An error occurred while loading the page. Please try again or contact your system administrator: {{msg}}",
+    "fetchPermissionsOptions.error": "The permissions for the app and namespace {{app}}:{{namespace}} could not be loaded: {{msg}}",
+    "fetchObject.error": "An error occurred while loading the object: {{msg}}",
     "heading": {
       "add.role": "Create role",
       "add.context": "Create context",
@@ -75,6 +81,7 @@
     "notFound.role": "The role object does not exist",
     "notFound.context": "The context object does not exist",
     "notFound.namespace": "The namespace object does not exist",
+    "notFound.capability": "The capability object does not exist",
     "creationFailed.role": "The role could not be created",
     "loadAddViewConfigFailed": "The page could not be loaded"
   },
@@ -95,12 +102,19 @@
     }
   },
   "EditViewSaveFailedModal": {
+    "objectNotFound": "Das Objekt existiert nicht mehr",
+    "objectNotFound_role": "The role no longer exists",
+    "objectNotFound_context": "The context no longer exists",
+    "objectNotFound_namespace": "The namespace no longer exists",
+    "objectNotFound_capability": "The capability no longer exists",
     "heading.role_edit": "The role object could not be saved",
     "heading.context_edit": "The context object could not be saved",
     "heading.namespace_edit": "The namespace object could not be saved",
+    "heading.capability_edit": "The capability object could not be saved",
     "heading.role_add": "The role object could not be created",
     "heading.context_add": "The context object could not be created",
     "heading.namespace_add": "The namespace object could not be created",
+    "heading.capability_add": "The capability object could not be created",
     "baseDescription_edit": "An unknown error occurred during saving",
     "baseDescription_add": "An unknown error occurred during creation",
     "fieldErrors.description": "Some fields contain errors:",
@@ -117,7 +131,16 @@
       "confirmation": "OK"
     }
   },
-  "dataAccess.options.all": "All",
+  "dataAccess": {
+    "options.all": "All",
+    "conditionsExtensionsEmptyError": "An unexpected error has occurred. Please try again or contact your system administrator: (Conditions should not be empty)"
+  },
+  "dataAdapter": {
+    "create.nameTaken": "The name is already taken",
+    "fetchFailed": "Command failed: {{msg}}",
+    "unknownError": "Unknown error",
+    "jsonError": "Invalid JSON format received: {{msg}}"
+  },
   "configs": {
     "listView": {
       "searchForm": {
@@ -150,5 +173,8 @@
         "autoGenerate": "When left blank, this will be automatically generated"
       }
     }
+  },
+  "validators": {
+    "validateName": "The name must start with a lowercase letter and may only contain lowercase letters (\"a-z\"), numbers (\"0-9\"), dash (\"-\") and underscore (\"_\")"
   }
 }

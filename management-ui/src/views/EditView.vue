@@ -28,7 +28,6 @@ import {
   fetchObject,
   createObject,
   updateObject,
-  type SaveError,
   fetchNamespacesOptions,
   fetchPermissionsOptions,
 } from '@/helpers/dataAccess';
@@ -40,8 +39,11 @@ import type {
   ObjectType,
   FieldComboBox,
   FieldMultiInput,
+  LabeledValue,
 } from '@/helpers/models';
 import {useTranslation} from 'i18next-vue';
+import {useErrorStore} from '@/stores/error';
+import type {SaveError} from '@/adapters/data';
 
 const props = defineProps<{
   action: 'edit' | 'add';
@@ -67,6 +69,7 @@ const route = useRoute();
 const router = useRouter();
 
 const standby = reactive(useStandby());
+const errorStore = useErrorStore();
 
 const nonModalError = ref('');
 const fetchedObject = ref<DetailResponseModel | null>(null);
@@ -177,7 +180,6 @@ const changedValues = computed(() => {
 });
 const hasChangedValues = computed(() => Object.keys(changedValues.value).length > 0);
 
-console.log('EditView: ', props.action);
 if (props.action === 'edit') {
   watch(
     () => (props.objectType === 'capability' ? route.params['id2'] : route.params['id']),
@@ -188,13 +190,22 @@ if (props.action === 'edit') {
         return;
       }
       nonModalError.value = '';
-      const answer = await standby.wrap(() => fetchObject(props.objectType, newId));
-      console.log('Editview fetchObject: ', answer);
-      if (answer === null) {
-        nonModalError.value = t(`EditView.notFound.${props.objectType}`);
+      const result = await standby.wrap(() => fetchObject(props.objectType, newId));
+      if (!result.ok) {
+        switch (result.error.type) {
+          case 'objectNotFound':
+            nonModalError.value = t(`EditView.notFound.${props.objectType}`);
+            break;
+          case 'generic':
+            errorStore.push({
+              title: t('ErrorModal.heading'),
+              message: t('EditView.fetchObject.error', {msg: result.error.message}),
+            });
+            break;
+        }
       } else {
-        fetchedObject.value = answer;
-        pages.value = getPagesWithAccessNoneMapped(answer.pages);
+        fetchedObject.value = result.value;
+        pages.value = getPagesWithAccessNoneMapped(result.value.pages);
         const _origValues = JSON.parse(JSON.stringify(fetchedObject.value.values));
         for (const name in _origValues) {
           const value = _origValues[name];
@@ -217,7 +228,15 @@ if (props.action === 'edit') {
 
 if (props.action === 'add') {
   onMounted(async () => {
-    const config = await standby.wrap(() => fetchAddViewConfig(props.objectType));
+    const result = await standby.wrap(() => fetchAddViewConfig(props.objectType));
+    if (!result.ok) {
+      errorStore.push({
+        title: t('ErrorModal.heading'),
+        message: t('EditView.fetchAddViewConfig.error', {msg: result.error}),
+      });
+      return;
+    }
+    const config = result.value;
     addViewConfigLoaded.value = true;
     pages.value = config.pages;
     const _origValues: FormValues = {};
@@ -241,7 +260,21 @@ if (props.action === 'add') {
         async newValue => {
           currentValues.value['namespaceName'] = '';
           field.props.hint = '';
-          field.props.options = await _standby.wrap(() => fetchNamespacesOptions(newValue as string, false));
+          const result = await _standby.wrap(() => fetchNamespacesOptions(newValue as string, false));
+          if (!result.ok) {
+            errorStore.push({
+              title: t('ErrorModal.heading'),
+              message: t('ListView.fetchNamespacesOptions.error', {app: newValue, msg: result.error}),
+            });
+            field.props.options = [
+              {
+                label: t('dataAccess.options.all'),
+                value: '',
+              },
+            ];
+          } else {
+            field.props.options = result.value;
+          }
         }
       );
 
@@ -253,11 +286,26 @@ if (props.action === 'add') {
         watch(
           () => currentValues.value['namespaceName'],
           async newValue => {
+            const appName = currentValues.value['appName'];
+            const namespaceName = newValue;
+
             currentValues.value['permissions'] = [];
             field.props.hint = '';
-            (field.props.subElements[0] as FieldComboBox).props.options = await _standby.wrap(() =>
-              fetchPermissionsOptions(currentValues.value['appName'] as string, newValue as string)
-            );
+            let options: LabeledValue<string>[] = [];
+            const result = await _standby.wrap(() => fetchPermissionsOptions(appName as string, newValue as string));
+            if (!result.ok) {
+              errorStore.push({
+                title: t('ErrorModal.heading'),
+                message: t('EditView.fetchPermissionsOptions.error', {
+                  app: appName,
+                  namespace: namespaceName,
+                  msg: result.error,
+                }),
+              });
+            } else {
+              options = result.value;
+            }
+            (field.props.subElements[0] as FieldComboBox).props.options = options;
           }
         );
       }
@@ -431,13 +479,13 @@ const save = async (): Promise<void> => {
     // @ts-ignore
     conditionsExtensions = pages.value[0].fieldsets[0].rows[2][0].props.subElements[0].props.extensions;
   }
-  const error = await standby.wrap(() =>
+  const result = await standby.wrap(() =>
     updateObject(props.objectType, currentValues.value, (route.params.id as string) ?? '', conditionsExtensions)
   );
-  console.log('error', error);
-  if (error) {
+
+  if (!result.ok) {
     saveFailedModal.active = true;
-    saveFailedModal.error = error;
+    saveFailedModal.error = result.error;
     handleSaveError();
     return;
   }
@@ -458,20 +506,15 @@ const add = async (): Promise<void> => {
     createObject(props.objectType, currentValues.value, (route.params.id as string) ?? '', conditionsExtensions)
   );
 
-  if (result.status === 'success') {
-    saveSuccessModal.active = true;
-    saveSuccessModal.name = result.name;
-    return;
-  }
-
-  if (result.status === 'error') {
+  if (!result.ok) {
     saveFailedModal.active = true;
     saveFailedModal.error = result.error;
     handleSaveError();
     return;
   }
 
-  console.debug("EditView:add: Unexpected response from 'createUser()'");
+  saveSuccessModal.active = true;
+  saveSuccessModal.name = result.value;
 };
 
 const heading = computed(() => {
@@ -676,6 +719,11 @@ const hideRoleEdit = computed(() => {
           <template v-else-if="saveFailedModal.error.type === 'generic'">
             <p>
               {{ saveFailedModal.error.message }}
+            </p>
+          </template>
+          <template v-else-if="saveFailedModal.error.type === 'objectNotFound'">
+            <p>
+              {{ t('EditViewSaveFailedModal.objectNotFound', {context: props.objectType}) }}
             </p>
           </template>
           <template v-else>

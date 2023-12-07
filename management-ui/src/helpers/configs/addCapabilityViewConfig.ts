@@ -1,6 +1,7 @@
 import type {AddViewConfig, Field} from '@/helpers/models';
 import type {LabeledValue} from '@/helpers/models';
 import i18next from 'i18next';
+import {validateName} from '@/helpers/validators';
 
 export const getAddCapabilityViewConfig = (
   appsOptions: LabeledValue<string>[],
@@ -56,6 +57,7 @@ export const getAddCapabilityViewConfig = (
                     label: i18next.t('configs.addView.field.name'),
                     hint: i18next.t('configs.addView.hint.autoGenerate'),
                     required: false,
+                    validators: [v => validateName(v)],
                   },
                 },
               ],

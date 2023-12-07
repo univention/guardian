@@ -6,10 +6,10 @@ import type {AppResponseData, AppsResponse, DisplayApp, WrappedAppsList} from '@
 import type {
   DisplayNamespace,
   Namespace,
-  NamespaceResponse,
-  NamespacesResponse,
   NamespaceRequestData,
+  NamespaceResponse,
   NamespaceResponseData,
+  NamespacesResponse,
   WrappedNamespace,
   WrappedNamespacesList,
 } from '@/helpers/models/namespaces';
@@ -17,23 +17,24 @@ import type {
   DisplayRole,
   Role,
   RoleRequestData,
-  RoleResponseData,
   RoleResponse,
+  RoleResponseData,
   RolesResponse,
   WrappedRole,
   WrappedRolesList,
 } from '@/helpers/models/roles';
 import type {
-  DisplayContext,
   Context,
-  ContextResponseData,
-  ContextResponse,
-  ContextsResponse,
   ContextRequestData,
+  ContextResponse,
+  ContextResponseData,
+  ContextsResponse,
+  DisplayContext,
   WrappedContext,
   WrappedContextsList,
 } from '@/helpers/models/contexts';
 import type {
+  CapabilitiesResponse,
   Capability,
   CapabilityCondition,
   CapabilityConditionRequestData,
@@ -42,27 +43,26 @@ import type {
   CapabilityPermission,
   CapabilityPermissionRequestData,
   CapabilityRequestData,
+  CapabilityResponse,
+  CapabilityResponseData,
   CapabilityRole,
   CapabilityRoleRequestData,
-  CapabilityResponse,
-  CapabilitiesResponse,
-  CapabilityResponseData,
   DisplayCapability,
   NewCapability,
   NewCapabilityRequestData,
-  WrappedCapability,
   WrappedCapabilitiesList,
+  WrappedCapability,
 } from '@/helpers/models/capabilities';
 import type {
   DisplayPermission,
-  PermissionsResponse,
   PermissionResponseData,
+  PermissionsResponse,
   WrappedPermissionsList,
 } from '@/helpers/models/permissions';
 import type {
   ConditionParameter,
-  ConditionsResponse,
   ConditionResponseData,
+  ConditionsResponse,
   DisplayCondition,
   WrappedConditionsList,
 } from '@/helpers/models/conditions';
@@ -74,151 +74,421 @@ import {makeMockPermissions, makeMockPermissionsResponse} from '@/helpers/mocks/
 import {makeMockConditions, makeMockConditionsResponse} from '@/helpers/mocks/api/conditions';
 import {makeMockCapabilities, makeMockCapabilitiesResponse} from '@/helpers/mocks/api/capabilities';
 
+export type Result<T, E> =
+  | {
+      ok: true;
+      value: T;
+    }
+  | {
+      ok: false;
+      error: E;
+    };
+
+const getError = async (response: Response): Promise<{detail: unknown} | null> => {
+  if (!response.ok) {
+    const text = (await response.text()) || response.statusText;
+    let detail = {
+      detail: text,
+    };
+    try {
+      const json = JSON.parse(text);
+      if (json && typeof json === 'object' && 'detail' in json) {
+        detail = json;
+      }
+    } catch (err) {
+      // Either not a JSON response, or unparsable. We'll just ignore this.
+    }
+    return detail;
+  }
+  return null;
+};
+const getErrorString = (error: {detail: unknown}): string => {
+  if (error.detail !== null && typeof error.detail === 'object' && 'message' in error.detail) {
+    return JSON.stringify(error.detail.message);
+  } else {
+    // technically could fail
+    return JSON.stringify(error.detail);
+  }
+};
+
+export type SaveError =
+  | {
+      type: 'objectNotFound';
+    }
+  | {
+      type: 'generic';
+      message: string;
+    }
+  | {
+      type: 'fieldErrors';
+      errors: {
+        field: string;
+        message: string;
+      }[];
+    };
+const getSaveError = async (response: Response): Promise<SaveError | null> => {
+  const errorJson = await getError(response);
+  if (!errorJson) {
+    return null;
+  }
+  if (response.status === 422) {
+    // FIXME validate format of errorJson
+    // We assume here that errorJson.detail has a specific format when we get a 422 status.
+    // We should validate that that is true.
+    //
+    // It would be nice to have a shared json.schema between frontend and backend to facilitate
+    // good/stable/exhaustive/type checked error handling.
+    //
+    // Ideally the json.schema would describe a set of tagged unions for all possible backend errors.
+    // Although that might collide/overlap with the status codes a bit.
+    //
+    // e.g.
+    // {
+    //   type: 'validationError',
+    //   detail: ...
+    // }
+    //
+    // {
+    //   type: 'nameTakenError'
+    // }
+
+    if (Array.isArray(errorJson.detail)) {
+      const detail: {loc: string[]; msg: string; type: string}[] = errorJson.detail;
+      const error: SaveError = {
+        type: 'fieldErrors',
+        errors: [],
+      };
+      for (const iDetail of detail) {
+        const field = iDetail.loc[iDetail.loc.length - 1];
+        if (field) {
+          error.errors.push({
+            field,
+            message: iDetail.msg,
+          });
+        }
+      }
+      return error;
+    }
+  }
+  if (
+    errorJson.detail !== null &&
+    typeof errorJson.detail === 'object' &&
+    'message' in errorJson.detail &&
+    errorJson.detail.message === 'An object with the given identifiers already exists.' // FIXME: It would be nice to get a more explicit error type for this from the backend
+  ) {
+    return {
+      type: 'fieldErrors',
+      errors: [
+        {
+          field: 'name',
+          message: i18next.t('dataAdapter.create.nameTaken'),
+        },
+      ],
+    };
+  }
+  if (response.status === 404) {
+    return {
+      type: 'objectNotFound',
+    };
+  }
+  return {
+    type: 'generic',
+    message: getErrorString(errorJson),
+  };
+};
+
+export type FetchObjectError =
+  | {
+      type: 'objectNotFound';
+    }
+  | {
+      type: 'generic';
+      message: string;
+    };
+
 export const apiDataSettings = {
   uri: 'apiDataAdapter.uri',
   useProxy: 'managementUi.cors.useProxy',
 };
 
 class GenericDataAdapter implements DataPort {
-  async fetchApps(): Promise<WrappedAppsList> {
-    const responseData = await this.fetchAppsRequest();
-    const apps = responseData.apps.map(app => this._appFromApi(app));
-    return {apps: apps};
+  async fetchApps(): Promise<Result<WrappedAppsList, string>> {
+    const result = await this.fetchAppsRequest();
+    if (!result.ok) {
+      return result;
+    }
+    return {
+      ok: true,
+      value: {
+        apps: result.value.apps.map(app => this._appFromApi(app)),
+      },
+    };
   }
 
-  async fetchNamespaces(app?: string): Promise<WrappedNamespacesList> {
-    const responseData = await this.fetchNamespacesRequest(app);
-    const namespaces = responseData.namespaces.map(namespace => this._namespaceFromApi(namespace));
-    return {namespaces: namespaces};
+  async fetchNamespaces(app?: string): Promise<Result<WrappedNamespacesList, string>> {
+    const result = await this.fetchNamespacesRequest(app);
+    if (!result.ok) {
+      return result;
+    }
+    return {
+      ok: true,
+      value: {
+        namespaces: result.value.namespaces.map(namespace => this._namespaceFromApi(namespace)),
+      },
+    };
   }
 
-  async fetchNamespace(app: string, name: string): Promise<WrappedNamespace> {
-    const responseData = await this.fetchNamespaceRequest(app, name);
-    const namespace = this._namespaceFromApi(responseData.namespace);
-    return {namespace: namespace};
+  async fetchNamespace(app: string, name: string): Promise<Result<WrappedNamespace, FetchObjectError>> {
+    const result = await this.fetchNamespaceRequest(app, name);
+    if (!result.ok) {
+      return result;
+    }
+    return {
+      ok: true,
+      value: {
+        namespace: this._namespaceFromApi(result.value.namespace),
+      },
+    };
   }
 
-  async createNamespace(namespace: Namespace): Promise<WrappedNamespace> {
+  async createNamespace(namespace: Namespace): Promise<Result<WrappedNamespace, SaveError>> {
     const requestData = this._namespaceToApi(namespace);
-    const responseData = await this.createNamespaceRequest(requestData);
-    const newNamespace = this._namespaceFromApi(responseData.namespace);
-    return {namespace: newNamespace};
+    const result = await this.createNamespaceRequest(requestData);
+    if (!result.ok) {
+      return result;
+    }
+    return {
+      ok: true,
+      value: {
+        namespace: this._namespaceFromApi(result.value.namespace),
+      },
+    };
   }
 
-  async updateNamespace(namespace: Namespace): Promise<WrappedNamespace> {
+  async updateNamespace(namespace: Namespace): Promise<Result<WrappedNamespace, SaveError>> {
     const requestData = this._namespaceToApi(namespace);
-    const responseData = await this.updateNamespaceRequest(requestData);
-    const updatedNamespace = this._namespaceFromApi(responseData.namespace);
-    return {namespace: updatedNamespace};
+    const result = await this.updateNamespaceRequest(requestData);
+    if (!result.ok) {
+      return result;
+    }
+    return {
+      ok: true,
+      value: {
+        namespace: this._namespaceFromApi(result.value.namespace),
+      },
+    };
   }
 
-  async fetchRoles(app?: string, namespace?: string): Promise<WrappedRolesList> {
-    const responseData = await this.fetchRolesRequest(app, namespace);
-    const roles = responseData.roles.map(role => this._roleFromApi(role));
-    return {roles: roles};
+  async fetchRoles(app?: string, namespace?: string): Promise<Result<WrappedRolesList, string>> {
+    const result = await this.fetchRolesRequest(app, namespace);
+    if (!result.ok) {
+      return result;
+    }
+    return {
+      ok: true,
+      value: {
+        roles: result.value.roles.map(role => this._roleFromApi(role)),
+      },
+    };
   }
 
-  async fetchRole(app: string, namespace: string, name: string): Promise<WrappedRole> {
-    const responseData = await this.fetchRoleRequest(app, namespace, name);
-    const role = this._roleFromApi(responseData.role);
-    return {role: role};
+  async fetchRole(app: string, namespace: string, name: string): Promise<Result<WrappedRole, FetchObjectError>> {
+    const result = await this.fetchRoleRequest(app, namespace, name);
+    if (!result.ok) {
+      return result;
+    }
+    return {
+      ok: true,
+      value: {
+        role: this._roleFromApi(result.value.role),
+      },
+    };
   }
 
-  async createRole(role: Role): Promise<WrappedRole> {
+  async createRole(role: Role): Promise<Result<WrappedRole, SaveError>> {
     const requestData = this._roleToApi(role);
-    const responseData = await this.createRoleRequest(requestData);
-    const newRole = this._roleFromApi(responseData.role);
-    return {role: newRole};
+    const result = await this.createRoleRequest(requestData);
+    if (!result.ok) {
+      return result;
+    }
+    return {
+      ok: true,
+      value: {
+        role: this._roleFromApi(result.value.role),
+      },
+    };
   }
 
-  async updateRole(role: Role): Promise<WrappedRole> {
+  async updateRole(role: Role): Promise<Result<WrappedRole, SaveError>> {
     const requestData = this._roleToApi(role);
-    const responseData = await this.updateRoleRequest(requestData);
-    const updatedRole = this._roleFromApi(responseData.role);
-    return {role: updatedRole};
+    const result = await this.updateRoleRequest(requestData);
+    if (!result.ok) {
+      return result;
+    }
+    return {
+      ok: true,
+      value: {
+        role: this._roleFromApi(result.value.role),
+      },
+    };
   }
 
-  async fetchContexts(app?: string, namespace?: string): Promise<WrappedContextsList> {
-    const responseData = await this.fetchContextsRequest(app, namespace);
-    const contexts = responseData.contexts.map(context => this._contextFromApi(context));
-    return {contexts: contexts};
+  async fetchContexts(app?: string, namespace?: string): Promise<Result<WrappedContextsList, string>> {
+    const result = await this.fetchContextsRequest(app, namespace);
+    if (!result.ok) {
+      return result;
+    }
+    return {
+      ok: true,
+      value: {
+        contexts: result.value.contexts.map(context => this._contextFromApi(context)),
+      },
+    };
   }
 
-  async fetchContext(app: string, namespace: string, name: string): Promise<WrappedContext> {
-    const responseData = await this.fetchContextRequest(app, namespace, name);
-    const context = this._contextFromApi(responseData.context);
-    return {context: context};
+  async fetchContext(app: string, namespace: string, name: string): Promise<Result<WrappedContext, FetchObjectError>> {
+    const result = await this.fetchContextRequest(app, namespace, name);
+    if (!result.ok) {
+      return result;
+    }
+    return {
+      ok: true,
+      value: {
+        context: this._contextFromApi(result.value.context),
+      },
+    };
   }
 
-  async createContext(context: Context): Promise<WrappedContext> {
+  async createContext(context: Context): Promise<Result<WrappedContext, SaveError>> {
     const requestData = this._contextToApi(context);
-    const responseData = await this.createContextRequest(requestData);
-    const newContext = this._contextFromApi(responseData.context);
-    return {context: newContext};
+    const result = await this.createContextRequest(requestData);
+    if (!result.ok) {
+      return result;
+    }
+    return {
+      ok: true,
+      value: {
+        context: this._contextFromApi(result.value.context),
+      },
+    };
   }
 
-  async updateContext(context: Context): Promise<WrappedContext> {
+  async updateContext(context: Context): Promise<Result<WrappedContext, SaveError>> {
     const requestData = this._contextToApi(context);
-    const responseData = await this.updateContextRequest(requestData);
-    const updatedContext = this._contextFromApi(responseData.context);
-    return {context: updatedContext};
+    const result = await this.updateContextRequest(requestData);
+    if (!result.ok) {
+      return result;
+    }
+    return {
+      ok: true,
+      value: {
+        context: this._contextFromApi(result.value.context),
+      },
+    };
   }
 
-  async fetchCapabilities(role: CapabilityRole, app?: string, namespace?: string): Promise<WrappedCapabilitiesList> {
+  async fetchCapabilities(
+    role: CapabilityRole,
+    app?: string,
+    namespace?: string
+  ): Promise<Result<WrappedCapabilitiesList, string>> {
     const roleData = this._capabilityRoleToApi(role);
-    const unfilteredResponseData = await this.fetchCapabilitiesRequest(roleData);
+    const result = await this.fetchCapabilitiesRequest(roleData);
+    if (!result.ok) {
+      return result;
+    }
+    const unfilteredResponseData = result.value;
     let responseData = unfilteredResponseData.capabilities;
     if (app !== undefined && app !== '') {
       if (namespace !== undefined && namespace !== '') {
-        responseData = unfilteredResponseData.capabilities.filter((capability: CapabilityResponseData) => {
-          return capability.app_name === app && capability.namespace_name == namespace;
-        });
+        responseData = unfilteredResponseData.capabilities.filter(
+          capability => capability.app_name === app && capability.namespace_name == namespace
+        );
       } else {
-        responseData = unfilteredResponseData.capabilities.filter((capability: CapabilityResponseData) => {
-          return capability.app_name === app;
-        });
+        responseData = unfilteredResponseData.capabilities.filter(capability => capability.app_name === app);
       }
     }
-
-    const capabilities = responseData.map(capability => this._capabilityFromApi(capability));
-    return {capabilities: capabilities};
+    return {
+      ok: true,
+      value: {
+        capabilities: responseData.map(capability => this._capabilityFromApi(capability)),
+      },
+    };
   }
 
-  async fetchCapability(app: string, namespace: string, name: string): Promise<WrappedCapability> {
-    const responseData = await this.fetchCapabilityRequest(app, namespace, name);
-    const capability: DisplayCapability = this._capabilityFromApi(responseData.capability);
-    return {capability: capability};
+  async fetchCapability(
+    app: string,
+    namespace: string,
+    name: string
+  ): Promise<Result<WrappedCapability, FetchObjectError>> {
+    const result = await this.fetchCapabilityRequest(app, namespace, name);
+    if (!result.ok) {
+      return result;
+    }
+    return {
+      ok: true,
+      value: {
+        capability: this._capabilityFromApi(result.value.capability),
+      },
+    };
   }
 
-  async createCapability(capability: NewCapability): Promise<WrappedCapability> {
+  async createCapability(capability: NewCapability): Promise<Result<WrappedCapability, SaveError>> {
     const requestData = this._newCapabilityToApi(capability);
-    const responseData = await this.createCapabilityRequest(requestData);
-    const newCapability = this._capabilityFromApi(responseData.capability);
-    return {capability: newCapability};
+    const result = await this.createCapabilityRequest(requestData);
+    if (!result.ok) {
+      return result;
+    }
+    return {
+      ok: true,
+      value: {
+        capability: this._capabilityFromApi(result.value.capability),
+      },
+    };
   }
 
-  async updateCapability(capability: Capability): Promise<WrappedCapability> {
+  async updateCapability(capability: Capability): Promise<Result<WrappedCapability, SaveError>> {
     const requestData = this._capabilityToApi(capability);
-    const responseData = await this.updateCapabilityRequest(requestData);
-    const updatedCapability = this._capabilityFromApi(responseData.capability);
-    return {capability: updatedCapability};
+    const result = await this.updateCapabilityRequest(requestData);
+    if (!result.ok) {
+      return result;
+    }
+    return {
+      ok: true,
+      value: {
+        capability: this._capabilityFromApi(result.value.capability),
+      },
+    };
   }
 
-  async removeCapability(app: string, namespace: string, name: string): Promise<boolean> {
-    const response = await this.removeCapabilityRequest(app, namespace, name);
-    return response;
+  async removeCapability(app: string, namespace: string, name: string): Promise<Result<null, string>> {
+    return await this.removeCapabilityRequest(app, namespace, name);
   }
 
-  async fetchPermissions(app: string, namespace: string): Promise<WrappedPermissionsList> {
-    const responseData = await this.fetchPermissionsRequest(app, namespace);
-    const permissions = responseData.permissions.map(permission => this._permissionFromApi(permission));
-    return {permissions: permissions};
+  async fetchPermissions(app: string, namespace: string): Promise<Result<WrappedPermissionsList, string>> {
+    const result = await this.fetchPermissionsRequest(app, namespace);
+    if (!result.ok) {
+      return result;
+    }
+    return {
+      ok: true,
+      value: {
+        permissions: result.value.permissions.map(permission => this._permissionFromApi(permission)),
+      },
+    };
   }
 
-  async fetchConditions(): Promise<WrappedConditionsList> {
-    const responseData = await this.fetchConditionsRequest();
-    const conditions = responseData.conditions.map(condition => this._conditionFromApi(condition));
-    return {conditions: conditions};
+  async fetchConditions(): Promise<Result<WrappedConditionsList, string>> {
+    const result = await this.fetchConditionsRequest();
+    if (!result.ok) {
+      return result;
+    }
+    return {
+      ok: true,
+      value: {
+        conditions: result.value.conditions.map(condition => this._conditionFromApi(condition)),
+      },
+    };
   }
 
   _appFromApi(appData: AppResponseData): DisplayApp {
@@ -452,83 +722,91 @@ class GenericDataAdapter implements DataPort {
     };
   }
 
-  fetchAppsRequest(): Promise<AppsResponse> {
+  fetchAppsRequest(): Promise<Result<AppsResponse, string>> {
     throw new Error('Not Implemented');
   }
 
-  fetchNamespacesRequest(app?: string): Promise<NamespacesResponse> {
+  fetchNamespacesRequest(app?: string): Promise<Result<NamespacesResponse, string>> {
     throw new Error(`Not Implemented. app=${app}`);
   }
 
-  fetchNamespaceRequest(app: string, name: string): Promise<NamespaceResponse> {
+  fetchNamespaceRequest(app: string, name: string): Promise<Result<NamespaceResponse, FetchObjectError>> {
     throw new Error(`Not Implemented. app=${app}; name=${name}`);
   }
 
-  createNamespaceRequest(namespaceData: NamespaceRequestData): Promise<NamespaceResponse> {
+  createNamespaceRequest(namespaceData: NamespaceRequestData): Promise<Result<NamespaceResponse, SaveError>> {
     throw new Error(`Not Implemented. namespace=${namespaceData}`);
   }
 
-  updateNamespaceRequest(namespaceData: NamespaceRequestData): Promise<NamespaceResponse> {
+  updateNamespaceRequest(namespaceData: NamespaceRequestData): Promise<Result<NamespaceResponse, SaveError>> {
     throw new Error(`Not Implemented. namespace=${namespaceData}`);
   }
 
-  fetchRolesRequest(app?: string, namespace?: string): Promise<RolesResponse> {
+  fetchRolesRequest(app?: string, namespace?: string): Promise<Result<RolesResponse, string>> {
     throw new Error(`Not Implemented. app=${app}, namespace=${namespace}`);
   }
 
-  fetchRoleRequest(app: string, namespace: string, name: string): Promise<RoleResponse> {
+  fetchRoleRequest(app: string, namespace: string, name: string): Promise<Result<RoleResponse, FetchObjectError>> {
     throw new Error(`Not Implemented. app=${app}; namespace=${namespace}; name=${name}`);
   }
 
-  createRoleRequest(roleData: RoleRequestData): Promise<RoleResponse> {
+  createRoleRequest(roleData: RoleRequestData): Promise<Result<RoleResponse, SaveError>> {
     throw new Error(`Not Implemented. role=${roleData}`);
   }
 
-  updateRoleRequest(roleData: RoleRequestData): Promise<RoleResponse> {
+  updateRoleRequest(roleData: RoleRequestData): Promise<Result<RoleResponse, SaveError>> {
     throw new Error(`Not Implemented. role=${roleData}`);
   }
 
-  fetchContextsRequest(app?: string, namespace?: string): Promise<ContextsResponse> {
+  fetchContextsRequest(app?: string, namespace?: string): Promise<Result<ContextsResponse, string>> {
     throw new Error(`Not Implemented. app=${app}, namespace=${namespace}`);
   }
 
-  fetchContextRequest(app: string, namespace: string, name: string): Promise<ContextResponse> {
+  fetchContextRequest(
+    app: string,
+    namespace: string,
+    name: string
+  ): Promise<Result<ContextResponse, FetchObjectError>> {
     throw new Error(`Not Implemented. app=${app}; namespace=${namespace}; name=${name}`);
   }
 
-  createContextRequest(contextData: ContextRequestData): Promise<ContextResponse> {
+  createContextRequest(contextData: ContextRequestData): Promise<Result<ContextResponse, SaveError>> {
     throw new Error(`Not Implemented. context=${contextData}`);
   }
 
-  updateContextRequest(contextData: ContextRequestData): Promise<ContextResponse> {
+  updateContextRequest(contextData: ContextRequestData): Promise<Result<ContextResponse, SaveError>> {
     throw new Error(`Not Implemented. context=${contextData}`);
   }
 
-  fetchPermissionsRequest(app: string, namespace: string): Promise<PermissionsResponse> {
+  fetchPermissionsRequest(app: string, namespace: string): Promise<Result<PermissionsResponse, string>> {
     throw new Error(`Not Implemented. app=${app}, namespace=${namespace}`);
   }
 
-  fetchConditionsRequest(): Promise<ConditionsResponse> {
+  fetchConditionsRequest(): Promise<Result<ConditionsResponse, string>> {
     throw new Error('Not Implemented');
   }
 
-  fetchCapabilitiesRequest(roleData: CapabilityRoleRequestData): Promise<CapabilitiesResponse> {
+  fetchCapabilitiesRequest(roleData: CapabilityRoleRequestData): Promise<Result<CapabilitiesResponse, string>> {
     throw new Error(`Not Implemented. role=${roleData}`);
   }
 
-  fetchCapabilityRequest(app: string, namespace: string, name: string): Promise<CapabilityResponse> {
+  fetchCapabilityRequest(
+    app: string,
+    namespace: string,
+    name: string
+  ): Promise<Result<CapabilityResponse, FetchObjectError>> {
     throw new Error(`Not Implemented. app=${app}; namespace=${namespace}; name=${name}`);
   }
 
-  createCapabilityRequest(capabilityData: NewCapabilityRequestData): Promise<CapabilityResponse> {
+  createCapabilityRequest(capabilityData: NewCapabilityRequestData): Promise<Result<CapabilityResponse, SaveError>> {
     throw new Error(`Not Implemented. capability=${capabilityData}`);
   }
 
-  updateCapabilityRequest(capabilityData: CapabilityRequestData): Promise<CapabilityResponse> {
+  updateCapabilityRequest(capabilityData: CapabilityRequestData): Promise<Result<CapabilityResponse, SaveError>> {
     throw new Error(`Not Implemented. capability=${capabilityData}`);
   }
 
-  removeCapabilityRequest(app: string, namespace: string, name: string): Promise<boolean> {
+  removeCapabilityRequest(app: string, namespace: string, name: string): Promise<Result<null, string>> {
     throw new Error(`Not Implemented. app=${app}; namespace=${namespace}; name=${name}`);
   }
 }
@@ -570,50 +848,80 @@ export class InMemoryDataAdapter extends GenericDataAdapter {
     }
   }
 
-  fetchAppsRequest(): Promise<AppsResponse> {
-    const mockAppsResponse: AppsResponse = makeMockAppsResponse(this._db.apps);
+  fetchAppsRequest(): Promise<Result<AppsResponse, string>> {
     return new Promise(resolve => {
       setTimeout(() => {
-        resolve(mockAppsResponse);
+        resolve({
+          ok: true,
+          value: makeMockAppsResponse(this._db.apps),
+        });
       }, this._responseTimeout);
     });
   }
 
-  fetchNamespacesRequest(app?: string): Promise<NamespacesResponse> {
+  fetchNamespacesRequest(app?: string): Promise<Result<NamespacesResponse, string>> {
     let mockNamespaces = this._db.namespaces;
     if (app !== undefined && app !== '') {
-      mockNamespaces = this._db.namespaces.filter(namespace => {
-        return namespace.app_name === app;
+      mockNamespaces = this._db.namespaces.filter(namespace => namespace.app_name === app);
+    }
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve({
+          ok: true,
+          value: makeMockNamespacesResponse(mockNamespaces),
+        });
+      }, this._responseTimeout);
+    });
+  }
+
+  fetchNamespaceRequest(app: string, name: string): Promise<Result<NamespaceResponse, FetchObjectError>> {
+    const mockNamespace = this._db.namespaces.find(ns => ns.app_name === app && ns.name === name);
+    if (!mockNamespace) {
+      return new Promise(resolve => {
+        setTimeout(() => {
+          resolve({
+            ok: false,
+            error: {
+              type: 'objectNotFound',
+            },
+          });
+        });
       });
     }
 
-    const mockNamespacesResponse: NamespacesResponse = makeMockNamespacesResponse(mockNamespaces);
     return new Promise(resolve => {
       setTimeout(() => {
-        resolve(mockNamespacesResponse);
+        resolve({
+          ok: true,
+          value: {
+            namespace: mockNamespace,
+          },
+        });
       }, this._responseTimeout);
     });
   }
 
-  fetchNamespaceRequest(app: string, name: string): Promise<NamespaceResponse> {
-    const mockNamespace: NamespaceResponseData[] = this._db.namespaces.filter(ns => {
-      return ns.app_name === app && ns.name === name;
-    });
-    return new Promise(resolve => {
-      setTimeout(() => {
-        resolve({namespace: mockNamespace[0]});
-      }, this._responseTimeout);
-    });
-  }
-
-  createNamespaceRequest(namespaceData: NamespaceRequestData): Promise<NamespaceResponse> {
-    const existingNamespace =
-      this._db.namespaces.filter(ns => {
-        return ns.app_name === namespaceData.app_name && ns.name === namespaceData.name;
-      }).length !== 0;
+  createNamespaceRequest(namespaceData: NamespaceRequestData): Promise<Result<NamespaceResponse, SaveError>> {
+    const existingNamespace = this._db.namespaces.find(
+      ns => ns.app_name === namespaceData.app_name && ns.name === namespaceData.name
+    );
     if (existingNamespace) {
-      // TODO: guardian#128: better error handling
-      throw new Error('Namespace already exists');
+      return new Promise(resolve => {
+        setTimeout(() => {
+          resolve({
+            ok: false,
+            error: {
+              type: 'fieldErrors',
+              errors: [
+                {
+                  field: 'name',
+                  message: i18next.t('dataAdapter.create.nameTaken'),
+                },
+              ],
+            },
+          });
+        }, this._responseTimeout);
+      });
     }
 
     const newNamespace: NamespaceResponseData = {
@@ -621,76 +929,113 @@ export class InMemoryDataAdapter extends GenericDataAdapter {
       ...namespaceData,
     };
     this._db.namespaces.push(newNamespace);
-
     return new Promise(resolve => {
       setTimeout(() => {
-        resolve({namespace: newNamespace});
+        resolve({
+          ok: true,
+          value: {namespace: newNamespace},
+        });
       }, this._responseTimeout);
     });
   }
 
-  updateNamespaceRequest(namespaceData: NamespaceRequestData): Promise<NamespaceResponse> {
-    const existingNamespace = this._db.namespaces.filter(ns => {
-      return ns.app_name === namespaceData.app_name && ns.name === namespaceData.name;
-    });
-    if (existingNamespace.length === 0) {
-      // TODO: guardian#128: better error handling
-      throw new Error('Namespace does not exist');
+  updateNamespaceRequest(namespaceData: NamespaceRequestData): Promise<Result<NamespaceResponse, SaveError>> {
+    const existingNamespace = this._db.namespaces.find(
+      ns => ns.app_name === namespaceData.app_name && ns.name === namespaceData.name
+    );
+    if (!existingNamespace) {
+      return new Promise(resolve => {
+        setTimeout(() => {
+          resolve({
+            ok: false,
+            error: {
+              type: 'objectNotFound',
+            },
+          });
+        }, this._responseTimeout);
+      });
     }
-    const updatedNamespace = existingNamespace[0];
+
+    const updatedNamespace = existingNamespace;
     updatedNamespace.display_name = namespaceData.display_name;
     return new Promise(resolve => {
       setTimeout(() => {
-        resolve({namespace: updatedNamespace});
+        resolve({
+          ok: true,
+          value: {namespace: updatedNamespace},
+        });
       }, this._responseTimeout);
     });
   }
 
-  fetchRolesRequest(app?: string, namespace?: string): Promise<RolesResponse> {
+  fetchRolesRequest(app?: string, namespace?: string): Promise<Result<RolesResponse, string>> {
     let mockRoles = this._db.roles;
     if (app !== undefined && app !== '') {
       if (namespace !== undefined && namespace !== '') {
-        mockRoles = this._db.roles.filter(role => {
-          return role.app_name === app && role.namespace_name === namespace;
-        });
+        mockRoles = this._db.roles.filter(role => role.app_name === app && role.namespace_name === namespace);
       } else {
-        mockRoles = this._db.roles.filter(role => {
-          return role.app_name === app;
-        });
+        mockRoles = this._db.roles.filter(role => role.app_name === app);
       }
     }
-
-    const mockRolesResponse: RolesResponse = makeMockRolesResponse(mockRoles);
     return new Promise(resolve => {
       setTimeout(() => {
-        resolve(mockRolesResponse);
+        resolve({
+          ok: true,
+          value: makeMockRolesResponse(mockRoles),
+        });
       }, this._responseTimeout);
     });
   }
 
-  fetchRoleRequest(app: string, namespace: string, name: string): Promise<RoleResponse> {
-    const mockRole: RoleResponseData[] = this._db.roles.filter(role => {
-      return role.app_name === app && role.namespace_name == namespace && role.name === name;
-    });
+  fetchRoleRequest(app: string, namespace: string, name: string): Promise<Result<RoleResponse, FetchObjectError>> {
+    const mockRole = this._db.roles.find(
+      role => role.app_name === app && role.namespace_name == namespace && role.name === name
+    );
+    if (!mockRole) {
+      return new Promise(resolve => {
+        setTimeout(() => {
+          resolve({
+            ok: false,
+            error: {
+              type: 'objectNotFound',
+            },
+          });
+        }, this._responseTimeout);
+      });
+    }
+
     return new Promise(resolve => {
       setTimeout(() => {
-        resolve({role: mockRole[0]});
+        resolve({
+          ok: true,
+          value: {role: mockRole},
+        });
       }, this._responseTimeout);
     });
   }
 
-  createRoleRequest(roleData: RoleRequestData): Promise<RoleResponse> {
-    const existingRole =
-      this._db.roles.filter(rl => {
-        return (
-          rl.app_name === roleData.app_name &&
-          rl.namespace_name === roleData.namespace_name &&
-          rl.name === roleData.name
-        );
-      }).length !== 0;
+  createRoleRequest(roleData: RoleRequestData): Promise<Result<RoleResponse, SaveError>> {
+    const existingRole = this._db.roles.find(
+      rl =>
+        rl.app_name === roleData.app_name && rl.namespace_name === roleData.namespace_name && rl.name === roleData.name
+    );
     if (existingRole) {
-      // TODO: guardian#128: better error handling
-      throw new Error('Role already exists');
+      return new Promise(resolve => {
+        setTimeout(() => {
+          resolve({
+            ok: false,
+            error: {
+              type: 'fieldErrors',
+              errors: [
+                {
+                  field: 'name',
+                  message: i18next.t('dataAdapter.create.nameTaken'),
+                },
+              ],
+            },
+          });
+        }, this._responseTimeout);
+      });
     }
 
     const newRole: RoleResponseData = {
@@ -698,78 +1043,122 @@ export class InMemoryDataAdapter extends GenericDataAdapter {
       ...roleData,
     };
     this._db.roles.push(newRole);
-
     return new Promise(resolve => {
       setTimeout(() => {
-        resolve({role: newRole});
+        resolve({
+          ok: true,
+          value: {role: newRole},
+        });
       }, this._responseTimeout);
     });
   }
 
-  updateRoleRequest(roleData: RoleRequestData): Promise<RoleResponse> {
-    const existingRole = this._db.roles.filter(rl => {
-      return (
+  updateRoleRequest(roleData: RoleRequestData): Promise<Result<RoleResponse, SaveError>> {
+    const existingRole = this._db.roles.find(
+      rl =>
         rl.app_name === roleData.app_name && rl.namespace_name === roleData.namespace_name && rl.name === roleData.name
-      );
-    });
-    if (existingRole.length === 0) {
-      // TODO: guardian#128: better error handling
-      throw new Error('Role does not exist');
+    );
+    if (!existingRole) {
+      return new Promise(resolve => {
+        setTimeout(() => {
+          resolve({
+            ok: false,
+            error: {
+              type: 'objectNotFound',
+            },
+          });
+        }, this._responseTimeout);
+      });
     }
-    const updatedRole = existingRole[0];
+
+    const updatedRole = existingRole;
     updatedRole.display_name = roleData.display_name;
     return new Promise(resolve => {
       setTimeout(() => {
-        resolve({role: updatedRole});
+        resolve({
+          ok: true,
+          value: {role: updatedRole},
+        });
       }, this._responseTimeout);
     });
   }
 
-  fetchContextsRequest(app?: string, namespace?: string): Promise<ContextsResponse> {
+  fetchContextsRequest(app?: string, namespace?: string): Promise<Result<ContextsResponse, string>> {
     let mockContexts = this._db.contexts;
     if (app !== undefined && app !== '') {
       if (namespace !== undefined && namespace !== '') {
-        mockContexts = this._db.contexts.filter(context => {
-          return context.app_name === app && context.namespace_name === namespace;
-        });
+        mockContexts = this._db.contexts.filter(
+          context => context.app_name === app && context.namespace_name === namespace
+        );
       } else {
-        mockContexts = this._db.contexts.filter(context => {
-          return context.app_name === app;
-        });
+        mockContexts = this._db.contexts.filter(context => context.app_name === app);
       }
     }
-
-    const mockContextsResponse: ContextsResponse = makeMockContextsResponse(mockContexts);
     return new Promise(resolve => {
       setTimeout(() => {
-        resolve(mockContextsResponse);
+        resolve({
+          ok: true,
+          value: makeMockContextsResponse(mockContexts),
+        });
       }, this._responseTimeout);
     });
   }
 
-  fetchContextRequest(app: string, namespace: string, name: string): Promise<ContextResponse> {
-    const mockContext: ContextResponseData[] = this._db.contexts.filter(context => {
-      return context.app_name === app && context.namespace_name == namespace && context.name === name;
-    });
+  fetchContextRequest(
+    app: string,
+    namespace: string,
+    name: string
+  ): Promise<Result<ContextResponse, FetchObjectError>> {
+    const mockContext = this._db.contexts.find(
+      context => context.app_name === app && context.namespace_name == namespace && context.name === name
+    );
+    if (!mockContext) {
+      return new Promise(resolve => {
+        setTimeout(() => {
+          resolve({
+            ok: false,
+            error: {
+              type: 'objectNotFound',
+            },
+          });
+        }, this._responseTimeout);
+      });
+    }
+
     return new Promise(resolve => {
       setTimeout(() => {
-        resolve({context: mockContext[0]});
+        resolve({
+          ok: true,
+          value: {context: mockContext},
+        });
       }, this._responseTimeout);
     });
   }
 
-  createContextRequest(contextData: ContextRequestData): Promise<ContextResponse> {
-    const existingContext =
-      this._db.contexts.filter(ctx => {
-        return (
-          ctx.app_name === contextData.app_name &&
-          ctx.namespace_name === contextData.namespace_name &&
-          ctx.name === contextData.name
-        );
-      }).length !== 0;
+  createContextRequest(contextData: ContextRequestData): Promise<Result<ContextResponse, SaveError>> {
+    const existingContext = this._db.contexts.find(
+      ctx =>
+        ctx.app_name === contextData.app_name &&
+        ctx.namespace_name === contextData.namespace_name &&
+        ctx.name === contextData.name
+    );
     if (existingContext) {
-      // TODO: guardian#128: better error handling
-      throw new Error('Context already exists');
+      return new Promise(resolve => {
+        setTimeout(() => {
+          resolve({
+            ok: false,
+            error: {
+              type: 'fieldErrors',
+              errors: [
+                {
+                  field: 'name',
+                  message: i18next.t('dataAdapter.create.nameTaken'),
+                },
+              ],
+            },
+          });
+        }, this._responseTimeout);
+      });
     }
 
     const newContext: ContextResponseData = {
@@ -780,105 +1169,152 @@ export class InMemoryDataAdapter extends GenericDataAdapter {
       resource_url: `http://localhost/guardian/management/contexts/${contextData.app_name}/${contextData.namespace_name}/${contextData.name}`,
     };
     this._db.contexts.push(newContext);
-
     return new Promise(resolve => {
       setTimeout(() => {
-        resolve({context: newContext});
+        resolve({
+          ok: true,
+          value: {context: newContext},
+        });
       }, this._responseTimeout);
     });
   }
 
-  updateContextRequest(contextData: ContextRequestData): Promise<ContextResponse> {
-    const existingContext = this._db.contexts.filter(ctx => {
-      return (
+  updateContextRequest(contextData: ContextRequestData): Promise<Result<ContextResponse, SaveError>> {
+    const existingContext = this._db.contexts.find(
+      ctx =>
         ctx.app_name === contextData.app_name &&
         ctx.namespace_name === contextData.namespace_name &&
         ctx.name === contextData.name
-      );
-    });
-    if (existingContext.length === 0) {
-      // TODO: guardian#128: better error handling
-      throw new Error('Context does not exist');
+    );
+    if (!existingContext) {
+      return new Promise(resolve => {
+        setTimeout(() => {
+          resolve({
+            ok: false,
+            error: {
+              type: 'objectNotFound',
+            },
+          });
+        });
+      });
     }
-    const updatedContext = existingContext[0];
+
+    const updatedContext = existingContext;
     updatedContext.display_name = contextData.display_name;
     return new Promise(resolve => {
       setTimeout(() => {
-        resolve({context: updatedContext});
+        resolve({
+          ok: true,
+          value: {context: updatedContext},
+        });
       }, this._responseTimeout);
     });
   }
 
-  fetchPermissionsRequest(app: string, namespace: string): Promise<PermissionsResponse> {
-    const mockPermissions: PermissionResponseData[] = this._db.permissions.filter(permission => {
-      return permission.app_name === app && permission.namespace_name === namespace;
-    });
-
-    const mockPermissionsResponse: PermissionsResponse = makeMockPermissionsResponse(mockPermissions);
+  fetchPermissionsRequest(app: string, namespace: string): Promise<Result<PermissionsResponse, string>> {
+    const mockPermissions = this._db.permissions.filter(
+      permission => permission.app_name === app && permission.namespace_name === namespace
+    );
     return new Promise(resolve => {
       setTimeout(() => {
-        resolve(mockPermissionsResponse);
+        resolve({
+          ok: true,
+          value: makeMockPermissionsResponse(mockPermissions),
+        });
       }, this._responseTimeout);
     });
   }
 
-  fetchConditionsRequest(): Promise<ConditionsResponse> {
-    const mockConditionsResponse: ConditionsResponse = makeMockConditionsResponse(this._db.conditions);
+  fetchConditionsRequest(): Promise<Result<ConditionsResponse, string>> {
     return new Promise(resolve => {
       setTimeout(() => {
-        resolve(mockConditionsResponse);
+        resolve({
+          ok: true,
+          value: makeMockConditionsResponse(this._db.conditions),
+        });
       }, this._responseTimeout);
     });
   }
 
-  fetchCapabilitiesRequest(roleData: CapabilityRoleRequestData): Promise<CapabilitiesResponse> {
-    const mockCapabilities: CapabilityResponseData[] = this._db.capabilities.filter(capability => {
-      return (
+  fetchCapabilitiesRequest(roleData: CapabilityRoleRequestData): Promise<Result<CapabilitiesResponse, string>> {
+    const mockCapabilities = this._db.capabilities.filter(
+      capability =>
         capability.role.app_name === roleData.app_name &&
         capability.role.namespace_name === roleData.namespace_name &&
         capability.role.name === roleData.name
-      );
-    });
+    );
 
-    const mockCapabilitiesResponse: CapabilitiesResponse = makeMockCapabilitiesResponse(mockCapabilities);
     return new Promise(resolve => {
       setTimeout(() => {
-        resolve(mockCapabilitiesResponse);
+        resolve({
+          ok: true,
+          value: makeMockCapabilitiesResponse(mockCapabilities),
+        });
       }, this._responseTimeout);
     });
   }
 
-  fetchCapabilityRequest(app: string, namespace: string, name: string): Promise<CapabilityResponse> {
-    const mockCapability: CapabilityResponseData[] = this._db.capabilities.filter(capability => {
-      return capability.app_name === app && capability.namespace_name == namespace && capability.name === name;
-    });
-    return new Promise(resolve => {
-      setTimeout(() => {
-        resolve({capability: mockCapability[0]});
-      }, this._responseTimeout);
-    });
-  }
-
-  createCapabilityRequest(capabilityData: NewCapabilityRequestData): Promise<CapabilityResponse> {
-    const existingCapability =
-      this._db.capabilities.filter(cap => {
-        return (
-          cap.app_name === capabilityData.app_name &&
-          cap.namespace_name === capabilityData.namespace_name &&
-          cap.name === capabilityData.name
-        );
-      }).length !== 0;
-    if (existingCapability) {
-      // TODO: guardian#128: better error handling
-      throw new Error('Capability already exists');
+  fetchCapabilityRequest(
+    app: string,
+    namespace: string,
+    name: string
+  ): Promise<Result<CapabilityResponse, FetchObjectError>> {
+    const mockCapability = this._db.capabilities.find(
+      capability => capability.app_name === app && capability.namespace_name == namespace && capability.name === name
+    );
+    if (!mockCapability) {
+      return new Promise(resolve => {
+        setTimeout(() => {
+          resolve({
+            ok: false,
+            error: {
+              type: 'objectNotFound',
+            },
+          });
+        }, this._responseTimeout);
+      });
     }
 
-    const name: string = capabilityData.name ?? uuid4();
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve({
+          ok: true,
+          value: {capability: mockCapability},
+        });
+      }, this._responseTimeout);
+    });
+  }
+
+  createCapabilityRequest(capabilityData: NewCapabilityRequestData): Promise<Result<CapabilityResponse, SaveError>> {
+    const existingCapability = this._db.capabilities.find(
+      cap =>
+        cap.app_name === capabilityData.app_name &&
+        cap.namespace_name === capabilityData.namespace_name &&
+        cap.name === capabilityData.name
+    );
+    if (existingCapability) {
+      return new Promise(resolve => {
+        setTimeout(() => {
+          resolve({
+            ok: false,
+            error: {
+              type: 'fieldErrors',
+              errors: [
+                {
+                  field: 'name',
+                  message: i18next.t('dataAdapter.create.nameTaken'),
+                },
+              ],
+            },
+          });
+        }, this._responseTimeout);
+      });
+    }
 
     const newCapability: CapabilityResponseData = {
       app_name: capabilityData.app_name,
       namespace_name: capabilityData.namespace_name,
-      name: name,
+      name: capabilityData.name ?? uuid4(),
       display_name: capabilityData.display_name,
       role: capabilityData.role,
       relation: capabilityData.relation,
@@ -887,53 +1323,72 @@ export class InMemoryDataAdapter extends GenericDataAdapter {
       resource_url: `http://localhost/guardian/management/capabilities/${capabilityData.app_name}/${capabilityData.namespace_name}/${name}`,
     };
     this._db.capabilities.push(newCapability);
-
     return new Promise(resolve => {
       setTimeout(() => {
-        resolve({capability: newCapability});
+        resolve({
+          ok: true,
+          value: {capability: newCapability},
+        });
       }, this._responseTimeout);
     });
   }
 
-  updateCapabilityRequest(capabilityData: CapabilityRequestData): Promise<CapabilityResponse> {
-    const existingCapability = this._db.capabilities.filter(cap => {
-      return (
+  updateCapabilityRequest(capabilityData: CapabilityRequestData): Promise<Result<CapabilityResponse, SaveError>> {
+    const existingCapability = this._db.capabilities.find(
+      cap =>
         cap.app_name === capabilityData.app_name &&
         cap.namespace_name === capabilityData.namespace_name &&
         cap.name === capabilityData.name
-      );
-    });
-    if (existingCapability.length === 0) {
-      // TODO: guardian#128: better error handling
-      throw new Error('Capability does not exist');
+    );
+    if (!existingCapability) {
+      return new Promise(resolve => {
+        setTimeout(() => {
+          resolve({
+            ok: false,
+            error: {
+              type: 'objectNotFound',
+            },
+          });
+        }, this._responseTimeout);
+      });
     }
-    const updatedCapability = existingCapability[0];
+
+    const updatedCapability = existingCapability;
     updatedCapability.display_name = capabilityData.display_name;
     updatedCapability.relation = capabilityData.relation;
     updatedCapability.conditions = capabilityData.conditions;
     updatedCapability.permissions = capabilityData.permissions;
     return new Promise(resolve => {
       setTimeout(() => {
-        resolve({capability: updatedCapability});
+        resolve({
+          ok: true,
+          value: {capability: updatedCapability},
+        });
       }, this._responseTimeout);
     });
   }
 
-  removeCapabilityRequest(app: string, namespace: string, name: string): Promise<boolean> {
-    const existingCapability = this._db.capabilities.filter(cap => {
-      return cap.app_name === app && cap.namespace_name === namespace && cap.name === name;
-    });
-    if (existingCapability.length === 0) {
-      // TODO: guardian#128: better error handling
-      throw new Error('Capability does not exist');
-    }
+  removeCapabilityRequest(app: string, namespace: string, name: string): Promise<Result<null, string>> {
+    const existingCapability = this._db.capabilities.find(
+      cap => cap.app_name === app && cap.namespace_name === namespace && cap.name === name
+    );
 
-    const index = this._db.capabilities.indexOf(existingCapability[0]);
-    this._db.capabilities.splice(index, 1);
+    // if (!existingCapability) {
+    //   pass
+    //   we treat deleting non existent objects as success
+    // }
+
+    if (existingCapability) {
+      const index = this._db.capabilities.indexOf(existingCapability);
+      this._db.capabilities.splice(index, 1);
+    }
 
     return new Promise(resolve => {
       setTimeout(() => {
-        resolve(true);
+        resolve({
+          ok: true,
+          value: null,
+        });
       }, this._responseTimeout);
     });
   }
@@ -961,45 +1416,156 @@ export class ApiDataAdapter extends GenericDataAdapter {
     this._useProxy = useProxy;
   }
 
-  async fetchAppsRequest(): Promise<AppsResponse> {
-    const endpoint = this._makeUrl('/apps');
-    const response = (await this._get(endpoint)) as AppsResponse;
-    return response;
+  async tryToJson<T>(response: Response): Promise<Result<T, string>> {
+    const result = await this.tryFn(() => response.json());
+    if (!result.ok) {
+      return {
+        ok: false,
+        error: i18next.t('dataAdapter.jsonError', {msg: result.error}),
+      };
+    }
+    // TODO: Add run-time checks that `result.value` is of type `T`
+    // response.json() returns `any` as type so the type check against `T` will
+    // always work but might actually be wrong.
+    // Add run-time checks
+    return result;
   }
 
-  async fetchNamespacesRequest(app?: string): Promise<NamespacesResponse> {
+  async _fetchList<T>(endpoint: string): Promise<Result<T, string>> {
+    const result = await this._get(endpoint);
+    if (!result.ok) {
+      return result;
+    }
+
+    const error = await getError(result.value);
+    if (error) {
+      return {
+        ok: false,
+        error: getErrorString(error),
+      };
+    }
+    return this.tryToJson<T>(result.value);
+  }
+
+  async fetchAppsRequest(): Promise<Result<AppsResponse, string>> {
+    const endpoint = this._makeUrl('/apps');
+    return this._fetchList<AppsResponse>(endpoint);
+  }
+
+  async fetchNamespacesRequest(app?: string): Promise<Result<NamespacesResponse, string>> {
     let endpoint = this._makeUrl('/namespaces');
     if (app !== undefined && app !== '') {
       endpoint = this._makeUrl(`/namespaces/${app}`);
     }
-    const response = (await this._get(endpoint)) as NamespacesResponse;
-    return response;
+    return this._fetchList<NamespacesResponse>(endpoint);
   }
 
-  async fetchNamespaceRequest(app: string, name: string): Promise<NamespaceResponse> {
+  async _fetchObject<T>(endpoint: string): Promise<Result<T, FetchObjectError>> {
+    const result = await this._get(endpoint);
+    if (!result.ok) {
+      return {
+        ok: false,
+        error: {
+          type: 'generic',
+          message: result.error,
+        },
+      };
+    }
+
+    const error = await getError(result.value);
+    if (error) {
+      if (result.value.status === 404) {
+        return {
+          ok: false,
+          error: {
+            type: 'objectNotFound',
+          },
+        };
+      }
+      return {
+        ok: false,
+        error: {
+          type: 'generic',
+          message: getErrorString(error),
+        },
+      };
+    }
+    const jsonResult = await this.tryToJson<T>(result.value);
+    if (!jsonResult.ok) {
+      return {
+        ok: false,
+        error: {
+          type: 'generic',
+          message: jsonResult.error,
+        },
+      };
+    }
+    return jsonResult;
+  }
+
+  async fetchNamespaceRequest(app: string, name: string): Promise<Result<NamespaceResponse, FetchObjectError>> {
     const endpoint = this._makeUrl(`/namespaces/${app}/${name}`);
-    const response = (await this._get(endpoint)) as NamespaceResponse;
-    return response;
+    return this._fetchObject<NamespaceResponse>(endpoint);
   }
 
-  async createNamespaceRequest(namespace: NamespaceRequestData): Promise<NamespaceResponse> {
+  async _save<T>(
+    endpoint: string,
+    request: any,
+    method: 'post' | 'put' | 'patch',
+  ): Promise<Result<T, SaveError>> {
+    const _method = {
+      post: this._post,
+      put: this._put,
+      patch: this._patch,
+    }[method].bind(this);
+    const result = await _method(endpoint, request);
+    if (!result.ok) {
+      return {
+        ok: false,
+        error: {
+          type: 'generic',
+          message: result.error,
+        },
+      };
+    }
+
+    const error = await getSaveError(result.value);
+    if (error) {
+      return {
+        ok: false,
+        error,
+      };
+    }
+
+    const jsonResult = await this.tryToJson<T>(result.value);
+    if (!jsonResult.ok) {
+      return {
+        ok: false,
+        error: {
+          type: 'generic',
+          message: jsonResult.error,
+        },
+      };
+    }
+    return jsonResult;
+  }
+
+  async createNamespaceRequest(namespace: NamespaceRequestData): Promise<Result<NamespaceResponse, SaveError>> {
     const endpoint = this._makeUrl(`/namespaces/${namespace.app_name}`);
     const request = {
       name: namespace.name,
       display_name: namespace.display_name,
     };
-    const response = (await this._post(endpoint, request)) as NamespaceResponse;
-    return response;
+    return this._save<NamespaceResponse>(endpoint, request, 'post');
   }
 
-  async updateNamespaceRequest(namespace: NamespaceRequestData): Promise<NamespaceResponse> {
+  async updateNamespaceRequest(namespace: NamespaceRequestData): Promise<Result<NamespaceResponse, SaveError>> {
     const endpoint = this._makeUrl(`/namespaces/${namespace.app_name}/${namespace.name}`);
     const request = {display_name: namespace.display_name};
-    const response = (await this._patch(endpoint, request)) as NamespaceResponse;
-    return response;
+    return this._save<NamespaceResponse>(endpoint, request, 'patch');
   }
 
-  async fetchRolesRequest(app?: string, namespace?: string): Promise<RolesResponse> {
+  async fetchRolesRequest(app?: string, namespace?: string): Promise<Result<RolesResponse, string>> {
     let endpoint = this._makeUrl(`/roles`);
     if (app !== undefined && app !== '') {
       if (namespace !== undefined && namespace !== '') {
@@ -1008,34 +1574,34 @@ export class ApiDataAdapter extends GenericDataAdapter {
         endpoint = this._makeUrl(`/roles/${app}`);
       }
     }
-    const response = (await this._get(endpoint)) as RolesResponse;
-    return response;
+    return this._fetchList<RolesResponse>(endpoint);
   }
 
-  async fetchRoleRequest(app: string, namespace: string, name: string): Promise<RoleResponse> {
+  async fetchRoleRequest(
+    app: string,
+    namespace: string,
+    name: string
+  ): Promise<Result<RoleResponse, FetchObjectError>> {
     const endpoint = this._makeUrl(`/roles/${app}/${namespace}/${name}`);
-    const response = (await this._get(endpoint)) as RoleResponse;
-    return response;
+    return this._fetchObject<RoleResponse>(endpoint);
   }
 
-  async createRoleRequest(role: RoleRequestData): Promise<RoleResponse> {
+  async createRoleRequest(role: RoleRequestData): Promise<Result<RoleResponse, SaveError>> {
     const endpoint = this._makeUrl(`/roles/${role.app_name}/${role.namespace_name}`);
     const request = {
       name: role.name,
       display_name: role.display_name,
     };
-    const response = (await this._post(endpoint, request)) as RoleResponse;
-    return response;
+    return this._save<RoleResponse>(endpoint, request, 'post');
   }
 
-  async updateRoleRequest(role: RoleRequestData): Promise<RoleResponse> {
+  async updateRoleRequest(role: RoleRequestData): Promise<Result<RoleResponse, SaveError>> {
     const endpoint = this._makeUrl(`/roles/${role.app_name}/${role.namespace_name}/${role.name}`);
     const request = {display_name: role.display_name};
-    const response = (await this._patch(endpoint, request)) as RoleResponse;
-    return response;
+    return this._save<RoleResponse>(endpoint, request, 'patch');
   }
 
-  async fetchContextsRequest(app?: string, namespace?: string): Promise<ContextsResponse> {
+  async fetchContextsRequest(app?: string, namespace?: string): Promise<Result<ContextsResponse, string>> {
     let endpoint = this._makeUrl('/contexts');
     if (app !== undefined && app !== '') {
       if (namespace !== undefined && namespace !== '') {
@@ -1044,50 +1610,52 @@ export class ApiDataAdapter extends GenericDataAdapter {
         endpoint = this._makeUrl(`/contexts/${app}`);
       }
     }
-    const response = (await this._get(endpoint)) as ContextsResponse;
-    return response;
+    return this._fetchList<ContextsResponse>(endpoint);
   }
 
-  async fetchContextRequest(app: string, namespace: string, name: string): Promise<ContextResponse> {
+  async fetchContextRequest(
+    app: string,
+    namespace: string,
+    name: string
+  ): Promise<Result<ContextResponse, FetchObjectError>> {
     const endpoint = this._makeUrl(`/contexts/${app}/${namespace}/${name}`);
-    const response = (await this._get(endpoint)) as ContextResponse;
-    return response;
+    return this._fetchObject<ContextResponse>(endpoint);
   }
 
-  async createContextRequest(context: ContextRequestData): Promise<ContextResponse> {
+  async createContextRequest(context: ContextRequestData): Promise<Result<ContextResponse, SaveError>> {
     const endpoint = this._makeUrl(`/contexts/${context.app_name}/${context.namespace_name}`);
-    const data = {
+    const request = {
       name: context.name,
       display_name: context.display_name,
     };
-    const response = (await this._post(endpoint, data)) as ContextResponse;
-    return response;
+    return this._save<ContextResponse>(endpoint, request, 'post');
   }
 
-  async updateContextRequest(context: ContextRequestData): Promise<ContextResponse> {
+  async updateContextRequest(context: ContextRequestData): Promise<Result<ContextResponse, SaveError>> {
     const endpoint = this._makeUrl(`/contexts/${context.app_name}/${context.namespace_name}/${context.name}`);
-    const data = {
+    const request = {
       display_name: context.display_name,
     };
-    const response = (await this._patch(endpoint, data)) as ContextResponse;
-    return response;
+    return this._save<ContextResponse>(endpoint, request, 'patch');
   }
 
-  async fetchCapabilitiesRequest(role: CapabilityRoleRequestData): Promise<CapabilitiesResponse> {
+  async fetchCapabilitiesRequest(role: CapabilityRoleRequestData): Promise<Result<CapabilitiesResponse, string>> {
     const endpoint = this._makeUrl(`/roles/${role.app_name}/${role.namespace_name}/${role.name}/capabilities`);
-    const response = (await this._get(endpoint)) as CapabilitiesResponse;
-    return response;
+    return this._fetchList<CapabilitiesResponse>(endpoint);
   }
 
-  async fetchCapabilityRequest(app: string, namespace: string, name: string): Promise<CapabilityResponse> {
+  async fetchCapabilityRequest(
+    app: string,
+    namespace: string,
+    name: string
+  ): Promise<Result<CapabilityResponse, FetchObjectError>> {
     const endpoint = this._makeUrl(`/capabilities/${app}/${namespace}/${name}`);
-    const response = (await this._get(endpoint)) as CapabilityResponse;
-    return response;
+    return this._fetchObject<CapabilityResponse>(endpoint);
   }
 
-  async createCapabilityRequest(capability: NewCapabilityRequestData): Promise<CapabilityResponse> {
+  async createCapabilityRequest(capability: NewCapabilityRequestData): Promise<Result<CapabilityResponse, SaveError>> {
     const endpoint = this._makeUrl(`/capabilities/${capability.app_name}/${capability.namespace_name}`);
-    const data: Record<string, any> = {
+    const request: Record<string, any> = {
       display_name: capability.display_name,
       role: capability.role,
       conditions: capability.conditions,
@@ -1095,43 +1663,65 @@ export class ApiDataAdapter extends GenericDataAdapter {
       permissions: capability.permissions,
     };
     if (capability.name !== undefined && capability.name !== '') {
-      data.name = capability.name;
+      request.name = capability.name;
     }
-    const response = (await this._post(endpoint, data)) as CapabilityResponse;
-    return response;
+    return this._save<CapabilityResponse>(endpoint, request, 'post');
   }
 
-  async updateCapabilityRequest(capability: CapabilityRequestData): Promise<CapabilityResponse> {
+  async updateCapabilityRequest(capability: CapabilityRequestData): Promise<Result<CapabilityResponse, SaveError>> {
     const endpoint = this._makeUrl(
       `/capabilities/${capability.app_name}/${capability.namespace_name}/${capability.name}`
     );
-    const data = {
+    const request = {
       display_name: capability.display_name,
       role: capability.role,
       conditions: capability.conditions,
       relation: capability.relation,
       permissions: capability.permissions,
     };
-    const response = (await this._put(endpoint, data)) as CapabilityResponse;
-    return response;
+    return this._save(endpoint, request, 'put');
   }
 
-  async removeCapabilityRequest(app: string, namespace: string, name: string): Promise<boolean> {
+  async _deleteObject(endpoint: string): Promise<Result<null, string>> {
+    const result = await this._delete(endpoint);
+    if (!result.ok) {
+      return result;
+    }
+
+    const error = await getError(result.value);
+    if (error) {
+      if (result.value.status === 404) {
+        // we can treat already deleted objects as a success
+        return {
+          ok: true,
+          value: null,
+        };
+      }
+      return {
+        ok: false,
+        error: getErrorString(error),
+      };
+    } else {
+      return {
+        ok: true,
+        value: null,
+      };
+    }
+  }
+
+  async removeCapabilityRequest(app: string, namespace: string, name: string): Promise<Result<null, string>> {
     const endpoint = this._makeUrl(`/capabilities/${app}/${namespace}/${name}`);
-    const response = this._delete(endpoint);
-    return response;
+    return this._deleteObject(endpoint);
   }
 
-  async fetchPermissionsRequest(app: string, namespace: string): Promise<PermissionsResponse> {
+  async fetchPermissionsRequest(app: string, namespace: string): Promise<Result<PermissionsResponse, string>> {
     const endpoint = this._makeUrl(`/permissions/${app}/${namespace}`);
-    const response = (await this._get(endpoint)) as PermissionsResponse;
-    return response;
+    return this._fetchList(endpoint);
   }
 
-  async fetchConditionsRequest(): Promise<ConditionsResponse> {
+  async fetchConditionsRequest(): Promise<Result<ConditionsResponse, string>> {
     const endpoint = this._makeUrl(`/conditions`);
-    const response = (await this._get(endpoint)) as ConditionsResponse;
-    return response;
+    return this._fetchList(endpoint);
   }
 
   _makeUrl(endpoint: string): string {
@@ -1151,58 +1741,69 @@ export class ApiDataAdapter extends GenericDataAdapter {
     };
   }
 
-  async _get(url: string): Promise<any> {
-    const headers = await this._makeHeaders();
-    const response = await fetch(url, {method: 'GET', headers: headers});
-    if (response.ok) {
-      return await response.json();
-    } else {
-      // TODO: guardian#128: handle errors
-      throw new Error(response.statusText);
+  async tryFn<T>(fn: () => Promise<T>): Promise<Result<T, string>> {
+    try {
+      const value = await fn();
+      return {
+        ok: true,
+        value,
+      };
+    } catch (err: unknown) {
+      let errorMessage = i18next.t('dataAdapter.unknownError');
+      if (err instanceof Error) {
+        errorMessage = err.toString();
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      } else {
+        try {
+          errorMessage = JSON.stringify(err);
+        } catch (err) {
+          // ignore
+        }
+      }
+      return {
+        ok: false,
+        error: errorMessage,
+      };
     }
   }
 
-  async _post(url: string, request: any): Promise<any> {
-    const headers = await this._makeHeaders();
-    const response = await fetch(url, {method: 'POST', headers: headers, body: JSON.stringify(request)});
-    if (response.ok) {
-      return await response.json();
-    } else {
-      // TODO: guardian#128: handle errors
-      throw new Error(response.statusText);
+  async _fetch(fn: () => Promise<Response>, i18nContext: string): Promise<Result<Response, string>> {
+    const result = await this.tryFn(fn);
+    if (!result.ok) {
+      return {
+        ok: false,
+        error: i18next.t('dataAdapter.fetchFailed', {
+          context: i18nContext,
+          msg: result.error,
+        }),
+      };
     }
+    return result;
   }
 
-  async _patch(url: string, request: any): Promise<any> {
+  async _get(url: string): Promise<Result<Response, string>> {
     const headers = await this._makeHeaders();
-    const response = await fetch(url, {method: 'PATCH', headers: headers, body: JSON.stringify(request)});
-    if (response.ok) {
-      return await response.json();
-    } else {
-      // TODO: guardian#128: handle errors
-      throw new Error(response.statusText);
-    }
+    return this._fetch(() => fetch(url, {method: 'GET', headers: headers}), 'get');
   }
 
-  async _put(url: string, request: any): Promise<any> {
+  async _post(url: string, request: any): Promise<Result<Response, string>> {
     const headers = await this._makeHeaders();
-    const response = await fetch(url, {method: 'PUT', headers: headers, body: JSON.stringify(request)});
-    if (response.ok) {
-      return await response.json();
-    } else {
-      // TODO: guardian#128: handle errors
-      throw new Error(response.statusText);
-    }
+    return this._fetch(() => fetch(url, {method: 'POST', headers: headers, body: JSON.stringify(request)}), 'post');
   }
 
-  async _delete(url: string): Promise<any> {
+  async _patch(url: string, request: any): Promise<Result<Response, string>> {
     const headers = await this._makeHeaders();
-    const response = await fetch(url, {method: 'DELETE', headers: headers});
-    if (response.ok) {
-      return Promise.resolve(true);
-    } else {
-      // TODO: guardian#128: handle errors
-      throw new Error(response.statusText);
-    }
+    return this._fetch(() => fetch(url, {method: 'PATCH', headers: headers, body: JSON.stringify(request)}), 'patch');
+  }
+
+  async _put(url: string, request: any): Promise<Result<Response, string>> {
+    const headers = await this._makeHeaders();
+    return this._fetch(() => fetch(url, {method: 'PUT', headers: headers, body: JSON.stringify(request)}), 'put');
+  }
+
+  async _delete(url: string): Promise<Result<Response, string>> {
+    const headers = await this._makeHeaders();
+    return this._fetch(() => fetch(url, {method: 'DELETE', headers: headers}), 'delete');
   }
 }

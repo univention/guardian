@@ -28,7 +28,6 @@ export const getRoleDetailResponseModel = (values: FormValues): DetailResponseMo
                   props: {
                     name: 'namespaceName',
                     label: i18next.t('configs.addView.field.namespaceName'),
-                    required: true,
                     access: 'read',
                   },
                 },

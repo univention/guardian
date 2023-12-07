@@ -11,34 +11,39 @@ import type {
 } from '@/helpers/models/capabilities';
 import type {WrappedPermissionsList} from '@/helpers/models/permissions';
 import type {WrappedConditionsList} from '@/helpers/models/conditions';
+import type {FetchObjectError, Result, SaveError} from '@/adapters/data';
 
 export const dataPortSetting = 'managementUi.adapter.dataPort';
 
 export interface DataPort {
-  fetchApps(): Promise<WrappedAppsList>;
+  fetchApps(): Promise<Result<WrappedAppsList, string>>;
 
-  fetchNamespaces(app?: string): Promise<WrappedNamespacesList>;
-  fetchNamespace(app: string, name: string): Promise<WrappedNamespace>;
-  createNamespace(namespace: Namespace): Promise<WrappedNamespace>;
-  updateNamespace(namespace: Namespace): Promise<WrappedNamespace>;
+  fetchNamespaces(app?: string): Promise<Result<WrappedNamespacesList, string>>;
+  fetchNamespace(app: string, name: string): Promise<Result<WrappedNamespace, FetchObjectError>>;
+  createNamespace(namespace: Namespace): Promise<Result<WrappedNamespace, SaveError>>;
+  updateNamespace(namespace: Namespace): Promise<Result<WrappedNamespace, SaveError>>;
 
-  fetchRoles(app?: string, namespace?: string): Promise<WrappedRolesList>;
-  fetchRole(app: string, namespace: string, name: string): Promise<WrappedRole>;
-  createRole(role: Role): Promise<WrappedRole>;
-  updateRole(role: Role): Promise<WrappedRole>;
+  fetchRoles(app?: string, namespace?: string): Promise<Result<WrappedRolesList, string>>;
+  fetchRole(app: string, namespace: string, name: string): Promise<Result<WrappedRole, FetchObjectError>>;
+  createRole(role: Role): Promise<Result<WrappedRole, SaveError>>;
+  updateRole(role: Role): Promise<Result<WrappedRole, SaveError>>;
 
-  fetchContexts(app?: string, namespace?: string): Promise<WrappedContextsList>;
-  fetchContext(app: string, namespace: string, name: string): Promise<WrappedContext>;
-  createContext(context: Context): Promise<WrappedContext>;
-  updateContext(context: Context): Promise<WrappedContext>;
+  fetchContexts(app?: string, namespace?: string): Promise<Result<WrappedContextsList, string>>;
+  fetchContext(app: string, namespace: string, name: string): Promise<Result<WrappedContext, FetchObjectError>>;
+  createContext(context: Context): Promise<Result<WrappedContext, SaveError>>;
+  updateContext(context: Context): Promise<Result<WrappedContext, SaveError>>;
 
-  fetchCapabilities(role: CapabilityRole, app?: string, namespace?: string): Promise<WrappedCapabilitiesList>;
-  fetchCapability(app: string, namespace: string, name: string): Promise<WrappedCapability>;
-  createCapability(capability: NewCapability): Promise<WrappedCapability>;
-  updateCapability(capability: Capability): Promise<WrappedCapability>;
-  removeCapability(app: string, namespace: string, name: string): Promise<boolean>;
+  fetchCapabilities(
+    role: CapabilityRole,
+    app?: string,
+    namespace?: string
+  ): Promise<Result<WrappedCapabilitiesList, string>>;
+  fetchCapability(app: string, namespace: string, name: string): Promise<Result<WrappedCapability, FetchObjectError>>;
+  createCapability(capability: NewCapability): Promise<Result<WrappedCapability, SaveError>>;
+  updateCapability(capability: Capability): Promise<Result<WrappedCapability, SaveError>>;
+  removeCapability(app: string, namespace: string, name: string): Promise<Result<null, string>>;
 
-  fetchPermissions(app: string, namespace: string): Promise<WrappedPermissionsList>;
+  fetchPermissions(app: string, namespace: string): Promise<Result<WrappedPermissionsList, string>>;
 
-  fetchConditions(): Promise<WrappedConditionsList>;
+  fetchConditions(): Promise<Result<WrappedConditionsList, string>>;
 }
