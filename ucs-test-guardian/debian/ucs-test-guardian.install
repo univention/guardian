@@ -3,3 +3,4 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 99_guardian usr/share/ucs-test
+guardian_scripts usr/share/guardian/scripts

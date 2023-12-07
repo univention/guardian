@@ -12,6 +12,7 @@
 
 
 APP="guardian-authorization-api"
+/usr/share/guardian/scripts/set_up_tests.sh
 
 declare -a CMD=(sh -c "
 cd /app/tests &&
