@@ -5,174 +5,174 @@
       "loginFailed": "Login fehlgeschlagen."
     }
   },
+  "ConfirmBackModal": {
+    "button": {
+      "continue_add": "Erstellen fortf\u00fchren",
+      "continue_edit": "Bearbeiten fortf\u00fchren",
+      "discard_add": "Erstellen abbrechen",
+      "discard_edit": "\u00c4nderungen verwerfen"
+    },
+    "description_add": "M\u00f6chten Sie den Erstellungsdialog abbrechen?",
+    "description_edit": "Einige \u00c4nderungen sind noch nicht gespeichert. M\u00f6chten Sie abbrechen?",
+    "heading": "Best\u00e4tigung"
+  },
   "DeleteModal": {
-    "title": "Capability löschen",
-    "description": "Bitte bestätigen Sie das unwiderrufliche Löschen der {{toDelete}} von {{selected}} Capabilities.",
-    "warning": "{{numberWarning}} von {{selected}} ausgewählten Capbilities können nicht gelöscht werden.",
-    "confirmLabel": "Löschen",
-    "cancelLabel": "Abbrechen"
+    "cancelLabel": "Abbrechen",
+    "confirmLabel": "L\u00f6schen",
+    "description": "Bitte best\u00e4tigen Sie das unwiderrufliche L\u00f6schen der {{toDelete}} von {{selected}} Capabilities.",
+    "title": "Capability l\u00f6schen",
+    "warning": "{{numberWarning}} von {{selected}} ausgew\u00e4hlten Capbilities k\u00f6nnen nicht gel\u00f6scht werden."
   },
   "DeleteModalError": {
-    "title": "Das Löschen von Capabilities ist fehlgeschlagen",
-    "description": "Die folgenden Capabilities konnten nicht gelöscht werden:",
-    "confirmLabel": "OK"
-  },
-  "SearchLimitReachedModal": {
-    "title": "Such-Limit erreicht",
-    "description": "Es wurden mehr als {{limit}} Objekte gefunden. Das Laden könnte einige Zeit dauern. Möchten Sie mit der Suche fortfahren?",
-    "button": {
-      "confirm": "Fortfahren"
-    }
-  },
-  "ErrorModal": {
-    "heading": "Fehler",
-    "button": {
-      "confirmation": "OK"
-    }
-  },
-  "ListView": {
-    "fetchConfig.error": "Beim Laden der Seite ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut oder wenden Sie sich an Ihren Systemadministrator: {{msg}}",
-    "fetchNamespacesOptions.error": "Die Namensräume für die App {{app}} konnten nicht geladen werden: {{msg}}",
-    "fetchObjects.error": "Die Suche ist fehlgeschlagen: {{msg}}",
-    "heading": {
-      "role": "Rollen",
-      "context": "Contexts",
-      "namespace": "Namespaces",
-      "capability": "Capabilities"
-    },
-    "searchForm": {
-      "resetButtonLabel": "Zurücksetzen",
-      "searchButtonLabel": "Suchen"
-    },
-    "contextActions": {
-      "deleteLabel": "Löschen",
-      "editLabel": "Bearbeiten"
-    },
-    "globalActions": {
-      "addLabel": "Hinzufügen"
-    }
+    "confirmLabel": "OK",
+    "description": "Die folgenden Capabilities konnten nicht gel\u00f6scht werden:",
+    "title": "Das L\u00f6schen von Capabilities ist fehlgeschlagen"
   },
   "EditView": {
-    "fetchAddViewConfig.error": "Beim Laden der Seite ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut oder wenden Sie sich an Ihren Systemadministrator: {{msg}}",
-    "fetchPermissionsOptions.error": "Die Berechtigungen für die App und den Namensraum {{app}}:{{namespace}} konnten nicht geladen werden: {{msg}}",
-    "fetchObject.error": "Beim Laden des Objekts ist ein Fehler aufgetreten: {{msg}}",
-    "heading": {
-      "add.role": "Rolle anlegen",
+    "button": {
+      "add.capability": "Capability anlegen",
       "add.context": "Context anlegen",
       "add.namespace": "Namespace anlegen",
-      "add.capability": "Capability hinzufügen",
-      "edit.role": "Rolle",
-      "edit.context": "Context",
-      "edit.namespace": "Namespace",
-      "edit.capability": "Capability"
+      "add.role": "Rolle anlegen",
+      "back": "Zur\u00fcck",
+      "save": "Speichern"
     },
+    "creationFailed.role": "Die Rolle konnte nicht angelegt werden",
+    "fetchAddViewConfig.error": "Beim Laden der Seite ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut oder wenden Sie sich an Ihren Systemadministrator: {{msg}}",
+    "fetchObject.error": "Beim Laden des Objekts ist ein Fehler aufgetreten: {{msg}}",
+    "fetchPermissionsOptions.error": "Die Berechtigungen f\u00fcr die App und den Namensraum {{app}}:{{namespace}} konnten nicht geladen werden: {{msg}}",
     "headerLink": {
       "editRole": "Rolle",
       "listCapabilities": "Capabilities"
     },
-    "button": {
-      "back": "Zurück",
-      "save": "Speichern",
-      "add.role": "Rolle anlegen",
+    "heading": {
+      "add.capability": "Capability hinzuf\u00fcgen",
       "add.context": "Context anlegen",
       "add.namespace": "Namespace anlegen",
-      "add.capability": "Capability anlegen"
+      "add.role": "Rolle anlegen",
+      "edit.capability": "Capability",
+      "edit.context": "Context",
+      "edit.namespace": "Namespace",
+      "edit.role": "Rolle"
     },
-    "notFound.role": "Das Rollen-Object existiert nicht",
+    "loadAddViewConfigFailed": "Die Seite konnte nicht geladen werden",
+    "notFound.capability": "Das Berechtigungen-Object existiert nicht",
     "notFound.context": "Das Context-Object existiert nicht",
     "notFound.namespace": "Das Namespace-Object existiert nicht",
-    "notFound.capability": "Das Berechtigungen-Object existiert nicht",
-    "creationFailed.role": "Die Rolle konnte nicht angelegt werden",
-    "loadAddViewConfigFailed": "Die Seite konnte nicht geladen werden"
-  },
-  "NotFoundView": {
-    "header": "Seite nicht gefunden",
-    "body.text": "Wir konnten die von Ihnen gesuchte Seite nicht finden.",
-    "button.home": "Startseite"
-  },
-  "ConfirmBackModal": {
-    "heading": "Bestätigung",
-    "description_edit": "Einige Änderungen sind noch nicht gespeichert. Möchten Sie abbrechen?",
-    "description_add": "Möchten Sie den Erstellungsdialog abbrechen?",
-    "button": {
-      "continue_edit": "Bearbeiten fortführen",
-      "continue_add": "Erstellen fortführen",
-      "discard_edit": "Änderungen verwerfen",
-      "discard_add": "Erstellen abbrechen"
-    }
+    "notFound.role": "Das Rollen-Object existiert nicht"
   },
   "EditViewSaveFailedModal": {
+    "baseDescription_add": "Beim Anlegen ist ein unbekannter Fehler aufgetreten",
+    "baseDescription_edit": "Beim Speichern ist ein unbekannter Fehler aufgetreten",
+    "button": {
+      "confirmation": "OK"
+    },
+    "fieldErrors.description": "Einige Felder enthalten Fehler:",
+    "heading.capability_add": "Das Capability-Objekt konnte nicht angelegt werden",
+    "heading.capability_edit": "Das Capability-Objekt konnte nicht gespeichert werden",
+    "heading.context_add": "Das Context-Objekt konnte nicht angelegt werden",
+    "heading.context_edit": "Das Context-Objekt konnte nicht gespeichert werden",
+    "heading.namespace_add": "Das Namespace-Objekt konnte nicht angelegt werden",
+    "heading.namespace_edit": "Das Namespace-Objekt konnte nicht gespeichert werden",
+    "heading.role_add": "Das Rollen-Objekt konnte nicht angelegt werden",
+    "heading.role_edit": "Das Rollen-Objekt konnte nicht gespeichert werden",
     "objectNotFound": "Das Objekt existiert nicht mehr",
-    "objectNotFound_role": "Die Rolle existiert nicht mehr",
+    "objectNotFound_capability": "Die Capability existiert nicht mehr",
     "objectNotFound_context": "Der Context existiert nicht mehr",
     "objectNotFound_namespace": "Der Namensraum existiert nicht mehr",
-    "objectNotFound_capability": "Die Capability existiert nicht mehr",
-    "heading.role_edit": "Das Rollen-Objekt konnte nicht gespeichert werden",
-    "heading.context_edit": "Das Context-Objekt konnte nicht gespeichert werden",
-    "heading.namespace_edit": "Das Namespace-Objekt konnte nicht gespeichert werden",
-    "heading.capability_edit": "Das Capability-Objekt konnte nicht gespeichert werden",
-    "heading.role_add": "Das Rollen-Objekt konnte nicht angelegt werden",
-    "heading.context_add": "Das Context-Objekt konnte nicht angelegt werden",
-    "heading.namespace_add": "Das Namespace-Objekt konnte nicht angelegt werden",
-    "heading.capability_add": "Das Capability-Objekt konnte nicht angelegt werden",
-    "baseDescription_edit": "Beim Speichern ist ein unbekannter Fehler aufgetreten",
-    "baseDescription_add": "Beim Anlegen ist ein unbekannter Fehler aufgetreten",
-    "fieldErrors.description": "Einige Felder enthalten Fehler:",
-    "button": {
-      "confirmation": "OK"
-    }
+    "objectNotFound_role": "Die Rolle existiert nicht mehr"
   },
   "EditViewSaveSuccessModal": {
-    "heading.role": "Das Rollen-Objekt '{{name}}' wurde erfolgreich angelegt",
-    "heading.context": "Das Context-Objekt '{{name}}' wurde erfolgreich angelegt",
-    "heading.namespace": "Das Namespace-Objekt '{{name}}' wurde erfolgreich angelegt",
-    "heading.capability": "Das Capability-Objekt '{{name}}' wurde erfolgreich angelegt",
     "button": {
       "confirmation": "OK"
+    },
+    "heading.capability": "Das Capability-Objekt '{{name}}' wurde erfolgreich angelegt",
+    "heading.context": "Das Context-Objekt '{{name}}' wurde erfolgreich angelegt",
+    "heading.namespace": "Das Namespace-Objekt '{{name}}' wurde erfolgreich angelegt",
+    "heading.role": "Das Rollen-Objekt '{{name}}' wurde erfolgreich angelegt"
+  },
+  "ErrorModal": {
+    "button": {
+      "confirmation": "OK"
+    },
+    "heading": "Fehler"
+  },
+  "ListView": {
+    "contextActions": {
+      "deleteLabel": "L\u00f6schen",
+      "editLabel": "Bearbeiten"
+    },
+    "fetchConfig.error": "Beim Laden der Seite ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut oder wenden Sie sich an Ihren Systemadministrator: {{msg}}",
+    "fetchNamespacesOptions.error": "Die Namensr\u00e4ume f\u00fcr die App {{app}} konnten nicht geladen werden: {{msg}}",
+    "fetchObjects.error": "Die Suche ist fehlgeschlagen: {{msg}}",
+    "globalActions": {
+      "addLabel": "Hinzuf\u00fcgen"
+    },
+    "heading": {
+      "capability": "Capabilities",
+      "context": "Contexts",
+      "namespace": "Namespaces",
+      "role": "Rollen"
+    },
+    "searchForm": {
+      "resetButtonLabel": "Zur\u00fccksetzen",
+      "searchButtonLabel": "Suchen"
+    }
+  },
+  "NotFoundView": {
+    "body.text": "Wir konnten die von Ihnen gesuchte Seite nicht finden.",
+    "button.home": "Startseite",
+    "header": "Seite nicht gefunden"
+  },
+  "SearchLimitReachedModal": {
+    "button": {
+      "confirm": "Fortfahren"
+    },
+    "description": "Es wurden mehr als {{limit}} Objekte gefunden. Das Laden k\u00f6nnte einige Zeit dauern. M\u00f6chten Sie mit der Suche fortfahren?",
+    "title": "Such-Limit erreicht"
+  },
+  "configs": {
+    "addView": {
+      "field": {
+        "appName": "App",
+        "condition": "Kondition",
+        "conditions": "Konditionen",
+        "displayName": "Anzeigename",
+        "name": "Name",
+        "namespaceName": "Namensraum",
+        "permissions": "Berechtigungen",
+        "relation": "Beziehung"
+      },
+      "fieldset.basicSettings": "Grundeinstellungen",
+      "hint": {
+        "autoGenerate": "Wird automatisch generiert, wenn leer gelassen",
+        "selectAppFirst": "Zuerst App ausw\u00e4hlen",
+        "selectNamespaceFirst": "Zuert Namensraum ausw\u00e4hlen"
+      },
+      "page.general": "Generell"
+    },
+    "listView": {
+      "columns": {
+        "appName": "App",
+        "displayName": "Anzeigename",
+        "name": "Name",
+        "namespaceName": "Namensraum"
+      },
+      "searchForm": {
+        "appSelection": "App",
+        "namespaceSelection": "Namensraum"
+      }
     }
   },
   "dataAccess": {
-    "options.all": "Alle",
-    "conditionsExtensionsEmptyError": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut oder wenden Sie sich and ihren Systemadministrator: (Conditions should not be empty)"
+    "conditionsExtensionsEmptyError": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut oder wenden Sie sich and ihren Systemadministrator: (Conditions should not be empty)",
+    "options.all": "Alle"
   },
   "dataAdapter": {
     "create.nameTaken": "Der Name ist bereits vergeben",
     "fetchFailed": "Befehl ist fehlgeschlagen: {{msg}}",
-    "unknownError": "Unbekannter fehler",
-    "jsonError": "Invalides JSON Format erhalten: {{msg}}"
-  },
-  "configs": {
-    "listView": {
-      "searchForm": {
-        "appSelection": "App",
-        "namespaceSelection": "Namensraum"
-      },
-      "columns": {
-        "name": "Name",
-        "displayName": "Anzeigename",
-        "appName": "App",
-        "namespaceName": "Namensraum"
-      }
-    },
-    "addView": {
-      "page.general": "Generell",
-      "fieldset.basicSettings": "Grundeinstellungen",
-      "field": {
-        "appName": "App",
-        "namespaceName": "Namensraum",
-        "name": "Name",
-        "displayName": "Anzeigename",
-        "conditions": "Konditionen",
-        "condition": "Kondition",
-        "relation": "Beziehung",
-        "permissions": "Berechtigungen"
-      },
-      "hint": {
-        "selectAppFirst": "Zuerst App auswählen",
-        "selectNamespaceFirst": "Zuert Namensraum auswählen",
-        "autoGenerate": "Wird automatisch generiert, wenn leer gelassen"
-      }
-    }
+    "jsonError": "Invalides JSON Format erhalten: {{msg}}",
+    "unknownError": "Unbekannter fehler"
   },
   "validators": {
     "validateName": "Der Name muss mit einem Kleinbuchstaben beginnen und darf nur Kleinbuchstaben (\"a-z\"), Zahlen (\"0-9\"), Bindestrich (\"-\") und Unterstrich (\"_\") enthalten"

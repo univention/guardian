@@ -5,40 +5,49 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
-    hooks:
-    -   id: check-added-large-files
-    -   id: check-json
-        exclude: management-ui/
-    -   id: check-xml
-    -   id: check-yaml
-    -   id: check-toml
-    -   id: trailing-whitespace
-    -   id: pretty-format-json
-        args: [--autofix]
-        exclude: management-ui/
--   repo: https://github.com/psf/black
-    rev: 23.3.0
-    hooks:
-    -   id: black
-        exclude: "udm_client.py"
--   repo: https://github.com/PyCQA/bandit
-    rev: 1.7.5
-    hooks:
-    -   id: bandit
-        exclude: "authorization-api/tests/|management-api/tests|udm_client.py|guardian-lib/tests"
--   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.3.0
-    hooks:
-    -   id: mypy
-        exclude: "docs/|authorization-api/tests/|management-api/tests|guardian-lib/tests"
-        args: []
-        additional_dependencies: [fastapi==0.95.2, loguru==0.7.0, requests==2.31.0, types-requests==2.31.0, alembic==1.11.3, types-aiofiles, types-pymysql]
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.4.0
+  hooks:
+    - id: check-added-large-files
+      name: general-check-added-large-files
+    - id: check-json
+      name: general-check-json
+    - id: check-xml
+      name: general-check-xml
+    - id: check-yaml
+      name: general-check-yaml
+    - id: check-toml
+      name: backend-check-toml
+    - id: trailing-whitespace
+      name: general-trailing-whitespace
+    - id: pretty-format-json
+      name: general-pretty-format-json
+      args: [--autofix]
+- repo: https://github.com/psf/black
+  rev: 23.3.0
+  hooks:
+    - id: black
+      name: backend-black
+      exclude: "udm_client.py"
+- repo: https://github.com/PyCQA/bandit
+  rev: 1.7.5
+  hooks:
+    - id: bandit
+      name: backend-bandit
+      exclude: "authorization-api/tests/|management-api/tests|udm_client.py|guardian-lib/tests"
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: v1.3.0
+  hooks:
+    - id: mypy
+      name: backend-mypy
+      exclude: "docs/|authorization-api/tests/|management-api/tests|guardian-lib/tests"
+      args: []
+      additional_dependencies: [fastapi==0.95.2, loguru==0.7.0, requests==2.31.0, types-requests==2.31.0, alembic==1.11.3, types-aiofiles, types-pymysql]
 - repo: https://github.com/jackdewinter/pymarkdown
   rev: v0.9.9
   hooks:
     - id: pymarkdown
+      name: general-markdown
       exclude: ".gitlab/issue_templates/"
       args:
         - --disable-rules
@@ -55,38 +64,82 @@ repos:
   rev: 'v0.0.270'
   hooks:
     - id: ruff
+      name: backend-ruff
       args: [--fix]
       exclude: "udm_client.py"
+
 - repo: https://github.com/python-poetry/poetry
   rev: '1.5.1'
   hooks:
     - id: poetry-check
+      name: backend-poetry-check-authorization-api
       args: ["-C", "authorization-api"]
     - id: poetry-check
+      name: backend-poetry-check-management-api
       args: [ "-C", "management-api" ]
     - id: poetry-check
+      name: backend-poetry-check-guardian-lib
       args: [ "-C", "guardian-lib" ]
     - id: poetry-lock
+      name: backend-poetry-lock-authorization-api
       args: ["-C", "authorization-api", "--check"]
     - id: poetry-lock
+      name: backend-poetry-lock-management-api
       args: [ "-C", "management-api", "--check" ]
     - id: poetry-lock
+      name: backend-poetry-lock-guardian-lib
       args: [ "-C", "guardian-lib", "--check" ]
 
 - repo: https://github.com/anderseknert/pre-commit-opa
   rev: v1.5.1
   hooks:
-  - id: opa-fmt
-  - id: opa-check
-    args: ["management-api/rego_policy_bundle_template"]
-  - id: opa-check
-    args: [ "management-api/alembic/1.0.0_builtin_conditions", "--ignore=\"*.json\"" ]
-  - id: opa-test
-    args: ["management-api/rego_policy_bundle_template"]
-  - id: opa-test
-    args: [ "management-api/alembic/1.0.0_builtin_conditions", "--ignore=\"*.json\"" ]
+    - id: opa-fmt
+      name: backend-opa-fmt
+    - id: opa-check
+      name: backend-opa-check-bundle-template
+      args: ["management-api/rego_policy_bundle_template"]
+    - id: opa-check
+      name: backend-opa-check-builtin-conditions
+      args: [ "management-api/alembic/1.0.0_builtin_conditions", "--ignore=\"*.json\"" ]
+    - id: opa-test
+      name: backend-opa-test-bundle-template
+      args: ["management-api/rego_policy_bundle_template"]
+    - id: opa-test
+      name: backend-opa-test-builtin-conditions
+      args: [ "management-api/alembic/1.0.0_builtin_conditions", "--ignore=\"*.json\"" ]
 
 - repo: https://github.com/StyraInc/regal
   rev: v0.8.0
   hooks:
     - id: regal-lint-use-path
+      name: backend-opa-policy-file-linting
+
+- repo: local
+  hooks:
+    - id: frontend-type-check
+      name: frontend-type-check
+      files: \.([jt]sx?|vue)$  # *.js, *.jsx, *.ts and *.tsx, as well as .vue
+      types: [ file ]
+      language: node
+      entry: "yarn --cwd management-ui type-check"
+      pass_filenames: false
+      additional_dependencies:
+        - "yarn"
+    - id: frontend-lint
+      name: frontend-lint
+      files: \.([jt]sx?|vue)$  # *.js, *.jsx, *.ts and *.tsx, as well as .vue
+      types: [ file ]
+      language: node
+      entry: "yarn --cwd management-ui lint"
+      pass_filenames: false
+      additional_dependencies:
+        - "yarn"
+    - id: frontend-format
+      name: frontend-format
+      files: \.([jt]sx?|vue)$  # *.js, *.jsx, *.ts and *.tsx, as well as .vue
+      types: [ file ]
+      language: node
+      entry: "yarn --cwd management-ui format"
+      pass_filenames: false
+      additional_dependencies:
+        - "yarn"

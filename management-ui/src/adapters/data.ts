@@ -1508,11 +1508,7 @@ export class ApiDataAdapter extends GenericDataAdapter {
     return this._fetchObject<NamespaceResponse>(endpoint);
   }
 
-  async _save<T>(
-    endpoint: string,
-    request: any,
-    method: 'post' | 'put' | 'patch',
-  ): Promise<Result<T, SaveError>> {
+  async _save<T>(endpoint: string, request: any, method: 'post' | 'put' | 'patch'): Promise<Result<T, SaveError>> {
     const _method = {
       post: this._post,
       put: this._put,
