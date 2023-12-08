@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@univention/univention-veb": "0.0.56",
+    "@univention/univention-veb": "0.0.58",
     "i18next": "^23.2.11",
     "i18next-vue": "^2.2.1",
     "keycloak-js": "22.0.1",
