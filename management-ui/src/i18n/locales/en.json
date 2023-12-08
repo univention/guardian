@@ -141,7 +141,8 @@
         "name": "Name",
         "namespaceName": "Namepace",
         "permissions": "Permissions",
-        "relation": "Relation"
+        "relation": "Relation of conditions",
+        "relationDescription": "A relation of \"ALL\" means that all conditions have to be met for the capability to take effect. \"OR\" means at least one condition has to be met."
       },
       "fieldset.basicSettings": "Basic Settings",
       "hint": {
