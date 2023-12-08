@@ -78,6 +78,7 @@ export const getAddCapabilityViewConfig = (
                   props: {
                     name: 'relation',
                     label: i18next.t('configs.addView.field.relation'),
+                    description: i18next.t('configs.addView.field.relationDescription'),
                     options: [
                       {
                         label: 'AND',

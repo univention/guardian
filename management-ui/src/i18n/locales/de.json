@@ -141,7 +141,8 @@
         "name": "Name",
         "namespaceName": "Namensraum",
         "permissions": "Berechtigungen",
-        "relation": "Beziehung"
+        "relation": "Beziehung der Konditionen",
+        "relationDescription": "Die Beziehung \"AND\" bedeutet, dass alle Konditionen erf\u00fcllt sein m\u00fcssen, damit die Berechtigungen wirksam werden. \"OR\" bedeutet, dass mindestens eine Kondition erf\u00fcllt sein muss."
       },
       "fieldset.basicSettings": "Grundeinstellungen",
       "hint": {
