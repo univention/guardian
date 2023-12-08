@@ -122,7 +122,7 @@ const fetchConditionSubElement = async (): Promise<Result<Field, string>> => {
           type: 'UInputText',
           props: {
             label: `${param.name}`,
-            name: `${conditionId}-${param.name}`,
+            name: `${param.name}`,
             required: true,
           },
         });
