@@ -2,6 +2,7 @@ import type {
   AddViewConfig,
   DetailResponseModel,
   Field,
+  FieldComboBoxOptions,
   FormValues,
   LabeledValue,
   ListResponseModel,
@@ -107,10 +108,7 @@ const fetchConditionSubElement = async (): Promise<Result<Field, string>> => {
   }
 
   const extensions: Record<string, Field[]> = {};
-  const options: {
-    label: string;
-    value: string;
-  }[] = [];
+  const options: FieldComboBoxOptions = [];
 
   result.value.conditions.forEach(condition => {
     const conditionId = `${condition.appName}:${condition.namespaceName}:${condition.name}`;
@@ -133,6 +131,7 @@ const fetchConditionSubElement = async (): Promise<Result<Field, string>> => {
     options.push({
       label: conditionId,
       value: `${conditionId}`,
+      description: condition.documentation || '',
     });
   });
 

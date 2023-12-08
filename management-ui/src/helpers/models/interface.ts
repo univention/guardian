@@ -113,6 +113,12 @@ export interface FieldSelect {
     options: {label: string; value: string}[];
   };
 }
+export type FieldComboBoxOptions = FieldComboBoxOption[];
+export interface FieldComboBoxOption {
+  label: string;
+  value: string;
+  description?: string;
+}
 export interface FieldComboBox {
   type: 'UComboBox';
   props: {
@@ -124,7 +130,7 @@ export interface FieldComboBox {
     required?: boolean;
     access?: 'write' | 'read' | 'none';
     standby?: any; // boolean | Ref<boolean>;
-    options: {label: string; value: string}[];
+    options: FieldComboBoxOptions;
   };
 }
 export interface FieldMultiSelect {
