@@ -162,7 +162,7 @@ class FastAPIContextAPIAdapter(
                     display_name=context.display_name,
                     app_name=context.app_name,
                     namespace_name=context.namespace_name,
-                    resource_url=f"http://localhost:8001/guardian/management/contexts/{context.app_name}/{context.namespace_name}/{context.name}",
+                    resource_url=f"{COMPLETE_URL}/contexts/{context.app_name}/{context.namespace_name}/{context.name}",
                 )
                 for context in contexts
             ],

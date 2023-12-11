@@ -163,7 +163,7 @@ class FastAPINamespaceAPIAdapter(
                     name=ns.name,
                     display_name=ns.display_name,
                     app_name=ns.app_name,
-                    resource_url=f"http://localhost:8001/guardian/management/namespaces/{ns.app_name}/{ns.name}",
+                    resource_url=f"{COMPLETE_URL}/namespaces/{ns.app_name}/{ns.name}",
                 )
                 for ns in namespaces
             ],
