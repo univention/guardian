@@ -1,7 +1,6 @@
 # Copyright (C) 2023 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
-#!/usr/bin/bash
 
 udm users/user delete --dn=uid=guardian,cn=users,dc=school,dc=test || true
 

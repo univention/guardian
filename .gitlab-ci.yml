@@ -75,6 +75,8 @@ test_management:
     - changes:
         - management-api/**/*
   image: docker-registry.knut.univention.de/python:3.11-slim
+  variables:
+    GUARDIAN__MANAGEMENT__BASE_URL: "http://localhost:8001"
   script:
     - cd management-api
     - pip install poetry=="$POETRY_VERSION"
@@ -88,6 +90,8 @@ coverage_management:
     - changes:
         - management-api/**/*
   image: docker-registry.knut.univention.de/python:3.11-slim
+  variables:
+    GUARDIAN__MANAGEMENT__BASE_URL: "http://localhost:8001"
   script:
     - cd management-api
     - pip install poetry=="$POETRY_VERSION"
