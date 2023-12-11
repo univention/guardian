@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-import os
 from urllib.parse import urljoin
 
 import pytest
@@ -513,10 +512,7 @@ class TestRoleEndpoints:
 
 
 @pytest.mark.e2e
-@pytest.mark.skipif(
-    "UCS_HOST_IP" not in os.environ,
-    reason="UCS_HOST_IP env var not set",
-)
+@pytest.mark.e2e_udm
 class TestRoleEndpointsAuthorization:
     @pytest.mark.asyncio
     async def test_get_guardian_role_allowed(

@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-import os
 from dataclasses import asdict
 from urllib.parse import urljoin
 
@@ -303,10 +302,7 @@ class TestConditionEndpoints:
 
 
 @pytest.mark.e2e
-@pytest.mark.skipif(
-    "UCS_HOST_IP" not in os.environ,
-    reason="UCS_HOST_IP env var not set",
-)
+@pytest.mark.e2e_udm
 class TestConditionEndpointsAuthorization:
     @pytest.mark.asyncio
     async def test_get_guardian_condition_allowed(

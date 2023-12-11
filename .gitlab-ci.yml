@@ -82,7 +82,7 @@ test_management:
     - pip install poetry=="$POETRY_VERSION"
     - poetry config --local virtualenvs.create false
     - poetry install
-    - pytest -vv .
+    - pytest -vv -k 'not e2e_udm' .
 
 coverage_management:
   stage: test
@@ -97,7 +97,7 @@ coverage_management:
     - pip install poetry=="$POETRY_VERSION"
     - poetry config --local virtualenvs.create false
     - poetry install
-    - pytest -vv --cov=guardian_management_api .
+    - pytest -vv -k 'not e2e_udm' --cov=guardian_management_api .
     - coverage report --fail-under="$MANAGEMENT_COVERAGE_LIMIT"  # Variable set in Gitlab UI
 
 test_authz:

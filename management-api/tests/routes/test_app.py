@@ -3,8 +3,6 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 
-import os
-
 import pytest
 from guardian_management_api.constants import COMPLETE_URL
 from guardian_management_api.main import app
@@ -276,10 +274,7 @@ class TestAppEndpoints:
 
 
 @pytest.mark.e2e
-@pytest.mark.skipif(
-    "UCS_HOST_IP" not in os.environ,
-    reason="UCS_HOST_IP env var not set",
-)
+@pytest.mark.e2e_udm
 class TestAppEndpointsAuthorization:
     @pytest.mark.asyncio
     async def test_get_guardian_app_allowed(

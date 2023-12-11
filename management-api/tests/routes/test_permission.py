@@ -1,4 +1,3 @@
-import os
 from dataclasses import asdict
 from urllib.parse import urljoin
 
@@ -257,10 +256,7 @@ class TestPermissionEndpoints:
 
 
 @pytest.mark.e2e
-@pytest.mark.skipif(
-    "UCS_HOST_IP" not in os.environ,
-    reason="UCS_HOST_IP env var not set",
-)
+@pytest.mark.e2e_udm
 class TestPermissionEndpointsAuthorization:
     @pytest.mark.asyncio
     async def test_get_guardian_permission_allowed(
