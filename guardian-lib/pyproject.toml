@@ -6,7 +6,7 @@
 name = "guardian-lib"
 version = "1.4.0"
 description = ""
-authors = ["Ole Schwiegert <schwiegert@univention.de>"]
+authors = ["UCS School Maintainers <ucsschool-maintainers@univention.de>"]
 readme = "README.md"
 packages = [{include = "guardian_lib"}, {include = "guardian_pytest"}]
 

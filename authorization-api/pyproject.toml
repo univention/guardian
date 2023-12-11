@@ -4,9 +4,9 @@
 
 [tool.poetry]
 name = "authorization-api"
-version = "0.2.0"
+version = "1.0.0"
 description = ""
-authors = ["Ole Schwiegert <schwiegert@univention.de>"]
+authors = ["UCS School Maintainers <ucsschool-maintainers@univention.de>"]
 readme = "README.md"
 packages = [{include = "guardian_authorization_api"}, ]
 
