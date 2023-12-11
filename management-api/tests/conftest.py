@@ -795,3 +795,8 @@ async def set_up_auth():
         ResourceAuthorizationPort, _original_resource_authorization_adapter
     )
     adapter.get_actor_identifier = _original_get_actor_identifier
+
+
+@pytest.fixture
+def base_url() -> str:
+    return os.getenv("GUARDIAN__MANAGEMENT__BASE_URL", "http://localhost:8001")

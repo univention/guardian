@@ -83,6 +83,7 @@ class TestNamespaceEndpoints:
         create_app,
         sqlalchemy_mixin,
         create_namespace,
+        base_url,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session)
@@ -98,7 +99,8 @@ class TestNamespaceEndpoints:
                 "app_name": DEFAULT_TEST_APP,
                 "display_name": "Namespace",
                 "name": DEFAULT_TEST_NAMESPACE,
-                "resource_url": f"http://localhost:8001/guardian/management/namespaces/{DEFAULT_TEST_APP}/{DEFAULT_TEST_NAMESPACE}",
+                "resource_url": f"{base_url}/guardian/management/namespaces/"
+                f"{DEFAULT_TEST_APP}/{DEFAULT_TEST_NAMESPACE}",
             }
         }
 
@@ -137,6 +139,7 @@ class TestNamespaceEndpoints:
         create_app,
         sqlalchemy_mixin,
         create_namespace,
+        base_url,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session)
@@ -151,13 +154,15 @@ class TestNamespaceEndpoints:
                     "app_name": DEFAULT_TEST_APP,
                     "display_name": "Namespace",
                     "name": "test-namespace1",
-                    "resource_url": f"http://localhost:8001/guardian/management/namespaces/{DEFAULT_TEST_APP}/test-namespace1",
+                    "resource_url": f"{base_url}/guardian/management/namespaces/"
+                    f"{DEFAULT_TEST_APP}/test-namespace1",
                 },
                 {
                     "app_name": DEFAULT_TEST_APP,
                     "display_name": "Namespace",
                     "name": "test-namespace2",
-                    "resource_url": f"http://localhost:8001/guardian/management/namespaces/{DEFAULT_TEST_APP}/test-namespace2",
+                    "resource_url": f"{base_url}/guardian/management/namespaces/"
+                    f"{DEFAULT_TEST_APP}/test-namespace2",
                 },
             ],
             "pagination": {"limit": 2, "offset": 0, "total_count": 2},
@@ -170,6 +175,7 @@ class TestNamespaceEndpoints:
         create_app,
         sqlalchemy_mixin,
         create_namespace,
+        base_url,
     ):
         app_name = "test-app2"
 
@@ -188,7 +194,8 @@ class TestNamespaceEndpoints:
                     "app_name": app_name,
                     "display_name": "Namespace",
                     "name": "test-namespace2",
-                    "resource_url": f"http://localhost:8001/guardian/management/namespaces/{app_name}/test-namespace2",
+                    "resource_url": f"{base_url}/guardian/management/namespaces/"
+                    f"{app_name}/test-namespace2",
                 },
             ],
             "pagination": {"limit": 1, "offset": 0, "total_count": 1},
@@ -221,6 +228,7 @@ class TestNamespaceEndpoints:
         create_app,
         sqlalchemy_mixin,
         create_namespace,
+        base_url,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session)
@@ -237,7 +245,8 @@ class TestNamespaceEndpoints:
                     "app_name": DEFAULT_TEST_APP,
                     "display_name": "Namespace",
                     "name": "test-namespace2",
-                    "resource_url": f"http://localhost:8001/guardian/management/namespaces/{DEFAULT_TEST_APP}/test-namespace2",
+                    "resource_url": f"{base_url}/guardian/management/namespaces/"
+                    f"{DEFAULT_TEST_APP}/test-namespace2",
                 }
             ],
             "pagination": {"limit": 1, "offset": 1, "total_count": 2},

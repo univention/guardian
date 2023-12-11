@@ -131,6 +131,7 @@ class TestContextEndpoints:
         sqlalchemy_mixin,
         create_namespace,
         create_context,
+        base_url,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session)
@@ -151,7 +152,8 @@ class TestContextEndpoints:
                 "namespace_name": DEFAULT_TEST_NAMESPACE,
                 "display_name": "Context",
                 "name": DEFAULT_TEST_CONTEXT,
-                "resource_url": f"http://localhost:8001/guardian/management/contexts/{DEFAULT_TEST_APP}/{DEFAULT_TEST_NAMESPACE}/{DEFAULT_TEST_CONTEXT}",
+                "resource_url": f"{base_url}/guardian/management/contexts/"
+                f"{DEFAULT_TEST_APP}/{DEFAULT_TEST_NAMESPACE}/{DEFAULT_TEST_CONTEXT}",
             }
         }
 
@@ -184,6 +186,7 @@ class TestContextEndpoints:
         sqlalchemy_mixin,
         create_namespace,
         create_context,
+        base_url,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session)
@@ -201,14 +204,14 @@ class TestContextEndpoints:
                     "namespace_name": "namespace",
                     "name": "context1",
                     "display_name": "Context",
-                    "resource_url": "http://localhost:8001/guardian/management/contexts/app/namespace/context1",
+                    "resource_url": f"{base_url}/guardian/management/contexts/app/namespace/context1",
                 },
                 {
                     "app_name": "app",
                     "namespace_name": "namespace",
                     "name": "context2",
                     "display_name": "Context",
-                    "resource_url": "http://localhost:8001/guardian/management/contexts/app/namespace/context2",
+                    "resource_url": f"{base_url}/guardian/management/contexts/app/namespace/context2",
                 },
             ],
         }
@@ -221,6 +224,7 @@ class TestContextEndpoints:
         sqlalchemy_mixin,
         create_namespace,
         create_context,
+        base_url,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session)
@@ -240,7 +244,7 @@ class TestContextEndpoints:
                     "namespace_name": "namespace",
                     "name": "context2",
                     "display_name": "Context",
-                    "resource_url": "http://localhost:8001/guardian/management/contexts/app2/namespace/context2",
+                    "resource_url": f"{base_url}/guardian/management/contexts/app2/namespace/context2",
                 }
             ],
         }
@@ -253,6 +257,7 @@ class TestContextEndpoints:
         sqlalchemy_mixin,
         create_namespace,
         create_context,
+        base_url,
     ):
         namespace_name = "namespace2"
         async with sqlalchemy_mixin.session() as session:
@@ -280,7 +285,7 @@ class TestContextEndpoints:
                     "namespace_name": "namespace2",
                     "name": "context2",
                     "display_name": "Context",
-                    "resource_url": "http://localhost:8001/guardian/management/contexts/app/namespace2/context2",
+                    "resource_url": f"{base_url}/guardian/management/contexts/app/namespace2/context2",
                 }
             ],
         }
