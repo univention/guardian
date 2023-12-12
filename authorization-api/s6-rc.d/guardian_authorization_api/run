@@ -1,4 +1,0 @@
-#!/command/with-contenv bash
-
-cd $SERVICE_DIR
-exec s6-setuidgid $SERVICE_USER gunicorn --log-level info --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 guardian_authorization_api.main:app
