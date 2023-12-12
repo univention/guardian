@@ -407,10 +407,7 @@ class TestGuardianAuthorizationAdapter:
 
 
 @pytest.mark.e2e
-@pytest.mark.skipif(
-    "UCS_HOST_IP" not in os.environ,
-    reason="UCS_HOST_IP env var not set",
-)
+@pytest.mark.e2e_udm
 class TestGuardianAuthorizationAdapterIntegration:
     @pytest.mark.asyncio
     async def test_authorize_operation_actor_not_allowed_condition(
