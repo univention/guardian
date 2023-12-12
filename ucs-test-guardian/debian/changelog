@@ -1,3 +1,9 @@
+ucs-test-guardian (0.0.4) unstable; urgency=medium
+
+  * Don't copy test bundle in the set_up_tests.sh script (Issue #134).
+
+ -- Carlos García-Mauriño <garcia-maurino.extern@univention.de>  Tue, 12 Dec 2023 14:46:03 +0100
+
 ucs-test-guardian (0.0.3) unstable; urgency=medium
 
   * Make set_up_tests.sh executable (Issue #134).

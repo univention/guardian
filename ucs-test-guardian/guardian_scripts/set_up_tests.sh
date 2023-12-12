@@ -10,6 +10,3 @@ udm users/user create \
   --set password=univention \
   --set guardianRole=guardian:builtin:app-admin \
   --position cn=users,$(ucr get ldap/base)
-
-univention-app shell guardian-management-api cp /app/management-api/rego_policy_bundle_template/univention/test_mapping/data.json /guardian_service_dir/bundle_server/build/GuardianDataBundle/guardian/mapping/data.json
-univention-app shell guardian-management-api opa build -b /guardian_service_dir/bundle_server/build/GuardianDataBundle -o /guardian_service_dir/bundle_server/bundles/GuardianDataBundle.tar.gz
