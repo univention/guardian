@@ -29,17 +29,11 @@ from guardian_authorization_api.udm_client import (
 from ..mock_classes import MockUdmObject
 
 
-def ucs_test_disabled():
+def udm_test_disabled():
     url = os.environ.get("UDM_DATA_ADAPTER__URL")
     username = os.environ.get("UDM_DATA_ADAPTER__USERNAME")
     password = os.environ.get("UDM_DATA_ADAPTER__PASSWORD")
-    ucs_test_enabled = os.environ.get("UCS_TEST_ENABLED") == "1"
-    if ((url is None) or (username is None) or (password is None)) and ucs_test_enabled:
-        raise Exception(
-            "UCS integration tests enabled but url, password or username missing"
-        )
-
-    return not ucs_test_enabled
+    return (url is None) or (username is None) or (password is None)
 
 
 @pytest.fixture()
@@ -327,8 +321,8 @@ class TestUDMDataAdapter:
 
 
 @pytest.mark.skipif(
-    ucs_test_disabled(),
-    reason="Cannot run integration tests for UDM adapter if UDM not available",
+    udm_test_disabled(),
+    reason="Cannot run integration tests for UDM adapter if UDM configuration is not available",
 )
 @pytest.mark.integration
 class TestUDMDataAdapterIntegration:
