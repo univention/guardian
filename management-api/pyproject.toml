@@ -101,5 +101,6 @@ omit = [
 
 [tool.pytest.ini_options]
 markers = [
-    "e2e: marks test that test the routes with full integration"
+    "e2e: marks test that test the routes with full integration",
+    "e2e_udm: marks test that need an UDM instance"
 ]
