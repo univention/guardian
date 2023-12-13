@@ -838,7 +838,7 @@ async def get_role(
         query = await role_api_port.to_role_get(api_request)
         actor_id: str = await authc_port.get_actor_identifier(request)
         resource: Resource = Resource(
-            resource_type=ResourceType.CAPABILITY,
+            resource_type=ResourceType.ROLE,
             name=query.name,
             namespace_name=query.namespace_name,
             app_name=query.app_name,

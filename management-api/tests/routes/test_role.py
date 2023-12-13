@@ -552,7 +552,7 @@ class TestRoleEndpointsAuthorization:
         assert response.json()["role"]["name"] == "test"
 
     @pytest.mark.asyncio
-    async def test_get_other_role_not_allowed(
+    async def test_get_other_role_allowed(
         self,
         client,
         create_tables,
@@ -585,7 +585,8 @@ class TestRoleEndpointsAuthorization:
                 app_name="other",
             ),
         )
-        assert response.status_code == 403
+        assert response.status_code == 200
+        assert response.json()["role"]["name"] == "test"
 
     @pytest.mark.asyncio
     async def test_get_all_roles(
