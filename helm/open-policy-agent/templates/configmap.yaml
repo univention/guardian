@@ -1,0 +1,16 @@
+---
+{{ include "common.configMap" (dict "top" . "overrides" "open-policy-agent.configMap") }}
+
+{{- define "open-policy-agent.configMap" }}
+
+data:
+{{- with .top.Values.openPolicyAgent }}
+  IS_UNIVENTION_APPCENTER: "{{ .isUniventionAppCenter }}"
+  OPA_DATA_BUNDLE: "{{ .opaDataBundle }}"
+  OPA_POLICY_BUNDLE: "{{ .opaPolicyBundle }}"
+  OPA_POLLING_MIN_DELAY: "{{ .opaPollingMinDelay }}"
+  OPA_POLLING_MAX_DELAY: "{{ .opaPollingMaxDelay }}"
+  OPA_GUARDIAN_MANAGEMENT_URL: "{{ .opaGuardianManagementUrl }}"
+{{ end }}
+{{ end }}
+...

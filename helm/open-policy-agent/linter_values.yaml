@@ -1,0 +1,10 @@
+---
+
+openPolicyAgent:
+  isUniventionAppCenter: 0
+  opaDataBundle: "bundles/GuardianDataBundle.tar.gz"
+  opaPolicyBundle: "bundles/GuardianPolicyBundle.tar.gz"
+  opaPollingMinDelay: 10
+  opaPollingMaxDelay: 15
+  opaGuardianManagementUrl: "http://guardian-management-api/guardian/management"
+...
