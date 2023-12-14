@@ -1,0 +1,37 @@
+---
+
+guardianManagementApi:
+  home: "/guardian_service_dir"
+  requestsCaBundle: "/etc/ssl/certs/ca-certificates.crt"
+  sslCertFile: "/etc/ssl/certs/ca-certificates.crt"
+  guardianManagementCorsAllowedOrigins: "*"
+  guardianManagementAdapterSettingsPort: "env"
+  guardianManagementAdapterAppPersistencePort: "sql"
+  guardianManagementAdapterConditionPersistencePort: "sql"
+  guardianManagementAdapterContextPersistencePort: "sql"
+  guardianManagementAdapterNamespacePersistencePort: "sql"
+  guardianManagementAdapterPermissionPersistencePort: "sql"
+  guardianManagementAdapterRolePersistencePort: "sql"
+  guardianManagementAdapterCapabilityPersistencePort: "sql"
+  guardianManagementAdapterAuthenticationPort: "fast_api_oauth"
+  guardianManagementAdapterAuthorizationApiUrl: "http://guardian-management-api/guardian/authorization"
+  guardianManagementAdapterResourceAuthorizationPort: "guardian"
+  isUniventionAppCenter: 0
+  sqlPersistenceAdapterDialect: "postgresql"
+  sqlPersistenceAdapterDbName: "/guardian_service_dir/management.db"
+  oauthAdapterWellKnownUrl: "http://keycloak/realms/souvap/.well-known/openid-configuration"
+  oauthAdapterM2mSecret: "stub_secret"
+  guardianManagementLoggingLevel: "DEBUG"
+  guardianManagementLoggingStructured: "0"
+  guardianManagementLoggingFormat: "<green>{time:YYYY-MM-DD HH:mm:ss.SSS ZZ}</green> | <level>{level}</level> | <level>{message}</level> | {extra}"
+  guardianManagementBaseUrl: "http://guardian-management"
+
+guardianManagementUi:
+  viteManagementUiAdapterAuthenticationPort: "keycloak"
+  viteManagementUiAdapterDataPort: "api"
+  viteApiDataAdapterUri: "http://guardian-management-api/guardian/management"
+  viteKeycloakAuthenticationAdapterSsoUri: "http://keycloak"
+  viteKeycloakAuthenticationAdapterRealm: "opendesk"
+  viteKeycloakAuthenticationAdapterClientId: "guardian"
+
+...

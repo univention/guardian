@@ -1,0 +1,75 @@
+---
+
+apiVersion: "apps/v1"
+kind: "StatefulSet"
+metadata:
+  name: '{{ include "common.names.fullname" . }}'
+  labels:
+    {{- include "common.labels.standard" . | nindent 4 }}
+spec:
+  serviceName: {{ include "common.names.fullname" . }}
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "common.labels.matchLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: '{{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}'
+        checksum/secret: '{{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}'
+        {{- with .Values.podAnnotations }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "common.labels.matchLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: '{{ .Chart.Name }}-api'
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: '{{ if .Values.image.guardianManagementApi.registry }}{{ .Values.image.guardianManagementApi.registry }}/{{ end }}{{ .Values.image.guardianManagementApi.repository }}{{ if .Values.image.guardianManagementApi.sha256 }}@sha256:{{ .Values.image.guardianManagementApi.sha256 }}{{ else }}:{{ .Values.image.guardianManagementApi.tag }}{{ end }}'
+          imagePullPolicy: '{{ .Values.image.pullPolicy }}'
+          envFrom:
+            - configMapRef:
+                name: '{{ include "common.names.fullname" . }}'
+          volumeMounts:
+            - name: "secrets"
+              mountPath: "/var/secrets"
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+        - name: '{{ .Chart.Name }}-ui'
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: '{{ if .Values.image.guardianManagementUi.registry }}{{ .Values.image.guardianManagementUi.registry }}/{{ end }}{{ .Values.image.guardianManagementUi.repository }}{{ if .Values.image.guardianManagementUi.sha256 }}@sha256:{{ .Values.image.guardianManagementUi.sha256 }}{{ else }}:{{ .Values.image.guardianManagementUi.tag }}{{ end }}'
+          imagePullPolicy: '{{ .Values.image.pullPolicy }}'
+          envFrom:
+            - configMapRef:
+                name: '{{ include "common.names.fullname" . }}'
+          volumeMounts:
+            - name: "secrets"
+              mountPath: "/var/secrets"
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+      - name: "secrets"
+        secret:
+          secretName: {{ include "common.names.fullname" . | quote }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+...

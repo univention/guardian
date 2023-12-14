@@ -1,0 +1,117 @@
+---
+
+## Global values
+affinity: {}
+environment: {}
+fullnameOverride: ""
+nameOverride: ""
+nodeSelector: {}
+podAnnotations: {}
+podSecurityContext: {}
+replicaCount: 1
+securityContext: {}
+tolerations: []
+
+guardianManagementApi:
+  # -- 
+  home: "/guardian_service_dir"
+  # -- Comma-separated list of hosts that are allowed to make cross-origin resource sharing (CORS) requests to the server.
+  guardianManagementCorsAllowedOrigins: "*"
+  guardianManagementAdapterSettingsPort: "env"
+  guardianManagementAdapterAppPersistencePort: "sql"
+  guardianManagementAdapterConditionPersistencePort: "sql"
+  guardianManagementAdapterContextPersistencePort: "sql"
+  guardianManagementAdapterNamespacePersistencePort: "sql"
+  guardianManagementAdapterPermissionPersistencePort: "sql"
+  guardianManagementAdapterRolePersistencePort: "sql"
+  guardianManagementAdapterCapabilityPersistencePort: "sql"
+  guardianManagementAdapterAuthenticationPort: "fast_api_oauth"
+  # -- URL to the Authorization API.
+  guardianManagementAdapterAuthorizationApiUrl: "http://guardian-management-api/guardian/authorization"
+  guardianManagementAdapterResourceAuthorizationPort: "guardian"
+  isUniventionAppCenter: 0
+  sqlPersistenceAdapterDialect: "postgresql"
+  sqlPersistenceAdapterDbName: "/guardian_service_dir/management.db"
+  # -- Identity Provider well known URL
+  oauthAdapterWellKnownUrl: "http://keycloak/realms/souvap/.well-known/openid-configuration"
+  oauthAdapterM2mSecret: "stub_secret"
+  # -- Sets the log level of the application.
+  guardianManagementLoggingLevel: "DEBUG"
+  # -- If set to True, the logging output is structured as a JSON object.
+  guardianManagementLoggingStructured: True
+  # -- Defines the format of the log output, if not structured. The possible options are described in https://loguru.readthedocs.io/en/stable/api/logger.html.
+  guardianManagementLoggingFormat: "<green>{time:YYYY-MM-DD HH:mm:ss.SSS ZZ}</green> | <level>{level}</level> | <level>{message}</level> | {extra}"
+  # -- Defines the base URL of the API. If unset the url is generated from hostname and domainname.
+  guardianManagementBaseUrl: "http://guardian-management"
+
+guardianManagementUi:
+  viteManagementUiAdapterAuthenticationPort: "keycloak"
+  viteManagementUiAdapterDataPort: "api"
+  # -- URL for the Guardian Management API.
+  viteApiDataAdapterUri: "http://guardian-management-api/guardian/management"
+  # -- Base URI of the Keycloak server for authentication.
+  viteKeycloakAuthenticationAdapterSsoUri: "http://keycloak"
+  # -- Keycloak authentication realm.
+  viteKeycloakAuthenticationAdapterRealm: "opendesk"
+  # -- Keycloak client ID.
+  viteKeycloakAuthenticationAdapterClientId: "guardian"
+
+image:
+  imagePullPolicy: "Always"
+  imagePullSecrets: []
+
+  guardianManagementApi:
+    registry: "docker.software-univention.de"
+    repository: "guardian-management-api-management-api"
+    tag: "1.0.0"
+    # -- Define image sha256 as an alternative to `tag`
+    sha256: null
+
+  guardianManagementUi:
+    registry: "docker.software-univention.de"
+    repository: "guardian-management-ui-management-ui"
+    tag: "1.0.0"
+    # -- Define image sha256 as an alternative to `tag`
+    sha256: null
+
+## Container deployment probes
+probes:
+  liveness:
+    enabled: true
+    initialDelaySeconds: 120
+    timeoutSeconds: 3
+    periodSeconds: 30
+    failureThreshold: 3
+    successThreshold: 1
+
+  readiness:
+    enabled: true
+    initialDelaySeconds: 30
+    timeoutSeconds: 3
+    periodSeconds: 15
+    failureThreshold: 30
+    successThreshold: 1
+
+# -- Deployment resources for the listener container
+resources: {}
+  # requests:
+  #   memory: "512Mi"
+  #   cpu: "250m"
+  # limits:
+  #   memory: "4Gi"
+  #   cpu: "4"
+
+# -- Deployment resources for the dependency waiters
+resourcesWaitForDependency: {}
+
+
+autoscaling:
+  enabled: false
+
+
+persistence:
+  data:
+    storageClass: ""
+    size: "1Gi"
+
+...
