@@ -1,3 +1,9 @@
+ucs-test-guardian (0.0.6) unstable; urgency=medium
+
+  * Fix setup script path (Issue #134).
+
+ -- Carlos García-Mauriño <garcia-maurino.extern@univention.de>  Wed, 13 Dec 2023 08:39:05 +0100
+
 ucs-test-guardian (0.0.5) unstable; urgency=medium
 
   * Setup authorization tests and cleanup later (Issue #134).
