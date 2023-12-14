@@ -1,0 +1,27 @@
+---
+
+guardianAuthorizationApi:
+  home: "/guardian_service_dir"
+  guardianAuthzCorsAllowedOrigins: "*"
+  guardianAuthzAdapterSettingsPort: "env"
+  guardianAuthzAdapterAppPersistencePort: "udm_data"
+  guardianAuthzAdapterPolicyPort: "opa"
+  guardianAuthzAdapteriAuthenticationPort: "fast_api_oauth"
+  isUniventionAppCenter: 0
+  udmDataAdapterUrl: "http://udm-rest-api/univention/udm"
+  udmDataAdapterUsername: "admin"
+  udmDataAdapterPassword: "stub_password"
+  opaAdapterUrl: "http://guardian-authorization-opa:8181/"
+  oauthAdapterWellKnownUrl: "http://keycloak/realms/souvap/.well-known/openid-configuration"
+  guardianAuthzLoggingLevel: "DEBUG"
+  guardianAuthzLoggingStructured: "0"
+  guardianAuthzLoggingFormat: "<green>{time:YYYY-MM-DD HH:mm:ss.SSS ZZ}</green> | <level>{level}</level> | <level>{message}</level> | {extra}"
+
+openPolicyAgent:
+  isUniventionAppCenter: 0
+  opaDataBundle: "bundles/GuardianDataBundle.tar.gz"
+  opaPolicyBundle: "bundles/GuardianPolicyBundle.tar.gz"
+  opaPollingMinDelay: 10
+  opaPollingMaxDelay: 15
+  opaGuardianManagementUrl: "http://guardian-management-api/guardian/management"
+...

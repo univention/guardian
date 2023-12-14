@@ -1,0 +1,107 @@
+---
+
+## Global values
+affinity: {}
+environment: {}
+fullnameOverride: ""
+nameOverride: ""
+nodeSelector: {}
+podAnnotations: {}
+podSecurityContext: {}
+replicaCount: 1
+securityContext: {}
+tolerations: []
+
+guardianAuthorizationApi:
+  home: "/guardian_service_dir"
+  # -- Comma-separated list of hosts that are allowed to make cross-origin resource sharing (CORS) requests to the server.
+  guardianAuthzCorsAllowedOrigins: "*"
+  guardianAuthzAdapterSettingsPort: "env"
+  guardianAuthzAdapterAppPersistencePort: "udm_data"
+  guardianAuthzAdapterPolicyPort: "opa"
+  guardianAuthzAdapteriAuthenticationPort: "fast_api_oauth"
+  isUniventionAppCenter: 0
+  # -- The URL of the UDM REST API for data queries.
+  udmDataAdapterUrl: "http://udm-rest-api/univention/udm"
+  # -- Username for authenticating against the UDM REST API
+  udmDataAdapterUsername: "admin"
+  # -- Password for authenticating against the UDM REST API
+  udmDataAdapterPassword: null
+  opaAdapterUrl: "http://guardian-authorization-opa:8181/"
+  # -- OIDC well-known url
+  oauthAdapterWellKnownUrl: "http://keycloak/realms/souvap/.well-known/openid-configuration"
+  # -- Sets the log level of the application.
+  guardianAuthzLoggingLevel: "DEBUG"
+  # -- If set to True, the logging output is structured as a JSON object.
+  guardianAuthzLoggingStructured: True
+  # -- Defines the format of the log output, if not structured. The possible options are described in https://loguru.readthedocs.io/en/stable/api/logger.html.
+  guardianAuthzLoggingFormat: "<green>{time:YYYY-MM-DD HH:mm:ss.SSS ZZ}</green> | <level>{level}</level> | <level>{message}</level> | {extra}"
+
+openPolicyAgent:
+  isUniventionAppCenter: 0
+  opaDataBundle: "bundles/GuardianDataBundle.tar.gz"
+  opaPolicyBundle: "bundles/GuardianPolicyBundle.tar.gz"
+  opaPollingMinDelay: 10
+  opaPollingMaxDelay: 15
+  # -- Bundle server URL
+  opaGuardianManagementUrl: "http://guardian-management-api/guardian/management"
+
+image:
+  imagePullPolicy: "Always"
+  imagePullSecrets: []
+
+  guardianAuthorizationApi:
+    registry: "docker.software-univention.de"
+    repository: "guardian-authorization-api-authorization-api"
+    tag: "1.0.0"
+    # -- Define image sha256 as an alternative to `tag`
+    sha256: null
+
+  openPolicyAgent:
+    registry: "docker.software-univention.de"
+    repository: "guardian-authorization-api-opa"
+    tag: "1.0.0"
+    # -- Define image sha256 as an alternative to `tag`
+    sha256: null
+
+## Container deployment probes
+probes:
+  liveness:
+    enabled: true
+    initialDelaySeconds: 120
+    timeoutSeconds: 3
+    periodSeconds: 30
+    failureThreshold: 3
+    successThreshold: 1
+
+  readiness:
+    enabled: true
+    initialDelaySeconds: 30
+    timeoutSeconds: 3
+    periodSeconds: 15
+    failureThreshold: 30
+    successThreshold: 1
+
+# -- Deployment resources for the listener container
+resources: {}
+  # requests:
+  #   memory: "512Mi"
+  #   cpu: "250m"
+  # limits:
+  #   memory: "4Gi"
+  #   cpu: "4"
+
+# -- Deployment resources for the dependency waiters
+resourcesWaitForDependency: {}
+
+
+autoscaling:
+  enabled: false
+
+
+persistence:
+  data:
+    storageClass: ""
+    size: "1Gi"
+
+...
