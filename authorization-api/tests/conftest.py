@@ -35,9 +35,15 @@ def patch_env():
     os.environ["GUARDIAN__AUTHZ__ADAPTER__PERSISTENCE_PORT"] = "udm_data"
     os.environ["GUARDIAN__AUTHZ__ADAPTER__POLICY_PORT"] = "opa"
     os.environ["OPA_ADAPTER__URL"] = "http://opa:8181"
-    os.environ["UDM_DATA_ADAPTER__URL"] = "http://localhost"
-    os.environ["UDM_DATA_ADAPTER__USERNAME"] = "Administrator"
-    os.environ["UDM_DATA_ADAPTER__PASSWORD"] = "univention"
+    os.environ["UDM_DATA_ADAPTER__URL"] = os.environ.get(
+        "UDM_DATA_ADAPTER__URL", "http://localhost"
+    )
+    os.environ["UDM_DATA_ADAPTER__USERNAME"] = os.environ.get(
+        "UDM_DATA_ADAPTER__USERNAME", "Administrator"
+    )
+    os.environ["UDM_DATA_ADAPTER__PASSWORD"] = os.environ.get(
+        "UDM_DATA_ADAPTER__PASSWORD", "univention"
+    )
     os.environ[
         "GUARDIAN__AUTHZ__ADAPTER__AUTHENTICATION_PORT"
     ] = "fast_api_always_authorized"
