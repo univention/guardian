@@ -1,0 +1,17 @@
+---
+{{ include "common.configMap" (dict "top" . "overrides" "guardian-management-ui.configMap") }}
+
+{{- define "guardian-management-ui.configMap" }}
+
+data:
+{{- with .top.Values.guardianManagementUi }}
+  VITE__MANAGEMENT_UI__ADAPTER__AUTHENTICATION_PORT: "{{ .viteManagementUiAdapterAuthenticationPort }}"
+  VITE__MANAGEMENT_UI__ADAPTER__DATA_PORT: "{{ .viteManagementUiAdapterDataPort }}"
+  VITE__API_DATA_ADAPTER__URI: "{{ .viteApiDataAdapterUri }}"
+  VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__SSO_URI: "{{ .viteKeycloakAuthenticationAdapterSsoUri }}"
+  VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__REALM: "{{ .viteKeycloakAuthenticationAdapterRealm }}"
+  VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__CLIENT_ID: "{{ .viteKeycloakAuthenticationAdapterClientId }}"
+{{ end }}
+
+{{ end }}
+...

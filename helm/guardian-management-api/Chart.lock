@@ -1,0 +1,9 @@
+dependencies:
+- name: common
+  repository: oci://gitregistry.knut.univention.de/univention/customers/dataport/upx/common-helm/helm
+  version: 0.6.0
+- name: postgresql
+  repository: https://charts.bitnami.com/bitnami
+  version: 13.2.24
+digest: sha256:734f6d23cd0bf6449784a4843ddc4eef6222e48e9436dd7fc5e7b5a0389d89f4
+generated: "2023-12-18T12:56:53.501301097+01:00"

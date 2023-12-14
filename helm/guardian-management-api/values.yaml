@@ -1,0 +1,172 @@
+---
+
+## Global values
+affinity: {}
+environment: {}
+fullnameOverride: ""
+nameOverride: ""
+nodeSelector: {}
+podAnnotations: {}
+podSecurityContext:
+replicaCount: 1
+securityContext: {}
+tolerations: []
+
+guardianManagementApi:
+  # -- 
+  home: "/guardian_service_dir"
+  # -- Comma-separated list of hosts that are allowed to make cross-origin resource sharing (CORS) requests to the server.
+  guardianManagementCorsAllowedOrigins: "*"
+  guardianManagementAdapterSettingsPort: "env"
+  guardianManagementAdapterAppPersistencePort: "sql"
+  guardianManagementAdapterConditionPersistencePort: "sql"
+  guardianManagementAdapterContextPersistencePort: "sql"
+  guardianManagementAdapterNamespacePersistencePort: "sql"
+  guardianManagementAdapterPermissionPersistencePort: "sql"
+  guardianManagementAdapterRolePersistencePort: "sql"
+  guardianManagementAdapterCapabilityPersistencePort: "sql"
+  guardianManagementAdapterAuthenticationPort: "fast_api_oauth"
+  # -- URL to the Authorization API.
+  guardianManagementAdapterAuthorizationApiUrl: "http://guardian-management-api/guardian/authorization"
+  guardianManagementAdapterResourceAuthorizationPort: "guardian"
+  isUniventionAppCenter: 0
+  sqlPersistenceAdapterDialect: "postgresql"
+  sqlPersistenceAdapterDbName: "postgres"
+  sqlPersistenceAdapterHost: "db"
+  sqlPersistenceAdapterPort: 5432
+  sqlPersistenceAdapterUsername: "postgres"
+  sqlPersistenceAdapterPassword: "stub_password"
+  # -- Identity Provider well known URL
+  oauthAdapterWellKnownUrl: "http://keycloak/realms/souvap/.well-known/openid-configuration"
+  oauthAdapterM2mSecret: "stub_secret"
+  # -- Sets the log level of the application.
+  guardianManagementLoggingLevel: "DEBUG"
+  # -- If set to True, the logging output is structured as a JSON object.
+  guardianManagementLoggingStructured: True
+  # -- Defines the format of the log output, if not structured. The possible options are described in https://loguru.readthedocs.io/en/stable/api/logger.html.
+  guardianManagementLoggingFormat: "<green>{time:YYYY-MM-DD HH:mm:ss.SSS ZZ}</green> | <level>{level}</level> | <level>{message}</level> | {extra}"
+  # -- Defines the base URL of the API. If unset the url is generated from hostname and domainname.
+  guardianManagementBaseUrl: "http://guardian-management"
+
+ingress:
+  # -- Set this to `true` in order to enable the installation on Ingress related objects.
+  enabled: true
+  ingressClassName: "nginx"
+  host: null
+  paths:
+    - pathType: Prefix
+      path: /guardian/management
+      backend:
+        service:
+          name: guardian-management-api
+          port:
+            number: 8000
+  tls:
+    enabled: true
+    secretName: ""
+
+istio:
+  # -- Set this to `true` in order to enable the installation on Istio related objects.
+  enabled: false
+  # -- The hostname. This parameter has to be supplied. Example `portal.example`.
+  host: null
+  virtualService:
+    enabled: true
+    annotations: {}
+    # -- The paths configuration.
+    # The default only grabs what is known to be handled by the UMC server.
+    paths:
+      - match: "prefix"
+        path: "/guardian/management/"
+        rewrite: "/guardian/management/"
+  gateway:
+    enabled: false
+    annotations:
+    selectorIstio: "ingressgateway"
+    externalGatewayName: "swp-istio-gateway"
+    tls:
+      enabled: true
+      httpsRedirect: true
+      secretName: ""
+
+# -- PostgreSQL settings.
+#
+# The bitnami helm chart does contain all details of what can be configured:
+# https://github.com/bitnami/charts/tree/main/bitnami/postgresql
+postgresql:
+  # -- Set to `true` if you want PostgreSQL to be installed as well.
+  bundled: true
+  # -- Connection parameters. These are required if you use an external database.
+  connection:
+    host:
+    port:
+  auth:
+    username: "guardian"
+    database: "guardian"
+    password: "guardian"
+    postgresPassword: "guardian"
+
+image:
+  imagePullPolicy: "Always"
+  imagePullSecrets: []
+
+  registry: "docker.software-univention.de"
+  repository: "guardian-management-api-management-api"
+  tag: "1.0.0"
+  # -- Define image sha256 as an alternative to `tag`
+  sha256: null
+
+## Container deployment probes
+probes:
+  liveness:
+    enabled: true
+    initialDelaySeconds: 120
+    timeoutSeconds: 3
+    periodSeconds: 30
+    failureThreshold: 3
+    successThreshold: 1
+
+  readiness:
+    enabled: true
+    initialDelaySeconds: 30
+    timeoutSeconds: 3
+    periodSeconds: 15
+    failureThreshold: 30
+    successThreshold: 1
+
+# -- Deployment resources for the listener container
+resources: {}
+  # requests:
+  #   memory: "512Mi"
+  #   cpu: "250m"
+  # limits:
+  #   memory: "4Gi"
+  #   cpu: "4"
+
+service:
+  enabled: true
+  type: "ClusterIP"
+  ports:
+    http:
+      containerPort: 8000
+      port: 80
+      protocol: "TCP"
+
+  sessionAffinity:
+    enabled: false
+    timeoutSeconds: 10800
+
+# -- Deployment resources for the dependency waiters
+resourcesWaitForDependency: {}
+
+
+autoscaling:
+  enabled: false
+
+
+persistence:
+  data:
+    storageClass: ""
+    size: "1Gi"
+
+...
