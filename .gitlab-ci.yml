@@ -18,7 +18,7 @@ include:
       # - "jobs/lint-pre-commit.yaml"
       # - "jobs/lint-commit-messages.yaml"
       - "jobs/semantic-release-env.yaml"
-      - "jobs/container-build.yaml"
+      - "jobs/container-build-souvap.yaml"
       - "jobs/package-and-publish-helm-charts-souvap.yaml"
 
 variables:
@@ -40,13 +40,14 @@ workflow:
 stages:
   - test_python
   - build_python
-  # - build_docker
+  - build_docker
+  - lint
+  - prepare
   - build
   - test
   - trigger
   - package
   - publish
-  - lint
   - build_debian
 
 .build-matrix: &build-matrix
@@ -56,12 +57,12 @@ stages:
     # - "guardian-management-ui"
     - "guardian-opa"
 
-# .publish-matrix: &publish-matrix
-#   - IMAGE_NAME:
-#     - "authorization-api"
-#     - "management-api"
-#     - "management-ui"
-#     - "opa"
+.publish-matrix: &publish-matrix
+  - IMAGE_NAME:
+    - "authorization-api"
+    - "management-api"
+    - "management-ui"
+    - "opa"
 
 container-build:
   parallel:
@@ -79,14 +80,24 @@ container-security-scan:
   parallel:
     matrix: *build-matrix
 
-# push-image-souvap:
-#   parallel:
-#     matrix: *publish-matrix
-#
-# container-sign-souvap:
-#   parallel:
-#     matrix: *publish-matrix
-#
+push-image-souvap:
+  parallel:
+    matrix: *publish-matrix
+
+container-sign-souvap:
+  parallel:
+    matrix: *publish-matrix
+
+build_docker_image_management_ui:
+  stage: build_docker
+  # rules:
+  #   - changes:
+  #       - management-ui/**/*
+  extends: .kaniko
+  variables:
+    DOCKERFILE_PATH: "$CI_PROJECT_DIR/docker/guardian-management-ui/Dockerfile"
+    CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-management-ui
+    KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --cache=false
 
 .pre_commit:
   stage: lint
@@ -133,12 +144,12 @@ run_precommit_frontend:
     - poetry config --local virtualenvs.create false
     - poetry install
     - pytest -vv "$GUARDIAN_TEST_ARGS" .
-#   rules:
-#     - if: "$CI_COMMIT_MESSAGE =~ /skip-build/ || $pipeline =~ /skip-build/"
-#       when: never
-#     - if: "$CI_COMMIT_MESSAGE =~ /force-build/ || $pipeline =~ /force-build/"
-#     - changes:
-#         - $GUARDIAN_COMPONENT/**/*
+  rules:
+    - if: "$CI_COMMIT_MESSAGE =~ /skip-build/ || $pipeline =~ /skip-build/"
+      when: never
+    - if: "$CI_COMMIT_MESSAGE =~ /force-build/ || $pipeline =~ /force-build/"
+    - changes:
+        - $GUARDIAN_COMPONENT/**/*
 
 .coverage:
   extends: .test
@@ -205,9 +216,9 @@ build_guardian_lib:
   needs:
     - test_guardian_lib
     - coverage_guardian_lib
-  # rules:
-  #   - changes:
-  #       - guardian-lib/**/*
+  rules:
+    - changes:
+        - guardian-lib/**/*
   artifacts:
     paths:
       - guardian-lib/dist/
@@ -224,56 +235,6 @@ build_guardian_lib:
       fi
     - poetry config --local virtualenvs.create false
     - poetry build
-
-# build_docker_image_opa:
-#   stage: build_docker
-#   # rules:
-#   #   - changes:
-#   #       - opa/**/*
-#   extends: .kaniko
-#   variables:
-#     KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR/opa"
-#     CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-opa
-#     KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
-#
-# build_docker_image_management_ui:
-#   stage: build_docker
-#   # rules:
-#   #   - changes:
-#   #       - management-ui/**/*
-#   extends: .kaniko
-#   variables:
-#     DOCKERFILE_PATH: "$CI_PROJECT_DIR/management-ui/docker/Dockerfile"
-#     CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-management-ui
-#     KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
-#
-# build_docker_image_authz:
-#   stage: build_docker
-#   needs:
-#     - test_authz
-#     - coverage_authz
-#   # rules:
-#   #   - changes:
-#   #       - authorization-api/**/*
-#   extends: .kaniko
-#   variables:
-#     KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR/authorization-api"
-#     CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-authorization-api
-#     KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --skip-unused-stages --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
-#
-# build_docker_image_management:
-#   stage: build_docker
-#   needs:
-#     - test_management
-#     - coverage_management
-#   # rules:
-#   #   - changes:
-#   #       - management-api/**/*
-#   extends: .kaniko
-#   variables:
-#     KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR/management-api"
-#     CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-management-api
-#     KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --skip-unused-stages --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
 
 publish_guardian-lib:
   stage: publish
@@ -313,10 +274,10 @@ publish_guardian-lib:
     - echo "updating $APP_NAME=$APP_VERSION"
     - ./scripts/generate-preinst
     - univention-appcenter-control upload "$APP_NAME=$APP_VERSION" compose configure_host inst ini preinst README_UPDATE_DE README_UPDATE_EN settings uinst
-  # rules:
-  #   - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-  #     changes:
-  #       - $APP_DIR/**/*
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - $APP_DIR/**/*
 
 authz_app_to_test_appcenter:
   extends: .app_to_test_appcenter
