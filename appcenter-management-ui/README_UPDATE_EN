@@ -3,3 +3,7 @@
 <ul>
     <li>Initial release</li>
 </ul>
+<h2>v1.1.0 ()</h2>
+<ul>
+    <li>Migrate docker image to UCS base image</li>
+</ul>

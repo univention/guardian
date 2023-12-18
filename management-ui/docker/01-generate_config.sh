@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 env_variable_names=$(compgen -e)
 config='{}'
@@ -9,5 +9,3 @@ for variable_name in $env_variable_names; do
     fi
 done
 echo "$config" > /app/config.json
-
-exec /docker-entrypoint.sh "$@"

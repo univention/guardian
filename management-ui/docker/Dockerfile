@@ -5,14 +5,19 @@ WORKDIR /management-ui
 RUN yarn install
 RUN yarn build
 
-FROM nginx:1.25.2
+FROM gitregistry.knut.univention.de/univention/customers/dataport/upx/container-nginx/nginx:0.1.1
 
-ADD https://github.com/jqlang/jq/releases/download/jq-1.7/jq-linux-amd64 /usr/local/bin/jq
-RUN chmod +x /usr/local/bin/jq
+ARG commit
+ARG date
+
+LABEL "description"="Guardian Management UI." \
+    "release date"="$date" \
+    "commit"="$commit"
+
+RUN apt-get update \
+    && apt-get --assume-yes --verbose-versions --no-install-recommends install \
+    jq \
+    && rm -fr /var/lib/apt/lists/* /var/cache/apt/archives/*
 COPY --from=builder /management-ui/dist /app
-COPY management-ui/docker/startup.sh /startup.sh
-COPY management-ui/docker/nginx.conf /etc/nginx/conf.d/default.conf
-
-ENTRYPOINT ["/startup.sh"]
-STOPSIGNAL SIGQUIT
-CMD ["nginx", "-g", "daemon off;"]
+COPY management-ui/docker/01-generate_config.sh /entrypoint.d/01-generate_config.sh
+COPY management-ui/docker/nginx.conf /etc/nginx/sites-enabled/default
