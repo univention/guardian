@@ -38,9 +38,9 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == "web"
     - if: $CI_PIPELINE_SOURCE == "webide"
 stages:
-  - test_guardian
+  - test_python
   - build_python
-  - build_docker
+  # - build_docker
   - build
   - test
   - trigger
@@ -121,7 +121,7 @@ run_precommit_frontend:
 # No jobs for OPA code were created, since the form and structure of the OPA code is not final yet. TODO
 
 .test:
-  stage: test_guardian
+  stage: test
   image: docker-registry.knut.univention.de/python:3.11-slim
   variables:
     GUARDIAN__MANAGEMENT__BASE_URL: "http://localhost:8001"
@@ -190,11 +190,13 @@ coverage_authz:
 
 test_guardian_lib:
   extends: .test
+  stage: test_python
   variables:
     GUARDIAN_COMPONENT: "guardian-lib"
 
 coverage_guardian_lib:
   extends: .coverage
+  stage: test_python
   variables:
     GUARDIAN_COMPONENT: "guardian-lib"
     GUARDIAN_COVERAGE_COMPONENT: "guardian_lib"
