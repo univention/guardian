@@ -121,7 +121,7 @@ run_precommit_frontend:
 # No jobs for OPA code were created, since the form and structure of the OPA code is not final yet. TODO
 
 .test:
-  stage: test
+  stage: test_python
   image: docker-registry.knut.univention.de/python:3.11-slim
   variables:
     GUARDIAN__MANAGEMENT__BASE_URL: "http://localhost:8001"
@@ -133,12 +133,12 @@ run_precommit_frontend:
     - poetry config --local virtualenvs.create false
     - poetry install
     - pytest -vv "$GUARDIAN_TEST_ARGS" .
-  rules:
-    - if: "$CI_COMMIT_MESSAGE =~ /skip-build/ || $pipeline =~ /skip-build/"
-      when: never
-    - if: "$CI_COMMIT_MESSAGE =~ /force-build/ || $pipeline =~ /force-build/"
-    - changes:
-        - $GUARDIAN_COMPONENT/**/*
+#   rules:
+#     - if: "$CI_COMMIT_MESSAGE =~ /skip-build/ || $pipeline =~ /skip-build/"
+#       when: never
+#     - if: "$CI_COMMIT_MESSAGE =~ /force-build/ || $pipeline =~ /force-build/"
+#     - changes:
+#         - $GUARDIAN_COMPONENT/**/*
 
 .coverage:
   extends: .test
@@ -190,13 +190,11 @@ coverage_authz:
 
 test_guardian_lib:
   extends: .test
-  stage: test_python
   variables:
     GUARDIAN_COMPONENT: "guardian-lib"
 
 coverage_guardian_lib:
   extends: .coverage
-  stage: test_python
   variables:
     GUARDIAN_COMPONENT: "guardian-lib"
     GUARDIAN_COVERAGE_COMPONENT: "guardian_lib"
@@ -207,9 +205,9 @@ build_guardian_lib:
   needs:
     - test_guardian_lib
     - coverage_guardian_lib
-  rules:
-    - changes:
-        - guardian-lib/**/*
+  # rules:
+  #   - changes:
+  #       - guardian-lib/**/*
   artifacts:
     paths:
       - guardian-lib/dist/
