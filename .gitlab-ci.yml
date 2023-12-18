@@ -185,9 +185,9 @@ build_guardian_lib:
 
 build_docker_image_opa:
   stage: build_docker
-  rules:
-    - changes:
-        - opa/**/*
+  # rules:
+  #   - changes:
+  #       - opa/**/*
   extends: .kaniko
   variables:
     KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR/opa"
@@ -196,9 +196,9 @@ build_docker_image_opa:
 
 build_docker_image_management_ui:
   stage: build_docker
-  rules:
-    - changes:
-        - management-ui/**/*
+  # rules:
+  #   - changes:
+  #       - management-ui/**/*
   extends: .kaniko
   variables:
     DOCKERFILE_PATH: "$CI_PROJECT_DIR/management-ui/docker/Dockerfile"
@@ -210,9 +210,9 @@ build_docker_image_authz:
   needs:
     - test_authz
     - coverage_authz
-  rules:
-    - changes:
-        - authorization-api/**/*
+  # rules:
+  #   - changes:
+  #       - authorization-api/**/*
   extends: .kaniko
   variables:
     KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR/authorization-api"
@@ -224,9 +224,9 @@ build_docker_image_management:
   needs:
     - test_management
     - coverage_management
-  rules:
-    - changes:
-        - management-api/**/*
+  # rules:
+  #   - changes:
+  #       - management-api/**/*
   extends: .kaniko
   variables:
     KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR/management-api"
