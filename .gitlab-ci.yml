@@ -40,14 +40,12 @@ stages:
   - test_python
   - build_python
   - build_docker
-  - lint
-  - prepare
   - build
   - test
-  - trigger
   - package
   - publish
   - build_debian
+  - lint
 
 .build-matrix: &build-matrix
   - IMAGE_NAME:
