@@ -102,8 +102,14 @@ run_precommit_frontend:
     - pip install poetry=="$POETRY_VERSION"
     - poetry config --local virtualenvs.create false
     - poetry install
-    - pytest -vv "$GUARDIAN_TEST_ARGS" --cov="$GUARDIAN_COVERAGE_COMPONENT" .
+    - pytest -vv "$GUARDIAN_TEST_ARGS" --cov="$GUARDIAN_COVERAGE_COMPONENT" --cov-report=term --cov-report=xml:coverage.xml .
     - coverage report --fail-under="$GUARDIAN_COVERAGE_LIMIT"  # Variable set in Gitlab UI
+  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: $GUARDIAN_COMPONENT/coverage.xml
 
 test_management:
   extends: .test
