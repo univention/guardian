@@ -29,6 +29,7 @@ variables:
   UCSLINT_IMAGE: gitregistry.knut.univention.de/univention/ucs
   UCS_TEST_PACKAGE: "ucs-test-guardian"
   SCOPE: "guardian"
+  KANIKO_CACHE_ARGS: "--cache=false"
 
 workflow:
   rules:
@@ -39,7 +40,7 @@ workflow:
 stages:
   - test_python
   - build_python
-  - build_docker
+  # - build_docker
   - build
   - test
   - package
