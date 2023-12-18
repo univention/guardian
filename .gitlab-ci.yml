@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
+---
 include:
   - project: univention/dist/docker-services
     file:
@@ -10,17 +11,15 @@ include:
   - project: "univention/customers/dataport/upx/common-ci"
     ref: "v1.12.0"
     file:
-      # - "defaults/stages.yaml"
       # Einkommentieren und damit `workflow:` ersetzen
+      # TODO: slightly different to what's in this file, check if this is fine.
       # - "defaults/souvap-workflow.yaml"
-      # - "templates/souvap.yaml"
+      # TODO: Decide if they want to addopt this pattern
       # - "jobs/lint-pre-commit.yaml"
       # - "jobs/lint-commit-messages.yaml"
       - "jobs/semantic-release-env.yaml"
-      # - "jobs/container-build.yaml"
+      - "jobs/container-build.yaml"
       - "jobs/package-and-publish-helm-charts-souvap.yaml"
-
-
 variables:
   APPCENTER_CONTROL_IMAGE: "docker-registry.knut.univention.de/knut/univention-appcenter-control"
   POETRY_VERSION: "1.5.1"
@@ -38,13 +37,55 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == "web"
     - if: $CI_PIPELINE_SOURCE == "webide"
 stages:
-  - test
+  - test_guardian
   - build_python
   - build_docker
+  - build
+  - test
+  - trigger
   - package
   - publish
   - lint
-  - build
+  - build_debian
+
+.build-matrix: &build-matrix
+  - IMAGE_NAME:
+    - "guardian-authorization-api"
+    - "guardian-management-api"
+    - "guardian-management-ui"
+    - "guardian-opa"
+
+# .publish-matrix: &publish-matrix
+#   - IMAGE_NAME:
+#     - "authorization-api"
+#     - "management-api"
+#     - "management-ui"
+#     - "opa"
+
+container-build:
+  parallel:
+    matrix: *build-matrix
+
+container-generate-sbom:
+  parallel:
+    matrix: *build-matrix
+
+container-sign:
+  parallel:
+    matrix: *build-matrix
+
+container-security-scan:
+  parallel:
+    matrix: *build-matrix
+
+# push-image-souvap:
+#   parallel:
+#     matrix: *publish-matrix
+#
+# container-sign-souvap:
+#   parallel:
+#     matrix: *publish-matrix
+#
 
 .pre_commit:
   stage: lint
@@ -79,7 +120,7 @@ run_precommit_frontend:
 # No jobs for OPA code were created, since the form and structure of the OPA code is not final yet. TODO
 
 .test:
-  stage: test
+  stage: test_guardian
   image: docker-registry.knut.univention.de/python:3.11-slim
   variables:
     GUARDIAN__MANAGEMENT__BASE_URL: "http://localhost:8001"
@@ -183,55 +224,55 @@ build_guardian_lib:
     - poetry config --local virtualenvs.create false
     - poetry build
 
-build_docker_image_opa:
-  stage: build_docker
-  # rules:
-  #   - changes:
-  #       - opa/**/*
-  extends: .kaniko
-  variables:
-    KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR/opa"
-    CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-opa
-    KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
-
-build_docker_image_management_ui:
-  stage: build_docker
-  # rules:
-  #   - changes:
-  #       - management-ui/**/*
-  extends: .kaniko
-  variables:
-    DOCKERFILE_PATH: "$CI_PROJECT_DIR/management-ui/docker/Dockerfile"
-    CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-management-ui
-    KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
-
-build_docker_image_authz:
-  stage: build_docker
-  needs:
-    - test_authz
-    - coverage_authz
-  # rules:
-  #   - changes:
-  #       - authorization-api/**/*
-  extends: .kaniko
-  variables:
-    KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR/authorization-api"
-    CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-authorization-api
-    KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --skip-unused-stages --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
-
-build_docker_image_management:
-  stage: build_docker
-  needs:
-    - test_management
-    - coverage_management
-  # rules:
-  #   - changes:
-  #       - management-api/**/*
-  extends: .kaniko
-  variables:
-    KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR/management-api"
-    CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-management-api
-    KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --skip-unused-stages --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
+# build_docker_image_opa:
+#   stage: build_docker
+#   # rules:
+#   #   - changes:
+#   #       - opa/**/*
+#   extends: .kaniko
+#   variables:
+#     KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR/opa"
+#     CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-opa
+#     KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
+#
+# build_docker_image_management_ui:
+#   stage: build_docker
+#   # rules:
+#   #   - changes:
+#   #       - management-ui/**/*
+#   extends: .kaniko
+#   variables:
+#     DOCKERFILE_PATH: "$CI_PROJECT_DIR/management-ui/docker/Dockerfile"
+#     CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-management-ui
+#     KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
+#
+# build_docker_image_authz:
+#   stage: build_docker
+#   needs:
+#     - test_authz
+#     - coverage_authz
+#   # rules:
+#   #   - changes:
+#   #       - authorization-api/**/*
+#   extends: .kaniko
+#   variables:
+#     KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR/authorization-api"
+#     CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-authorization-api
+#     KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --skip-unused-stages --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
+#
+# build_docker_image_management:
+#   stage: build_docker
+#   needs:
+#     - test_management
+#     - coverage_management
+#   # rules:
+#   #   - changes:
+#   #       - management-api/**/*
+#   extends: .kaniko
+#   variables:
+#     KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR/management-api"
+#     CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-management-api
+#     KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --skip-unused-stages --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
 
 publish_guardian-lib:
   stage: publish
@@ -312,7 +353,7 @@ ucs_test_deb_lint:
       junit: $UCS_TEST_PACKAGE/ucslint.xml
 
 ucs_test_deb_build_git:
-  stage: build
+  stage: build_debian
   image: $DEB_IMAGE
   rules:
     - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
@@ -331,7 +372,7 @@ ucs_test_deb_build_git:
 
 
 ucs_test_deb_repo_import:
-  stage: build
+  stage: build_debian
   variables:
     GIT_STRATEGY: none
   rules:
@@ -351,7 +392,7 @@ ucs_test_deb_repo_import:
       -p $UCS_TEST_PACKAGE
 
 ucs_test_deb_repo_build:
-  stage: build
+  stage: build_debian
   needs:
     - job: ucs_test_deb_repo_import
       artifacts: false
@@ -371,6 +412,4 @@ ucs_test_deb_repo_build:
       -s $SCOPE
       -p $UCS_TEST_PACKAGE
 
-# publish-helm-charts-souvap:
-#   extends: .publish-helm-charts-souvap
-#
+...
