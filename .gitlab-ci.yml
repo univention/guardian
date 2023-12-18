@@ -37,32 +37,27 @@ stages:
   - lint
   - build
 
-run_precommit_general:
+.pre_commit:
   stage: lint
   needs: []
   extends: .pre-commit
   variables:
     PRE_COMMIT_IMAGE: "docker-registry.knut.univention.de/knut/pre-commit-opa"
+
+run_precommit_general:
+  extends: .pre_commit
   script:
     - export SKIP=$(python3 .gitlab-ci/pre_commit_hook_parser.py .pre-commit-config.yaml general)
     - pre-commit run -a
 
 run_precommit_backend:
-  stage: lint
-  needs: []
-  extends: .pre-commit
-  variables:
-    PRE_COMMIT_IMAGE: "docker-registry.knut.univention.de/knut/pre-commit-opa"
+  extends: .pre_commit
   script:
     - export SKIP=$(python3 .gitlab-ci/pre_commit_hook_parser.py .pre-commit-config.yaml backend)
     - pre-commit run -a
 
 run_precommit_frontend:
-  stage: lint
-  needs: []
-  extends: .pre-commit
-  variables:
-    PRE_COMMIT_IMAGE: "docker-registry.knut.univention.de/knut/pre-commit-opa"
+  extends: .pre_commit
   script:
     - export SKIP=$(python3 .gitlab-ci/pre_commit_hook_parser.py .pre-commit-config.yaml frontend)
     - cd /tmp  &&curl https://nodejs.org/download/release/v18.19.0/node-v18.19.0-linux-x64.tar.gz --output node.tar.gz
@@ -74,90 +69,76 @@ run_precommit_frontend:
 
 # No jobs for OPA code were created, since the form and structure of the OPA code is not final yet. TODO
 
-test_management:
+.test:
   stage: test
-  rules:
-    - changes:
-        - management-api/**/*
   image: docker-registry.knut.univention.de/python:3.11-slim
   variables:
     GUARDIAN__MANAGEMENT__BASE_URL: "http://localhost:8001"
+    GUARDIAN_COMPONENT: ""
+    GUARDIAN_TEST_ARGS: ""
   script:
-    - cd management-api
+    - cd "$GUARDIAN_COMPONENT"
     - pip install poetry=="$POETRY_VERSION"
     - poetry config --local virtualenvs.create false
     - poetry install
-    - pytest -vv -k 'not e2e_udm' .
+    - pytest -vv "$GUARDIAN_TEST_ARGS" .
+  rules:
+    - changes:
+        - $GUARDIAN_COMPONENT/**/*
+
+.coverage:
+  extends: .test
+  variables:
+    GUARDIAN__MANAGEMENT__BASE_URL: "http://localhost:8001"
+    GUARDIAN_COMPONENT: ""
+    GUARDIAN_TEST_ARGS: ""
+    GUARDIAN_COVERAGE_COMPONENT: ""
+    GUARDIAN_COVERAGE_LIMIT: ""
+  script:
+    - cd "$GUARDIAN_COMPONENT"
+    - pip install poetry=="$POETRY_VERSION"
+    - poetry config --local virtualenvs.create false
+    - poetry install
+    - pytest -vv "$GUARDIAN_TEST_ARGS" --cov="$GUARDIAN_COVERAGE_COMPONENT" .
+    - coverage report --fail-under="$GUARDIAN_COVERAGE_LIMIT"  # Variable set in Gitlab UI
+
+test_management:
+  extends: .test
+  variables:
+    GUARDIAN_COMPONENT: "management-api"
+    GUARDIAN_TEST_ARGS: "-k not e2e_udm"
 
 coverage_management:
-  stage: test
-  rules:
-    - changes:
-        - management-api/**/*
-  image: docker-registry.knut.univention.de/python:3.11-slim
+  extends: .coverage
   variables:
-    GUARDIAN__MANAGEMENT__BASE_URL: "http://localhost:8001"
-  script:
-    - cd management-api
-    - pip install poetry=="$POETRY_VERSION"
-    - poetry config --local virtualenvs.create false
-    - poetry install
-    - pytest -vv -k 'not e2e_udm' --cov=guardian_management_api .
-    - coverage report --fail-under="$MANAGEMENT_COVERAGE_LIMIT"  # Variable set in Gitlab UI
+    GUARDIAN_COMPONENT: "management-api"
+    GUARDIAN_TEST_ARGS: "-k not e2e_udm"
+    GUARDIAN_COVERAGE_COMPONENT: "guardian_management_api"
+    GUARDIAN_COVERAGE_LIMIT: $MANAGEMENT_COVERAGE_LIMIT
 
 test_authz:
-  stage: test
-  rules:
-    - changes:
-        - authorization-api/**/*
-  image: docker-registry.knut.univention.de/python:3.11-slim
-  script:
-    - cd authorization-api
-    - pip install poetry=="$POETRY_VERSION"
-    - poetry config --local virtualenvs.create false
-    - poetry install
-    - pytest -vv .
+  extends: .test
+  variables:
+    GUARDIAN_COMPONENT: "authorization-api"
 
 coverage_authz:
-  stage: test
-  rules:
-    - changes:
-        - authorization-api/**/*
-  image: docker-registry.knut.univention.de/python:3.11-slim
-  script:
-    - cd authorization-api
-    - pip install poetry=="$POETRY_VERSION"
-    - poetry config --local virtualenvs.create false
-    - poetry install
-    - pytest -vv --cov=guardian_authorization_api .
-    - coverage report --fail-under="$AUTHZ_COVERAGE_LIMIT"  # Variable set in Gitlab UI
+  extends: .coverage
+  variables:
+    GUARDIAN_COMPONENT: "authorization-api"
+    GUARDIAN_COVERAGE_COMPONENT: "guardian_authorization_api"
+    GUARDIAN_COVERAGE_LIMIT: $AUTHZ_COVERAGE_LIMIT
 
 test_guardian_lib:
-  stage: test
-  rules:
-    - changes:
-        - guardian-lib/**/*
-  image: docker-registry.knut.univention.de/python:3.11-slim
-  script:
-    - cd guardian-lib
-    - pip install poetry=="$POETRY_VERSION"
-    - poetry config --local virtualenvs.create false
-    - poetry install
-    - pytest -vv .
+  extends: .test
+  variables:
+    GUARDIAN_COMPONENT: "guardian-lib"
 
 coverage_guardian_lib:
-  stage: test
-  rules:
-    - changes:
-        - guardian-lib/**/*
-  image: docker-registry.knut.univention.de/python:3.11-slim
-  script:
-    - cd guardian-lib
-    - pip install poetry=="$POETRY_VERSION"
-    - poetry config --local virtualenvs.create false
-    - poetry install
-    - pytest -vv --cov=guardian_lib .
-    - coverage report --fail-under="$GUARDIAN_LIB_COVERAGE_LIMIT"  # Variable set in Gitlab UI
+  extends: .coverage
+  variables:
+    GUARDIAN_COMPONENT: "guardian-lib"
+    GUARDIAN_COVERAGE_COMPONENT: "guardian_lib"
+    GUARDIAN_COVERAGE_LIMIT: $GUARDIAN_LIB_COVERAGE_LIMIT
 
 build_guardian_lib:
   stage: build_python
@@ -258,13 +239,9 @@ publish_guardian-lib:
     - poetry config --local repositories.project_local ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi
     - poetry publish -r project_local --username gitlab-ci-token --password ${CI_JOB_TOKEN}
 
-authz_app_to_test_appcenter:
+.app_to_test_appcenter:
   stage: publish
   image: $APPCENTER_CONTROL_IMAGE
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      changes:
-        - appcenter-authz/**/*
   needs: []
   variables:
     APP_ID: "guardian-authorization-api"
@@ -276,44 +253,31 @@ authz_app_to_test_appcenter:
     - echo "updating $APP_NAME=$APP_VERSION"
     - ./scripts/generate-preinst
     - univention-appcenter-control upload "$APP_NAME=$APP_VERSION" compose configure_host inst ini preinst README_UPDATE_DE README_UPDATE_EN settings uinst
+  # rules:
+  #   - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  #     changes:
+  #       - $APP_DIR/**/*
+
+authz_app_to_test_appcenter:
+  extends: .app_to_test_appcenter
+  variables:
+    APP_ID: "guardian-authorization-api"
+    APP_DIR: "appcenter-authz"
+    APP_NAME: "5.0/$APP_ID"
 
 management_app_to_test_appcenter:
-  stage: publish
-  image: $APPCENTER_CONTROL_IMAGE
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      changes:
-        - appcenter-management/**/*
-  needs: []
+  extends: .app_to_test_appcenter
   variables:
     APP_ID: "guardian-management-api"
     APP_DIR: "appcenter-management"
     APP_NAME: "5.0/$APP_ID"
-  script:
-    - cd "$APP_DIR"
-    - APP_VERSION="$(sed -n 's/^Version\s*=\s*//p' ini)"
-    - echo "updating $APP_NAME=$APP_VERSION"
-    - ./scripts/generate-preinst
-    - univention-appcenter-control upload "$APP_NAME=$APP_VERSION" compose configure configure_host ini inst preinst README_UPDATE_DE README_UPDATE_EN settings uinst
 
 management_ui_app_to_test_appcenter:
-  stage: publish
-  image: $APPCENTER_CONTROL_IMAGE
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      changes:
-        - appcenter-management-ui/**/*
-  needs: []
+  extends: .app_to_test_appcenter
   variables:
     APP_ID: "guardian-management-ui"
     APP_DIR: "appcenter-management-ui"
     APP_NAME: "5.0/$APP_ID"
-  script:
-    - cd "$APP_DIR"
-    - APP_VERSION="$(sed -n 's/^Version\s*=\s*//p' ini)"
-    - echo "updating $APP_NAME=$APP_VERSION"
-    - ./scripts/generate-preinst
-    - univention-appcenter-control upload "$APP_NAME=$APP_VERSION" compose configure_host ini inst preinst README_UPDATE_DE README_UPDATE_EN settings uinst
 
 ucs_test_deb_lint:
   stage: lint
