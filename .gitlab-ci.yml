@@ -12,7 +12,7 @@ include:
     file:
       # Einkommentieren und damit `workflow:` ersetzen
       # TODO: slightly different to what's in this file, check if this is fine.
-      # - "defaults/souvap-workflow.yaml"
+      - "defaults/souvap-workflow.yaml"
       # TODO: Decide if they want to addopt this pattern
       # - "jobs/lint-pre-commit.yaml"
       # - "jobs/lint-commit-messages.yaml"
@@ -29,18 +29,15 @@ variables:
   UCSLINT_IMAGE: gitregistry.knut.univention.de/univention/ucs
   UCS_TEST_PACKAGE: "ucs-test-guardian"
   SCOPE: "guardian"
-  # KANIKO_CACHE_ARGS: "--cache=false"
 
-workflow:
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_OPEN_MERGE_REQUESTS
-    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_PROTECTED == "true"
-    - if: $CI_PIPELINE_SOURCE == "web"
-    - if: $CI_PIPELINE_SOURCE == "webide"
+# workflow:
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_OPEN_MERGE_REQUESTS
+#     - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_PROTECTED == "true"
+#     - if: $CI_PIPELINE_SOURCE == "web"
+#     - if: $CI_PIPELINE_SOURCE == "webide"
+
 stages:
-  - test_python
-  - build_python
-  # - build_docker
   - build
   - test
   - package
@@ -64,6 +61,10 @@ stages:
     - "opa"
 
 container-build:
+  needs:
+    - pre-semantic-release
+    - job: build_guardian_lib
+      optional: true
   parallel:
     matrix: *build-matrix
 
@@ -131,7 +132,7 @@ run_precommit_frontend:
 # No jobs for OPA code were created, since the form and structure of the OPA code is not final yet. TODO
 
 .test:
-  stage: test_python
+  stage: test
   image: docker-registry.knut.univention.de/python:3.11-slim
   variables:
     GUARDIAN__MANAGEMENT__BASE_URL: "http://localhost:8001"
@@ -211,7 +212,7 @@ run_precommit_frontend:
 #     GUARDIAN_COVERAGE_LIMIT: $GUARDIAN_LIB_COVERAGE_LIMIT
 
 # build_guardian_lib:
-#   stage: build_python
+#   stage: build
 #   needs:
 #     - test_guardian_lib
 #     - coverage_guardian_lib
