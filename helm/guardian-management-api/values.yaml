@@ -13,7 +13,7 @@ securityContext: {}
 tolerations: []
 
 guardianManagementApi:
-  # -- 
+  # --
   home: "/guardian_service_dir"
   # -- Comma-separated list of hosts that are allowed to make cross-origin resource sharing (CORS) requests to the server.
   guardianManagementCorsAllowedOrigins: "*"

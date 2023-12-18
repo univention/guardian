@@ -10,7 +10,7 @@ description: |
   The Guardian allows to set up complex attribute based access control (ABAC)
   and enables the integration with various UCS and third party components.
 
-  This chart ships the API to manage objects of the Guardian. This includes 
+  This chart ships the API to manage objects of the Guardian. This includes
   roles, namespaces, apps, permissions, etc.
 
 version: "0.1.0"
