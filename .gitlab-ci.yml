@@ -20,6 +20,7 @@ include:
       - "jobs/semantic-release-env.yaml"
       - "jobs/container-build.yaml"
       - "jobs/package-and-publish-helm-charts-souvap.yaml"
+
 variables:
   APPCENTER_CONTROL_IMAGE: "docker-registry.knut.univention.de/knut/univention-appcenter-control"
   POETRY_VERSION: "1.5.1"
@@ -164,13 +165,13 @@ run_precommit_frontend:
 test_management:
   extends: .test
   variables:
-    GUARDIAN_COMPONENT: "management-api"
+    GUARDIAN_COMPONENT: "docker/guardian-management-api"
     GUARDIAN_TEST_ARGS: "-k not e2e_udm"
 
 coverage_management:
   extends: .coverage
   variables:
-    GUARDIAN_COMPONENT: "management-api"
+    GUARDIAN_COMPONENT: "docker/guardian-management-api"
     GUARDIAN_TEST_ARGS: "-k not e2e_udm"
     GUARDIAN_COVERAGE_COMPONENT: "guardian_management_api"
     GUARDIAN_COVERAGE_LIMIT: $MANAGEMENT_COVERAGE_LIMIT
@@ -178,12 +179,12 @@ coverage_management:
 test_authz:
   extends: .test
   variables:
-    GUARDIAN_COMPONENT: "authorization-api"
+    GUARDIAN_COMPONENT: "docker/guardian-authorization-api"
 
 coverage_authz:
   extends: .coverage
   variables:
-    GUARDIAN_COMPONENT: "authorization-api"
+    GUARDIAN_COMPONENT: "docker/guardian-authorization-api"
     GUARDIAN_COVERAGE_COMPONENT: "guardian_authorization_api"
     GUARDIAN_COVERAGE_LIMIT: $AUTHZ_COVERAGE_LIMIT
 
