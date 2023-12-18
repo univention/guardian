@@ -53,6 +53,7 @@ stages:
   - IMAGE_NAME: "guardian-management-api"
   - IMAGE_NAME: "guardian-management-ui"
     DOCKERFILE_PATH: "docker/guardian-management-ui/Dockerfile"
+    KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR"
   - IMAGE_NAME: "guardian-opa"
 
 .publish-matrix: &publish-matrix
