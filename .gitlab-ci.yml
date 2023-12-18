@@ -7,6 +7,17 @@ include:
     file:
       - kaniko.yml
       - pre-commit.yml
+  - project: "univention/customers/dataport/upx/common-ci"
+    ref: "v1.12.0"
+    file:
+      # - "defaults/stages.yaml"
+      # - "defaults/souvap-workflow.yaml"
+      # - "templates/souvap.yaml"
+      # - "jobs/lint-pre-commit.yaml"
+      # - "jobs/lint-commit-messages.yaml"
+      - "jobs/semantic-release-env.yaml"
+      # - "jobs/container-build-souvap.yaml"
+      - "jobs/package-and-publish-helm-charts-souvap.yaml"
 
 variables:
   APPCENTER_CONTROL_IMAGE: "docker-registry.knut.univention.de/knut/univention-appcenter-control"
@@ -24,10 +35,12 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_PROTECTED == "true"
     - if: $CI_PIPELINE_SOURCE == "web"
     - if: $CI_PIPELINE_SOURCE == "webide"
+
 stages:
   - test
   - build_python
   - build_docker
+  - package
   - publish
   - lint
   - build
@@ -356,3 +369,5 @@ ucs_test_deb_repo_build:
       -r ${UCS_RELEASE}-0-0
       -s $SCOPE
       -p $UCS_TEST_PACKAGE
+
+...
