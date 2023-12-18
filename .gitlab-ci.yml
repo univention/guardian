@@ -53,7 +53,7 @@ stages:
   - IMAGE_NAME:
     - "guardian-authorization-api"
     - "guardian-management-api"
-    - "guardian-management-ui"
+    # - "guardian-management-ui"
     - "guardian-opa"
 
 # .publish-matrix: &publish-matrix
