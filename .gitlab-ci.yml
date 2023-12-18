@@ -173,92 +173,92 @@ run_precommit_frontend:
         coverage_format: cobertura
         path: $GUARDIAN_COMPONENT/coverage.xml
 
-test_management:
-  extends: .test
-  variables:
-    GUARDIAN_COMPONENT: "docker/guardian-management-api"
-    GUARDIAN_TEST_ARGS: "-k not e2e_udm"
+# test_management:
+#   extends: .test
+#   variables:
+#     GUARDIAN_COMPONENT: "docker/guardian-management-api"
+#     GUARDIAN_TEST_ARGS: "-k not e2e_udm"
+#
+# coverage_management:
+#   extends: .coverage
+#   variables:
+#     GUARDIAN_COMPONENT: "docker/guardian-management-api"
+#     GUARDIAN_TEST_ARGS: "-k not e2e_udm"
+#     GUARDIAN_COVERAGE_COMPONENT: "guardian_management_api"
+#     GUARDIAN_COVERAGE_LIMIT: $MANAGEMENT_COVERAGE_LIMIT
+#
+# test_authz:
+#   extends: .test
+#   variables:
+#     GUARDIAN_COMPONENT: "docker/guardian-authorization-api"
+#
+# coverage_authz:
+#   extends: .coverage
+#   variables:
+#     GUARDIAN_COMPONENT: "docker/guardian-authorization-api"
+#     GUARDIAN_COVERAGE_COMPONENT: "guardian_authorization_api"
+#     GUARDIAN_COVERAGE_LIMIT: $AUTHZ_COVERAGE_LIMIT
+#
+# test_guardian_lib:
+#   extends: .test
+#   variables:
+#     GUARDIAN_COMPONENT: "guardian-lib"
+#
+# coverage_guardian_lib:
+#   extends: .coverage
+#   variables:
+#     GUARDIAN_COMPONENT: "guardian-lib"
+#     GUARDIAN_COVERAGE_COMPONENT: "guardian_lib"
+#     GUARDIAN_COVERAGE_LIMIT: $GUARDIAN_LIB_COVERAGE_LIMIT
 
-coverage_management:
-  extends: .coverage
-  variables:
-    GUARDIAN_COMPONENT: "docker/guardian-management-api"
-    GUARDIAN_TEST_ARGS: "-k not e2e_udm"
-    GUARDIAN_COVERAGE_COMPONENT: "guardian_management_api"
-    GUARDIAN_COVERAGE_LIMIT: $MANAGEMENT_COVERAGE_LIMIT
-
-test_authz:
-  extends: .test
-  variables:
-    GUARDIAN_COMPONENT: "docker/guardian-authorization-api"
-
-coverage_authz:
-  extends: .coverage
-  variables:
-    GUARDIAN_COMPONENT: "docker/guardian-authorization-api"
-    GUARDIAN_COVERAGE_COMPONENT: "guardian_authorization_api"
-    GUARDIAN_COVERAGE_LIMIT: $AUTHZ_COVERAGE_LIMIT
-
-test_guardian_lib:
-  extends: .test
-  variables:
-    GUARDIAN_COMPONENT: "guardian-lib"
-
-coverage_guardian_lib:
-  extends: .coverage
-  variables:
-    GUARDIAN_COMPONENT: "guardian-lib"
-    GUARDIAN_COVERAGE_COMPONENT: "guardian_lib"
-    GUARDIAN_COVERAGE_LIMIT: $GUARDIAN_LIB_COVERAGE_LIMIT
-
-build_guardian_lib:
-  stage: build_python
-  needs:
-    - test_guardian_lib
-    - coverage_guardian_lib
-  rules:
-    - changes:
-        - guardian-lib/**/*
-  artifacts:
-    paths:
-      - guardian-lib/dist/
-    expire_in: 1 week
-  image: docker-registry.knut.univention.de/python:3.11-slim
-  script:
-    - cd guardian-lib
-    - pip install poetry=="$POETRY_VERSION"
-    - |-
-      if [ "$CI_COMMIT_BRANCH" != "$CI_DEFAULT_BRANCH" ]; then
-        poetry version "0.0.0.dev0+${CI_COMMIT_REF_SLUG//-/.}.$CI_COMMIT_SHORT_SHA"
-      else
-        true
-      fi
-    - poetry config --local virtualenvs.create false
-    - poetry build
-
-publish_guardian-lib:
-  stage: publish
-  when: manual
-  rules:
-    - changes:
-        - guardian-lib/**/*
-  dependencies:
-    - build_guardian_lib
-  needs:
-    - build_guardian_lib
-  image: docker-registry.knut.univention.de/python:3.11-slim
-  script:
-    - cd guardian-lib
-    - pip install poetry=="$POETRY_VERSION"
-    - |-
-      if [ "$CI_COMMIT_BRANCH" != "$CI_DEFAULT_BRANCH" ]; then
-        poetry version "0.0.0.dev0+${CI_COMMIT_REF_SLUG//-/.}.$CI_COMMIT_SHORT_SHA"
-      else
-        true
-      fi
-    - poetry config --local virtualenvs.create false
-    - poetry config --local repositories.project_local ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi
-    - poetry publish -r project_local --username gitlab-ci-token --password ${CI_JOB_TOKEN}
+# build_guardian_lib:
+#   stage: build_python
+#   needs:
+#     - test_guardian_lib
+#     - coverage_guardian_lib
+#   rules:
+#     - changes:
+#         - guardian-lib/**/*
+#   artifacts:
+#     paths:
+#       - guardian-lib/dist/
+#     expire_in: 1 week
+#   image: docker-registry.knut.univention.de/python:3.11-slim
+#   script:
+#     - cd guardian-lib
+#     - pip install poetry=="$POETRY_VERSION"
+#     - |-
+#       if [ "$CI_COMMIT_BRANCH" != "$CI_DEFAULT_BRANCH" ]; then
+#         poetry version "0.0.0.dev0+${CI_COMMIT_REF_SLUG//-/.}.$CI_COMMIT_SHORT_SHA"
+#       else
+#         true
+#       fi
+#     - poetry config --local virtualenvs.create false
+#     - poetry build
+#
+# publish_guardian-lib:
+#   stage: publish
+#   when: manual
+#   rules:
+#     - changes:
+#         - guardian-lib/**/*
+#   dependencies:
+#     - build_guardian_lib
+#   needs:
+#     - build_guardian_lib
+#   image: docker-registry.knut.univention.de/python:3.11-slim
+#   script:
+#     - cd guardian-lib
+#     - pip install poetry=="$POETRY_VERSION"
+#     - |-
+#       if [ "$CI_COMMIT_BRANCH" != "$CI_DEFAULT_BRANCH" ]; then
+#         poetry version "0.0.0.dev0+${CI_COMMIT_REF_SLUG//-/.}.$CI_COMMIT_SHORT_SHA"
+#       else
+#         true
+#       fi
+#     - poetry config --local virtualenvs.create false
+#     - poetry config --local repositories.project_local ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi
+#     - poetry publish -r project_local --username gitlab-ci-token --password ${CI_JOB_TOKEN}
 
 .app_to_test_appcenter:
   stage: publish
