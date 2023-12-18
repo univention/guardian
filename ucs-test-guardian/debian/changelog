@@ -1,3 +1,9 @@
+ucs-test-guardian (0.0.7) unstable; urgency=medium
+
+  * Fix bundle setup (Issue #134).
+
+ -- Johannes Königer <koeniger@univention.de>  Mon, 18 Dec 2023 10:15:50 +0100
+
 ucs-test-guardian (0.0.6) unstable; urgency=medium
 
   * Fix setup script path (Issue #134).
