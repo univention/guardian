@@ -6,7 +6,6 @@
 include:
   - project: univention/dist/docker-services
     file:
-      - kaniko.yml
       - pre-commit.yml
   - project: "univention/customers/dataport/upx/common-ci"
     ref: "v1.12.0"
@@ -54,7 +53,7 @@ stages:
   - IMAGE_NAME:
     - "guardian-authorization-api"
     - "guardian-management-api"
-    # - "guardian-management-ui"
+    - "guardian-management-ui"
     - "guardian-opa"
 
 .publish-matrix: &publish-matrix
@@ -88,16 +87,16 @@ container-sign-souvap:
   parallel:
     matrix: *publish-matrix
 
-build_docker_image_management_ui:
-  stage: build_docker
-  # rules:
-  #   - changes:
-  #       - management-ui/**/*
-  extends: .kaniko
-  variables:
-    DOCKERFILE_PATH: "$CI_PROJECT_DIR/docker/guardian-management-ui/Dockerfile"
-    CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-management-ui
-    KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --cache=false
+# build_docker_image_management_ui:
+#   stage: build_docker
+#   # rules:
+#   #   - changes:
+#   #       - management-ui/**/*
+#   extends: .kaniko
+#   variables:
+#     DOCKERFILE_PATH: "$CI_PROJECT_DIR/docker/guardian-management-ui/Dockerfile"
+#     CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-management-ui
+#     KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --cache=false
 
 .pre_commit:
   stage: lint
