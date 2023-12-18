@@ -6,7 +6,7 @@
 #  Join script that runs on the docker host.
 #
 
-VERSION=1
+VERSION=2
 APP_ID="guardian-management-api"
 APP_DIR="/var/lib/univention-appcenter/apps/$APP_ID"
 
@@ -55,6 +55,13 @@ univention-keycloak "$@" oidc/rp create \
     --redirect-uri "https://$API_FQDN/guardian/*" \
     --add-audience-mapper guardian-cli || die
 $APP_DIR/scripts/configure-keycloak "$@"
+
+if [ $JS_LAST_EXECUTED_VERSION -eq 1 ]; then
+    # In version 2, we renamed the UCR variable for storing the Keycloak secret
+    # that Guardian uses to talk with the Authorization API
+    old_keycloak_secret=$(ucr get guardian-management-api/oauth/keycloak-cli-client-secret)
+    univention-app configure guardian-management-api --set "guardian-management-api/oauth/keycloak-client-secret=$old_keycloak_secret"
+fi
 
 joinscript_save_current_version
 

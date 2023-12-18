@@ -106,10 +106,7 @@ def update_guardian_cli_client(
 
 
 def configure_keycloak(keycloak_session: KeycloakAdmin, ucr: ConfigRegistry) -> int:
-    client_name = ucr.get(KEYCLOAK_CLIENT_ID_SETTING)
-    cli_client_name = ucr.get(KEYCLOAK_CLI_CLIENT_ID_SETTING)
     web_host = get_web_host(ucr)
-
-    failure_guardian = update_guardian_client(keycloak_session, client_name, web_host)
-    failure_cli = update_guardian_cli_client(keycloak_session, cli_client_name, web_host)
+    failure_guardian = update_guardian_client(keycloak_session, 'guardian', web_host)
+    failure_cli = update_guardian_cli_client(keycloak_session, 'guardian-cli', web_host)
     return failure_guardian or failure_cli

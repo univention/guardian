@@ -63,42 +63,12 @@ Group = Authentication
 Scope = outside
 Show = Install,Settings
 
-[guardian-management-api/oauth/keycloak-realm]
-Type = String
-Required = True
-InitialValue = ucs
-Description = Keycloak authentication realm.
-Description[de] = Keycloak-Authentifizierungsrealm.
-Group = Authentication
-Scope = outside
-Show = Install,Settings
-
-[guardian-management-api/oauth/keycloak-client-id]
-Type = String
-Required = True
-InitialValue = guardian
-Description = Keycloak client ID.
-Description[de] = ID des Keycloak-Client.
-Group = Authentication
-Scope = outside
-Show = Install,Settings
-
-[guardian-management-api/oauth/keycloak-cli-client-id]
-Type = String
-Required = True
-InitialValue = guardian-cli
-Description = Keycloak CLI client ID.
-Description[de] = ID des Keycloak-CLI-Client.
-Group = Authentication
-Scope = outside
-Show = Install,Settings
-
-[guardian-management-api/oauth/keycloak-cli-client-secret]
+[guardian-management-api/oauth/keycloak-client-secret]
 Type = String
 Required = True
 InitialValue = changeme
-Description = Keycloak CLI client secret.
-Description[de] = Geheimnis des Keycloak-CLI-Clients.
+Description = Keycloak client secret.
+Description[de] = Geheimnis des Keycloak-Clients.
 Group = Authentication
 Scope = outside
 Show = Install,Settings

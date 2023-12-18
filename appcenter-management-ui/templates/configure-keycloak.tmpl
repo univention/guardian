@@ -61,6 +61,5 @@ def update_guardian_ui_client(
 
 
 def configure_keycloak(keycloak_session: KeycloakAdmin, ucr: ConfigRegistry) -> int:
-    client_name = ucr.get(KEYCLOAK_CLIENT_ID_SETTING)
     web_host = get_web_host(ucr)
-    return update_guardian_ui_client(keycloak_session, client_name, web_host)
+    return update_guardian_ui_client(keycloak_session, 'guardian-ui', web_host)

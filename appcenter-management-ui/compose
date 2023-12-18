@@ -22,5 +22,5 @@ if not url:
 if not url.startswith('http'):
     url = f'https://{url}'
 print(url, end='')@!@
-      VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__REALM: @%@guardian-management-ui/oauth/keycloak-realm@%@
-      VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__CLIENT_ID: @%@guardian-management-ui/oauth/keycloak-client-id@%@
+      VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__REALM: ucs
+      VITE__KEYCLOAK_AUTHENTICATION_ADAPTER__CLIENT_ID: guardian-ui

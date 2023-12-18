@@ -71,26 +71,6 @@ Group = Authentication
 Scope = outside
 Show = Install,Settings
 
-[guardian-authorization-api/oauth/keycloak-realm]
-Type = String
-Required = True
-InitialValue = ucs
-Description = Keycloak authentication realm.
-Description[de] = Keycloak-Authentifizierungsrealm.
-Group = Authentication
-Scope = outside
-Show = Install,Settings
-
-[guardian-authorization-api/oauth/keycloak-client-id]
-Type = String
-Required = True
-InitialValue = guardian
-Description = Keycloak client ID.
-Description[de] = ID des Keycloak-Client.
-Group = Authentication
-Scope = outside
-Show = Install,Settings
-
 [guardian-authorization-api/bundle_server_url]
 Type = String
 Description = URL to the bundle server, that should be contacted for downloading the policy bundles. If not set, the url is generated from hostname and domainname.

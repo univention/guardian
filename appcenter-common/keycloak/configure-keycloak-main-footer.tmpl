@@ -6,7 +6,7 @@ def main(admin_username: str, admin_password: str) -> int:
 
     keycloak_session = KeycloakAdmin(
         server_url=get_keycloak_url(ucr),
-        realm_name=get_keycloak_realm(ucr),
+        realm_name=DEFAULT_UCS_REALM,
         user_realm_name=DEFAULT_REALM,
         username=admin_username,
         password=admin_password,

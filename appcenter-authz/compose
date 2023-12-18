@@ -39,8 +39,7 @@ if not base_url:
     base_url = ucr.get('keycloak/server/sso/fqdn', f"https://ucs-sso-ng.{ucr.get('domainname')}")
 if not base_url.startswith('http'):
     base_url = f'https://{base_url}'
-realm = ucr.get('guardian-authorization-api/oauth/keycloak-realm')
-print(f"{base_url}/realms/{realm}/.well-known/openid-configuration", end='')@!@
+print(f"{base_url}/realms/ucs/.well-known/openid-configuration", end='')@!@
   opa:
     image: gitregistry.knut.univention.de/univention/components/authorization-engine/guardian/guardian-opa:latest
     security_opt:

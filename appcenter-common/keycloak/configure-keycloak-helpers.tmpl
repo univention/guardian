@@ -12,10 +12,6 @@ from univention.config_registry import ConfigRegistry
 
 
 KEYCLOAK_URI_SETTING = "%APP%/oauth/keycloak-uri"
-KEYCLOAK_REALM_SETTING = "%APP%/oauth/keycloak-realm"
-KEYCLOAK_CLIENT_ID_SETTING = "%APP%/oauth/keycloak-client-id"
-KEYCLOAK_CLI_CLIENT_ID_SETTING = "%APP%/oauth/keycloak-cli-client-id"
-
 DEFAULT_REALM = "master"
 DEFAULT_UCS_REALM = "ucs"
 
@@ -49,13 +45,6 @@ def get_keycloak_url(ucr: ConfigRegistry) -> str:
     if not keycloak_url.endswith("/"):
         keycloak_url = f"{keycloak_url}/"
     return keycloak_url
-
-
-def get_keycloak_realm(ucr: ConfigRegistry) -> str:
-    """Guess the realm for the Keycloak server"""
-
-    realm = ucr.get(KEYCLOAK_REALM_SETTING, DEFAULT_UCS_REALM)
-    return realm
 
 
 def get_client_config_and_id(keycloak_session: KeycloakAdmin, client_name: str) -> Dict[str, any]:
