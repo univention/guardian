@@ -45,15 +45,20 @@ fi
 # Creating and configuring the Keycloak clients is safe to rerun multiple times
 API_FQDN="$hostname.$domainname"
 univention-keycloak "$@" oidc/rp create \
-    --name guardian \
+    --name guardian-ui \
     --app-url "https://$API_FQDN" \
-    --redirect-uri "https://$API_FQDN/guardian/*" \
-    --add-audience-mapper guardian || die
+    --redirect-uri "https://$API_FQDN/univention/guardian/*" \
+    --add-audience-mapper guardian-ui || die
 univention-keycloak "$@" oidc/rp create \
-    --name guardian-cli \
+    --name guardian-management-api \
     --app-url "https://$API_FQDN" \
-    --redirect-uri "https://$API_FQDN/guardian/*" \
-    --add-audience-mapper guardian-cli || die
+    --redirect-uri "https://$API_FQDN/univention/guardian/*" \
+    --add-audience-mapper guardian-management-api || die
+univention-keycloak "$@" oidc/rp create \
+    --name guardian-scripts \
+    --app-url "https://$API_FQDN" \
+    --redirect-uri "https://$API_FQDN/univention/guardian/*" \
+    --add-audience-mapper guardian-scripts || die
 $APP_DIR/scripts/configure-keycloak "$@"
 
 if [ $JS_LAST_EXECUTED_VERSION -eq 1 ]; then

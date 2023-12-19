@@ -45,7 +45,7 @@ app = FastAPI(
     swagger_ui_oauth2_redirect_url=f"{API_PREFIX}/docs/oauth2-redirect",
     swagger_ui_init_oauth={
         "usePkceWithAuthorizationCodeGrant": True,
-        "clientId": "guardian",
+        "clientId": "guardian-ui",
         "scopes": ["openid"],
     },
 )

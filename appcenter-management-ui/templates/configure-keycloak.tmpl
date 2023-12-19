@@ -1,10 +1,6 @@
-def update_guardian_ui_client(
-    keycloak_session: KeycloakAdmin,
-    client_name: str,
-    web_host: str,
-) -> int:
+def update_guardian_ui_client(keycloak_session: KeycloakAdmin, web_host: str) -> int:
     """
-    Update the client used with the Swagger UI.
+    Update the client used with the Management UI.
 
     This entails:
 
@@ -15,6 +11,7 @@ def update_guardian_ui_client(
     * Making the client public.
     """
 
+    client_name = "guardian-ui"
     errors = []
 
     try:
@@ -37,7 +34,7 @@ def update_guardian_ui_client(
             keycloak_session,
             client_name,
             web_host,
-            redirect_url_base="univention/guardian",
+            redirect_url_bases=["univention/guardian", "guardian"],
         )
     except Exception as exc:
         errors.append(f"Unable to add {web_host} to redirectUris and webOrigins for {client_name} client: {exc}")
@@ -62,4 +59,4 @@ def update_guardian_ui_client(
 
 def configure_keycloak(keycloak_session: KeycloakAdmin, ucr: ConfigRegistry) -> int:
     web_host = get_web_host(ucr)
-    return update_guardian_ui_client(keycloak_session, 'guardian-ui', web_host)
+    return update_guardian_ui_client(keycloak_session, web_host)

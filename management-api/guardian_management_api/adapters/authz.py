@@ -117,7 +117,9 @@ class GuardianAuthorizationAdapter(
     ) -> dict[str, bool]:
         """Query the Guardian Authorization API."""
         if not client:
-            client = AsyncOAuth2Client("guardian-cli", self._settings.m2m_secret)
+            client = AsyncOAuth2Client(
+                "guardian-management-api", self._settings.m2m_secret
+            )
         # get an access token from the Guardian Management API
         await client.fetch_token(
             self.oauth_settings["mtls_endpoint_aliases"]["token_endpoint"],

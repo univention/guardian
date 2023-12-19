@@ -17,7 +17,7 @@
   "baseUrl": "",
   "bearerOnly": false,
   "clientAuthenticatorType": "client-secret",
-  "clientId": "guardian-cli",
+  "clientId": "guardian-management-api",
   "consentRequired": false,
   "defaultClientScopes": [
     "web-origins",

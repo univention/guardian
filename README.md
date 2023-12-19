@@ -36,12 +36,6 @@ More information can be found [here](opa/README.md)
 
 ## Apps
 
-> If you are using the Management or Authorization API apps from
-> the Appcenter, be aware that you need to provide a `client_secret`
-> if you want to log in via the Swagger UI. On the UCS host that has
-> Keycloak installed, you can get the `client_secret` with the following
-> command: `univention-keycloak oidc/rp secret --client-name guardian`
-
 ### Guardian Authorization API
 
 This app contains the components `Guardian Authorization API` and the OPA service in a docker compose app.
@@ -81,7 +75,7 @@ udm users/user create \
 For Keycloak to have the right configuration, install the Guardian apps from the App Center or manually copy the client
 configuration from the `dev-compose.yml` Keycloak container.
 
-You will need to fetch the `guardian-cli` client secret from Keycloak and set it in the `.env` for development
+You will need to fetch the `guardian-management-api` client secret from Keycloak and set it in the `.env` for development
 (`OAUTH_ADAPTER__M2M_SECRET`).
 
 Additionally, if you don't use `dev-run` and instead run `docker compose up` directly, the variable `UCS_HOST_IP` needs to be set:

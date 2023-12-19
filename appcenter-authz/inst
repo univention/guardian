@@ -21,10 +21,10 @@ joinscript_init
 # Creating and configuring the Keycloak clients is safe to rerun multiple times.
 API_FQDN="$hostname.$domainname"
 univention-keycloak "$@" oidc/rp create \
-    --name guardian \
+    --name guardian-ui \
     --app-url "https://$API_FQDN" \
-    --redirect-uri "https://$API_FQDN/guardian/*" \
-    --add-audience-mapper guardian || die
+    --redirect-uri "https://$API_FQDN/univention/guardian/*" \
+    --add-audience-mapper guardian-ui || die
 $APP_DIR/scripts/configure-keycloak "$@"
 
 eval $(ucr shell ldap/base appcenter/apps/guardian-authorization-api/hostdn)

@@ -276,7 +276,7 @@ class TestGuardianAuthorizationAdapter:
                 ],
                 client=None,
             )
-        client_patch.assert_called_once_with("guardian-cli", "secret")
+        client_patch.assert_called_once_with("guardian-management-api", "secret")
 
     @pytest.mark.asyncio
     async def test_authorize_operation_actor_not_allowed(self):

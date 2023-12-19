@@ -169,7 +169,7 @@ def update_redirect_uris_and_web_origins(
     keycloak_session: KeycloakAdmin,
     client_name: str,
     host: str,
-    redirect_url_base: str = "guardian",
+    redirect_url_bases: List[str],
 ):
     """Make sure current server is part of the redirectUris and webOrigins"""
 
@@ -179,9 +179,10 @@ def update_redirect_uris_and_web_origins(
     if host_url not in client_config["webOrigins"]:
         client_config["webOrigins"].append(host_url)
 
-    redirect_url = f"{host_url}/{redirect_url_base}/*"
-    if redirect_url not in client_config["redirectUris"]:
-        client_config["redirectUris"].append(redirect_url)
+    for base in redirect_url_bases:
+        redirect_url = f"{host_url}/{base}/*"
+        if redirect_url not in client_config["redirectUris"]:
+            client_config["redirectUris"].append(redirect_url)
 
     keycloak_session.update_client(client_id, client_config)
 
@@ -199,4 +200,12 @@ def enable_service_accounts(keycloak_session: KeycloakAdmin, client_name: str):
 
     client_config, client_id = get_client_config_and_id(keycloak_session, client_name)
     client_config["serviceAccountsEnabled"] = True
+    keycloak_session.update_client(client_id, client_config)
+
+
+def enable_direct_access_grants(keycloak_session: KeycloakAdmin, client_name: str):
+    """Enable direct access (password) grants"""
+
+    client_config, client_id = get_client_config_and_id(keycloak_session, client_name)
+    client_config["directAccessGrantsEnabled"] = True
     keycloak_session.update_client(client_id, client_config)

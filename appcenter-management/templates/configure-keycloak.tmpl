@@ -1,18 +1,17 @@
-def update_guardian_client(
-    keycloak_session: KeycloakAdmin,
-    client_name: str,
-    web_host: str,
-) -> int:
+def update_guardian_ui_client(keycloak_session: KeycloakAdmin, web_host: str) -> int:
     """
     Update the client used with the Swagger UI.
 
     This entails:
 
+    * Adding guardian audience mapper.
     * Adding the 'dn' mapper.
     * Ensuring PKCE support.
     * Updating webOrigins and redirectUris.
+    * Making the client public.
     """
 
+    client_name = "guardian-ui"
     errors = []
 
     try:
@@ -21,12 +20,22 @@ def update_guardian_client(
         errors.append(f"Unable to add dn protocol mapper to {client_name} client: {exc}")
 
     try:
+        add_audience(keycloak_session, client_name, "guardian")
+    except Exception as exc:
+        errors.append(f"Unable to add guardian audience to {client_name} client: {exc}")
+
+    try:
         add_pkce_support(keycloak_session, client_name)
     except Exception as exc:
         errors.append(f"Unable to add PKCE support to {client_name} client: {exc}")
 
     try:
-        update_redirect_uris_and_web_origins(keycloak_session, client_name, web_host)
+        update_redirect_uris_and_web_origins(
+            keycloak_session,
+            client_name,
+            web_host,
+            redirect_url_bases=["univention/guardian", "guardian"],
+        )
     except Exception as exc:
         errors.append(f"Unable to add {web_host} to redirectUris and webOrigins for {client_name} client: {exc}")
 
@@ -48,13 +57,10 @@ def update_guardian_client(
     return 0
 
 
-def update_guardian_cli_client(
-    keycloak_session: KeycloakAdmin,
-    client_name: str,
-    web_host: str,
-) -> int:
+
+def update_guardian_management_api_client(keycloak_session: KeycloakAdmin, web_host: str) -> int:
     """
-    Update the CLI client.
+    Update the client used by Management API to connect to Authorization API.
 
     This entails:
 
@@ -65,6 +71,7 @@ def update_guardian_cli_client(
     * Enable service accounts.
     """
 
+    client_name = "guardian-management-api"
     errors = []
 
     try:
@@ -83,7 +90,12 @@ def update_guardian_cli_client(
         errors.append(f"Unable to add PKCE support to {client_name} client: {exc}")
 
     try:
-        update_redirect_uris_and_web_origins(keycloak_session, client_name, web_host)
+        update_redirect_uris_and_web_origins(
+            keycloak_session,
+            client_name,
+            web_host,
+            redirect_url_bases=["univention/guardian", "guardian"],
+        )
     except Exception as exc:
         errors.append(f"Unable to add {web_host} to redirectUris and webOrigins for {client_name} client: {exc}")
 
@@ -105,8 +117,74 @@ def update_guardian_cli_client(
     return 0
 
 
+def update_guardian_scripts_client(keycloak_session: KeycloakAdmin, web_host: str) -> int:
+    """
+    Update the client used with scripts.
+
+    This entails:
+
+    * Adding guardian audience mapper.
+    * Adding the 'dn' mapper.
+    * Ensuring PKCE support.
+    * Updating webOrigins and redirectUris.
+    * Making the client public.
+    * Supporting direct access (password) grants.
+    """
+
+    client_name = "guardian-scripts"
+    errors = []
+
+    try:
+        add_dn(keycloak_session, client_name)
+    except Exception as exc:
+        errors.append(f"Unable to add dn protocol mapper to {client_name} client: {exc}")
+
+    try:
+        add_audience(keycloak_session, client_name, "guardian")
+    except Exception as exc:
+        errors.append(f"Unable to add guardian audience to {client_name} client: {exc}")
+
+    try:
+        add_pkce_support(keycloak_session, client_name)
+    except Exception as exc:
+        errors.append(f"Unable to add PKCE support to {client_name} client: {exc}")
+
+    try:
+        update_redirect_uris_and_web_origins(
+            keycloak_session,
+            client_name,
+            web_host,
+            redirect_url_bases=["univention/guardian", "guardian"],
+        )
+    except Exception as exc:
+        errors.append(f"Unable to add {web_host} to redirectUris and webOrigins for {client_name} client: {exc}")
+
+    try:
+        fix_web_origins(keycloak_session, client_name)
+    except Exception as exc:
+        errors.append(f"Unable to fix webOrigins to {client_name} client: {exc}")
+
+    try:
+        make_public_client(keycloak_session, client_name)
+    except Exception as exc:
+        errors.append(f"Unable to make {client_name} client public: {exc}")
+
+    try:
+        enable_direct_access_grants(keycloak_session, client_name)
+    except Exception as exc:
+        errors.append(f"Unable to add direct access grants to {client_name} client: {exc}")
+
+    if errors:
+        for error in errors:
+            print(f"ERROR: {error}")
+        return 1
+
+    return 0
+
+
 def configure_keycloak(keycloak_session: KeycloakAdmin, ucr: ConfigRegistry) -> int:
     web_host = get_web_host(ucr)
-    failure_guardian = update_guardian_client(keycloak_session, 'guardian', web_host)
-    failure_cli = update_guardian_cli_client(keycloak_session, 'guardian-cli', web_host)
-    return failure_guardian or failure_cli
+    failure_management = update_guardian_management_api_client(keycloak_session, web_host)
+    failure_ui = update_guardian_ui_client(keycloak_session, web_host)
+    failure_scripts = update_guardian_scripts_client(keycloak_session, web_host)
+    return failure_management or failure_ui or failure_scripts

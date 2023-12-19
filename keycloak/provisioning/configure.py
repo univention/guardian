@@ -80,11 +80,13 @@ class KeycloakConfigurator:
 
         # create clients
         client_config = json.load(
-            open("/keycloak/provisioning/guardian_client_config.json", "r")
+            open("/keycloak/provisioning/guardian_ui_client_config.json", "r")
         )
         self.keycloak_admin.create_client(payload=client_config, skip_exists=True)
         client_config = json.load(
-            open("/keycloak/provisioning/guardian_client_cli_config.json", "r")
+            open(
+                "/keycloak/provisioning/guardian_client_management_api_config.json", "r"
+            )
         )
         self.keycloak_admin.create_client(payload=client_config, skip_exists=True)
         client_config = json.load(

@@ -1,18 +1,17 @@
-def update_guardian_client(
-    keycloak_session: KeycloakAdmin,
-    client_name: str,
-    web_host: str,
-) -> int:
+def update_guardian_ui_client(keycloak_session: KeycloakAdmin, web_host: str) -> int:
     """
     Update the client used with the Swagger UI.
 
     This entails:
 
+    * Adding guardian audience mapper.
     * Adding the 'dn' mapper.
     * Ensuring PKCE support.
     * Updating webOrigins and redirectUris.
+    * Making the client public.
     """
 
+    client_name = "guardian-ui"
     errors = []
 
     try:
@@ -21,12 +20,22 @@ def update_guardian_client(
         errors.append(f"Unable to add dn protocol mapper to {client_name} client: {exc}")
 
     try:
+        add_audience(keycloak_session, client_name, "guardian")
+    except Exception as exc:
+        errors.append(f"Unable to add guardian audience to {client_name} client: {exc}")
+
+    try:
         add_pkce_support(keycloak_session, client_name)
     except Exception as exc:
         errors.append(f"Unable to add PKCE support to {client_name} client: {exc}")
 
     try:
-        update_redirect_uris_and_web_origins(keycloak_session, client_name, web_host)
+        update_redirect_uris_and_web_origins(
+            keycloak_session,
+            client_name,
+            web_host,
+            redirect_url_bases=["univention/guardian", "guardian"],
+        )
     except Exception as exc:
         errors.append(f"Unable to add {web_host} to redirectUris and webOrigins for {client_name} client: {exc}")
 
@@ -50,4 +59,5 @@ def update_guardian_client(
 
 def configure_keycloak(keycloak_session: KeycloakAdmin, ucr: ConfigRegistry) -> int:
     web_host = get_web_host(ucr)
-    return update_guardian_client(keycloak_session, 'guardian', web_host)
+    failure_ui = update_guardian_ui_client(keycloak_session, web_host)
+    return failure_ui
