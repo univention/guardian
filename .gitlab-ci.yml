@@ -182,6 +182,16 @@ build_guardian_lib:
     - poetry config --local virtualenvs.create false
     - poetry build
 
+
+build_ums_dependencies:
+  stage: build_docker
+  rules:
+  extends: .kaniko
+  variables:
+    DOCKERFILE_PATH: "$CI_PROJECT_DIR/ums-dependencies/Dockerfile"
+    KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR"
+    CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/ums-dependencies
+
 build_docker_image_opa:
   stage: build_docker
   rules:
