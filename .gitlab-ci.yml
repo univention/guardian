@@ -30,13 +30,6 @@ variables:
   UCS_TEST_PACKAGE: "ucs-test-guardian"
   SCOPE: "guardian"
 
-# workflow:
-#   rules:
-#     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_OPEN_MERGE_REQUESTS
-#     - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_REF_PROTECTED == "true"
-#     - if: $CI_PIPELINE_SOURCE == "web"
-#     - if: $CI_PIPELINE_SOURCE == "webide"
-
 stages:
   - build
   - test
@@ -52,13 +45,6 @@ stages:
     DOCKERFILE_PATH: "docker/guardian-management-ui/Dockerfile"
     KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR"
   - IMAGE_NAME: "guardian-opa"
-
-.publish-matrix: &publish-matrix
-  - IMAGE_NAME:
-    - "authorization-api"
-    - "management-api"
-    - "management-ui"
-    - "opa"
 
 container-build:
   needs:
@@ -82,22 +68,11 @@ container-security-scan:
 
 push-image-souvap:
   parallel:
-    matrix: *publish-matrix
+    matrix: *build-matrix
 
 container-sign-souvap:
   parallel:
-    matrix: *publish-matrix
-
-# build_docker_image_management_ui:
-#   stage: build_docker
-#   # rules:
-#   #   - changes:
-#   #       - management-ui/**/*
-#   extends: .kaniko
-#   variables:
-#     DOCKERFILE_PATH: "$CI_PROJECT_DIR/docker/guardian-management-ui/Dockerfile"
-#     CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-management-ui
-#     KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --cache=false
+    matrix: *build-matrix
 
 .pre_commit:
   stage: lint
@@ -130,6 +105,10 @@ run_precommit_frontend:
     - pre-commit run -a
 
 # No jobs for OPA code were created, since the form and structure of the OPA code is not final yet. TODO
+.rules_overrides: &rules_overrides
+  - if: "$CI_COMMIT_MESSAGE =~ /skip-build/ || $pipeline =~ /skip-build/"
+    when: never
+  - if: "$CI_COMMIT_MESSAGE =~ /force-build/ || $pipeline =~ /force-build/"
 
 .test:
   stage: test
@@ -145,11 +124,9 @@ run_precommit_frontend:
     - poetry install
     - pytest -vv "$GUARDIAN_TEST_ARGS" .
   rules:
-    - if: "$CI_COMMIT_MESSAGE =~ /skip-build/ || $pipeline =~ /skip-build/"
-      when: never
-    - if: "$CI_COMMIT_MESSAGE =~ /force-build/ || $pipeline =~ /force-build/"
     - changes:
         - $GUARDIAN_COMPONENT/**/*
+    - *rules_overrides
 
 .coverage:
   extends: .test
@@ -219,6 +196,7 @@ run_precommit_frontend:
 #   rules:
 #     - changes:
 #         - guardian-lib/**/*
+#     - *rules_overrides
 #   artifacts:
 #     paths:
 #       - guardian-lib/dist/
@@ -242,6 +220,7 @@ run_precommit_frontend:
 #   rules:
 #     - changes:
 #         - guardian-lib/**/*
+#     - *rules_overrides
 #   dependencies:
 #     - build_guardian_lib
 #   needs:
@@ -305,6 +284,7 @@ ucs_test_deb_lint:
   rules:
     - changes:
       - $UCS_TEST_PACKAGE/**/*
+    - *rules_overrides
   image:
     name: $UCSLINT_IMAGE
     entrypoint: [""]
