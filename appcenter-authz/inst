@@ -9,6 +9,7 @@
 VERSION=1
 APP_ID="guardian-authorization-api"
 APP_DIR="/var/lib/univention-appcenter/apps/$APP_ID"
+UDM_REST_GROUP="UDM-API-enabled-machines"
 
 . /usr/share/univention-join/joinscripthelper.lib || exit 1
 . /usr/share/univention-appcenter/joinscripthelper.sh || exit 1
@@ -25,6 +26,25 @@ univention-keycloak "$@" oidc/rp create \
     --redirect-uri "https://$API_FQDN/guardian/*" \
     --add-audience-mapper guardian || die
 $APP_DIR/scripts/configure-keycloak "$@"
+
+echo "Creating group '$UDM_REST_GROUP' for machine accounts that are allowed to access the UDM REST API."
+univention-directory-manager groups/group create "$@" --ignore_exists \
+  --position "cn=groups,$ldap_base" \
+  --set name="$UDM_REST_GROUP" \
+  --set description="Machine accounts that are allowed to connect to the UDM REST API." || die
+
+UDM_REST_GROUP_DN="cn=$UDM_REST_GROUP,cn=groups,$ldap_base"
+
+echo "Adding Guardian Authorization API machine account '$appcenter_apps_guardian_authorization_api_hostdn' to group '$UDM_REST_GROUP'."
+univention-directory-manager groups/group modify \
+  --dn "$UDM_REST_GROUP_DN" \
+  --append users="$appcenter_apps_guardian_authorization_api_hostdn" || die
+
+echo "Whitelisting new group for UDM REST API."
+ucr set directory/manager/rest/authorized-groups/udm-api-enabled-machines="$UDM_REST_GROUP_DN" || die
+
+echo "Restarting UDM REST API service."
+service univention-directory-manager-rest restart || die
 
 joinscript_save_current_version
 
