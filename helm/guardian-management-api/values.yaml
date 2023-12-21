@@ -38,7 +38,8 @@ guardianManagementApi:
   sqlPersistenceAdapterPassword: "stub_password"
   # -- Identity Provider well known URL
   oauthAdapterWellKnownUrl: "http://keycloak/realms/souvap/.well-known/openid-configuration"
-  oauthAdapterM2mSecret: "stub_secret"
+  oauthAdapterM2mSecret: "stub_client_secret"
+  oauthAdapterM2mSecretFile: "/var/secrets/oauthAdapterM2mSecret"
   # -- Sets the log level of the application.
   guardianManagementLoggingLevel: "DEBUG"
   # -- If set to True, the logging output is structured as a JSON object.

@@ -10,7 +10,7 @@ data:
   GUARDIAN__AUTHZ__ADAPTER__SETTINGS_PORT: "{{ .guardianAuthzAdapterSettingsPort }}"
   GUARDIAN__AUTHZ__ADAPTER__PERSISTENCE_PORT: "{{ .guardianAuthzAdapterAppPersistencePort }}"
   GUARDIAN__AUTHZ__ADAPTER__POLICY_PORT: "{{ .guardianAuthzAdapterPolicyPort }}"
-  GUARDIAN__AUTHZ__ADAPTER__AUTHENTICATION_PORT: "{{ .guardianAuthzAdapteriAuthenticationPort }}"
+  GUARDIAN__AUTHZ__ADAPTER__AUTHENTICATION_PORT: "{{ .guardianAuthzAdapterAuthenticationPort }}"
   IS_UNIVENTION_APPCENTER: "{{ .isUniventionAppCenter }}"
   UDM_DATA_ADAPTER__URL: "{{ .udmDataAdapterUrl }}"
   UDM_DATA_ADAPTER__USERNAME: "{{ .udmDataAdapterUsername }}"

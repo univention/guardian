@@ -80,6 +80,15 @@ false
 			<td></td>
 		</tr>
 		<tr>
+			<td>guardianAuthorizationApi.guardianAuthzAdapterAuthenticationPort</td>
+			<td>string</td>
+			<td><pre lang="json">
+"fast_api_oauth"
+</pre>
+</td>
+			<td></td>
+		</tr>
+		<tr>
 			<td>guardianAuthorizationApi.guardianAuthzAdapterPolicyPort</td>
 			<td>string</td>
 			<td><pre lang="json">
@@ -93,15 +102,6 @@ false
 			<td>string</td>
 			<td><pre lang="json">
 "env"
-</pre>
-</td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>guardianAuthorizationApi.guardianAuthzAdapteriAuthenticationPort</td>
-			<td>string</td>
-			<td><pre lang="json">
-"fast_api_oauth"
 </pre>
 </td>
 			<td></td>

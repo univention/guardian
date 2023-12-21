@@ -19,7 +19,7 @@ guardianAuthorizationApi:
   guardianAuthzAdapterSettingsPort: "env"
   guardianAuthzAdapterAppPersistencePort: "udm_data"
   guardianAuthzAdapterPolicyPort: "opa"
-  guardianAuthzAdapteriAuthenticationPort: "fast_api_oauth"
+  guardianAuthzAdapterAuthenticationPort: "fast_api_oauth"
   isUniventionAppCenter: 0
   # -- The URL of the UDM REST API for data queries.
   udmDataAdapterUrl: "http://udm-rest-api/univention/udm"

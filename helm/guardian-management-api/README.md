@@ -237,7 +237,16 @@ true
 			<td>guardianManagementApi.oauthAdapterM2mSecret</td>
 			<td>string</td>
 			<td><pre lang="json">
-"stub_secret"
+"stub_client_secret"
+</pre>
+</td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>guardianManagementApi.oauthAdapterM2mSecretFile</td>
+			<td>string</td>
+			<td><pre lang="json">
+"/var/secrets/oauthAdapterM2mSecret"
 </pre>
 </td>
 			<td></td>
