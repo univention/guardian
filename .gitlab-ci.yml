@@ -380,4 +380,9 @@ ucs_test_deb_repo_build:
       -s $SCOPE
       -p $UCS_TEST_PACKAGE
 
+post-semantic-release:
+  stage: ".post"
+  script:
+    - echo "Not needed until semantic-release is needed"
+
 ...
