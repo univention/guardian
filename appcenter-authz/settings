@@ -43,26 +43,6 @@ Group = UDM
 Scope = outside
 Show = Install,Settings
 
-[guardian-authorization-api/udm_data/username]
-Type = String
-Required = True
-InitialValue = Administrator
-Description = Username for authenticating against the UDM REST API
-Description[de] = Der Nutzername, um gegen die UDM REST API zu authentifizieren.
-Group = UDM
-Scope = outside
-Show = Install,Settings
-
-[guardian-authorization-api/udm_data/password]
-Type = String
-Required = True
-InitialValue = changeme
-Description = Password for authenticating against the UDM REST API
-Description[de] = Das Password, um gegen die UDM REST API zu authentifizieren.
-Group = UDM
-Scope = outside
-Show = Install,Settings
-
 [guardian-authorization-api/oauth/keycloak-uri]
 Type = String
 Description = Base URI of the Keycloak server for authentication. If unset the joinscript will attempt to set this value automatically.

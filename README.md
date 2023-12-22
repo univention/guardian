@@ -56,8 +56,6 @@ If installed via the UMC, you are prompted to enter them before installation. If
 ```shell
 univention-app configure guardian-authorization-api \
   --set guardian-authorization-api/udm_data/url=$URL \
-  guardian-authorization-api/udm_data/username=$USERNAME \
-  guardian-authorization-api/udm_data/password=$PASSWORD \
   guardian-authorization-api/bundle_server_url=https://$URL_TO_MANAGEMENT_API
 ```
 
