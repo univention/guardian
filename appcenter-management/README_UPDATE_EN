@@ -3,7 +3,9 @@
 <ul>
     <li>Initial release</li>
 </ul>
-<h2>v1.1.0 ()</h2>
+<h2>v1.1.0 (2023-12-22)</h2>
 <ul>
+    <li>Remove obsolete App Center settings</li>
+    <li>Rename App Center setting for Management API Keycloak client secret</li>
     <li>Migrate docker image to UCS base image</li>
 </ul>

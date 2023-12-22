@@ -40,7 +40,7 @@ Update settings for the :term:`Management UI`:
 .. code-block:: bash
 
    univention-app configure guardian-management-api --set \
-       "guardian-management-api/oauth/keycloak-cli-client-secret=$KEYCLOAK_SECRET"
+       "guardian-management-api/oauth/keycloak-client-secret=$KEYCLOAK_SECRET"
 
 Then set your ``USERNAME`` and ``PASSWORD`` to credentials for a user which
 has access to the UDM REST API:

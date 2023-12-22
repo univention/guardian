@@ -97,7 +97,7 @@ Authentication
 Base URI of the Keycloak server for authentication. If unset the application tries to derive the Keycloak URI from
 the UCR variable ``keycloak/server/sso/fqdn`` or fall back to the domain name of the host the application is installed on.
 
-.. envvar:: guardian-management-api/oauth/keycloak-cli-client-secret
+.. envvar:: guardian-management-api/oauth/keycloak-client-secret
 
 Keycloak client secret.
 
