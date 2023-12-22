@@ -40,7 +40,10 @@ if not base_url:
 if not base_url.startswith("http"):
     base_url = f"https://{base_url}"
 print(f"{base_url}/realms/ucs/.well-known/openid-configuration", end='')@!@
-      OAUTH_ADAPTER__M2M_SECRET: @%@guardian-management-api/oauth/keycloak-client-secret@%@
+      OAUTH_ADAPTER__M2M_SECRET: @!@
+ucr = configRegistry
+m2m_secret = ucr.get('guardian-management-api/oauth/keycloak-client-secret', 'change me')
+print(f"{m2m_secret}")@!@
       GUARDIAN__MANAGEMENT__LOGGING__LEVEL: @%@guardian-management-api/logging/level@%@
       GUARDIAN__MANAGEMENT__LOGGING__STRUCTURED: "@%@guardian-management-api/logging/structured@%@"
       GUARDIAN__MANAGEMENT__LOGGING__FORMAT: @%@guardian-management-api/logging/format@%@
