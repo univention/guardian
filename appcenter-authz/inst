@@ -27,6 +27,7 @@ univention-keycloak "$@" oidc/rp create \
     --add-audience-mapper guardian || die
 $APP_DIR/scripts/configure-keycloak "$@"
 
+eval $(ucr shell ldap/base appcenter/apps/guardian-authorization-api/hostdn)
 echo "Creating group '$UDM_REST_GROUP' for machine accounts that are allowed to access the UDM REST API."
 univention-directory-manager groups/group create "$@" --ignore_exists \
   --position "cn=groups,$ldap_base" \
@@ -50,6 +51,9 @@ service univention-directory-manager-rest restart || die
 if [ $JS_LAST_EXECUTED_VERSION -eq 1 ]; then
     # removed settings containing secrets
     univention-app configure guardian-management-api --unset \
+        "guardian-authorization-api/udm_data/username" \
+        "guardian-authorization-api/udm_data/password"
+    ucr unset \
         "guardian-authorization-api/udm_data/username" \
         "guardian-authorization-api/udm_data/password"
 fi

@@ -50,7 +50,6 @@ RUN mkdir -p $service_dir
 RUN pip install --no-cache-dir -U pip wheel && pip install --no-cache-dir poetry==1.5.1 && poetry config virtualenvs.create false
 COPY management-api management-api
 COPY guardian-lib guardian-lib
-RUN mv management-api/entrypoint.d/* /entrypoint.d/
 RUN cd management-api && poetry install && cd ..
 RUN cd guardian-lib && poetry install && cd ..
 
@@ -73,6 +72,7 @@ WORKDIR /app/management-api
 ENV SERVICE_USER $service_user
 ENV SERVICE_DIR $service_dir
 
+RUN mkdir -p /guardian_service_dir/conf; touch /guardian_service_dir/conf/m2m.secret
 RUN apt-get update \
     && apt-get --assume-yes --verbose-versions --no-install-recommends install \
     python3-pip \

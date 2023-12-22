@@ -63,9 +63,16 @@ if [ $JS_LAST_EXECUTED_VERSION -eq 1 ]; then
     univention-app configure guardian-management-api --set "guardian-management-api/oauth/keycloak-client-secret=$old_keycloak_secret"
 fi
 
-if [ $JS_LAST_EXECUTED_VERSION -eq 2 ]; then
+if [ $JS_LAST_EXECUTED_VERSION -le 2 ]; then
     # removed settings containing secrets
-    univention-app configure guardian-management-api --unset "guardian-management-api/oauth/keycloak-client-secret"
+    univention-app configure guardian-management-api --unset \
+        "guardian-management-api/oauth/keycloak-client-secret" \
+        "guardian-management-api/oauth/keycloak-cli-client-secret"
+    ucr get guardian-management-api/oauth/keycloak-client-secret > /var/lib/univention-appcenter/apps/guardian-management-api/conf/m2m.secret
+    chmod 600 /var/lib/univention-appcenter/apps/guardian-management-api/conf/m2m.secret
+    ucr unset \
+        "guardian-management-api/oauth/keycloak-client-secret" \
+        "guardian-management-api/oauth/keycloak-cli-client-secret"
 fi
 
 joinscript_save_current_version

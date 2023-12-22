@@ -59,6 +59,7 @@ WORKDIR /app
 ENV SERVICE_USER $service_user
 ENV SERVICE_DIR $service_dir
 
+RUN touch /etc/machine.secret
 RUN apt-get update \
     && apt-get --assume-yes --verbose-versions --no-install-recommends install \
     python3-pip \
