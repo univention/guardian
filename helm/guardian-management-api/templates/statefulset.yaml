@@ -44,13 +44,22 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       initContainers:
-       - name: database-migrations
-         command: ["alembic", "upgrade", "head"]
-         image: '{{ if .Values.image.registry }}{{ .Values.image.registry }}/{{ end }}{{ .Values.image.repository }}{{ if .Values.image.sha256 }}@sha256:{{ .Values.image.sha256 }}{{ else }}:{{ .Values.image.tag }}{{ end }}'
-         imagePullPolicy: '{{ .Values.image.pullPolicy }}'
-         envFrom:
-           - configMapRef:
-               name: '{{ include "common.names.fullname" . }}'
+        - name: wait-for-postgres
+          command: ["/bin/bash", "-c", "pg_isready -h $SQL_PERSISTENCE_ADAPTER__HOST -p $SQL_PERSISTENCE_ADAPTER__PORT -U $SQL_PERSISTENCE_ADAPTER__USERNAME -t 120"]
+          {{ with .Values.image.waitForDependency }}
+          image: "{{ if .registry }}{{ .registry }}/{{ end }}{{ .repository }}{{ if .sha256 }}@sha256:{{ .sha256 }}{{ else }}:{{ .tag }}{{ end }}"
+          {{ end }}
+          imagePullPolicy: '{{ .Values.image.pullPolicy }}'
+          envFrom:
+            - configMapRef:
+                name: {{ include "common.names.fullname" . }}
+        - name: database-migrations
+          command: ["alembic", "upgrade", "head"]
+          image: '{{ if .Values.image.registry }}{{ .Values.image.registry }}/{{ end }}{{ .Values.image.repository }}{{ if .Values.image.sha256 }}@sha256:{{ .Values.image.sha256 }}{{ else }}:{{ .Values.image.tag }}{{ end }}'
+          imagePullPolicy: '{{ .Values.image.pullPolicy }}'
+          envFrom:
+            - configMapRef:
+                name: '{{ include "common.names.fullname" . }}'
 
       volumes:
       - name: "secrets"

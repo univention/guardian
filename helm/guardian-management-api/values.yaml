@@ -117,6 +117,14 @@ image:
   # -- Define image sha256 as an alternative to `tag`
   sha256: null
 
+  waitForDependency:
+    registry: "gitregistry.knut.univention.de"
+    repository: "univention/components/univention-portal/wait-for-dependency"
+    imagePullPolicy: "Always"
+    tag: "latest"
+    ## Define image sha256 as an alternative to `tag`
+    sha256: null
+
 ## Container deployment probes
 probes:
   liveness:
