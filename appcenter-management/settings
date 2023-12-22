@@ -63,16 +63,6 @@ Group = Authentication
 Scope = outside
 Show = Install,Settings
 
-[guardian-management-api/oauth/keycloak-client-secret]
-Type = String
-Required = True
-InitialValue = changeme
-Description = Keycloak client secret.
-Description[de] = Geheimnis des Keycloak-Clients.
-Group = Authentication
-Scope = outside
-Show = Install,Settings
-
 [guardian-management-api/authorization_api_url]
 Type = String
 Description = URL to the Authorization API. If not set, the url is generated from hostname and domainname.
