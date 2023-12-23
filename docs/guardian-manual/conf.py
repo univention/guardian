@@ -73,7 +73,35 @@ extensions = [
     "univention_sphinx_extension",
     "sphinx_sitemap",
     "sphinx_last_updated_by_git",
+    "sphinx.ext.intersphinx",
 ]
+
+intersphinx_mapping = {
+    "uv-ucsschool-id-connector": (
+        "https://docs.software-univention.de/ucsschool-id-connector/",
+        None,
+    ),
+    "uv-dev-ref": (
+        "https://docs.software-univention.de/developer-reference/latest/en/",
+        None,
+    ),
+    "uv-keycloak-app": (
+        "https://docs.software-univention.de/keycloak-app/latest/",
+        None,
+    ),
+    "uv-ucs-manual": (
+        "https://docs.software-univention.de/manual/latest/en/",
+        None,
+    ),
+    "uv-app-center": (
+        "https://docs.software-univention.de/app-center/latest/en/",
+        None,
+    ),
+    "loguru": (
+        "https://loguru.readthedocs.io/en/stable/",
+        None,
+    ),
+}
 
 # For more configuration options of Sphinx-copybutton, see the documentation
 # https://sphinx-copybutton.readthedocs.io/en/latest/index.html

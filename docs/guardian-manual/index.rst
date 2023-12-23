@@ -133,7 +133,7 @@ that in some way connects to a UCS system
 to provide services to users
 within that system, for example,
 using the
-`UCS\@school ID Connector <https://docs.software-univention.de/ucsschool-id-connector/index.html>`_.
+:external+uv-ucsschool-id-connector:doc:`UCS\@school ID Connector <index>`.
 
 An :term:`app` is either an App Center application
 or a third-party external service provider,
