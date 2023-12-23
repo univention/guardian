@@ -8,8 +8,8 @@
 Management UI
 *************
 
-This chapter is geared towards :term:`Guardian administrators<guardian admin>` who want to
-manage :term:`roles<role>` and related objects which can grant :term:`permissions<permission>` to users.
+This chapter is geared towards :term:`Guardian administrators <guardian administrator>` who want to
+manage :term:`roles <role>` and related objects which can grant :term:`permissions <permission>` to users.
 
 The Guardian :term:`Management UI` app provides a web interface to manage some of the features of the
 REST API of the Guardian :term:`Management API` app.
@@ -20,7 +20,7 @@ You can access the :program:`Guardian Management UI` under
 for the :samp:`Domainname` where the :program:`Guardian Management UI` app is installed.
 When installing the app, a portal entry is created in the *Administration* category of the default
 domain portal (:samp:`cn=domain,cn=portal,cn=portals,cn=univention,$ldap_base`).
-With the default configuration, a user who wants to use the :program:`Guardian Management UI` as a :term:`guardian admin`
+With the default configuration, a user who wants to use the :program:`Guardian Management UI` as a :term:`guardian administrator`
 needs the role ``guardian:builtin:super-admin``.
 
 For a detailed explanation on what :term:`roles<role>`, :term:`capabilities<capability>`, :term:`namespaces<namespace>`

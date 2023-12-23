@@ -59,7 +59,7 @@ Then update settings for the Guardian :term:`Authorization API`:
        "guardian-authorization-api/udm_data/password=$PASSWORD"
 
 To be able to use the Guardian Management UI, it is also necessary to give the user the required permissions. For this the Management UI already utilizes the Guardian.
-This means the user needs to get the proper ``guardianRole`` assigned. To make the Administrator account the :term:`Guardian super user<guardian admin>`, who has all privileges, execute:
+This means the user needs to get the proper ``guardianRole`` assigned. To make the Administrator account the :term:`Guardian super user <guardian administrator>`, who has all privileges, execute:
 
 .. code-block:: bash
 

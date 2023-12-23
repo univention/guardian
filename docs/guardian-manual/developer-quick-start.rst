@@ -260,8 +260,8 @@ Here is how ACME Corporation creates these permissions:
 Registering capabilities
 ------------------------
 
-Finally, ACME Corporation wants to define some default :term:`capabilities<capability>` for their applications.
-The :term:`guardian app admin` that installs Cake Express can change these later,
+Finally, ACME Corporation wants to define some default :term:`capabilities <capability>` for their applications.
+The :term:`guardian app administrator` that installs Cake Express can change these later,
 but these default capabilities make it easier for Cake Express to work out of the box.
 
 They want to create:
@@ -464,7 +464,7 @@ and the :term:`Management API` provides an endpoint to facilitate this.
 The endpoint requires knowledge of `Rego <https://www.openpolicyagent.org/docs/latest/policy-language/>`_.
 
 Suppose that ACME Corporation tracks whether or not a user likes cake,
-and wants to provide a simple condition to :term:`guardian app admins<guardian app admin>`
+and wants to provide a simple condition to :term:`guardian app administrator <guardian app administrator>`
 that allows them to opt users out of receiving a cake,
 without having to know how Cake Express stores its cake preferences.
 

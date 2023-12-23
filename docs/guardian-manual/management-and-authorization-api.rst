@@ -38,7 +38,7 @@ and create any new Guardian elements that it needs, using this API.
 
 Once the join script is complete,
 the app has no more need to contact the Management API.
-However, :term:`guardian admins<guardian admin>` and :term:`guardian app admins<guardian app admin>` may use this API to modify :term:`roles<role>` and :term:`capabilities<capability>` after installing the app.
+However, :term:`guardian admins <guardian administrator>` and :term:`guardian app admins <guardian app administrator>` may use this API to modify :term:`roles<role>` and :term:`capabilities <capability>` after installing the app.
 
 .. _management-api-documentation:
 
@@ -50,7 +50,7 @@ Swagger documentation for the API is located at ``/guardian/management/docs`` on
 The API requires authentication.
 Click the :guilabel:`Authorize` button at the top of the page.
 The default client does not require a ``client_secret``.
-When logging in, please use the credentials of either a :term:`guardian admin` or a :term:`guardian app admin`.
+When logging in, please use the credentials of either a :term:`guardian administrator` or a :term:`guardian app administrator`.
 
 .. note::
 
@@ -105,13 +105,13 @@ Registration looks like:
 
    There is another endpoint, ``/guardian/management/apps`` which will also create a new app.
    However, the ``register`` endpoint also does additional setup for the app,
-   such as creating a :term:`guardian app admin` :term:`role` that can be used to manage the app.
+   such as creating a :term:`guardian app administrator` :term:`role` that can be used to manage the app.
 
    Unless you know what you are doing,
    please avoid the ``/guardian/management/apps`` endpoint.
 
-After registration, an app must at the bare minimum register the :term:`permissions<permission>` that it needs.
-However, other Guardian objects are optional and may be manually created by a :term:`guardian app admin` later.
+After registration, an app must at the bare minimum register the :term:`permissions <permission>` that it needs.
+However, other Guardian objects are optional and may be manually created by a :term:`guardian app administrator` later.
 
 .. _management-api-conditions:
 
@@ -136,7 +136,7 @@ Please see :ref:`registering-custom-conditions` in the :ref:`developer-quick-sta
 Contexts
 --------
 
-:term:`Contexts<context>` are a special feature of the Guardian that allows :term:`guardian admins<guardian admin>` to tell :term:`apps<app>` about where a :term:`role` applies.
+:term:`Contexts <context>` are a special feature of the Guardian that allows :term:`guardian admins <guardian administrator>` to tell :term:`apps <app>` about where a :term:`role` applies.
 
 For example, if Happy Employees installs the Cake Express app,
 Happy Employees can create a ``london`` context and a ``berlin`` context,

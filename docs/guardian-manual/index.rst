@@ -65,7 +65,7 @@ Audience for this manual
 
 The Guardian manual addresses the following audiences:
 
-* :term:`Guardian Administrators <guardian admin>`
+* :term:`Guardian Administrators <guardian administrator>`
 * :term:`App Infrastructure Maintainers <app infrastructure maintainer>`
 * :term:`App Developers <app developer>`
 
@@ -78,7 +78,7 @@ A Guardian administrator in the context of this manual is a superuser
 who administers the Guardian after its installation,
 as well as, manages :term:`apps <app>`
 that integrate with the Guardian.
-A :term:`Guardian administrator <guardian app admin>`
+A :term:`Guardian administrator <guardian app administrator>`
 is a subset of the guardian administrator role,
 which has limited capabilities to manage specific apps within the Guardian.
 Whenever this manual refers to an *admininstrator*,

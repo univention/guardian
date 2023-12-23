@@ -8,9 +8,9 @@
 Conditions Reference
 ********************
 
-This chapter documents the :term:`conditions<condition>` that the Guardian provides for configuring
-:term:`capabilities<capability>` on :term:`roles<role>`. This is of interest for both
-:term:`app developers<app developer>` and :term:`guardian admins<guardian admin>`, that
+This chapter documents the :term:`conditions <condition>` that the Guardian provides for configuring
+:term:`capabilities <capability>` on :term:`roles <role>`. This is of interest for both
+:term:`app developers <app developer>` and :term:`guardian administrators <guardian administrator>`, that
 want to configure roles properly.
 
 All conditions listed here are created in the ``guardian`` app's ``builtin`` :term:`namespace`. Therefore the identifier of

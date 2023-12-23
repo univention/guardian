@@ -84,7 +84,7 @@ Management UI
 -------------
 
 The Management UI is a user-friendly web interface that allows
-:term:`guardian admins<guardian admin>` and :term:`guardian app admins<guardian app admin>`
+:term:`guardian admins <guardian administrator>` and :term:`guardian app admins <guardian app administrator>`
 to configure what users in their UCS system are allowed to do once an :term:`app`
 has been installed.
 
@@ -161,8 +161,8 @@ detail.
 Guardian admin and Guardian app admin
 -------------------------------------
 
-:term:`Guardian admins<guardian admin>` and
-:term:`guardian app admins<guardian app admin>` are the two kinds of
+:term:`Guardian admins <guardian administrator>` and
+:term:`guardian app admins <guardian app administrator>` are the two kinds of
 people who can manage the Guardian.
 
 .. note:: Technical Note
@@ -322,7 +322,7 @@ permissions include:
    This can only be done in the Management API, and as such should only be
    managed by :term:`app developers<app developer>`.
 
-   While a :term:`guardian admin` technically has the ability to create
+   While a :term:`guardian administrator` technically has the ability to create
    permissions, the app most likely won't recognize the permission and know
    what to do with it.
 
@@ -345,7 +345,7 @@ that only applies if the condition is met that the cake has the role
    This can only be done in the Management API, and
    :term:`app developers<app developer>` are most likely to manage them.
 
-   While a :term:`guardian admin` technically has the ability to create
+   While a :term:`guardian administrator` technically has the ability to create
    conditions, this requires knowledge of how to write
    `Rego <https://www.openpolicyagent.org/docs/latest/policy-language/>`_
    code.

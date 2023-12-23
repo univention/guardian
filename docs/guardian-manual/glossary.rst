@@ -52,23 +52,23 @@ Glossary
     context
        An optional tag that modifies when a :term:`role` applies.
 
-    guardian admin
+    guardian administrator
        A user with the :code:`guardian:builtin:super-admin` :term:`role`, who
        can manage all aspects of the Guardian and any :term:`app` using the
        Guardian, including :term:`capabilities<capability>` for users and groups.
 
-    guardian app admin
+    guardian app administrator
        A user with a :term:`role` ending in :code:`app-admin`, who can manage
        most aspects of an :term:`app`, including which
        :term:`capabilities<capability>` a user has for that app.
 
     Management API
        A `REST <https://en.wikipedia.org/wiki/REST>`_ interface that allows
-       an :term:`app` or :term:`guardian admin` to manage the Guardian.
+       an :term:`app` or :term:`guardian administrator` to manage the Guardian.
 
     Management UI
-       A limited web interface that allows an :term:`guardian admin` or
-       :term:`guardian app admin` to manage the Guardian.
+       A limited web interface that allows an :term:`guardian administrator` or
+       :term:`guardian app administrator` to manage the Guardian.
 
     namespace
        A categorization of Guardian elements within an :term:`app`. For example,
