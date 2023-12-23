@@ -130,6 +130,7 @@ html_theme_options = {
     "typesense_search": True,
     "typesense_document": doc_basename,
     "typesense_document_version": version,  # or "latest"
+    "univention_docs_deployment": True,
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -171,7 +172,5 @@ html_baseurl = ""
 # Deactivated per default. To activate, set it to True.
 
 univention_feedback = True
-
-
-univention_doc_basename = "guardian_docs"
+univention_doc_basename = doc_basename
 univention_pdf_show_source_license = True
