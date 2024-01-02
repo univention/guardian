@@ -9,7 +9,8 @@
     <li>Rename App Center setting for Management API Keycloak client secret</li>
     <li>Migrate docker image to UCS base image</li>
 </ul>
-<h2>v2.0.0 (2024-01-15)</h2>
+<h2>v2.0.0 (2024-01-02)</h2>
 <ul>
     <li>Fix ordering of condition parameters.</li>
+    <li>Remove App Center settings containing secrets</li>
 </ul>
