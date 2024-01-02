@@ -31,7 +31,7 @@ to release a new version of the app:
    * The app center version in ``appcenter-management/ini``
    * The version in the App center's `provider portal <https://provider-portal.software-univention.de>`_
 
-#. Create the tag ``management-api-$VERSION`` on the latest commit on main to mark the correct release.
+#. Create the tag ``management-api_$VERSION`` on the latest commit on main to mark the correct release.
 #. Copy the docker image referenced in the compose file to the public docker registry.
 
    For that to work, use `this jenkins job <https://univention-dist-jenkins.k8s.knut.univention.de/job/UCS-5.0/job/Apps/job/guardian-management-api/job/App%20Autotest%20MultiEnv/>`_
