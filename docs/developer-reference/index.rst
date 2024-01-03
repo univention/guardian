@@ -14,6 +14,7 @@ Welcome to the Guardian Developer Reference
 
    setup
    releases
+   tests
 
 This document aims to be a comprehensive guide for the developers of the Guardian software.
 
