@@ -48,10 +48,10 @@ stages:
   - build_docker
   - package
   - publish
-  - lint
   - build
   - merge
   - production
+  - lint
 
 .pre_commit:
   stage: lint
