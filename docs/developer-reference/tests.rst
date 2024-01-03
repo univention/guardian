@@ -26,6 +26,7 @@ To run the tests locally, first install the necessary dependencies by running:
 If you have a local instance of UDM and Keycloak running, you can run the integration tests as well. Those tests additionally need the UDM user ``guardian`` to exist with the right role. It can be created with:
 
 .. code-block:: bash
+
     udm users/user create \
       --set username=guardian \
       --set lastname=app-admin \

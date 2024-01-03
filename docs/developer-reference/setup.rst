@@ -11,8 +11,14 @@ Reproducible environment with Vagrant
 
 This project provides a Vagrantfile to create reproducible development environments with
 `Vagrant <https://developer.hashicorp.com/vagrant/>`_. Installation instructions can be found
-`here <https://developer.hashicorp.com/vagrant/docs/installation>`_. The Vagrant box used in the Vagrantfile
-supports both `libvirt <https://github.com/vagrant-libvirt/vagrant-libvirt>`_ and
+`here <https://developer.hashicorp.com/vagrant/docs/installation>`_. On a debian based system, Vagrant and kvm/libvirt
+can be installed with:
+
+.. code-block:: bash
+
+    apt-get install -y vagrant qemu-kvm libvirt-clients libvirt-daemon-system bridge-utils virtinst libvirt-daemon.
+
+The Vagrant box used in the Vagrantfile supports both `libvirt <https://github.com/vagrant-libvirt/vagrant-libvirt>`_ and
 `virtualbox <https://developer.hashicorp.com/vagrant/docs/providers/virtualbox>`_ as providers.
 
 After installing Vagrant and a suitable provider on your system, you can create your environment with ``vagrant up``.
