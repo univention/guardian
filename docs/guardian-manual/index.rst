@@ -2,31 +2,9 @@
 ..
 .. SPDX-License-Identifier: AGPL-3.0-only
 
-###############
-Guardian manual
-###############
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-   :numbered:
-   :hidden:
-
-   what-is-the-guardian
-   installation
-   configuration
-   troubleshooting
-   management-ui
-   management-and-authorization-api
-   developer-quick-start
-   limitations
-
-.. toctree::
-   :hidden:
-
-   conditions
-   glossary
-   changelogs
+############
+Introduction
+############
 
 Managing user permissions for a Univention Corporate Server (UCS) system is difficult and time-consuming.
 Historically, it has required knowledge of access control lists (ACLs),
@@ -60,9 +38,6 @@ what users can do in applications.
 
 .. _audience-for-this-manual:
 
-Audience for this manual
-========================
-
 The Guardian manual addresses the following audiences:
 
 * :term:`Guardian Administrators <guardian administrator>`
@@ -72,7 +47,7 @@ The Guardian manual addresses the following audiences:
 .. _guardian-administrators-audience:
 
 Guardian administrators
------------------------
+=======================
 
 A Guardian administrator in the context of this manual is a superuser
 who administers the Guardian after its installation,
@@ -102,7 +77,7 @@ When possible, all instructions use a web browser.
 .. _app-infrastructure-maintainers-audience:
 
 App infrastructure maintainers
-------------------------------
+==============================
 
 An app infrastructure maintainer in the context of this manual is a person
 who is responsible for installing
@@ -122,7 +97,7 @@ are the following ones:
 .. _app-developers-audience:
 
 App developers
---------------
+==============
 
 An app developer in the context of this manual is a person
 in a company, or organization

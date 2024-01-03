@@ -149,7 +149,7 @@ if "spelling" in sys.argv:
     spelling_show_suggestions = True
     spelling_word_list_filename = ["spelling_wordlist"]
 
-root_doc = "index"
+root_doc = "contents"
 
 latex_engine = "lualatex"
 latex_show_pagerefs = True
