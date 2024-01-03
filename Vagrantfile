@@ -27,7 +27,7 @@ Vagrant.configure("2") do |config|
     export PATH=$PATH:/home/vagrant/.local/bin
     cd /vagrant && pre-commit install
     cd /vagrant/management-ui && yarn install
-    for project in "management-api" "authorization-api"
+    for project in "management-api" "authorization-api" "guardian-lib"
     do
       VENV_PATH="/home/vagrant/venvs/$project"
       python3.11 -m venv $VENV_PATH

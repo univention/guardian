@@ -23,7 +23,9 @@ To run the tests locally, first install the necessary dependencies by running:
     cd ../authorization-api/
     poetry install
 
-If you have a local instance of UDM and Keycloak running, you can run the integration tests as well. Those tests additionally need the UDM user ``guardian`` to exist with the right role. It can be created with:
+If you have a local instance of UDM and Keycloak running, you can run the integration tests as well. Those tests
+additionally need the UDM user ``guardian`` to exist with the right role. It can be created with the following command on your
+:guilabel:`UCS server`:
 
 .. code-block:: bash
 
@@ -34,10 +36,11 @@ If you have a local instance of UDM and Keycloak running, you can run the integr
       --set guardianRole=guardian:builtin:app-admin \
       --position cn=users,$(ucr get ldap/base)
 
-Then, set up the environment variables required by the tests:
+Then, set up the environment variables required by the tests with the following command in your :guilabel:`VAGRANT` environment:
 
 .. code-block:: bash
 
+    cd /vagrant
     cp .env.example .env
     $EDITOR .env # adapt the variables at the top of the file
     source .env
@@ -46,15 +49,15 @@ Finally, run the tests for the desired component:
 
 .. code-block:: bash
 
-    pytest -lv management-api
-    pytest -lv authorization-api
-    pytest -lv guardian-lib
+    . ~/venvs/management-api/bin/activate && pytest -lv management-api/; deactivate
+    . ~/venvs/authorization-api/bin/activate && pytest -lv authorization-api/; deactivate
+    . ~/venvs/guardian-lib/bin/activate && pytest -lv guardian-lib/; deactivate
 
 If you don't want to test the integration with UDM and Keycloak, you can exclude the ``e2e_udm`` test in the management-api component:
 
 .. code-block:: bash
 
-    pytest -lv "-k not e2e_udm" management-api
+    . ~/venvs/management-api/bin/activate && pytest -lv -k "not e2e_udm" management-api/ && deactivate
 
 For the Authorization API component, the UDM integration tests are automatically skipped if ``UDM_DATA_ADAPTER__URL`` is not set.
 
