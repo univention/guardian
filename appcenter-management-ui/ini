@@ -1,7 +1,7 @@
 [Application]
 ID = guardian-management-ui
 Code = 4D
-Version = 1.2.0
+Version = 2.0.0
 Name = Guardian Management UI
 Vendor = Univention
 DockerScriptRestoreDataAfterSetup =
