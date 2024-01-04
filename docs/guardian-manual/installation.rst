@@ -8,136 +8,209 @@
 Installation
 ************
 
+This section is for :term:`Guardian administrators <guardian administrator>`
+and covers the installation of the Guardian on UCS systems.
+
 .. _installation-on-ucs-primary-node:
 
-Installation on a UCS primary node
-==================================
+Installation on a UCS Primary Directory Node
+============================================
 
-The different components of the Guardian can be installed from the Univention App Center. A prerequisite for using
-the Guardian is a working Keycloak installation in the UCS domain. How to install and configure Keycloak in a UCS
-domain can be found `here <https://docs.software-univention.de/keycloak-app/latest/index.html>`_.
+This section describes the installation of the Guardian on a
+:external+uv-ucs-manual:ref:`domain-ldap-primary-directory-node`.
+For other server roles, see :ref:`installation-various-ucs-server-roles`.
 
-To install all required components on a UCS primary node, run:
+:term:`Guardian administrators <guardian administrator>`
+install the different components of the Guardian from the Univention App Center.
+A prerequisite for using the Guardian is a working Keycloak installation in the UCS domain.
+For information about how to install and configure Keycloak in a UCS,
+refer to
+:external+uv-keycloak-app:ref:`Installation of Keycloak app <app-installation>`.
+
+To install all required components on a UCS primary node,
+run the following command:
 
 .. code-block:: bash
+   :caption: Install Guardian apps from command line
 
-   univention-app install \
+   $ univention-app install \
        guardian-management-api \
        guardian-authorization-api \
        guardian-management-ui
 
-Most of the settings are configured automatically, but since this is a preview version, some manual configuration steps
-remain.
+The installation procedure automatically configures most of the settings,
+but some manual configuration steps remain,
+as described in the following sections.
 
-``KEYCLOAK_SECRET`` can be obtained by running the following command:
-
-.. code-block:: bash
-
-   KEYCLOAK_SECRET=$(univention-keycloak oidc/rp secret --client-name guardian-cli | sed -n 2p | sed "s/.*'value': '\([[:alnum:]]*\)'.*/\1/")
-
-Update settings for the :term:`Management UI`:
+You need to obtain the ``KEYCLOAK_SECRET`` by running the following command:
 
 .. code-block:: bash
+   :caption: Retrieve ``KEYCLOAK_SECRET``
 
-   univention-app configure guardian-management-api --set \
-       "guardian-management-api/oauth/keycloak-client-secret=$KEYCLOAK_SECRET"
+   $ KEYCLOAK_SECRET=$(univention-keycloak \
+      oidc/rp secret \
+      --client-name guardian-cli \
+      | sed -n 2p \
+      | sed "s/.*'value': '\([[:alnum:]]*\)'.*/\1/")
+
+You need the secret to enable the *Management API* to access Keycloak.
+Add the ``KEYCLOAK_SECRET`` to the setting
+:envvar:`guardian-management-api/oauth/keycloak-client-secret`
+for the :term:`Management API`:
+
+.. code-block:: bash
+   :caption: Add ``KEYCLOAK_SECRET`` to :term:`Management API`
+
+   $ univention-app \
+      configure guardian-management-api \
+      --set \
+      "guardian-management-api/oauth/keycloak-client-secret=$KEYCLOAK_SECRET"
 
 Then set your ``USERNAME`` and ``PASSWORD`` to credentials for a user which
-has access to the UDM REST API:
+has access to the
+:external+uv-dev-ref:ref:`UDM REST API <udm-rest-api>`:
 
 .. code-block:: bash
+   :caption: Define credentials for user access to UDM REST API
 
-   USERNAME=Administrator
-   PASSWORD=password
+   $ USERNAME="Administrator"
+   $ PASSWORD="password"
 
 Then update settings for the Guardian :term:`Authorization API`:
 
 .. code-block:: bash
+   :caption: Configure :term:`Authorization API` for access to UDM REST API
 
-   univention-app configure guardian-authorization-api --set \
-       "guardian-authorization-api/udm_data/username=$USERNAME" \
-       "guardian-authorization-api/udm_data/password=$PASSWORD"
+   $ univention-app \
+      configure guardian-authorization-api \
+      --set \
+      "guardian-authorization-api/udm_data/username=$USERNAME" \
+      "guardian-authorization-api/udm_data/password=$PASSWORD"
 
-To be able to use the Guardian Management UI, it is also necessary to give the user the required permissions. For this the Management UI already utilizes the Guardian.
-This means the user needs to get the proper ``guardianRole`` assigned. To make the Administrator account the :term:`Guardian super user <guardian administrator>`, who has all privileges, execute:
+To use the Guardian *Management UI*,
+it's also necessary to give the user the required permissions.
+For this step the *Management UI* already utilizes the Guardian.
+The user needs to get the proper ``guardianRole`` assigned.
+To make the ``Administrator`` account the :term:`Guardian super user <guardian administrator>`,
+who has all privileges, run the following command:
 
 .. code-block:: bash
+   :caption: Assign Guardian super user role to ``Administrator`` user
 
-   udm users/user modify --dn uid=Administrator,cn=users,$(ucr get ldap/base) \
-       --set guardianRole=guardian:builtin:super-admin
+   $ udm users/user modify \
+      --dn uid=Administrator,cn=users,$(ucr get ldap/base) \
+      --set guardianRole=guardian:builtin:super-admin
 
-With these steps the Guardian setup is complete and the Management UI should be available from the Univention Portal.
+You have completed the Guardian setup.
+You can reach the *Management UI* from the
+:external+uv-ucs-manual:ref:`Univention Portal <central-portal>`.
 
 .. _configuring-keycloak-for-join-scripts:
 
 Configuring Keycloak for join scripts
 -------------------------------------
 
-When installing an :term:`app` that uses the Guardian, it will need a special
-Keycloak client that is configured specifically for join scripts.
+When installing an :term:`app` that uses the Guardian,
+it needs a dedicated Keycloak client specifically for join scripts.
 
-Run the following command on the server with the Guardian Management API installed:
+Create Keycloak client for join scripts
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Run the following command on the UCS system with the Guardian :term:`Management API` installed:
 
 .. code-block:: bash
+   :caption: Create Keycloak client specifically for join scripts
 
-   GUARDIAN_SERVER="$(hostname).$(ucr get domainname)"
-   univention-keycloak oidc/rp create \
+   $ GUARDIAN_SERVER="$(hostname).$(ucr get domainname)"
+   $ univention-keycloak oidc/rp create \
        --name guardian-scripts \
        --app-url https://$GUARDIAN_SERVER \
        --redirect-uri "https://$GUARDIAN_SERVER/univention/guardian/*" \
        --add-audience-mapper guardian-scripts
 
-Then configure the new client using the Keycloak web interface.
-Choose :menuselection:`ucs` from the realm drop-down list at the top of the left navigation bar.
-Then click on :menuselection:`Clients` in the left navigation bar, and choose :menuselection:`guardian-scripts`.
+Configure created Keycloak client
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Configure password login for scripts and remove the client secret:
+Then configure the created client using the
+:external+uv-keycloak-app:ref:`Keycloak Admin Console <keycloak-admin-console>`.
+In the *Keycloak Admin Console* use the following steps:
 
-#. Go to the :guilabel:`Settings` tab.
-#. Navigate to the :guilabel:`Capability config` section.
-#. Turn :guilabel:`Client authentication` off.
-#. Under :guilabel:`Authentication flow`, check the checkbox for :guilabel:`Direct access grants`.
+#. Select :menuselection:`ucs` from the realm drop-down list at the top of the left sidebar navigation.
 
-Click the :guilabel:`Save` button at the bottom of the screen.
+#. Click :guilabel:`Clients` in the left sidebar navigation.
 
-Configure the correct audience for the Guardian:
+#. Select :menuselection:`guardian-scripts`.
 
-#. Go to the :guilabel:`Client scopes` tab.
-#. Click on :guilabel:`guardian-scopes-dedicated`.
-#. Choose :menuselection:`Add mapper --> By configuration`.
-    #. Select :guilabel:`Audience`.
-    #. For the :guilabel:`Name`, use ``guardian-audience``.
-    #. For the :guilabel:`Included Client Audience`, choose ``guardian``.
-#. Choose :menuselection:`Add mapper --> By configuration`.
-    #. Select :guilabel:`User Attribute`.
-    #. For the :guilabel:`Name`, use ``dn``.
-    #. For the :guilabel:`User Attribute`, use ``LDAP_ENTRY_DN``.
-    #. For the :guilabel:`Token Claim Name`, use ``dn``.
-    #. Turn :guilabel:`Add to ID Token` off.
-    #. Turn :guilabel:`Add to userinfo` off.
-    #. Verify that :guilabel:`Add to access token` is on.
+Activate password login for scripts
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Click the :guilabel:`Save` button at the bottom of the screen.
+To configure the password login for scripts and remove the client secret,
+use the following steps:
 
-.. _installation-on-different-ucs-server-roles:
+#. Go to the :menuselection:`Settings → Capability config`.
 
-Installation on different UCS server roles
-==========================================
+#. Deactivate :guilabel:`Client authentication`.
 
-This setup assumes that all Guardian components are installed on the same host and that Keycloak as well as the UDM
-REST API are running on that host as well. This is usually the UCS primary node.
-The Guardian supports the installation of its components on any UCS server role as well as distributing the individual
-components on different hosts. For that to work though, multiple settings
-regarding URLs for Keycloak, the UDM REST API and the different Guardian components themselves have to be configured manually.
-Please check the chapter Configuration for a full reference of all the app settings.
+#. In the section :menuselection:`Authentication flow`,
+   activate :guilabel:`Direct access grants`.
+
+#. Click :guilabel:`Save` at the bottom of the screen.
+
+Configure audience for Guardian
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To configure the correct audience for the Guardian,
+use the following steps:
+
+#. Go to :guilabel:`Client scopes` tab.
+
+#. Click :guilabel:`guardian-scopes-dedicated`.
+
+#. Select :menuselection:`Add mapper --> By configuration --> Audience`:
+
+   :Name: ``guardian-audience``
+   :Included Client Audience: ``guardian``
+
+#. Select :menuselection:`Add mapper --> By configuration --> User Attribute`:
+
+   :Name: ``dn``
+   :User Attribute*: ``LDAP_ENTRY_DN``
+   :Token Claim Name*: ``dn``
+   :Add to ID Token: Deactivate
+   :Add to userinfo: Deactivate
+   :Add to access token: Activate
+
+#. Click :guilabel:`Save` at the bottom of the screen.
+
+.. _installation-various-ucs-server-roles:
+
+Installation on various UCS server roles
+========================================
+
+This setup assumes that you have all Guardian components installed on the same UCS system,
+and that Keycloak and the UDM REST API are also running on that system.
+This system is usually the
+:external+uv-ucs-manual:ref:`domain-ldap-primary-directory-node`.
+
+The Guardian supports the installation of its components on any UCS server role,
+as well as the distribution of the individual components on different systems.
+For this to work, however,
+you must manually configure several settings regarding URLs for
+:external+uv-keycloak-app:doc:`Keycloak <index>`,
+the :external+uv-dev-ref:ref:`UDM REST API <udm-rest-api>`,
+and the various :ref:`Guardian components <guardian-apps>` themselves.
+For a full reference of all the app settings, refer to the section :ref:`conf`.
 
 .. _load-balancing-and-multiple-instances:
 
 Load balancing and multiple instances
 =====================================
 
-The Guardian was developed with the capability of running multiple instances of each component in mind. It is possible
-to deploy multiple instances of the Guardian Management UI and Guardian Authorization API apps in the UCS domain without
-any problems, as long as they are properly configured.
+A design goal for the Guardian was the ability to run multiple instances of each component.
+It's possible to deploy multiple instances of
+the Guardian :term:`Management UI` and Guardian :term:`Authorization API` apps
+in the UCS domain with no known issues,
+as long as they're configured properly.
 
-The Management API should only be deployed once in any UCS domain due to the limitations mentioned in :ref:`app-center-database-limitations`.
+Only deploy the :term:`Management API` once in each UCS domain
+due to the limitations mentioned in :ref:`app-center-database-limitations`.
