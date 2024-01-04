@@ -32,7 +32,7 @@ General remarks
 
 After you entered the :program:`Guardian Management UI`, you will see a navigation bar with the entries :guilabel:`ROLES`, :guilabel:`NAMESPACES` and :guilabel:`CONTEXTS`, a search bar with filters and a table.
 
-.. figure:: _static/images/management-ui/front_page.png
+.. figure:: /images/management-ui/front_page.png
    :width: 100%
    :align: center
 
@@ -70,7 +70,7 @@ Create a new role
 To create a new role first open the :program:`Guardian Management UI` and click on :guilabel:`ROLES` in the
 navigation menu.
 
-.. figure:: _static/images/management-ui/click_on_roles_button.png
+.. figure:: /images/management-ui/click_on_roles_button.png
    :width: 100%
    :align: center
 
@@ -78,7 +78,7 @@ navigation menu.
 
 Then click on the :guilabel:`+ ADD` button to open the page to create a new role.
 
-.. figure:: _static/images/management-ui/click_on_add_roles_button.png
+.. figure:: /images/management-ui/click_on_add_roles_button.png
    :width: 100%
    :align: center
 
@@ -86,7 +86,7 @@ Then click on the :guilabel:`+ ADD` button to open the page to create a new role
 
 The page to create a new role looks like this:
 
-.. figure:: _static/images/management-ui/create_role_page.png
+.. figure:: /images/management-ui/create_role_page.png
    :width: 100%
    :align: center
 
@@ -118,7 +118,7 @@ Listing and searching roles
 To list existing roles open the "Guardian Management UI" and click on :guilabel:`ROLES` in the
 navigation menu.
 
-.. figure:: _static/images/management-ui/click_on_role.png
+.. figure:: /images/management-ui/click_on_role.png
    :width: 100%
    :align: center
 
@@ -129,7 +129,7 @@ The results will be shown below that button.
 The search can be narrowed down by selecting a specific app in the *App* box, and
 a namespace of the selected app in the *Namespace* box.
 
-.. figure:: _static/images/management-ui/search_and_list_roles.png
+.. figure:: /images/management-ui/search_and_list_roles.png
    :width: 100%
    :align: center
 
@@ -149,7 +149,7 @@ Editing existing roles
 To edit a role, follow the steps in :ref:`listing-roles` to list them and then
 click on the name of the role you want to edit.
 
-.. figure:: _static/images/management-ui/click_on_role.png
+.. figure:: /images/management-ui/click_on_role.png
    :width: 100%
    :align: center
 
@@ -162,7 +162,7 @@ first page you see when opening a role.
 This page can be accessed by clicking :guilabel:`ROLE` in the navigation menu.
 Here you can edit the fields you want to change and click on :guilabel:`SAVE` to save the changes.
 
-.. figure:: _static/images/management-ui/click_on_save_role.png
+.. figure:: /images/management-ui/click_on_save_role.png
    :width: 100%
    :align: center
 
@@ -171,7 +171,7 @@ Here you can edit the fields you want to change and click on :guilabel:`SAVE` to
 The second page is to manage the capabilities of the current role. This page can be
 visited by clicking on :guilabel:`CAPABILITES` in the navigation menu.
 
-.. figure:: _static/images/management-ui/list_capabilities.png
+.. figure:: /images/management-ui/list_capabilities.png
    :width: 100%
    :align: center
 
@@ -224,7 +224,7 @@ on editing a role.
 
 Then click on the :guilabel:`+ ADD` button to open the page to create a new capability.
 
-.. figure:: _static/images/management-ui/click_on_add_capabilities_button.png
+.. figure:: /images/management-ui/click_on_add_capabilities_button.png
    :width: 100%
    :align: center
 
@@ -232,7 +232,7 @@ Then click on the :guilabel:`+ ADD` button to open the page to create a new capa
 
 The page to create a new capability looks like this:
 
-.. figure:: _static/images/management-ui/create_new_capability.png
+.. figure:: /images/management-ui/create_new_capability.png
    :width: 100%
    :align: center
 
@@ -263,7 +263,7 @@ Conditions
         You can look up more about these conditions in chapter :ref:`conditions`.
         Additional fields will be shown underneath them once selected.
 
-.. figure:: _static/images/management-ui/conditions_list.png
+.. figure:: /images/management-ui/conditions_list.png
    :width: 100%
    :align: center
 
@@ -292,7 +292,7 @@ clicking the :guilabel:`SEARCH` button. The results will be shown below that but
 The search can be narrowed down by selecting a specific app in the *App* box,
 and a namespace of the selected app in the *Namespace* box.
 
-.. figure:: _static/images/management-ui/listing_and_searching_capabilities.png
+.. figure:: /images/management-ui/listing_and_searching_capabilities.png
    :width: 100%
    :align: center
 
@@ -313,7 +313,7 @@ Edit a capability of a role
 To edit a capability of a role, follow the steps in :ref:`listing-capabilities-of-a-role`
 to list them and then click on the name of the capability you want to edit.
 
-.. figure:: _static/images/management-ui/click_on_capability.png
+.. figure:: /images/management-ui/click_on_capability.png
    :width: 100%
    :align: center
 
@@ -321,7 +321,7 @@ to list them and then click on the name of the capability you want to edit.
 
 The page to edit the clicked capability looks like this:
 
-.. figure:: _static/images/management-ui/capability_edit_page.png
+.. figure:: /images/management-ui/capability_edit_page.png
    :width: 100%
    :align: center
 
@@ -340,7 +340,7 @@ Conditions
         Some conditions require additional parameters.
         Additional fields will be shown underneath them once selected.
 
-.. figure:: _static/images/management-ui/conditions_list.png
+.. figure:: /images/management-ui/conditions_list.png
    :width: 100%
    :align: center
 
@@ -365,7 +365,7 @@ while editing a role. See :ref:`editing-existing-roles` for more details on edit
 
 Search and select all the capabilities you want to delete, then click the :guilabel:`DELETE` button.
 
-.. figure:: _static/images/management-ui/delete_capabilities.png
+.. figure:: /images/management-ui/delete_capabilities.png
    :width: 100%
    :align: center
 
@@ -387,7 +387,7 @@ Create a new namespace
 To create a new namespace first open the :program:`Guardian Management UI` and click on :guilabel:`NAMESPACES` in the
 navigation menu.
 
-.. figure:: _static/images/management-ui/click_on_namespace_button.png
+.. figure:: /images/management-ui/click_on_namespace_button.png
    :width: 100%
    :align: center
 
@@ -395,7 +395,7 @@ navigation menu.
 
 Then click on the :guilabel:`+ ADD` button to open the page to create a new namespace.
 
-.. figure:: _static/images/management-ui/click_on_add_namespace_button.png
+.. figure:: /images/management-ui/click_on_add_namespace_button.png
    :width: 100%
    :align: center
 
@@ -403,7 +403,7 @@ Then click on the :guilabel:`+ ADD` button to open the page to create a new name
 
 The page to create a new namespace looks like this:
 
-.. figure:: _static/images/management-ui/create_namespace_page.png
+.. figure:: /images/management-ui/create_namespace_page.png
    :width: 100%
    :align: center
 
@@ -420,7 +420,7 @@ Listing and searching namespaces
 To list existing namespaces open the :program:`Guardian Management UI` and click on :guilabel:`NAMESPACES` in the
 navigation menu.
 
-.. figure:: _static/images/management-ui/click_on_namespace_button.png
+.. figure:: /images/management-ui/click_on_namespace_button.png
    :width: 100%
    :align: center
 
@@ -430,7 +430,7 @@ On this page you can search for existing namespaces by clicking the :guilabel:`S
 The results will be shown below that button.
 The search can be narrowed down by selecting a specific app in the *App* box.
 
-.. figure:: _static/images/management-ui/namespace_app_box.png
+.. figure:: /images/management-ui/namespace_app_box.png
    :width: 100%
    :align: center
 
@@ -446,7 +446,7 @@ Editing existing namespaces
 To edit a namespaces, follow the steps in :ref:`listing-namespaces`
 to list them and then click on the name of the namespace you want to edit.
 
-.. figure:: _static/images/management-ui/click_on_namespace.png
+.. figure:: /images/management-ui/click_on_namespace.png
    :width: 100%
    :align: center
 
@@ -454,7 +454,7 @@ to list them and then click on the name of the namespace you want to edit.
 
 The page to edit the namespace you clicked looks like this:
 
-.. figure:: _static/images/management-ui/namespace_edit_page.png
+.. figure:: /images/management-ui/namespace_edit_page.png
    :width: 100%
    :align: center
 
@@ -485,7 +485,7 @@ Create a new context
 To create a new context first open the :program:`Guardian Management UI` and click on :guilabel:`CONTEXTS` in the
 navigation menu.
 
-.. figure:: _static/images/management-ui/click_on_context_button.png
+.. figure:: /images/management-ui/click_on_context_button.png
    :width: 100%
    :align: center
 
@@ -493,7 +493,7 @@ navigation menu.
 
 Then click on the :guilabel:`ADD` button to open the page to create a new context.
 
-.. figure:: _static/images/management-ui/click_on_add_context_button.png
+.. figure:: /images/management-ui/click_on_add_context_button.png
    :width: 100%
    :align: center
 
@@ -501,7 +501,7 @@ Then click on the :guilabel:`ADD` button to open the page to create a new contex
 
 The page to create a new context looks like this:
 
-.. figure:: _static/images/management-ui/create_context_page.png
+.. figure:: /images/management-ui/create_context_page.png
    :width: 100%
    :align: center
 
@@ -518,7 +518,7 @@ Listing and searching contexts
 To list existing contexts open the :program:`Guardian Management UI` and click on :guilabel:`CONTEXTS` in the
 navigation menu.
 
-.. figure:: _static/images/management-ui/click_on_context_button.png
+.. figure:: /images/management-ui/click_on_context_button.png
    :width: 100%
    :align: center
 
@@ -529,7 +529,7 @@ The results will be shown below that button.
 The search can be narrowed down by selecting a specific app in the *App* box,
 and a namespace of the selected app in the *Namespace* box.
 
-.. figure:: _static/images/management-ui/search_filter_context.png
+.. figure:: /images/management-ui/search_filter_context.png
    :width: 100%
    :align: center
 
@@ -550,7 +550,7 @@ Editing existing contexts
 To edit a context, follow the steps in :ref:`listing-contexts`
 to list them and then click on the name of the context you want to edit.
 
-.. figure:: _static/images/management-ui/click_on_context.png
+.. figure:: /images/management-ui/click_on_context.png
    :width: 100%
    :align: center
 
@@ -558,7 +558,7 @@ to list them and then click on the name of the context you want to edit.
 
 The page to edit the context you clicked looks like this:
 
-.. figure:: _static/images/management-ui/context_edit_page.png
+.. figure:: /images/management-ui/context_edit_page.png
    :width: 100%
    :align: center
 
