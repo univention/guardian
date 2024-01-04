@@ -47,7 +47,6 @@ ucr set directory/manager/rest/authorized-groups/udm-api-enabled-machines="$UDM_
 echo "Restarting UDM REST API service."
 service univention-directory-manager-rest restart || die
 
-
 if [ $JS_LAST_EXECUTED_VERSION -eq 1 ]; then
     # removed settings containing secrets
     univention-app configure guardian-management-api --unset \
