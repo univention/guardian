@@ -2,229 +2,366 @@
 ..
 .. SPDX-License-Identifier: AGPL-3.0-only
 
-.. _configuration:
+.. _conf:
 
 *************
 Configuration
 *************
 
-This chapter is a reference to all :term:`app` settings of the Guardian divided by component. These settings
-can be configured either via the ``univention-app`` command line interface or the Univention App center
-dialog for app settings.
+This section is a reference for all :term:`app` settings of the Guardian organized by component.
+:term:`Guardian administrators <guardian administrator>` can configure the settings using
+either the :command:`univention-app` command
+or the app settings dialog in the
+:external+uv-ucs-manual:ref:`App Center UMC module <software-appcenter>`.
 
-To change the log level for the :term:`Management API` for example, use the following command:
+The App Center automatically restarts the application after changing any setting.
+
+For example, to change the log level for the :term:`Management API`,
+use the following command:
 
 .. code-block:: bash
+   :caption: Example: Change log level for *Management API*
 
-   univention-app configure guardian-management-api --set \
-      "guardian-management-api/logging/level=ERROR"
+   $ univention-app \
+      configure guardian-management-api \
+      --set "guardian-management-api/logging/level=ERROR"
 
-If any of the settings are changed, the application is restarted automatically.
+You find configuration settings for the following Guardian components at:
 
-.. _guardian-management-api-configuration:
+* :ref:`conf-management-api`
+* :ref:`conf-authorization-api`
+* :ref:`conf-management-ui`
 
-Guardian Management API
-=======================
 
-.. _guardian-management-api-general-configuration:
+.. _conf-management-api:
+
+Management API
+==============
+
+This section describes the configuration settings for the :term:`Management API`.
+
+.. _conf-management-api-general:
 
 General
 -------
 
-.. figure:: /_static/images/management-api/settings_general.png
-   :alt: The General settings category of the Management API in the Univention App center
-   :align: left
+:numref:`conf-management-api-general-fig` shows the *General* settings category
+of the *Management API* in the App Center.
+The available configuration settings and their description follow.
+
+.. _conf-management-api-general-fig:
+
+.. figure:: /images/management-api/settings_general.png
+   :alt: The General settings category of the Management API in the App Center
+
+   The *General* settings category of the Management API in the App Center
 
 .. envvar:: guardian-management-api/base_url
 
-Defines the base URL of the API. If unset the URL is generated from hostname and domain name of the server
-the API is installed on. You must not specify the protocol here as this is set in :envvar:`guardian-management-api/protocol`.
+   Defines the base URL of the API.
+   If the value is unset,
+   the *Management API* generates the URL from hostname and domain name of the UCS system, where you installed it.
+   You mustn't specify the protocol.
+   :envvar:`guardian-management-api/protocol` sets the protocol separately.
 
 .. envvar:: guardian-management-api/protocol
 
-Defines the protocol of the API. Can be either ``http`` or ``https``.
-Default is ``https``.
+   Defines the protocol of the *Management API*.
+   It can have the value ``http`` or ``https``.
+   The default value is ``https``.
 
-.. _guardian-management-api-logging-configuration:
+.. _conf-management-api-logging:
 
 Logging
 -------
 
-.. figure:: /_static/images/management-api/settings_logging.png
-   :alt: The logging settings category of the Management API in the Univention App center
-   :align: left
+:numref:`conf-management-api-logging-fig` shows the *Logging* settings category
+of the *Management API* in the App Center.
+The available configuration settings and their description follow.
+
+.. _conf-management-api-logging-fig:
+
+.. figure:: /images/management-api/settings_logging.png
+   :alt: The Logging settings category of the Management API in the Univention App Center
+
+   The *Logging* settings category of the Management API in the Univention App Center
 
 .. envvar:: guardian-management-api/logging/structured
 
-Can be either ``True`` or ``False``. If set to ``True``, the logging output of the Management API is structured
-as json data.
+   Defines if the logging output of the *Management API* uses structured JSON data.
+   The value can either be ``True`` or ``False``.
+   The default value is ``False``.
+   Set the value to ``True`` for structured JSON data.
 
 .. envvar:: guardian-management-api/logging/level
 
-Sets the log level of the application. It can be one of ``DEBUG``, ``INFO``, ``WARNING``, ``ERROR``, ``CRITICAL``.
+   Defines the logging level of the *Management API* application.
+   The value can be ``DEBUG``, ``INFO``, ``WARNING``, ``ERROR``, ``CRITICAL``.
+   The default value is ``INFO``.
 
 .. envvar:: guardian-management-api/logging/format
 
-This setting defines the format of the log output if :envvar:`guardian-management-api/logging/structured`
-is set to ``False``. The documentation for configuring the log format can be found
-`here <https://loguru.readthedocs.io/en/stable/api/logger.html>`_.
+   This setting defines the format of the logging output,
+   if :envvar:`guardian-management-api/logging/structured` has the value ``False``.
+   For the logging output format,
+   see the section :external+loguru:ref:`time` in the
+   :external+loguru:doc:`loguru documentation <index>`.
 
-.. _guardian-management-api-cors-configuration:
+.. _conf-management-api-cors:
 
-CORS
-----
+Cross-origin resource sharing (CORS)
+------------------------------------
 
-.. figure:: /_static/images/management-api/settings_cors.png
-   :alt: The CORS settings category of the Management API in the Univention App center
-   :align: left
+:numref:`conf-management-api-cors-fig` shows the *CORS* settings category
+of the *Management API* in the App Center.
+The available configuration settings and their description follow.
+
+.. _conf-management-api-cors-fig:
+
+.. figure:: /images/management-api/settings_cors.png
+   :alt: The CORS settings category of the Management API in the Univention App Center
+
+   The *CORS* settings category of the Management API in the Univention App Center
 
 .. envvar:: guardian-management-api/cors/allowed-origins
 
-Comma-separated list of hosts that are allowed to make cross-origin resource sharing (CORS) requests to the server.
-At a minimum, this must include the host of the :term:`Management UI`, if installed on a different server.
+   Defines a comma-separated list of hosts
+   that the *Management API* allows to make cross-origin resource sharing (CORS) requests to the server.
+   At a minimum, the setting must include the UCS system
+   where you installed the :term:`Management UI`, if installed on a different system.
 
-.. _guardian-management-api-authentication-configuration:
+.. _conf-management-api-authentication:
 
 Authentication
 --------------
 
-.. figure:: /_static/images/management-api/settings_authentication.png
-   :alt: The authentication settings category of the Management API in the Univention App center
-   :align: left
+:numref:`conf-management-api-authentication-fig` shows the *Authentication* settings category
+of the *Management API* in the App Center.
+The available configuration settings and their description follow.
+
+.. _conf-management-api-authentication-fig:
+
+.. figure:: /images/management-api/settings_authentication.png
+   :alt: The Authentication settings category of the Management API in the Univention App Center
+
+   The *Authentication* settings category of the Management API in the Univention App Center
 
 .. envvar:: guardian-management-api/oauth/keycloak-uri
 
-Base URI of the Keycloak server for authentication. If unset the application tries to derive the Keycloak URI from
-the UCR variable ``keycloak/server/sso/fqdn`` or fall back to the domain name of the host the application is installed on.
+   Defines the base URI of the Keycloak server for authentication.
+   If unset, the application tries to derive the Keycloak URI from the UCR variable
+   :external+uv-keycloak-app:envvar:`keycloak/server/sso/fqdn`
+   or falls back to the domain name of the UCS system where you installed the application.
 
 .. envvar:: guardian-management-api/oauth/keycloak-client-secret
 
-Keycloak client secret.
+   Defines the Keycloak client secret that the *Management API* needs for accessing Keycloak.
 
-.. _guardian-management-api-authorization-configuration:
+.. _conf-management-api-authorization:
 
 Authorization
 -------------
 
-.. figure:: /_static/images/management-api/settings_authorization.png
-   :alt: The authorization settings category of the Management API in the Univention App center
-   :align: left
+:numref:`conf-management-api-authorization-fig` shows the *Authorization* settings category
+of the *Management API* in the App Center.
+The available configuration settings and their description follow.
+
+.. _conf-management-api-authorization-fig:
+
+.. figure:: /images/management-api/settings_authorization.png
+   :alt: The Authorization settings category of the Management API in the Univention App Center
+
+   The *Authorization* settings category of the Management API in the Univention App Center
 
 .. envvar:: guardian-management-api/authorization_api_url
 
-URL to the Authorization API. If not set, the URL is generated from hostname and domain name of the server the application
-is installed on.
+   Defines the URL to the *Authorization API*.
+   If not set, the *Management API* generates the URL from hostname and domain name of the UCS system
+   where you installed the application.
 
-.. _guardian-authorization-api-configuration:
+.. _conf-authorization-api:
 
-Guardian Authorization API
-==========================
+Authorization API
+=================
 
-.. figure:: /_static/images/authorization-api/settings_settings.png
-   :alt: The authorization settings category of the Management API in the Univention App center
-   :align: left
+This section describes the configuration settings for the :term:`Authorization API`.
+
+:numref:`conf-authorization-api-fig` shows the settings category
+of the *Authorization API* in the App Center.
+The available configuration settings and their description follow.
+
+.. _conf-authorization-api-fig:
+
+.. figure:: /images/authorization-api/settings_settings.png
+   :alt: The Authorization settings category of the Authorization API in the Univention App Center
+
+   The *Authorization* settings category of the Authorization API in the Univention App Center
 
 .. envvar:: guardian-authorization-api/bundle_server_url
 
-URL to the Management API from which to fetch the policy data for decision making.
-If not set, the URL is generated from hostname and domain name of the server the application is installed on.
+   Defines the URL to the *Management API*
+   from which the *Authorization API* fetches the policy data for decision making.
+   If not set, the *Authorization API* generates the URL from hostname and domain name of the UCS system
+   where you installed the application.
 
-.. _guardian-authorization-api-logging-configuration:
+.. _conf-authorization-api-logging:
 
 Logging
 -------
 
-.. figure:: /_static/images/authorization-api/settings_logging.png
-   :alt: The authorization settings category of the Management API in the Univention App center
-   :align: left
+:numref:`conf-authorization-api-logging-fig` shows the *Logging* settings category
+of the *Authorization API* in the App Center.
+The available configuration settings and their description follow.
+
+.. _conf-authorization-api-logging-fig:
+
+.. figure:: /images/authorization-api/settings_logging.png
+   :alt: The *Logging* settings category of the Authorization API in the Univention App Center
+
+   The *Logging* settings category of the Authorization API in the Univention App Center
 
 .. envvar:: guardian-authorization-api/logging/structured
 
-Can be either ``True`` or ``False``. If set to ``True``, the logging output of the Authorization API is structured
-as json data.
+   Defines if the logging output of the *Authorization API* uses structured JSON data.
+   The value can either be ``True`` or ``False``.
+   The default value is ``False``.
+   Set the value to ``True`` for structured JSON data.
 
 .. envvar:: guardian-authorization-api/logging/level
 
-Sets the log level of the application. It can be one of ``DEBUG``, ``INFO``, ``WARNING``, ``ERROR``, ``CRITICAL``.
+   Defines the logging level of the *Authorization API* application.
+   The value can be ``DEBUG``, ``INFO``, ``WARNING``, ``ERROR``, ``CRITICAL``.
+   The default value is ``INFO``.
 
 .. envvar:: guardian-authorization-api/logging/format
 
-This setting defines the format of the log output if :envvar:`guardian-authorization-api/logging/structured`
-is set to ``False``. The documentation for configuring the log format can be found
-`here <https://loguru.readthedocs.io/en/stable/api/logger.html>`_.
+   This setting defines the format of the logging output,
+   if :envvar:`guardian-authorization-api/logging/structured` has the value ``False``.
+   For the logging output format,
+   see the section :external+loguru:ref:`time` in the
+   :external+loguru:doc:`loguru documentation <index>`.
 
-.. _guardian-authorization-api-cors-configuration:
+.. _conf-authorization-api-cors:
 
-CORS
-----
+Cross-origin resource sharing (CORS)
+------------------------------------
 
-.. figure:: /_static/images/authorization-api/settings_cors.png
-   :alt: The authorization settings category of the Management API in the Univention App center
-   :align: left
+:numref:`conf-authorization-api-cors-fig` shows the *CORS* settings category
+of the *Authorization API* in the App Center.
+The available configuration settings and their description follow.
+
+.. _conf-authorization-api-cors-fig:
+
+.. figure:: /images/authorization-api/settings_cors.png
+   :alt: The CORS settings category of the Authorization API in the Univention App Center
+
+   The *CORS* settings category of the Authorization API in the Univention App Center
 
 .. envvar:: guardian-authorization-api/cors/allowed-origins
 
-Comma-separated list of hosts that are allowed to make cross-origin resource sharing (CORS) requests to the server.
-You may need to add third-party :term:`apps<app>` to this list, if they need to use the Guardian.
+   Defines a comma-separated list of hosts
+   that the *Authorization API* allows to make cross-origin resource sharing (CORS) requests to the server.
+   Add third-party :term:`apps <app>` to this list,
+   if they need to use the Guardian.
 
-.. _guardian-authorization-api-udm-configuration:
+.. _conf-authorization-api-udm:
 
 UDM
 ---
 
-.. figure:: /_static/images/authorization-api/settings_udm.png
-   :alt: The authorization settings category of the Management API in the Univention App center
-   :align: left
+:numref:`conf-authorization-api-udm-fig` shows the *UDM* settings category
+of the *Authorization API* in the App Center.
+The available configuration settings and their description follow.
+
+.. _conf-authorization-api-udm-fig:
+
+.. figure:: /images/authorization-api/settings_udm.png
+   :alt: The UDM settings category of the Authorization API in the Univention App Center
+
+   The *UDM* settings category of the Authorization API in the Univention App Center
 
 .. envvar:: guardian-authorization-api/udm_data/url
 
-The URL of the UDM REST API for data queries.
+   Defines the URL of the
+   :external+uv-dev-ref:ref:`UDM REST API <udm-rest-api>`
+   for data queries.
 
 .. envvar:: guardian-authorization-api/udm_data/username
 
-Username for authentication against the UDM REST API.
+   Defines the username for authentication against the
+   :external+uv-dev-ref:ref:`UDM REST API <udm-rest-api>`.
 
 .. envvar:: guardian-authorization-api/udm_data/password
 
-Password for authentication against the UDM REST API.
+   Defines the password for authentication against the
+   :external+uv-dev-ref:ref:`UDM REST API <udm-rest-api>`.
 
-.. _guardian-authorization-api-authentication-configuration:
+.. _conf-authorization-api-authentication:
 
 Authentication
 --------------
 
-.. figure:: /_static/images/authorization-api/settings_authentication.png
-   :alt: The authorization settings category of the Management API in the Univention App center
-   :align: left
+:numref:`conf-authorization-api-authentication-fig` shows the *Authentication* settings category
+of the *Authorization API* in the App Center.
+The available configuration settings and their description follow.
+
+.. _conf-authorization-api-authentication-fig:
+
+.. figure:: /images/authorization-api/settings_authentication.png
+   :alt: The Authentication settings category of the Management API in the Univention App Center
+
+   The *Authentication* settings category of the Management API in the Univention App Center
 
 .. envvar:: guardian-authorization-api/oauth/keycloak-uri
 
-Base URI of the Keycloak server for authentication. If unset the application tries to derive the Keycloak URI from
-the UCR variable ``keycloak/server/sso/fqdn`` or fall back to the domain name of the host the application is installed on.
+   Defines the base URI of the Keycloak server for authentication.
+   If unset, the application tries to derive the Keycloak URI from the UCR variable
+   :external+uv-keycloak-app:envvar:`keycloak/server/sso/fqdn`
+   or falls back to the domain name of the UCS system where you installed the application.
 
-.. _guardian-management-ui-configuration:
+.. _conf-management-ui:
 
-Guardian Management UI
-======================
+Management UI
+=============
 
-.. figure:: /_static/images/management-ui/settings_settings.png
-   :alt: The authorization settings category of the Management API in the Univention App center
-   :align: left
+This section describes the configuration settings for the :term:`Management UI`.
+
+:numref:`conf-management-ui-fig` shows the settings category
+of the *Management UI* in the App Center.
+The available configuration settings and their description follow.
+
+.. _conf-management-ui-fig:
+
+.. figure:: /images/management-ui/settings_settings.png
+   :alt: The settings of the Management UI in the Univention App Center
+
+   The settings of the Management UI in the Univention App Center
 
 .. envvar:: guardian-management-ui/management-api-url
 
-URL for the Guardian Management API. If not set, the URL is generated from hostname and domain name.
+   Defines the URL to the *Management API*
+   If not set, the *Management UI* generates the URL from hostname and domain name of the UCS system
+   where you installed the application.
 
-.. _guardian-management-ui-authentication-configuration:
+.. _conf-management-ui-authentication:
 
 Authentication
 --------------
 
-.. figure:: /_static/images/management-ui/settings_authentication.png
-   :alt: The authorization settings category of the Management API in the Univention App center
-   :align: left
+:numref:`conf-management-ui-authentication-fig` shows the *Authentication* settings category
+of the *Management UI* in the App Center.
+The available configuration settings and their description follow.
+
+.. _conf-management-ui-authentication-fig:
+
+.. figure:: /images/management-ui/settings_authentication.png
+   :alt: The Authentication settings category of the Management UI in the Univention App Center
+
+   The *Authentication* settings category of the Management UI in the Univention App Center
 
 .. envvar:: guardian-management-ui/oauth/keycloak-uri
 
-Base URI of the Keycloak server for authentication. If unset the application tries to derive the Keycloak URI from
-the UCR variable ``keycloak/server/sso/fqdn`` or fall back to the domain name of the host the application is installed on.
+   Defines the base URI of the Keycloak server for authentication.
+   If unset, the application tries to derive the Keycloak URI from the UCR variable
+   :external+uv-keycloak-app:envvar:`keycloak/server/sso/fqdn`
+   or falls back to the domain name of the UCS system where you installed the application.
