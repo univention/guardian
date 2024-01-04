@@ -120,6 +120,7 @@ Run the following command on the UCS system with the Guardian :term:`Management 
 
 .. code-block:: bash
    :caption: Create Keycloak client specifically for join scripts
+   :name: create-keycloak-client-for-join-scripts
 
    $ GUARDIAN_SERVER="$(hostname).$(ucr get domainname)"
    $ univention-keycloak oidc/rp create \
@@ -213,4 +214,4 @@ in the UCS domain with no known issues,
 as long as they're configured properly.
 
 Only deploy the :term:`Management API` once in each UCS domain
-due to the limitations mentioned in :ref:`app-center-database-limitations`.
+due to the limitations mentioned in :ref:`limits-app-center-database`.
