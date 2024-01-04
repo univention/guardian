@@ -84,7 +84,7 @@ who is responsible for installing
 and maintaining a UCS system
 and applications installed from the Univention App Center.
 This manual assumes some technical knowledge for app infrastructure maintainers,
-such as the ability to use the command line and read log files.
+such as the ability to use the command line and read logging output.
 
 The most relevant chapters
 for app infrastructure maintainers
@@ -92,7 +92,7 @@ are the following ones:
 
 * :ref:`installation`
 * :ref:`configuration`
-* :ref:`troubleshooting`
+* :ref:`trouble`
 
 .. _app-developers-audience:
 
