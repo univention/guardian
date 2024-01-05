@@ -1,0 +1,18 @@
+#!/bin/sh
+
+action=$1
+
+if [ -n "$action" ] && [ "$action" = "remove" ]; then
+	exit 0
+fi
+
+if [ -f /etc/machine.secret ]; then
+    echo "Copying machine secret file..."
+    mkdir -p /guardian_service_dir/conf
+    cp /etc/machine.secret /guardian_service_dir/conf/machine.secret
+    echo $(echo $LDAP_HOSTDN | cut -d= -f2 | cut -d, -f1)\$ > /guardian_service_dir/conf/machine.user
+    chmod 600 /guardian_service_dir/conf/machine.secret
+    chmod 600 /guardian_service_dir/conf/machine.user
+    chown guardian: /guardian_service_dir/conf/machine.secret
+    chown guardian: /guardian_service_dir/conf/machine.user
+fi

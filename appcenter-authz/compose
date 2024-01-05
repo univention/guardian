@@ -1,7 +1,7 @@
 version: '3.1'
 services:
   authorization-api:
-    image: gitregistry.knut.univention.de/univention/components/authorization-engine/guardian/guardian-authorization-api:latest
+    image: gitregistry.knut.univention.de/univention/components/authorization-engine/guardian/guardian-authorization-api:branch-cgarcia-207-appcenter-secrets
     security_opt:
       - seccomp:/etc/docker/seccomp-systemd.json
     restart: unless-stopped
@@ -27,8 +27,8 @@ udm_url = ucr.get(
 if not udm_url.startswith('http'):
     udm_url = f'https://{udm_url}'
 print(udm_url, end='')@!@
-      UDM_DATA_ADAPTER__USERNAME_FILE: /etc/hostname
-      UDM_DATA_ADAPTER__PASSWORD_FILE: /etc/machine.secret
+      UDM_DATA_ADAPTER__USERNAME_FILE: /guardian_service_dir/conf/machine.user
+      UDM_DATA_ADAPTER__PASSWORD_FILE: /guardian_service_dir/conf/machine.secret
       OPA_ADAPTER__URL: http://opa:8181/
       GUARDIAN__AUTHZ__LOGGING__LEVEL: @%@guardian-authorization-api/logging/level@%@
       GUARDIAN__AUTHZ__LOGGING__STRUCTURED: "@%@guardian-authorization-api/logging/structured@%@"
