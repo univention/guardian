@@ -90,6 +90,7 @@ RUN pip install --no-cache-dir -U pip wheel && pip install --no-cache-dir -r req
 # Install project
 COPY . .
 RUN pip install --no-cache-dir . && pip list
+RUN mkdir -p /guardian_service_dir/conf && touch /guardian_service_dir/conf/m2m.secret
 
 USER $service_user
 ENTRYPOINT ["/entrypoint.sh"]
