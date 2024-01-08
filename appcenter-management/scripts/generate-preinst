@@ -21,6 +21,11 @@ sed -i -e "/%GUARDIAN-SYNTAX%/r $FILES_DIR/guardian_syntax.py" -e "/%GUARDIAN-SY
 sed -i -e "/%GUARDIAN-SCHEMA%/r $FILES_DIR/guardian.schema" -e "/%GUARDIAN-SCHEMA%/d" preinst
 sed -i -e "/%GUARDIAN-PO%/r $LOCALE_DIR/DE/LC_MESSAGES/de.po" -e "/%GUARDIAN-PO%/d" preinst
 
+TMP_MO_FILE=$(mktemp /tmp/guardian-mo-base64.XXXXXX)
+base64 "$LOCALE_DIR/DE/LC_MESSAGES/de.mo" > $TMP_MO_FILE
+sed -i -e "/%GUARDIAN-MO%/r $TMP_MO_FILE" -e "/%GUARDIAN-MO%/d" preinst
+rm $TMP_MO_FILE
+
 # Assemble the configure-keycloak script
 ./$APPCENTER_COMMON_DIR/keycloak/generate-configure-keycloak.sh \
     $APP_NAME \
