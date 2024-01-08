@@ -32,19 +32,11 @@ echo "Installing Guardian schema file"
 %EOF
 chmod 644 "$guardian_schema_path"
 
-# guardian mo file
-guardian_po_path="$LOCALE_DIR/de.po"
-guardian_mo_path="$LOCALE_DIR/de.mo"
-echo "Preparing Guardian mo file"
-cat <<%EOF >"$guardian_po_path"
-%GUARDIAN-PO%
-%EOF
-
 echo "Installing Guardian mo file"
-msgfmt "$guardian_po_path" -o "$guardian_mo_path"
-
-echo "Removing additional dependencies of Guardian mo file"
-rm "$guardian_po_path"
+guardian_mo_path="$LOCALE_DIR/de.mo"
+base64 -d <<%EOF >"$guardian_mo_path"
+%GUARDIAN-MO%
+%EOF
 
 # keycloak client configuration script
 guardian_keycloak_script_path="$SCRIPTS_DIR/configure-keycloak"
