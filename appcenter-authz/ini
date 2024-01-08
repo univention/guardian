@@ -13,6 +13,7 @@ DockerScriptUpdateAppVersion =
 DockerScriptUpdateRelease =
 DockerScriptSetup =
 DockerMainService = authorization-api
+ServerRole = domaincontroller_master, domaincontroller_backup
 WebInterface = /guardian/authorization
 WebInterfaceName = Guardian Authorization API
 WebInterfacePortHttp = 8000
