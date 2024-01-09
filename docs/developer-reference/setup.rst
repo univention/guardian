@@ -36,7 +36,7 @@ If set (any value will do), your ssh key is copied from the host to the guest ma
 
 .. envvar:: GIT_SSH_PRIVATE_KEY_SOURCE
 
-Set this variable to your private ssh key, if it is not located at ``~/.ssh/id_rsa``.
+Set this variable to your private ssh key, if it is not located at ``$HOME/.ssh/id_rsa``.
 
 .. envvar:: GIT_SSH_PRIVATE_KEY_DESTINATION
 
@@ -46,12 +46,12 @@ might be necessary to accommodate some specific ssh config.
 
 .. envvar:: PROVISION_SSH_CONFIG
 
-If set (any value will do), your ssh config, assumed to be located at ``~/.ssh/config``, is copied
+If set (any value will do), your ssh config, assumed to be located at ``$HOME/.ssh/config``, is copied
 from the host to the guest.
 
 .. envvar:: PROVISION_GIT_CONFIG
 
-If set (any value will do), your global git config, assumed to be located at ``~/.gitconfig``,
+If set (any value will do), your global git config, assumed to be located at ``$HOME/.gitconfig``,
 is copied from the host to the guest.
 
 In addition, you can create the script ``vagrant_custom_provisioning.sh`` in the repositories root directory to run

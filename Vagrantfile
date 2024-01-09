@@ -44,18 +44,18 @@ Vagrant.configure("2") do |config|
 
   if ENV["PROVISION_SSH_KEY"]
     # Path to the ssh key you need for accessing Gitlab.
-    GIT_SSH_PRIVATE_KEY_SOURCE = ENV["GIT_SSH_PRIVATE_KEY_SOURCE"].to_s.empty? ? "~/.ssh/id_rsa" : ENV["GIT_SSH_PRIVATE_KEY_SOURCE"].to_s
+    GIT_SSH_PRIVATE_KEY_SOURCE = ENV["GIT_SSH_PRIVATE_KEY_SOURCE"].to_s.empty? ? "%s/.ssh/id_rsa" % [ENV["HOME"].to_s] : ENV["GIT_SSH_PRIVATE_KEY_SOURCE"].to_s
     # Set a value if the key should be copied to some other place than the source.
     GIT_SSH_PRIVATE_KEY_DESTINATION = ENV["GIT_SSH_PRIVATE_KEY_DESTINATION"].to_s
     config.vm.provision "file", source: GIT_SSH_PRIVATE_KEY_SOURCE, destination: GIT_SSH_PRIVATE_KEY_DESTINATION.empty? ? GIT_SSH_PRIVATE_KEY_SOURCE : GIT_SSH_PRIVATE_KEY_DESTINATION
   end
 
   if ENV["PROVISION_GIT_CONFIG"]
-    config.vm.provision "file", source: "~/.gitconfig", destination: ".gitconfig"
+    config.vm.provision "file", source: "%s/.gitconfig" % [ENV["HOME"].to_s], destination: ".gitconfig"
   end
 
   if ENV["PROVISION_SSH_CONFIG"]
-    config.vm.provision "file", source: "~/.ssh/config", destination: ".ssh/config"
+    config.vm.provision "file", source: "%s/.ssh/config" % [ENV["HOME"].to_s], destination: ".ssh/config"
   end
 
   if File.exist?("./vagrant_custom_provisioning.sh")
