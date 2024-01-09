@@ -18,6 +18,11 @@ can be installed with:
 
     sudo apt-get install -y vagrant qemu-kvm libvirt-clients libvirt-daemon-system bridge-utils virtinst libvirt-daemon
 
+.. note::
+
+   More information about the installation and configuration of libvirt on a Ubuntu system can be found at the
+   `Ubuntu libvirt documentation <https://ubuntu.com/server/docs/virtualization-libvirt>`_.
+
 The Vagrant box used in the Vagrantfile supports both `libvirt <https://github.com/vagrant-libvirt/vagrant-libvirt>`_ and
 `virtualbox <https://developer.hashicorp.com/vagrant/docs/providers/virtualbox>`_ as providers.
 
