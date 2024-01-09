@@ -13,17 +13,7 @@ The tests were designed with the goal of having 100% unit tests coverage.
 Running Tests Locally
 =====================
 
-To run the tests locally, first install the necessary dependencies by running:
-
-.. code-block:: bash
-
-    pip install poetry=="1.5.1"
-    cd management-api/
-    poetry install
-    cd ../authorization-api/
-    poetry install
-
-If you have a local instance of UDM and Keycloak running, you can run the integration tests as well. Those tests
+If you have an instance of UDM and Keycloak running, you can run the integration tests as well. Those tests
 additionally need the UDM user ``guardian`` to exist with the right role. It can be created with the following command on your
 :guilabel:`UCS server`:
 
@@ -45,7 +35,7 @@ Then, set up the environment variables required by the tests with the following 
     $EDITOR .env # adapt the variables at the top of the file
     source .env
 
-Finally, run the tests for the desired component:
+Finally, run the tests for the desired component in your :guilabel:`VAGRANT` environment:
 
 .. code-block:: bash
 
