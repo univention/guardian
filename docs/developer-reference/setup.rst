@@ -16,7 +16,7 @@ can be installed with:
 
 .. code-block:: bash
 
-    apt-get install -y vagrant qemu-kvm libvirt-clients libvirt-daemon-system bridge-utils virtinst libvirt-daemon.
+    sudo apt-get install -y vagrant qemu-kvm libvirt-clients libvirt-daemon-system bridge-utils virtinst libvirt-daemon
 
 The Vagrant box used in the Vagrantfile supports both `libvirt <https://github.com/vagrant-libvirt/vagrant-libvirt>`_ and
 `virtualbox <https://developer.hashicorp.com/vagrant/docs/providers/virtualbox>`_ as providers.
