@@ -10,6 +10,8 @@ Vagrant.configure("2") do |config|
   # boxes at https://vagrantcloud.com/search.
   config.vm.box = "debian/bookworm64"
 
+  config.vm.network "forwarded_port", guest: 5173, host: 5173
+
   # Installs some required packages.
   config.vm.provision "shell", name: "SYSTEM SETUP", inline: <<-SHELL
     apt-get update
