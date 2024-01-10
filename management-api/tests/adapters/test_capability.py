@@ -87,10 +87,8 @@ class TestSQLCapabilityPersistenceAdapter:
                         namespace_name=db_cond.namespace.name,
                         name=db_cond.name,
                         parameters=[
-                            CapabilityConditionParameter(name="a", value=1, position=0),
-                            CapabilityConditionParameter(
-                                name="b", value=True, position=1
-                            ),
+                            CapabilityConditionParameter(name="a", value=1),
+                            CapabilityConditionParameter(name="b", value=True),
                         ],
                     )
                 ],
