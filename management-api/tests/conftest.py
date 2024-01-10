@@ -614,8 +614,10 @@ def create_condition():
                 display_name=display_name,
                 documentation=documentation,
                 parameters=[
-                    DBConditionParameter(name=cond_param[0], value_type=cond_param[1])
-                    for cond_param in parameters
+                    DBConditionParameter(
+                        name=cond_param[0], value_type=cond_param[1], position=idx
+                    )
+                    for idx, cond_param in enumerate(parameters)
                 ],
                 code=code,
             )
@@ -645,13 +647,15 @@ def create_conditions(create_namespaces):
                     documentation=f"Doc {namespace.app_id} {namespace.id} {i}",
                     parameters=[
                         DBConditionParameter(
-                            name=cond_param[0], value_type=cond_param[1]
+                            name=cond_param[0], value_type=cond_param[1], position=idx
                         )
-                        for cond_param in [
-                            ("a", ConditionParameterType.ANY),
-                            ("b", ConditionParameterType.ANY),
-                            ("c", ConditionParameterType.ANY),
-                        ]
+                        for idx, cond_param in enumerate(
+                            [
+                                ("a", ConditionParameterType.ANY),
+                                ("b", ConditionParameterType.ANY),
+                                ("c", ConditionParameterType.ANY),
+                            ]
+                        )
                     ],
                     code=b64encode(b"CODE"),
                 )

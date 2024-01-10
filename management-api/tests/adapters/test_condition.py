@@ -341,6 +341,30 @@ class TestSQLConditionPersistenceAdapter:
                 )
             )
 
+    def test__condition_to_db_condition(self, adapter):
+        condition = Condition(
+            app_name="app",
+            namespace_name="namespace",
+            name="condition",
+            code=b"CODE",
+            display_name="Display Name",
+            documentation="This is some documentation",
+            parameters=[
+                ConditionParameter(
+                    name="condition1", value_type=ConditionParameterType.ANY
+                ),
+                ConditionParameter(
+                    name="condition2", value_type=ConditionParameterType.ANY
+                ),
+            ],
+        )
+        db_condition = adapter._condition_to_db_condition(condition)
+
+        assert db_condition.parameters[0].position == 0
+        assert db_condition.parameters[0].name == "condition1"
+        assert db_condition.parameters[1].position == 1
+        assert db_condition.parameters[1].name == "condition2"
+
 
 class TestFastapiConditionAPIAdapter:
     @pytest.fixture(autouse=True)
