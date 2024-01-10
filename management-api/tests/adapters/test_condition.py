@@ -358,7 +358,7 @@ class TestSQLConditionPersistenceAdapter:
                 ),
             ],
         )
-        db_condition = adapter._condition_to_db_condition(condition)
+        db_condition = adapter._condition_to_db_condition(condition, 0)
 
         assert db_condition.parameters[0].position == 0
         assert db_condition.parameters[0].name == "condition1"
