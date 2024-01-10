@@ -341,7 +341,7 @@ class TestSQLConditionPersistenceAdapter:
                 )
             )
 
-    def test__condition_to_db_condition(self, adapter):
+    def test__condition_to_db_condition(self, condition_sql_adapter):
         condition = Condition(
             app_name="app",
             namespace_name="namespace",
