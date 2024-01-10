@@ -119,6 +119,7 @@ class DBConditionParameter(Base):
     value_type: Mapped[ConditionParameterType] = mapped_column(
         Enum(ConditionParameterType, native_enum=False)
     )
+    position: Mapped[int] = mapped_column(nullable=False)
 
 
 class DBCondition(Base):
@@ -131,7 +132,9 @@ class DBCondition(Base):
     display_name: Mapped[Optional[str]] = mapped_column(String(STRING_MAX_LENGTH))
     documentation: Mapped[Optional[str]] = mapped_column(Text())
     parameters: Mapped[list[DBConditionParameter]] = relationship(
-        lazy="joined", cascade="all, delete-orphan"
+        lazy="joined",
+        cascade="all, delete-orphan",
+        order_by=DBConditionParameter.position,
     )
     code: Mapped[bytes] = mapped_column(LargeBinary())
 
