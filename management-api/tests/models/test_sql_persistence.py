@@ -155,10 +155,10 @@ async def test_condition_parameter_cascading(sqlalchemy_mixin):
             db_app = DBApp(name="app1")
             db_ns = DBNamespace(app=db_app, name="ns1")
             db_param = DBConditionParameter(
-                name="param1", value_type=ConditionParameterType.ANY
+                name="param1", value_type=ConditionParameterType.ANY, position=0
             )
             db_param2 = DBConditionParameter(
-                name="param2", value_type=ConditionParameterType.ANY
+                name="param2", value_type=ConditionParameterType.ANY, position=1
             )
             db_cond = DBCondition(
                 namespace=db_ns,
@@ -194,7 +194,7 @@ async def test_parameter_condition_cascading(sqlalchemy_mixin):
             db_app = DBApp(name="app1")
             db_ns = DBNamespace(app=db_app, name="ns1")
             db_param = DBConditionParameter(
-                name="param1", value_type=ConditionParameterType.ANY
+                name="param1", value_type=ConditionParameterType.ANY, position=0
             )
             db_cond = DBCondition(
                 namespace=db_ns, name="cond1", parameters=[db_param], code=b""

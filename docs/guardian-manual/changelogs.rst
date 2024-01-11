@@ -25,6 +25,11 @@ Authorization API
 Management API
 ==============
 
+2.0.0 (2024-01-15)
+------------------
+
+* Fix ordering of condition parameters.
+
 1.1.0 (2023-12-22)
 ------------------
 
