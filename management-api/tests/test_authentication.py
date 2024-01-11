@@ -122,6 +122,7 @@ async def get_keycloak_token():
     oauth_settings = await get_oauth_settings(
         os.getenv("OAUTH_ADAPTER__WELL_KNOWN_URL")
     )
+    # klk
     response = requests.post(
         oauth_settings["token_endpoint"],
         data={
