@@ -6,6 +6,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 # Changelog
 
+## 1.6.0
+
+* Update port-loader dependency to 1.2.0.
+
 ## 1.4.0
 
 * Update port-loader dependency to use standalone project
