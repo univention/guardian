@@ -183,6 +183,18 @@ The available configuration settings and their description follow.
 
 .. _conf-authorization-api:
 
+.. _conf-management-api-other-settings:
+
+Other configuration options
+---------------------------
+
+Changing the Keycloak client secret
+   The Keycloak client secret that the *Management API* needs
+   for accessing Keycloak can be changed by modifying ``/var/lib/univention-appcenter/apps/guardian-management-api/conf/m2m.secret``.
+   Afterwards, run ``univention-app configure guardian-authorization-api`` and ``univention-app restart guardian-authorization-api``
+   to activate the secret.
+
+
 Authorization API
 =================
 
