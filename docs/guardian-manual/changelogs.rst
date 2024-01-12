@@ -13,9 +13,10 @@ Authorization API
 2.0.0 (2024-01-15)
 ------------------
 
-* It is no longer needed to provide a UDM password and username
+* It is no longer needed to provide a UDM password and username.
 * Removed App Center settings :envvar:`guardian-management-api/oauth/keycloak-client-secret`
-  and :envvar:`guardian-authorization-api/udm_data/username`
+  and :envvar:`guardian-authorization-api/udm_data/username`.
+* The application can now only be installed on the UCS system roles primary and backup.
 
 1.1.0 (2023-12-22)
 ------------------
