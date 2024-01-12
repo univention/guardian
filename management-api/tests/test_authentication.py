@@ -128,7 +128,7 @@ async def get_keycloak_token():
             "grant_type": "password",
             "username": "guardian",
             "password": "univention",
-            "client_id": "guardian-cli",
+            "client_id": "guardian-scritps",
         },
         verify=os.environ.get("SSL_CERT_FILE", False),
     )
