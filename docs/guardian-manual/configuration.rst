@@ -153,12 +153,6 @@ The available configuration settings and their description follow.
    :external+uv-keycloak-app:envvar:`keycloak/server/sso/fqdn`
    or falls back to the domain name of the UCS system where you installed the application.
 
-Changing the Keycloak client secret
-   The Keycloak client secret that the *Management API* needs
-   for accessing Keycloak can be changed by modifying ``/var/lib/univention-appcenter/apps/guardian-management-api/conf/m2m.secret``.
-   Afterwards, run ``univention-app configure guardian-authorization-api`` and ``univention-app restart guardian-authorization-api``
-   to activate the secret.
-
 .. _conf-management-api-authorization:
 
 Authorization
