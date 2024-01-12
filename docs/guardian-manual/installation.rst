@@ -50,7 +50,7 @@ You need to obtain the ``KEYCLOAK_SECRET`` by running the following command:
 
    $ KEYCLOAK_SECRET=$(univention-keycloak \
       oidc/rp secret \
-      --client-name guardian-cli \
+      --client-name guardian-management-api \
       | sed -n 2p \
       | sed "s/.*'value': '\([[:alnum:]]*\)'.*/\1/")
 
@@ -80,7 +80,7 @@ To apply the new secret file, run:
 The configuration and restart is also necessary for the :term:`Authorization API`:
 
 .. code-block:: bash
-   :caption: Configure and restart the :term:`Management API`
+   :caption: Configure and restart the :term:`Authorization API`
 
    $ univention-app configure guardian-authorization-api
    $ univention-app restart guardian-authorization-api
@@ -102,84 +102,6 @@ who has all privileges, run the following command:
 You have completed the Guardian setup.
 You can reach the *Management UI* from the
 :external+uv-ucs-manual:ref:`Univention Portal <central-portal>`.
-
-.. _configuring-keycloak-for-join-scripts:
-
-Configuring Keycloak for join scripts
--------------------------------------
-
-When installing an :term:`app` that uses the Guardian,
-it needs a dedicated Keycloak client specifically for join scripts.
-
-Create Keycloak client for join scripts
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Run the following command on the UCS system with the Guardian :term:`Management API` installed:
-
-.. code-block:: bash
-   :caption: Create Keycloak client specifically for join scripts
-   :name: create-keycloak-client-for-join-scripts
-
-   $ GUARDIAN_SERVER="$(hostname).$(ucr get domainname)"
-   $ univention-keycloak oidc/rp create \
-       --name guardian-scripts \
-       --app-url https://$GUARDIAN_SERVER \
-       --redirect-uri "https://$GUARDIAN_SERVER/univention/guardian/*" \
-       --add-audience-mapper guardian-scripts
-
-Configure created Keycloak client
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Then configure the created client using the
-:external+uv-keycloak-app:ref:`Keycloak Admin Console <keycloak-admin-console>`.
-In the *Keycloak Admin Console* use the following steps:
-
-#. Select :menuselection:`ucs` from the realm drop-down list at the top of the left sidebar navigation.
-
-#. Click :guilabel:`Clients` in the left sidebar navigation.
-
-#. Select :menuselection:`guardian-scripts`.
-
-Activate password login for scripts
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-To configure the password login for scripts and remove the client secret,
-use the following steps:
-
-#. Go to the :menuselection:`Settings → Capability config`.
-
-#. Deactivate :guilabel:`Client authentication`.
-
-#. In the section :menuselection:`Authentication flow`,
-   activate :guilabel:`Direct access grants`.
-
-#. Click :guilabel:`Save` at the bottom of the screen.
-
-Configure audience for Guardian
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-To configure the correct audience for the Guardian,
-use the following steps:
-
-#. Go to :guilabel:`Client scopes` tab.
-
-#. Click :guilabel:`guardian-scopes-dedicated`.
-
-#. Select :menuselection:`Add mapper --> By configuration --> Audience`:
-
-   :Name: ``guardian-audience``
-   :Included Client Audience: ``guardian``
-
-#. Select :menuselection:`Add mapper --> By configuration --> User Attribute`:
-
-   :Name: ``dn``
-   :User Attribute*: ``LDAP_ENTRY_DN``
-   :Token Claim Name*: ``dn``
-   :Add to ID Token: Deactivate
-   :Add to userinfo: Deactivate
-   :Add to access token: Activate
-
-#. Click :guilabel:`Save` at the bottom of the screen.
 
 .. _upgrade-on-ucs-primary-node:
 
@@ -209,7 +131,29 @@ Use the command ``univention-app upgrade`` to upgrade the Guardian:
        guardian-authorization-api \
        guardian-management-ui
 
-If your are unsure whether the Guardian was set up correctly during the previous installation,
+The previous major version used a different Keycloak client for the :term:`Management API`,
+so the secret file for the client must be updated.
+Obtain the ``KEYCLOAK_SECRET`` for the new client with the following command,
+using the server where Keycloak is installed:
+
+.. code-block:: bash
+   :caption: Retrieve ``KEYCLOAK_SECRET``
+
+   $ KEYCLOAK_SECRET=$(univention-keycloak \
+      oidc/rp secret \
+      --client-name guardian-management-api \
+      | sed -n 2p \
+      | sed "s/.*'value': '\([[:alnum:]]*\)'.*/\1/")
+
+On the server where the Management API is located:
+
+.. code-block:: bash
+   :caption: Write ``KEYCLOAK_SECRET`` to the machine-to-machine secret file
+
+   $ echo $KEYCLOAK_SECRET > /var/lib/univention-appcenter/apps/guardian-management-api/conf/m2m.secret
+   $ chmod 600 /var/lib/univention-appcenter/apps/guardian-management-api/conf/m2m.secret
+
+If you are unsure whether the Guardian was set up correctly during the previous installation,
 follow the configuration steps described in :ref:`installation-on-ucs-primary-node` to complete the upgrade.
 Otherwise, the only additionally needed configuration steps are:
 

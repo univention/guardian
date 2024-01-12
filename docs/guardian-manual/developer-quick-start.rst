@@ -691,7 +691,7 @@ you must follow the instructions from the previous section
 
    All examples in this section use a hypothetical Keycloak client that :program:`Cake Express` already has.
    To create your own Keycloak client,
-   adapt the code in :numref:`create-keycloak-client-for-join-scripts`.
+   you can use ``univention-keycloak oidc/rp create``.
 
 .. _listing-all-general-permissions:
 
