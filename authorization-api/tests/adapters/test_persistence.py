@@ -31,8 +31,12 @@ from ..mock_classes import MockUdmObject
 
 def udm_test_disabled():
     url = os.environ.get("UDM_DATA_ADAPTER__URL")
-    username = os.environ.get("UDM_DATA_ADAPTER__USERNAME")
-    password = os.environ.get("UDM_DATA_ADAPTER__PASSWORD")
+    username = os.environ.get("UDM_DATA_ADAPTER__USERNAME") or os.environ.get(
+        "UDM_DATA_ADAPTER__USERNAME_FILE"
+    )
+    password = os.environ.get("UDM_DATA_ADAPTER__PASSWORD") or os.environ.get(
+        "UDM_DATA_ADAPTER__PASSWORD_FILE"
+    )
     return (url is None) or (username is None) or (password is None)
 
 
