@@ -125,7 +125,6 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 #
 html_theme = "univention_sphinx_book_theme"
 html_theme_options = {
-    "pdf_download_filename": f"{doc_basename}.pdf",
     "show_source_license": True,
     "typesense_search": True,
     "typesense_document": doc_basename,
