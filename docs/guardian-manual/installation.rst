@@ -186,29 +186,32 @@ use the following steps:
 Upgrading the Guardian
 ======================
 
-For all upgrades use the command ``univention-app upgrade``:
+For minor and patch level version changes, use the command ``univention-app upgrade``:
 
 .. code-block:: bash
-   :caption: Upgrade Guardian apps from command line
+   :caption: Install Guardian apps from command line
 
    $ univention-app upgrade \
        guardian-management-api \
        guardian-authorization-api \
        guardian-management-ui
 
-If the previous version had major version 1, see :ref:`upgrade_from_major_version` for additional steps.
-
-.. _upgrade_from_major_version:
-
 Upgrading from major version 1
-------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use the command ``univention-app upgrade`` to upgrade the Guardian:
+
+.. code-block:: bash
+   :caption: Install Guardian apps from command line
+
+   $ univention-app upgrade \
+       guardian-management-api \
+       guardian-authorization-api \
+       guardian-management-ui
 
 If your are unsure whether the Guardian was set up correctly during the previous installation,
 follow the configuration steps described in :ref:`installation-on-ucs-primary-node` to complete the upgrade.
-Otherwise, continue with this section.
-
-When upgrading from major version 1 to 2, in addition to ``univention-upgrade``
-the following configuration and restart steps are needed:
+Otherwise, the only additionally needed configuration steps are:
 
 .. code-block:: bash
    :caption: Additional configure and restart step
@@ -217,7 +220,6 @@ the following configuration and restart steps are needed:
    $ univention-app restart guardian-authorization-api
    $ univention-app configure guardian-management-api
    $ univention-app restart guardian-management-api
-
 
 .. _installation-various-ucs-server-roles:
 
