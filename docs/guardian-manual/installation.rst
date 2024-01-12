@@ -221,7 +221,7 @@ and that Keycloak and the UDM REST API are also running on that system.
 This system is usually the
 :external+uv-ucs-manual:ref:`domain-ldap-primary-directory-node`.
 
-The Guardian supports the installation of its components on any UCS server role,
+The Guardian supports the installation of the :term:`Management API` on any UCS server role,
 as well as the distribution of the individual components on different systems.
 For this to work, however,
 you must manually configure several settings regarding URLs for
@@ -229,6 +229,7 @@ you must manually configure several settings regarding URLs for
 the :external+uv-dev-ref:ref:`UDM REST API <udm-rest-api>`,
 and the various :ref:`Guardian components <guardian-apps>` themselves.
 For a full reference of all the app settings, refer to the section :ref:`conf`.
+The installation of the :term:`Authorization API` is restricted to the UCS server role :external+uv-ucs-manual:ref:`domain-ldap-primary-directory-node` and :external+uv-ucs-manual:ref:`domain-ldap-backup-directory-node`.
 
 .. _load-balancing-and-multiple-instances:
 
