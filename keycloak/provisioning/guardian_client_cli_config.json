@@ -27,7 +27,7 @@
     "email"
   ],
   "description": "",
-  "directAccessGrantsEnabled": true,
+  "directAccessGrantsEnabled": false,
   "enabled": true,
   "frontchannelLogout": true,
   "fullScopeAllowed": true,
