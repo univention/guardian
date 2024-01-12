@@ -186,8 +186,18 @@ use the following steps:
 Upgrading the Guardian
 ======================
 
-Upgrading from 1.x.y to 2.x.y or higher
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+For minor and patch level version changes, use the command ``univention-app upgrade``:
+
+.. code-block:: bash
+   :caption: Install Guardian apps from command line
+
+   $ univention-app upgrade \
+       guardian-management-api \
+       guardian-authorization-api \
+       guardian-management-ui
+
+Upgrading from major version 1
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Use the command ``univention-app upgrade`` to upgrade the Guardian:
 
