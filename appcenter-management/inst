@@ -71,8 +71,6 @@ if [ $JS_LAST_EXECUTED_VERSION -le 2 ]; then
     if ! test -f /var/lib/univention-appcenter/apps/guardian-management-api/conf/m2m.secret; then
         ucr get guardian-management-api/oauth/keycloak-client-secret > /var/lib/univention-appcenter/apps/guardian-management-api/conf/m2m.secret
         chmod 600 /var/lib/univention-appcenter/apps/guardian-management-api/conf/m2m.secret
-        univention-app configure $APP_ID
-        univention-app restart $APP_ID
     fi
     ucr unset \
         "guardian-management-api/oauth/keycloak-client-secret" \

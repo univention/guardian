@@ -55,8 +55,6 @@ if [ $JS_LAST_EXECUTED_VERSION -eq 1 ]; then
     ucr unset \
         "guardian-authorization-api/udm_data/username" \
         "guardian-authorization-api/udm_data/password"
-    univention-app configure $APP_ID
-    univention-app restart $APP_ID
 fi
 
 joinscript_save_current_version
