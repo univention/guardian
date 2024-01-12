@@ -10,6 +10,7 @@ Installation
 
 This section is for :term:`Guardian administrators <guardian administrator>`
 and covers the installation of the Guardian on UCS systems.
+If you're upgrading the Guardian to a new version, refer to the upgrade guide :ref:`upgrade-on-ucs-primary-node`.
 
 .. _installation-on-ucs-primary-node:
 
@@ -53,39 +54,36 @@ You need to obtain the ``KEYCLOAK_SECRET`` by running the following command:
       | sed -n 2p \
       | sed "s/.*'value': '\([[:alnum:]]*\)'.*/\1/")
 
-You need the secret to enable the *Management API* to access Keycloak.
-Add the ``KEYCLOAK_SECRET`` to the setting
-:envvar:`guardian-management-api/oauth/keycloak-client-secret`
-for the :term:`Management API`:
+Create the machine-to-machine secret file for the :term:`Management API` and adjust the access permissions:
 
 .. code-block:: bash
-   :caption: Add ``KEYCLOAK_SECRET`` to :term:`Management API`
+   :caption: Create machine-to-machine secret file
 
-   $ univention-app \
-      configure guardian-management-api \
-      --set \
-      "guardian-management-api/oauth/keycloak-client-secret=$KEYCLOAK_SECRET"
+   $ touch /var/lib/univention-appcenter/apps/guardian-management-api/conf/m2m.secret
+   $ chmod 600 /var/lib/univention-appcenter/apps/guardian-management-api/conf/m2m.secret
 
-Then set your ``USERNAME`` and ``PASSWORD`` to credentials for a user which
-has access to the
-:external+uv-dev-ref:ref:`UDM REST API <udm-rest-api>`:
+Write the contents of ``KEYCLOAK_SECRET`` to the machine-to-machine secret file:
 
 .. code-block:: bash
-   :caption: Define credentials for user access to UDM REST API
+   :caption: Write ``KEYCLOAK_SECRET`` to the machine-to-machine secret file
 
-   $ USERNAME="Administrator"
-   $ PASSWORD="password"
+   $ echo $KEYCLOAK_SECRET > /var/lib/univention-appcenter/apps/guardian-management-api/conf/m2m.secret
 
-Then update settings for the Guardian :term:`Authorization API`:
+To apply the new secret file, run:
 
 .. code-block:: bash
-   :caption: Configure :term:`Authorization API` for access to UDM REST API
+   :caption: Configure and restart the :term:`Management API`
 
-   $ univention-app \
-      configure guardian-authorization-api \
-      --set \
-      "guardian-authorization-api/udm_data/username=$USERNAME" \
-      "guardian-authorization-api/udm_data/password=$PASSWORD"
+   $ univention-app configure guardian-management-api
+   $ univention-app restart guardian-management-api
+
+The configuration and restart is also necessary for the :term:`Authorization API`:
+
+.. code-block:: bash
+   :caption: Configure and restart the :term:`Management API`
+
+   $ univention-app configure guardian-authorization-api
+   $ univention-app restart guardian-authorization-api
 
 To use the Guardian *Management UI*,
 it's also necessary to give the user the required permissions.
@@ -183,6 +181,46 @@ use the following steps:
 
 #. Click :guilabel:`Save` at the bottom of the screen.
 
+.. _upgrade-on-ucs-primary-node:
+
+Upgrading the Guardian
+======================
+
+For minor and patch level version changes, use the command ``univention-app upgrade``:
+
+.. code-block:: bash
+   :caption: Install Guardian apps from command line
+
+   $ univention-app upgrade \
+       guardian-management-api \
+       guardian-authorization-api \
+       guardian-management-ui
+
+Upgrading from major version 1
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use the command ``univention-app upgrade`` to upgrade the Guardian:
+
+.. code-block:: bash
+   :caption: Install Guardian apps from command line
+
+   $ univention-app upgrade \
+       guardian-management-api \
+       guardian-authorization-api \
+       guardian-management-ui
+
+If your are unsure whether the Guardian was set up correctly during the previous installation,
+follow the configuration steps described in :ref:`installation-on-ucs-primary-node` to complete the upgrade.
+Otherwise, the only additionally needed configuration steps are:
+
+.. code-block:: bash
+   :caption: Additional configure and restart step
+
+   $ univention-app configure guardian-authorization-api
+   $ univention-app restart guardian-authorization-api
+   $ univention-app configure guardian-management-api
+   $ univention-app restart guardian-management-api
+
 .. _installation-various-ucs-server-roles:
 
 Installation on various UCS server roles
@@ -193,7 +231,7 @@ and that Keycloak and the UDM REST API are also running on that system.
 This system is usually the
 :external+uv-ucs-manual:ref:`domain-ldap-primary-directory-node`.
 
-The Guardian supports the installation of its components on any UCS server role,
+The Guardian supports the installation of the :term:`Management API` on any UCS server role,
 as well as the distribution of the individual components on different systems.
 For this to work, however,
 you must manually configure several settings regarding URLs for
@@ -201,6 +239,7 @@ you must manually configure several settings regarding URLs for
 the :external+uv-dev-ref:ref:`UDM REST API <udm-rest-api>`,
 and the various :ref:`Guardian components <guardian-apps>` themselves.
 For a full reference of all the app settings, refer to the section :ref:`conf`.
+The installation of the :term:`Authorization API` is restricted to the UCS server role :external+uv-ucs-manual:ref:`domain-ldap-primary-directory-node` and :external+uv-ucs-manual:ref:`domain-ldap-backup-directory-node`.
 
 .. _load-balancing-and-multiple-instances:
 
