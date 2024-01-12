@@ -201,7 +201,7 @@ If the previous version had major version 1, see :ref:`upgrade_from_major_versio
 .. _upgrade_from_major_version:
 
 Upgrading from major version 1
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------
 
 If your are unsure whether the Guardian was set up correctly during the previous installation,
 follow the configuration steps described in :ref:`installation-on-ucs-primary-node` to complete the upgrade.
