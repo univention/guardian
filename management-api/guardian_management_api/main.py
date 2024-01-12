@@ -5,6 +5,7 @@ import asyncio
 import logging
 import os
 from contextlib import asynccontextmanager
+from importlib import metadata
 from pathlib import Path
 
 from fastapi import Depends, FastAPI
@@ -126,6 +127,7 @@ async def lifespan(fastapi_app: FastAPI):
 app = FastAPI(
     lifespan=lifespan,
     title="Guardian Management API",
+    version=metadata.version("management-api"),
     openapi_url=f"{API_PREFIX}/openapi.json",
     docs_url=f"{API_PREFIX}/docs",
     default_response_class=ORJSONResponse,

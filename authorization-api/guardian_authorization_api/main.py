@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 import os
 from contextlib import asynccontextmanager
+from importlib import metadata
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -37,6 +38,7 @@ async def lifespan(fastapi_app: FastAPI):
 app = FastAPI(
     lifespan=lifespan,
     title="Guardian Authorization API",
+    version=metadata.version("authorization-api"),
     openapi_url=f"{API_PREFIX}/openapi.json",
     docs_url=f"{API_PREFIX}/docs",
     default_response_class=ORJSONResponse,
