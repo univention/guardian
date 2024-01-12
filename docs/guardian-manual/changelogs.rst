@@ -71,7 +71,7 @@ Guardian Manual
 2.0 (2024-01-15)
 ----------------
 
-* Add a new upgrade section: :ref:`_upgrade-on-ucs-primary-node`
+* Add a new upgrade section: :ref:`upgrade-on-ucs-primary-node`
 * Remove obsolete settings from configuration documentation
 * Clarified UCS node roles on which the applications can be installed
 
