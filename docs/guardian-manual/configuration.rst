@@ -153,10 +153,6 @@ The available configuration settings and their description follow.
    :external+uv-keycloak-app:envvar:`keycloak/server/sso/fqdn`
    or falls back to the domain name of the UCS system where you installed the application.
 
-.. envvar:: guardian-management-api/oauth/keycloak-client-secret
-
-   Defines the Keycloak client secret that the *Management API* needs for accessing Keycloak.
-
 .. _conf-management-api-authorization:
 
 Authorization
@@ -180,6 +176,18 @@ The available configuration settings and their description follow.
    where you installed the application.
 
 .. _conf-authorization-api:
+
+.. _conf-management-api-other-settings:
+
+Other configuration options
+---------------------------
+
+Changing the Keycloak client secret
+   The Keycloak client secret that the *Management API* needs
+   for accessing Keycloak can be changed by modifying ``/var/lib/univention-appcenter/apps/guardian-management-api/conf/m2m.secret``.
+   Afterwards, run ``univention-app configure guardian-authorization-api`` and ``univention-app restart guardian-authorization-api``
+   to activate the secret.
+
 
 Authorization API
 =================
@@ -285,16 +293,6 @@ The available configuration settings and their description follow.
    Defines the URL of the
    :external+uv-dev-ref:ref:`UDM REST API <udm-rest-api>`
    for data queries.
-
-.. envvar:: guardian-authorization-api/udm_data/username
-
-   Defines the username for authentication against the
-   :external+uv-dev-ref:ref:`UDM REST API <udm-rest-api>`.
-
-.. envvar:: guardian-authorization-api/udm_data/password
-
-   Defines the password for authentication against the
-   :external+uv-dev-ref:ref:`UDM REST API <udm-rest-api>`.
 
 .. _conf-authorization-api-authentication:
 
