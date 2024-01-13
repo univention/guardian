@@ -51,7 +51,6 @@ spec:
          envFrom:
            - configMapRef:
                name: '{{ include "common.names.fullname" . }}'
-
       volumes:
       - name: "secrets"
         secret:

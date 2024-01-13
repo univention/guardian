@@ -37,8 +37,15 @@ spec:
           envFrom:
             - configMapRef:
                 name: '{{ include "common.names.fullname" . }}'
+          volumeMounts:
+            - name: "secrets"
+              mountPath: "/var/secrets"
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+      - name: "secrets"
+        secret:
+          secretName: {{ include "common.names.fullname" . | quote }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

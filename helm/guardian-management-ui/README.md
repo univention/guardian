@@ -166,7 +166,7 @@ null
 			<td>image.tag</td>
 			<td>string</td>
 			<td><pre lang="json">
-"1.0.0"
+"2.0.0"
 </pre>
 </td>
 			<td></td>

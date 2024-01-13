@@ -188,6 +188,15 @@ null
 			<td>Password for authenticating against the UDM REST API</td>
 		</tr>
 		<tr>
+			<td>guardianAuthorizationApi.udmDataAdapterPasswordFile</td>
+			<td>string</td>
+			<td><pre lang="json">
+"/var/secrets/udmDataAdapterPassword"
+</pre>
+</td>
+			<td></td>
+		</tr>
+		<tr>
 			<td>guardianAuthorizationApi.udmDataAdapterUrl</td>
 			<td>string</td>
 			<td><pre lang="json">
@@ -204,6 +213,15 @@ null
 </pre>
 </td>
 			<td>Username for authenticating against the UDM REST API</td>
+		</tr>
+		<tr>
+			<td>guardianAuthorizationApi.udmDataAdapterUsernameFile</td>
+			<td>string</td>
+			<td><pre lang="json">
+"/var/secrets/udmDataAdapterUsername"
+</pre>
+</td>
+			<td></td>
 		</tr>
 		<tr>
 			<td>image.imagePullPolicy</td>
@@ -254,7 +272,7 @@ null
 			<td>image.tag</td>
 			<td>string</td>
 			<td><pre lang="json">
-"1.0.0"
+"2.0.0"
 </pre>
 </td>
 			<td></td>

@@ -22,8 +22,6 @@ data:
   # We can probably drop it, since it is used on some bash termiation script
   IS_UNIVENTION_APPCENTER: "{{ .isUniventionAppCenter }}"
   OAUTH_ADAPTER__WELL_KNOWN_URL: "{{ .oauthAdapterWellKnownUrl }}"
-  # FIXME: This is a secret
-  OAUTH_ADAPTER__M2M_SECRET: "{{ .oauthAdapterM2mSecret }}"
   OAUTH_ADAPTER__M2M_SECRET_FILE: "{{ .oauthAdapterM2mSecretFile }}"
   GUARDIAN__MANAGEMENT__LOGGING__LEVEL: "{{ .guardianManagementLoggingLevel }}"
   GUARDIAN__MANAGEMENT__LOGGING__STRUCTURED: "{{ .guardianManagementLoggingStructured }}"
