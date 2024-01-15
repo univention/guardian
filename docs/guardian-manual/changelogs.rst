@@ -40,8 +40,10 @@ Management API
 ------------------
 
 * Fix ordering of condition parameters.
-* The Keycloak client secret must now be provided with a file
-* Removed setting :envvar:`guardian-management-api/oauth/keycloak-client-secret`
+* Remove App Center settings containing secrets.
+    * Removed setting :envvar:`guardian-management-api/oauth/keycloak-client-secret`.
+* Fix container startup behavior.
+* Update Keycloak setup.
 
 1.1.0 (2023-12-22)
 ------------------
