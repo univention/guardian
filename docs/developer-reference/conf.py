@@ -72,7 +72,6 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 #
 html_theme = "univention_sphinx_book_theme"
 html_theme_options = {
-    "pdf_download_filename": f"{doc_basename}.pdf",
     "show_source_license": True,
     "typesense_search": True,
     "typesense_document": doc_basename,
@@ -96,16 +95,7 @@ if "spelling" in sys.argv:
     spelling_show_suggestions = True
     spelling_word_list_filename = ["spelling_wordlist"]
 
-root_doc = "index"
-
-latex_engine = "lualatex"
-latex_show_pagerefs = True
-latex_show_urls = "footnote"
-latex_documents = [(root_doc, f"{doc_basename}.tex", project, author, "manual", False)]
-latex_elements = {
-    "papersize": "a4paper",
-    "babel": "\\usepackage{babel}",
-}
+root_doc = "contents"
 
 # Sitemap, see https://github.com/jdillard/sphinx-sitemap
 sitemap_url_scheme = "{version}{lang}{link}"
