@@ -55,6 +55,13 @@ Management API
 Management UI
 ==============
 
+2.0.0 (2024-01-15)
+------------------
+
+* Fix container startup behavior.
+* Update Keycloak configuration.
+* Set correct language for accessibility features.
+
 1.1.0 (2023-12-22)
 ------------------
 
