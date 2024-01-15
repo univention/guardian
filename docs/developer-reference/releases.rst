@@ -80,3 +80,32 @@ The release of the Guardian Manual is mostly automated, but contains a couple of
 
 #. If you release a new version, you also have to update the navigation in the `docs-overview-pages <https://git.knut.univention.de/univention/documentation/ucs-doc-overview-pages>`_
    repository. The necessary changes can be derived from this `MR <https://git.knut.univention.de/univention/documentation/ucs-doc-overview-pages/-/merge_requests/26/>`_.
+#. To add the new version to the doc search as well, please create and merge a MR to add the new version,
+   like here `Docsearch <https://git.knut.univention.de/univention/documentation/docsearch/-/merge_requests/7>`_
+
+Release Announcement
+====================
+
+The last step is to announce the new release. Good places are the Rocket.Chat channels ``Guardian`` and an email
+to ``app-announcement@univention.de``. You can use the following template for each app:
+
+.. code-block:: text
+
+   Hello,
+
+   the following App update has been published:
+
+   Guardian Management API $VERSION
+
+   Most important changes:
+
+      * CHANGE1
+      * CHANGE2
+
+   The changelog can be read here:
+
+   https://docs.software-univention.de/guardian-manual/latest/changelogs.html
+
+   Greetings,
+
+   $NAME
