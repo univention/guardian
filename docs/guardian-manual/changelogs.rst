@@ -13,10 +13,13 @@ Authorization API
 2.0.0 (2024-01-15)
 ------------------
 
-* It is no longer needed to provide a UDM password and username.
-* Removed App Center settings :envvar:`guardian-management-api/oauth/keycloak-client-secret`
-  and :envvar:`guardian-authorization-api/udm_data/username`.
+* Remove App Center settings containing secrets.
+    * Removed App Center settings :envvar:`guardian-management-api/oauth/keycloak-client-secret`
+      and :envvar:`guardian-authorization-api/udm_data/username`.
+* Use Machine Account for UDM access.
 * The application can now only be installed on the UCS system roles primary and backup.
+* Fix container startup behavior.
+* Update Keycloak configuration.
 
 1.1.0 (2023-12-22)
 ------------------

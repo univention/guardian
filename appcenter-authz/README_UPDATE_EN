@@ -1,15 +1,18 @@
 <h1>Changelog</h1>
-<h2>v1.0.0 (2023-12-11)</h2>
+<h2>v2.0.0 (2024-01-15)</h2>
 <ul>
-    <li>Initial release</li>
+    <li>Remove App Center settings containing secrets.</li>
+    <li>Use Machine Account for UDM access.</li>
+    <li>The application can now only be installed on the UCS system roles primary and backup.</li>
+    <li>Fix container startup behavior.</li>
+    <li>Update Keycloak configuration.</li>
 </ul>
 <h2>v1.1.0 (2023-12-22)</h2>
 <ul>
-    <li>Remove obsolete App Center settings</li>
-    <li>Migrate docker image to UCS base image</li>
+    <li>Remove obsolete App Center settings.</li>
+    <li>Migrate docker image to UCS base image.</li>
 </ul>
-<h2>v2.0.0 (2024-01-15)</h2>
+<h2>v1.0.0 (2023-12-11)</h2>
 <ul>
-    <li>Remove App Center settings containing secrets</li>
-    <li>The application can now only be installed on the UCS system roles primary and backup.</li>
+    <li>Initial release.</li>
 </ul>
