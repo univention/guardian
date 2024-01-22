@@ -72,6 +72,13 @@ class FastAPIAdapterUtils:
                 app_name=role.app_name,
                 namespace_name=role.namespace_name,
                 name=role.name,
+                context=PoliciesContext(
+                    app_name=role.context.app_name,
+                    namespace_name=role.context.namespace_name,
+                    name=role.context.name,
+                )
+                if role.context
+                else None,
             )
             for role in obj.roles
         ]

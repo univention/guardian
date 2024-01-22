@@ -10,6 +10,11 @@ component and version of the app.
 Authorization API
 =================
 
+2.0.1 (2024-01-22)
+------------------
+
+* Fix a problem, where contexts are not processed correctly.
+
 2.0.0 (2024-01-15)
 ------------------
 

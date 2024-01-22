@@ -360,3 +360,49 @@ class TestFastAPIGetPermissionsAPIAdapter:
                 )
             ],
         )
+
+
+class TestFastAPIAdapterUtils:
+    @pytest.mark.parametrize(
+        "context",
+        [
+            Context(
+                app_name=AppName("app"),
+                namespace_name=NamespaceName("namespace"),
+                name=ContextName("context"),
+            ),
+            None,
+        ],
+    )
+    def test_preserve_context(self, context):
+        authz_obj = AuthzObject(
+            id=AuthzObjectIdentifier("id"),
+            roles=[
+                Role(
+                    app_name=AppName("app"),
+                    namespace_name=NamespaceName("namespace"),
+                    name=AuthzObjectIdentifier("role"),
+                    context=context,
+                )
+            ],
+            attributes={},
+        )
+        result = FastAPIAdapterUtils.authz_to_policy_object(authz_obj)
+        assert result == PolicyObject(
+            id="id",
+            roles=[
+                PoliciesRole(
+                    app_name="app",
+                    namespace_name="namespace",
+                    name="role",
+                    context=PoliciesContext(
+                        app_name=context.app_name,
+                        namespace_name=context.namespace_name,
+                        name=context.name,
+                    )
+                    if context
+                    else None,
+                )
+            ],
+            attributes={},
+        )

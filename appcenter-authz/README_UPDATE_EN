@@ -1,4 +1,8 @@
 <h1>Changelog</h1>
+<h2>v2.0.1 (2024-01-22)</h2>
+<ul>
+    <li>Fix a problem, where contexts are not processed correctly.</li>
+</ul>
 <h2>v2.0.0 (2024-01-15)</h2>
 <ul>
     <li>Remove App Center settings containing secrets.</li>

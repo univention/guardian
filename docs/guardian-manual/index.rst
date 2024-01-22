@@ -91,7 +91,7 @@ for app infrastructure maintainers
 are the following ones:
 
 * :ref:`installation`
-* :ref:`configuration`
+* :ref:`conf`
 * :ref:`trouble`
 
 .. _app-developers-audience:

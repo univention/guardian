@@ -106,7 +106,7 @@ use the following commands for the respective Guardian component:
 First time installation and configuration
 =========================================
 
-Make sure that you complete all steps of the :ref:`configuration <configuration>` process.
+Make sure that you complete all steps of the :ref:`configuration <conf>` process.
 Services don't work properly if the configuration isn't complete.
 
 .. _trouble-management-ui:
