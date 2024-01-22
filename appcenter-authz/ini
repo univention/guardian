@@ -35,6 +35,7 @@ License = free
 Contact = sales@univention.de
 SupportURL = https://www.univention.com/products/support/enterprise-support/
 SupportType = univention
+NotificationEmail = appcenter-reporting@univention.de
 
 [de]
 Description = Kontrollinstanz, um die Berechtigungen einer Rolle zu überprüfen.

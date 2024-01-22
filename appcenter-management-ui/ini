@@ -34,6 +34,7 @@ License = free
 Contact = sales@univention.de
 SupportURL = https://www.univention.com/products/support/enterprise-support/
 SupportType = univention
+NotificationEmail = appcenter-reporting@univention.de
 
 [de]
 Description = Web-Interface zur Verwaltung der Rollen und Rechte von Objekten.
