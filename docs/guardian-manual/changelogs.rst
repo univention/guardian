@@ -96,6 +96,14 @@ Guardian Manual
 * Clarify UCS node roles on which the applications can be installed.
 * Add upgrade instructions.
 
+Minor changes
+~~~~~~~~~~~~~
+
+2024-01-24
+""""""""""
+
+* Fix some broken references.
+
 1.1 (2023-12-22)
 ----------------
 
