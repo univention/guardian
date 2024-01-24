@@ -18,19 +18,26 @@ Authorization API
 2.0.0 (2024-01-15)
 ------------------
 
-* Remove App Center settings containing secrets.
-    * Removed App Center settings :envvar:`guardian-management-api/oauth/keycloak-client-secret`
-      and :envvar:`guardian-authorization-api/udm_data/username`.
+* Remove App Center settings containing secrets:
+
+  * :envvar:`guardian-management-api/oauth/keycloak-client-secret`
+  * :envvar:`guardian-authorization-api/udm_data/username`
+
 * Use Machine Account for UDM access.
-* The application can now only be installed on the UCS system roles primary and backup.
+
+* The application now only allows installation on the UCS system roles
+  Primary Directory Node and Backup Directory Node.
+
 * Fix container startup behavior.
+
 * Update Keycloak configuration.
 
 1.1.0 (2023-12-22)
 ------------------
 
 * Remove obsolete App Center settings.
-* Migrate docker image to UCS base image.
+
+* Migrate Docker image to UCS base image.
 
 1.0.0 (2023-12-11)
 ------------------
@@ -45,9 +52,12 @@ Management API
 ------------------
 
 * Fix ordering of condition parameters.
-* Remove App Center settings containing secrets.
-    * Removed setting :envvar:`guardian-management-api/oauth/keycloak-client-secret`.
+
+* Remove App Center settings containing secrets:
+  :envvar:`guardian-management-api/oauth/keycloak-client-secret`
+
 * Fix container startup behavior.
+
 * Update Keycloak setup.
 
 1.1.0 (2023-12-22)
