@@ -30,26 +30,26 @@ After installing Vagrant and a suitable provider on your system, you can create 
 
 The Vagrantfile allows for some configuration via environmental variables:
 
-.. envvar:: PROVISION_SSH_KEY
+.. envvar:: VAGRANT_PROVISION_SSH_KEY
 
 If set (any value will do), your ssh key is copied from the host to the guest machine.
 
-.. envvar:: GIT_SSH_PRIVATE_KEY_SOURCE
+.. envvar:: VAGRANT_GIT_SSH_PRIVATE_KEY_SOURCE
 
 Set this variable to your private ssh key, if it is not located at ``$HOME/.ssh/id_rsa``.
 
-.. envvar:: GIT_SSH_PRIVATE_KEY_DESTINATION
+.. envvar:: VAGRANT_GIT_SSH_PRIVATE_KEY_DESTINATION
 
 Set this variable to the path, the ssh key should be copied to in the guest.
 If unset, the key will be copied to the same location within the guest, as specified in the source variable. This
 might be necessary to accommodate some specific ssh config.
 
-.. envvar:: PROVISION_SSH_CONFIG
+.. envvar:: VAGRANT_PROVISION_SSH_CONFIG
 
 If set (any value will do), your ssh config, assumed to be located at ``$HOME/.ssh/config``, is copied
 from the host to the guest.
 
-.. envvar:: PROVISION_GIT_CONFIG
+.. envvar:: VAGRANT_PROVISION_GIT_CONFIG
 
 If set (any value will do), your global git config, assumed to be located at ``$HOME/.gitconfig``,
 is copied from the host to the guest.
@@ -61,7 +61,7 @@ With all that you might set up your development environment like this:
 
 .. code-block:: bash
 
-   PROVISION_SSH_KEY=1 GIT_SSH_PRIVATE_KEY_SOURCE='~/.ssh/work' PROVISION_GIT_CONFIG=1 PROVISION_SSH_CONFIG=1 vagrant up
+   VAGRANT_PROVISION_SSH_KEY=1 VAGRANT_GIT_SSH_PRIVATE_KEY_SOURCE='~/.ssh/work' VAGRANT_PROVISION_GIT_CONFIG=1 VAGRANT_PROVISION_SSH_CONFIG=1 vagrant up
 
 .. note::
 
