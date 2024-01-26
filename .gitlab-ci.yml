@@ -434,4 +434,4 @@ docs-create-production-merge-request:
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
       changes:
-      - docs/**/*
+      - $DOCS_DIR/**/*
