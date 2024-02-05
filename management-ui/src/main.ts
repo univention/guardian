@@ -4,7 +4,6 @@ import i18next from 'i18next';
 import {createPinia} from 'pinia';
 
 import '@univention/univention-veb/style.css';
-import '@/assets/style.styl';
 
 import App from '@/App.vue';
 import router from '@/router';
