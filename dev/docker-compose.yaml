@@ -1,0 +1,214 @@
+# Copyright (C) 2024 Univention GmbH
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
+services:
+  install_deps:
+    image: guardian-dev:latest
+    build: &docker-build
+      dockerfile: dev/Dockerfile
+      context: ../
+    container_name: guardian-install_deps
+    command: ["dev/scripts/install_deps.sh"]
+    profiles:
+      - clean-profile
+      - dev-server
+    user: $DOCKER_USER
+    extra_hosts: &extra_hosts
+      - git.knut.univention.de:${GITLAB_IP}
+      - host.docker.internal:host-gateway
+    volumes: &default-volumes
+      - ../:/src
+    env_file: &env-files
+      - path: .env
+  db_provisioning:
+    image: guardian-dev:latest
+    build: *docker-build
+    container_name: guardian-db_provisioning
+    command: [ "poetry", "run", "alembic", "upgrade", "head" ]
+    working_dir: /src/management-api
+    profiles:
+      - clean-profile
+      - dev-server
+    depends_on:
+      install_deps:
+        condition: service_completed_successfully
+    user: $DOCKER_USER
+    extra_hosts: *extra_hosts
+    volumes: *default-volumes
+    env_file: *env-files
+  run_command:
+    image: guardian-dev:latest
+    build: *docker-build
+    container_name: guardian-run_command
+    command: [ "echo", "'You should provide a command.'" ]
+    profiles:
+      - clean-profile
+    depends_on:
+      install_deps:
+        condition: service_completed_successfully
+    user: $DOCKER_USER
+    extra_hosts: *extra_hosts
+    volumes: *default-volumes
+    env_file: *env-files
+  proxy:
+    image: traefik:v2.11
+    container_name: guardian-proxy
+    command:
+      - --providers.docker
+      - --entryPoints.web.address=:${PROXY_PORT}
+    hostname: guardian-proxy
+    profiles:
+      - clean-profile
+      - dev-server
+    extra_hosts: *extra_hosts
+    ports:
+      - "${PROXY_PORT}:${PROXY_PORT}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    env_file: *env-files
+  keycloak:
+    image: guardian-keycloak:latest
+    build:
+      context: ../
+      dockerfile: dev/keycloak/Dockerfile
+    container_name: guardian-keycloak
+    command: start --optimized
+    healthcheck:
+      test: "/opt/keycloak/bin/kcadm.sh get realms/GuardianDev --server http://localhost:8080/keycloak --realm master --user admin --password admin"
+      interval: 30s
+      timeout: 10s
+      retries: 30
+      start_period: 40s
+      start_interval: 2s
+    hostname: keycloak
+    profiles:
+      - clean-profile
+      - dev-server
+    depends_on:
+      - proxy
+      - keycloak-provisioning
+    labels:
+      traefik.http.routers.keycloak.entrypoints: web
+      traefik.http.routers.keycloak.rule: PathPrefix(`/keycloak`)
+      traefik.http.routers.keycloak.service: keycloak
+      traefik.http.services.keycloak.loadbalancer.server.port: 8080
+      traefik.http.middlewares.customheaders.headers.customrequestheaders.X-Forwarded-Proto: http
+      traefik.http.routers.keycloak.middlewares: customheaders
+  keycloak-provisioning:
+    image: guardian-keycloak-provisioning:latest
+    container_name: guardian-keycloak-provisioning
+    build:
+      context: ../
+      dockerfile: dev/keycloak/provisioning/Dockerfile
+    profiles:
+      - clean-profile
+      - dev-server
+  opa:
+    image: guardian-opa:latest
+    container_name: guardian-opa
+    hostname: opa
+    build: ../opa/
+    profiles:
+      - clean-profile
+      - dev-server
+    depends_on:
+      proxy:
+        condition: service_started
+      management-api:
+        condition: service_started
+    env_file: *env-files
+  management-api:
+    image: guardian-dev:latest
+    build: *docker-build
+    container_name: guardian-management-api
+    command:
+      - "poetry"
+      - "-C"
+      - "management-api"
+      - "run"
+      - "uvicorn"
+      - "--reload"
+      - "--log-level"
+      - "debug"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8000"
+      - "guardian_management_api.main:app"
+    profiles:
+      - clean-profile
+      - dev-server
+    depends_on:
+      install_deps:
+        condition: service_completed_successfully
+      db_provisioning:
+        condition: service_completed_successfully
+      proxy:
+        condition: service_started
+      keycloak:
+        condition: service_healthy
+    user: $DOCKER_USER
+    extra_hosts: *extra_hosts
+    volumes: *default-volumes
+    env_file: *env-files
+    labels:
+      traefik.http.routers.management.entrypoints: web
+      traefik.http.routers.management.rule: PathPrefix(`/guardian/management`)
+      traefik.http.routers.management.service: management
+      traefik.http.services.management.loadbalancer.server.port: 8000
+  authorization-api:
+    image: guardian-dev:latest
+    build: *docker-build
+    container_name: guardian-authorization-api
+    command:
+      - "poetry"
+      - "-C"
+      - "authorization-api"
+      - "run"
+      - "uvicorn"
+      - "--reload"
+      - "--log-level"
+      - "debug"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8000"
+      - "guardian_authorization_api.main:app"
+    profiles:
+      - clean-profile
+      - dev-server
+    depends_on:
+      install_deps:
+        condition: service_completed_successfully
+      proxy:
+        condition: service_started
+      keycloak:
+        condition: service_healthy
+    user: $DOCKER_USER
+    extra_hosts: *extra_hosts
+    volumes: *default-volumes
+    env_file: *env-files
+    labels:
+      traefik.http.routers.authz.entrypoints: web
+      traefik.http.routers.authz.rule: PathPrefix(`/guardian/authorization`)
+      traefik.http.routers.authz.service: authz
+      traefik.http.services.authz.loadbalancer.server.port: 8000
+  sphinx:
+    image: docker-registry.knut.univention.de/sphinx:latest
+    pull_policy: always
+    container_name: guardian-sphinx
+    command: ["make", "-C", "docs/guardian-manual/", "livehtml"]
+    working_dir: /project
+    profiles:
+      - sphinx
+      - clean-profile
+    user: $DOCKER_USER
+    extra_hosts: *extra_hosts
+    ports:
+      - "${SPHINX_PORT}:${SPHINX_PORT}"
+    volumes:
+      - ../:/project
+    env_file: *env-files
+    environment:
+      SPHINXOPTS: "--host 0.0.0.0 --port ${SPHINX_PORT}"

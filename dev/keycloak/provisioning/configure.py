@@ -2,11 +2,10 @@ import json
 import logging
 import time
 
+import keycloak
 import requests
 
-import keycloak
-
-KEYCLOAK_URL = "http://keycloak:8080/guardian/keycloak/"
+KEYCLOAK_URL = "http://keycloak:8080/keycloak/"
 
 logger = None
 

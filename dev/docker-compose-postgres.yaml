@@ -26,8 +26,11 @@ services:
       - SQL_PERSISTENCE_ADAPTER__PASSWORD=postgres
   db:
     image: postgres:bookworm
-    container_name: postgres-db
+    container_name: guardian-postgres
     command: []
+    profiles:
+      - clean-profile
+      - dev-server
     user: postgres
     environment:
       - POSTGRES_USER=postgres
