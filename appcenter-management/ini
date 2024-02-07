@@ -3,7 +3,7 @@ ID = guardian-management-api
 Code = 49
 Version = 2.0.1
 Name = Guardian Management API
-Vendor = Univention
+Vendor = Univention GmbH
 DockerScriptRestoreDataAfterSetup =
 DockerScriptStoreData =
 DockerScriptUpdateAvailable =
@@ -37,8 +37,7 @@ Description = API to create, delete and edit roles in the product.
 LongDescription = <p>This app is part of the UCS product component "Guardian".
 	The Management API is required to create, delete and edit roles in the
 	product.</p>
-WebsiteMaintainer = https://www.univention.com/
-Maintainer = Univention GmbH
+WebsiteVendor = https://www.univention.com/
 License = free
 Contact = sales@univention.de
 SupportURL = https://www.univention.com/products/support/enterprise-support/
@@ -50,6 +49,5 @@ Description = API um Rollen im Produkt anzulegen, zu löschen und zu editieren.
 LongDescription = <p>Diese App ist Teil der UCS Produktkomponente "Guardian".
 	Die Management-API wird benötigt um Rollen im Produkt anzulegen, zu löschen
 	und zu editieren.</p>
-Maintainer = Univention GmbH
-WebsiteMaintainer = https://www.univention.de/
+WebsiteVendor = https://www.univention.de/
 SupportURL = https://www.univention.de/produkte/support/enterprise-support/

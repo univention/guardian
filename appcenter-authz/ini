@@ -3,7 +3,7 @@ ID = guardian-authorization-api
 Code = 47
 Version = 2.0.2
 Name = Guardian Authorization API
-Vendor = Univention
+Vendor = Univention GmbH
 DockerScriptRestoreDataAfterSetup =
 DockerScriptStoreData =
 DockerScriptUpdateAvailable =
@@ -29,8 +29,7 @@ Description = Control instance to check the capabilities of a role.
 LongDescription = <p>This app is part of the UCS product component "Guardian".
 	The Authorization API is used as a control instance to check the capabilities
 	of a role.</p>
-WebsiteMaintainer = https://www.univention.com/
-Maintainer = Univention GmbH
+WebsiteVendor = https://www.univention.com/
 License = free
 Contact = sales@univention.de
 SupportURL = https://www.univention.com/products/support/enterprise-support/
@@ -42,6 +41,5 @@ Description = Kontrollinstanz, um die Berechtigungen einer Rolle zu überprüfen
 LongDescription = <p>Diese App ist Teil der UCS Produktkomponente "Guardian".
 	Die Autorisierungs-API wird als Kontrollinstanz eingesetzt, um die
 	Berechtigungen einer Rolle zu überprüfen.</p>
-Maintainer = Univention GmbH
-WebsiteMaintainer = https://www.univention.de/
+WebsiteVendor = https://www.univention.de/
 SupportURL = https://www.univention.de/produkte/support/enterprise-support/

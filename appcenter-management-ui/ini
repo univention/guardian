@@ -3,7 +3,7 @@ ID = guardian-management-ui
 Code = 4D
 Version = 2.0.1
 Name = Guardian Management UI
-Vendor = Univention
+Vendor = Univention GmbH
 DockerScriptRestoreDataAfterSetup =
 DockerScriptStoreData =
 DockerScriptUpdateAvailable =
@@ -28,8 +28,7 @@ Description = Web interface to administrate the rights and roles of objects.
 LongDescription = <p>This app is part of the UCS product component "Guardian".
 	Via the web interface roles in the product can be created, deleted and
 	edited.</p>
-WebsiteMaintainer = https://www.univention.com/
-Maintainer = Univention GmbH
+WebsiteVendor = https://www.univention.com/
 License = free
 Contact = sales@univention.de
 SupportURL = https://www.univention.com/products/support/enterprise-support/
@@ -41,6 +40,5 @@ Description = Web-Interface zur Verwaltung der Rollen und Rechte von Objekten.
 LongDescription = <p>Diese App ist Teil der UCS Produktkomponente "Guardian".
 	Über das Web-Interface können Rollen im Produkt angelegt, gelöscht und editiert
 	werden.</p>
-Maintainer = Univention GmbH
-WebsiteMaintainer = https://www.univention.de/
+WebsiteVendor = https://www.univention.de/
 SupportURL = https://www.univention.de/produkte/support/enterprise-support/
