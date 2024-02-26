@@ -1642,7 +1642,10 @@ onMounted(async () => {
 
 <template>
   <template></template>
-  <main v-if="!loading" class="testView">
+  <main
+    v-if="!loading"
+    class="testView"
+  >
     <h1><RouterLink :to="{name: 'testsMain'}">Manual Tests</RouterLink></h1>
 
     <h2>Data Adapter Tests</h2>
@@ -1806,7 +1809,10 @@ onMounted(async () => {
           :itemsPerPageOptions="[20, 50, -1]"
         />
       </div>
-      <div v-if="config[currentAdapter.currentTab].editForm !== null" class="uContainer uCard dataDisplay">
+      <div
+        v-if="config[currentAdapter.currentTab].editForm !== null"
+        class="uContainer uCard dataDisplay"
+      >
         <h3>
           {{ currentAdapter.state[currentAdapter.currentTab].editForm.mode.charAt(0).toUpperCase()
           }}{{ currentAdapter.state[currentAdapter.currentTab].editForm.mode.slice(1) }} {{ currentAdapter.currentTab }}

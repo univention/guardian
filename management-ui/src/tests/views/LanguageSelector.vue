@@ -45,7 +45,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <main v-if="!loading" class="testView">
+  <main
+    v-if="!loading"
+    class="testView"
+  >
     <h1><RouterLink :to="{name: 'testsMain'}">Manual Tests</RouterLink></h1>
 
     <h2>Language Tests</h2>
@@ -55,12 +58,34 @@ onMounted(() => {
         <p>Switch the language of the UI, without the need for the Portal</p>
 
         <div class="testButtonsWrapper">
-          <UButton :class="{'uButton--flat': lang !== en}" type="button" label="English" @click="useEnglish" />
-          <UButton :class="{'uButton--flat': lang !== de}" type="button" label="German" @click="useGerman" />
-          <UButton :class="{'uButton--flat': lang !== ''}" type="button" label="None" @click="clearLanguage" />
+          <UButton
+            :class="{'uButton--flat': lang !== en}"
+            type="button"
+            label="English"
+            @click="useEnglish"
+          />
+          <UButton
+            :class="{'uButton--flat': lang !== de}"
+            type="button"
+            label="German"
+            @click="useGerman"
+          />
+          <UButton
+            :class="{'uButton--flat': lang !== ''}"
+            type="button"
+            label="None"
+            @click="clearLanguage"
+          />
         </div>
 
-        <p><RouterLink :to="{name: 'landing'}" target="_blank">View Language in App</RouterLink></p>
+        <p>
+          <RouterLink
+            :to="{name: 'landing'}"
+            target="_blank"
+          >
+            View Language in App
+          </RouterLink>
+        </p>
       </div>
     </div>
   </main>

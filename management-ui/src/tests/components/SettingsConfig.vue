@@ -12,7 +12,10 @@ export default {
 
 <template>
   <table class="config-display-table">
-    <tr v-for="(item, key) in configObj" :key="key">
+    <tr
+      v-for="(item, key) in configObj"
+      :key="key"
+    >
       <td>
         <label class="testLabel">{{ key }}:</label>
       </td>

@@ -32,7 +32,10 @@ onMounted(async () => {
 
 <template>
   <template></template>
-  <main v-if="!loading" class="testView">
+  <main
+    v-if="!loading"
+    class="testView"
+  >
     <h1><RouterLink :to="{name: 'testsMain'}">Manual Tests</RouterLink></h1>
 
     <h2>Settings Adapter Tests</h2>

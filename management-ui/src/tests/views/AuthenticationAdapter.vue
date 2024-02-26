@@ -225,7 +225,10 @@ onMounted(async () => {
 </script>
 
 <template>
-  <main v-if="!loading" class="testView">
+  <main
+    v-if="!loading"
+    class="testView"
+  >
     <h1><RouterLink :to="{name: 'testsMain'}">Manual Tests</RouterLink></h1>
     <h2>Authentication Adapter Tests</h2>
 
@@ -279,18 +282,35 @@ onMounted(async () => {
           </tr>
         </table>
 
-        <UButton v-show="!currentAdapter?.adapter.authenticated" type="button" label="Login" @click="login" />
+        <UButton
+          v-show="!currentAdapter?.adapter.authenticated"
+          type="button"
+          label="Login"
+          @click="login"
+        />
 
-        <UButton v-show="currentAdapter?.adapter.authenticated" type="button" label="Logout" @click="logout" />
+        <UButton
+          v-show="currentAdapter?.adapter.authenticated"
+          type="button"
+          label="Logout"
+          @click="logout"
+        />
         <p class="error">{{ currentAdapter?.error }}</p>
 
         <h3>Authorization Header:</h3>
-        <UButton type="button" label="Get Authorization Header" @click="getAuthorizationHeader" />
+        <UButton
+          type="button"
+          label="Get Authorization Header"
+          @click="getAuthorizationHeader"
+        />
 
         <p class="token">{{ currentAdapter?.token }}</p>
       </div>
 
-      <div v-if="currentAdapter?.name === 'keycloak'" class="uContainer uCard">
+      <div
+        v-if="currentAdapter?.name === 'keycloak'"
+        class="uContainer uCard"
+      >
         <h3>Update Adapter Configuration</h3>
         <template v-if="settingsStore.config.authenticationPort.adapter === 'keycloak'">
           <p>
@@ -322,11 +342,18 @@ onMounted(async () => {
             description="The client ID to use when talking to Keycloak"
           />
 
-          <UButton type="button" label="Update Adapter Settings and Logout" @click="updateKeycloakSettings" />
+          <UButton
+            type="button"
+            label="Update Adapter Settings and Logout"
+            @click="updateKeycloakSettings"
+          />
         </template>
       </div>
 
-      <div v-if="currentAdapter?.name === 'configured'" class="uContainer uCard">
+      <div
+        v-if="currentAdapter?.name === 'configured'"
+        class="uContainer uCard"
+      >
         <h3>Current Settings</h3>
         <SettingsConfig :configObj="settingsStore.config.authenticationPort" />
       </div>
