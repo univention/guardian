@@ -397,13 +397,25 @@ const heading = computed(() => {
 </script>
 
 <template>
-  <main v-if="!loading" class="listView">
-    <div class="listView__header" :class="`listView__header--${props.objectType}`">
+  <main
+    v-if="!loading"
+    class="listView"
+  >
+    <div
+      class="listView__header"
+      :class="`listView__header--${props.objectType}`"
+    >
       <h1 class="listView__header__heading">
         {{ heading }}
       </h1>
-      <div v-if="props.objectType === 'capability'" class="listView__header__buttons">
-        <RouterLink class="uButton routerButton" :to="{name: 'editRole', query: {back: 'true'}}">
+      <div
+        v-if="props.objectType === 'capability'"
+        class="listView__header__buttons"
+      >
+        <RouterLink
+          class="uButton routerButton"
+          :to="{name: 'editRole', query: {back: 'true'}}"
+        >
           {{ t('EditView.button.back') }}
         </RouterLink>
       </div>
@@ -411,15 +423,25 @@ const heading = computed(() => {
     <div class="routeButtonsWrapper">
       <div class="routeButtons">
         <template v-if="props.objectType === 'capability'">
-          <RouterLink class="uButton uButton--flat" :to="{name: 'editRole'}">
+          <RouterLink
+            class="uButton uButton--flat"
+            :to="{name: 'editRole'}"
+          >
             {{ t('EditView.headerLink.editRole') }}
           </RouterLink>
-          <RouterLink class="uButton" :to="{name: 'listCapabilities'}">
+          <RouterLink
+            class="uButton"
+            :to="{name: 'listCapabilities'}"
+          >
             {{ t('EditView.headerLink.listCapabilities') }}
           </RouterLink>
         </template>
         <template v-else>
-          <RouterLink class="uButton" :class="{'uButton--flat': props.objectType !== 'role'}" :to="{name: 'listRoles'}">
+          <RouterLink
+            class="uButton"
+            :class="{'uButton--flat': props.objectType !== 'role'}"
+            :to="{name: 'listRoles'}"
+          >
             {{ t('ListView.heading.role') }}
           </RouterLink>
           <RouterLink
@@ -450,8 +472,17 @@ const heading = computed(() => {
         />
       </div>
       <div class="searchForm__buttons">
-        <UButton type="button" :label="t('ListView.searchForm.resetButtonLabel')" @click="reset" />
-        <UButton primary type="submit" icon="search" :label="t('ListView.searchForm.searchButtonLabel')" />
+        <UButton
+          type="button"
+          :label="t('ListView.searchForm.resetButtonLabel')"
+          @click="reset"
+        />
+        <UButton
+          primary
+          type="submit"
+          icon="search"
+          :label="t('ListView.searchForm.searchButtonLabel')"
+        />
       </div>
     </form>
     <template v-if="props.objectType === 'capability'">
@@ -541,7 +572,12 @@ const heading = computed(() => {
             {{ t('DeleteModalError.description') }}
           </p>
           <ul>
-            <li v-for="fail in deleteModalError.failedCapabilities" :key="fail.id">{{ fail.id }} - {{ fail.error }}</li>
+            <li
+              v-for="fail in deleteModalError.failedCapabilities"
+              :key="fail.id"
+            >
+              {{ fail.id }} - {{ fail.error }}
+            </li>
           </ul>
         </div>
       </template>

@@ -15,7 +15,11 @@ const goHome = () => {
   <main class="notFoundView">
     <h1>404: {{ t('NotFoundView.header') }}</h1>
     <p>{{ t('NotFoundView.body.text') }}</p>
-    <UButton type="button" :label="t('NotFoundView.button.home')" @click="goHome" />
+    <UButton
+      type="button"
+      :label="t('NotFoundView.button.home')"
+      @click="goHome"
+    />
   </main>
 </template>
 

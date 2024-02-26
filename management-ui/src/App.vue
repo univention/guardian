@@ -48,7 +48,10 @@ onMounted(async () => {
 <template>
   <UStandbyFullScreen :active="loading" />
   <template v-if="!loading">
-    <div v-if="errors.activeError && errors.activeError.unRecoverable" class="app__errorMessage">
+    <div
+      v-if="errors.activeError && errors.activeError.unRecoverable"
+      class="app__errorMessage"
+    >
       <div class="uCard uContainer">
         <h1 v-if="errors.activeError.title">
           {{ errors.activeError.title }}
@@ -56,7 +59,10 @@ onMounted(async () => {
         {{ errors.activeError.message }}
       </div>
     </div>
-    <RouterView v-else v-slot="{Component}">
+    <RouterView
+      v-else
+      v-slot="{Component}"
+    >
       <KeepAlive :include="['ListView']">
         <component :is="Component" />
       </KeepAlive>

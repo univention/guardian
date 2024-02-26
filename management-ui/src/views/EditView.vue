@@ -582,7 +582,10 @@ const hideRoleEdit = computed(() => {
       class="editView"
       :class="[`editView--${props.objectType}`, `editView--${props.action}`]"
     >
-      <div class="editView__stickyHeader" :class="{'editView__stickyHeader--bordered': windowScroll > 0}">
+      <div
+        class="editView__stickyHeader"
+        :class="{'editView__stickyHeader--bordered': windowScroll > 0}"
+      >
         <div class="listView__header">
           <h1 class="listView__header__heading">
             {{ heading }}
@@ -602,12 +605,22 @@ const hideRoleEdit = computed(() => {
               primary
               @click="save"
             />
-            <UButton :label="t('EditView.button.back')" @click="tryBack(false)" />
+            <UButton
+              :label="t('EditView.button.back')"
+              @click="tryBack(false)"
+            />
           </div>
         </div>
-        <div v-if="props.objectType === 'role' && props.action === 'edit'" class="routeButtonsWrapper">
+        <div
+          v-if="props.objectType === 'role' && props.action === 'edit'"
+          class="routeButtonsWrapper"
+        >
           <div class="routeButtons">
-            <RouterLink class="uButton" :class="{'uButton--flat': route.name !== 'editRole'}" :to="{name: 'editRole'}">
+            <RouterLink
+              class="uButton"
+              :class="{'uButton--flat': route.name !== 'editRole'}"
+              :to="{name: 'editRole'}"
+            >
               {{ t('EditView.headerLink.editRole') }}
             </RouterLink>
             <RouterLink
@@ -620,7 +633,10 @@ const hideRoleEdit = computed(() => {
           </div>
         </div>
       </div>
-      <div v-if="nonModalError !== ''" class="editView__notFoundError">
+      <div
+        v-if="nonModalError !== ''"
+        class="editView__notFoundError"
+      >
         <UIcon icon="alert-circle" />
         <h1>{{ nonModalError }}</h1>
       </div>
@@ -659,17 +675,30 @@ const hideRoleEdit = computed(() => {
             <div class="editView__form__pageHeading">
               {{ page.label }}
             </div>
-            <div v-for="fieldset in page.fieldsets" :key="fieldset.label">
-              <div class="editView__accordion" @click="updateAccordionState(fieldset.name)">
+            <div
+              v-for="fieldset in page.fieldsets"
+              :key="fieldset.label"
+            >
+              <div
+                class="editView__accordion"
+                @click="updateAccordionState(fieldset.name)"
+              >
                 <div class="editView__accordion__label">
                   {{ fieldset.label }}
                 </div>
                 <UIcon :icon="accordionOpen(fieldset.name) ? 'chevron-up' : 'chevron-down'" />
               </div>
               <UTransitionHeight>
-                <div v-show="accordionOpen(fieldset.name)" class="editView__accordion__contentWrapper">
+                <div
+                  v-show="accordionOpen(fieldset.name)"
+                  class="editView__accordion__contentWrapper"
+                >
                   <div class="editView__accordion__content">
-                    <div v-for="(row, index) in fieldset.rows" :key="index" class="editView__form__row">
+                    <div
+                      v-for="(row, index) in fieldset.rows"
+                      :key="index"
+                      class="editView__form__row"
+                    >
                       <component
                         :is="components[field.type]"
                         v-for="field in getRow(row)"
@@ -684,7 +713,11 @@ const hideRoleEdit = computed(() => {
               </UTransitionHeight>
             </div>
           </div>
-          <button class="sr-only" type="submit" tabindex="-1">
+          <button
+            class="sr-only"
+            type="submit"
+            tabindex="-1"
+          >
             {{ t('EditView.button.save') }}
           </button>
         </form>
@@ -729,7 +762,10 @@ const hideRoleEdit = computed(() => {
           <template v-else>
             <p>{{ t('EditViewSaveFailedModal.fieldErrors.description') }}</p>
             <ul>
-              <li v-for="err in saveFailedModal.error.errors" :key="err.field">
+              <li
+                v-for="err in saveFailedModal.error.errors"
+                :key="err.field"
+              >
                 {{ getLabel(err.field) }}: {{ err.message }}
               </li>
             </ul>
@@ -744,7 +780,10 @@ const hideRoleEdit = computed(() => {
         @confirm="forceBack(true)"
       />
     </main>
-    <RouterView v-if="props.objectType === 'role'" v-slot="{Component}">
+    <RouterView
+      v-if="props.objectType === 'role'"
+      v-slot="{Component}"
+    >
       <KeepAlive :include="['ListView']">
         <component :is="Component" />
       </KeepAlive>
