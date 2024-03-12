@@ -160,10 +160,9 @@ latex_elements = {
     "babel": "\\usepackage{babel}",
 }
 
-# Sitemap, see https://github.com/jdillard/sphinx-sitemap
-sitemap_url_scheme = "{version}{lang}{link}"
-html_baseurl = ""
-
+# https://git.knut.univention.de/univention/documentation/univention_sphinx_extension#multiple-releases-and-multiple-languages
+univention_use_doc_base = True
+univention_release_language_scheme = "{release}"
 
 # Configure Univention feedback link
 # See https://git.knut.univention.de/univention/documentation/univention_sphinx_extension#univention_feedback
