@@ -1,4 +1,8 @@
 <h1>Changelog</h1>
+<h2>v2.0.1 (2024-03-12)</h2>
+<ul>
+    <li>Fix a bug where the permissions of a target could not be returned, if the old_target was empty</li>
+</ul>
 <h2>v2.0.0 (2024-01-15)</h2>
 <ul>
     <li>Fix ordering of condition parameters.</li>

@@ -70,7 +70,7 @@ get_permissions contains result if {
 	)
 
 	result := {
-		"target_id": target_object.old.id,
+		"target_id": extract_target_id(target_object),
 		"permissions": permissions,
 	}
 }

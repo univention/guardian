@@ -213,6 +213,34 @@ test_get_permissions_empty_input if {
 	result == set()
 }
 
+test_get_permissions_empty_old_target if {
+	# The input data is irrelevant. We just want to make sure that a result is generated for targets without old data
+	inp = {
+		"actor": {
+			"id": "actor_id_1",
+			"roles": {"ucsschool:users:admin"},
+		},
+		"targets": [
+			{
+				"old": null,
+				"new": {"id": "target_id_1"},
+			},
+			{
+				"old": {},
+				"new": {"id": "target_id_2"},
+			},
+		],
+		"namespaces": {},
+		"contexts": {},
+		"extra_args": {},
+	}
+	result = get_permissions with input as inp with data.guardian.mapping as data.univention.test_mapping
+
+	# regal ignore: print-or-trace-call
+	print("TEST_DEBUG -- result: ", result)
+	result == {{"permissions": set(), "target_id": "target_id_1"}, {"permissions": set(), "target_id": "target_id_2"}}
+}
+
 test_get_permissions_wrong_role if {
 	inp = {
 		"actor": {
