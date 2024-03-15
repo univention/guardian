@@ -383,14 +383,15 @@
     "@typescript-eslint/types" "5.62.0"
     eslint-visitor-keys "^3.3.0"
 
-"@univention/univention-veb@0.0.59":
-  version "0.0.59"
-  resolved "https://git.knut.univention.de/api/v4/projects/666/packages/npm/@univention/univention-veb/-/@univention/univention-veb-0.0.59.tgz#e49a544e86a214c42d97bf55551040244f2fe87d"
-  integrity sha1-5JpUToaiFMQtl79VVRBAJE8v6H0=
+"@univention/univention-veb@0.0.63":
+  version "0.0.63"
+  resolved "https://git.knut.univention.de/api/v4/projects/666/packages/npm/@univention/univention-veb/-/@univention/univention-veb-0.0.63.tgz#c7da83ea26d56642399e86905ee9ff3e19a226cc"
+  integrity sha1-x9qD6ibVZkI5noaQXun/PhmiJsw=
   dependencies:
     focus-trap "^7.0.0"
     i18next "^23.2.11"
     i18next-vue "^2.0.0"
+    keycloak-js "22.0.1"
     vue "^3.2.37"
 
 "@vitejs/plugin-vue@^4.2.3":
