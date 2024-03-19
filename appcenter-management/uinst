@@ -6,15 +6,16 @@
 #  Join script that runs on the docker host.
 #
 
-VERSION=1
+VERSION=2
 
 APP_ID="guardian-management-api"
 
 . /usr/share/univention-join/joinscripthelper.lib || exit 1
+eval "$(ucr shell)" || exit 1
 
 joinscript_init
 
-# nothing to do, this unjoin script exists solely to execute:
+udm computers/"$server_role" modify "$@" --dn "$ldap_hostdn" --remove service="guardian-management-api" || die
 
 joinscript_remove_script_from_status_file "$APP_ID"
 

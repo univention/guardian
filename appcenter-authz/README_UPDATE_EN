@@ -1,4 +1,8 @@
 <h1>Changelog</h1>
+<h2>v2.0.2 (2024-03-19)</h2>
+<ul>
+    <li>Add service entry for Guardian Authorization API to host server in UDM.</li>
+</ul>
 <h2>v2.0.1 (2024-01-22)</h2>
 <ul>
     <li>Fix a problem, where contexts are not processed correctly.</li>

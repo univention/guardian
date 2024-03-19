@@ -6,13 +6,14 @@
 #  Join script that runs on the docker host.
 #
 
-VERSION=2
+VERSION=3
 APP_ID="guardian-authorization-api"
 APP_DIR="/var/lib/univention-appcenter/apps/$APP_ID"
 UDM_REST_GROUP="UDM-API-enabled-machines"
 
 . /usr/share/univention-join/joinscripthelper.lib || exit 1
 . /usr/share/univention-appcenter/joinscripthelper.sh || exit 1
+eval "$(ucr shell)" || exit 1
 
 joinscript_init
 
@@ -56,6 +57,8 @@ if [ $JS_LAST_EXECUTED_VERSION -eq 1 ]; then
         "guardian-authorization-api/udm_data/username" \
         "guardian-authorization-api/udm_data/password"
 fi
+
+udm computers/"$server_role" modify "$@" --dn "$ldap_hostdn" --append service="guardian-authorization-api" || die
 
 joinscript_save_current_version
 

@@ -10,6 +10,11 @@ component and version of the app.
 Authorization API
 =================
 
+2.0.2 (2024-03-19)
+------------------
+
+* Add service entry for Guardian Authorization API to host server in UDM.
+
 2.0.1 (2024-01-22)
 ------------------
 
@@ -48,9 +53,10 @@ Authorization API
 Management API
 ==============
 
-2.0.1 (2024-03-12)
+2.0.1 (2024-03-19)
 ------------------
 
+* Add service entry for Guardian Management API to host server in UDM.
 * Fix a bug where the permissions of a target could not be returned, if the ``old_target`` was empty.
 
 2.0.0 (2024-01-15)

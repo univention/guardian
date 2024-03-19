@@ -6,7 +6,7 @@
 #  Join script that runs on the docker host.
 #
 
-VERSION=3
+VERSION=4
 APP_ID="guardian-management-api"
 APP_DIR="/var/lib/univention-appcenter/apps/$APP_ID"
 
@@ -81,6 +81,8 @@ if [ $JS_LAST_EXECUTED_VERSION -le 2 ]; then
         "guardian-management-api/oauth/keycloak-client-secret" \
         "guardian-management-api/oauth/keycloak-cli-client-secret"
 fi
+
+udm computers/"$server_role" modify "$@" --dn "$ldap_hostdn" --append service="guardian-management-api" || die
 
 joinscript_save_current_version
 
