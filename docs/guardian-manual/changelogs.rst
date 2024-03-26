@@ -10,7 +10,7 @@ component and version of the app.
 Authorization API
 =================
 
-2.0.2 (2024-03-19)
+2.0.2 (2024-03-26)
 ------------------
 
 * Add service entry for Guardian Authorization API to host server in UDM.
@@ -53,7 +53,7 @@ Authorization API
 Management API
 ==============
 
-2.0.1 (2024-03-19)
+2.0.1 (2024-03-26)
 ------------------
 
 * Add service entry for Guardian Management API to host server in UDM.
@@ -85,6 +85,11 @@ Management API
 
 Management UI
 ==============
+
+2.0.1 (2024-03-26)
+------------------
+
+* Fix a problem which affected all icons in the interface.
 
 2.0.0 (2024-01-15)
 ------------------
