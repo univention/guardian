@@ -1,7 +1,7 @@
 [Application]
 ID = guardian-management-api
 Code = 49
-Version = 2.0.1
+Version = 2.0.2
 Name = Guardian Management API
 Vendor = Univention GmbH
 DockerScriptRestoreDataAfterSetup =
