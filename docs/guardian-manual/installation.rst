@@ -117,6 +117,9 @@ For minor and patch level version changes, use the command ``univention-app upgr
        guardian-management-api \
        guardian-authorization-api \
        guardian-management-ui
+   $ univention-app restart guardian-management-api
+   $ univention-app restart guardian-authorization-api
+
 
 Upgrading from major version 1
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
