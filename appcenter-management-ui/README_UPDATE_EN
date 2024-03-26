@@ -1,4 +1,9 @@
 <h1>Changelog</h1>
+
+<h2>v2.0.1 (2024-03-26)</h2>
+<ul>
+    <li>Fix a problem which affected all icons in the interface.</li>
+</ul>
 <h2>v2.0.0 (2024-01-15)</h2>
 <ul>
     <li>Fix container startup behavior.</li>

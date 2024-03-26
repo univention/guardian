@@ -1,5 +1,5 @@
 <h1>Changelog</h1>
-<h2>v2.0.1 (2024-03-19)</h2>
+<h2>v2.0.1 (2024-03-26)</h2>
 <ul>
     <li>Fix a bug where the permissions of a target could not be returned, if the old_target was empty</li>
     <li>Add service entry for Guardian Management API to host server in UDM.</li>
