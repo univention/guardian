@@ -17,6 +17,34 @@ The components of the Guardian are versioned following `Semantic Versioning <htt
 The documentation of the Guardian follows semantic versioning as well, but omits the patch level version number.
 This means that the Guardian Manual in version ``1.1`` is valid for all components of version ``1.1.x``.
 
+Checklist
+=========
+
+Copy this into a release issue:
+
+.. code-block:: text
+
+    - [ ] Announce that a release is planned a day prior
+    - [ ] Check if Jenkins is green: https://jenkins2022.knut.univention.de/job/Guardian/
+    - [ ] Check if major/minor or patch level version increase is needed
+    - [ ] Prepare a test VM
+    - [ ] Ensure a merge stop on the main branch during the duration of the release
+    - [ ] Ensure the correct version of the component in all places.
+        - [ ] The version in ``management-api/pyproject.toml``
+        - [ ] The version of the migration folder in ``management-api/alembic`` if a new one was added
+        - [ ] The app center version in ``appcenter-management/ini``
+        - [ ] The version in the App center's `provider portal <https://provider-portal.software-univention.de>`_
+    - [ ] Create the tag ``management-api_$VERSION`` on the latest commit on main to mark the correct release.
+    - [ ] Copy the docker image referenced in the compose file to the public docker registry.
+    - [ ] Smoke test the app a final time (follow the manual and interact with the management-ui)
+        - [ ] Installation of the new version
+        - [ ] Upgrade from the last public release to the new version
+    - [ ] Release the app
+    - [ ] Verify the app files were released `here <https://appcenter.software-univention.de/meta-inf/5.0/guardian-management-api/>`_
+       and `there <https://appcenter.software-univention.de/univention-repository/5.0/maintained/component/>`_.
+    - [ ] Verify the release with a test installation/upgrade.
+    - [ ] Announce the release via mail and chat
+
 Guardian Management API
 =======================
 
@@ -40,7 +68,8 @@ to release a new version of the app:
    .. warning::
       If there are any commits on main that trigger the ``management_app_to_test_appcenter`` job, the changes made by this
       jenkins job are overwritten.
-
+#. For installation smoke tests install the latest version from the test App Center and follow the installation steps in the manual. Check that you can log into the ``management-ui`` with the Administrator (he needs the Guardian `super` and that you can interact with it (e.g. create a role).
+#. For upgrade smoke tests, install the latest version that is publicly released and follow the upgrade steps in the manual. Check that you can log into and interact with the ``mangement-ui`` again.
 #. The following steps require the correct app center id to proceed. You can find it by examining the
    `ini files <https://appcenter-test.software-univention.de/meta-inf/5.0/guardian-management-api/>`_. Search for the one
    that corresponds with the app version you want to release. This will be your ``$APP_ID``.
