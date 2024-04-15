@@ -60,6 +60,9 @@ fi
 
 udm computers/"$server_role" modify "$@" --dn "$ldap_hostdn" --append service="guardian-authorization-api" || die
 
+univention-app configure guardian-authorization-api
+univention-app restart guardian-authorization-api
+
 joinscript_save_current_version
 
 exit $?

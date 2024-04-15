@@ -1,4 +1,8 @@
 <h1>Changelog</h1>
+<h2>v2.0.2 (2024-04-17)</h2>
+<ul>
+    <li>The app installation has been simplified and doesn't need additional steps anymore</li>
+</ul>
 <h2>v2.0.1 (2024-03-26)</h2>
 <ul>
     <li>Fix a bug where the permissions of a target could not be returned, if the old_target was empty</li>

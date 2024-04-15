@@ -284,6 +284,8 @@ publish_guardian-lib:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
         - $APP_DIR/**/*
+    - when: manual
+      allow_failure: true
 
 authz_app_to_test_appcenter:
   extends: .app_to_test_appcenter

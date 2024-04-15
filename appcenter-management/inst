@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 ## joinscript api: bindpwdfile
 
@@ -40,6 +40,10 @@ if [ $JS_LAST_EXECUTED_VERSION -lt 1 ]; then
     --set objectClass=univentionGuardianObject \
     --set syntax=GuardianRole \
     --set ldapMapping=univentionGuardianRole || die
+
+  udm users/user modify "$@" \
+    --dn "uid=Administrator,cn=users,$ldap_base" \
+    --set guardianRole="guardian:builtin:super-admin" || die
 fi
 
 # Creating and configuring the Keycloak clients is safe to rerun multiple times
@@ -60,6 +64,19 @@ univention-keycloak "$@" oidc/rp create \
     --redirect-uri "https://$API_FQDN/univention/guardian/*" \
     --add-audience-mapper guardian-scripts || die
 $APP_DIR/scripts/configure-keycloak "$@"
+if [[ ! -f /var/lib/univention-appcenter/apps/guardian-management-api/conf/m2m.secret ]]; then
+    touch /var/lib/univention-appcenter/apps/guardian-management-api/conf/m2m.secret
+    chmod 600 /var/lib/univention-appcenter/apps/guardian-management-api/conf/m2m.secret
+    univention-keycloak \
+       oidc/rp secret \
+       --client-name guardian-management-api \
+       | sed -n 2p \
+       | sed "s/.*'value': '\([[:alnum:]]*\)'.*/\1/" \
+       > /var/lib/univention-appcenter/apps/guardian-management-api/conf/m2m.secret
+    echo "Copying m2m secret file..."
+    univention-app shell guardian-management-api /app/management-api/update_client_secret.sh
+    univention-app restart guardian-management-api
+fi
 
 if [ $JS_LAST_EXECUTED_VERSION -eq 1 ]; then
     # In version 2, we renamed the UCR variable for storing the Keycloak secret

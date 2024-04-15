@@ -4,4 +4,5 @@ action=$1
 
 if [ "$action" = "settings" ]; then
   univention-app reinitialize guardian-management-api
+  univention-app restart guardian-management-api
 fi

@@ -39,64 +39,19 @@ run the following command:
        guardian-authorization-api \
        guardian-management-ui
 
-The installation procedure automatically configures most of the settings,
-but some manual configuration steps remain,
-as described in the following sections.
-
-You need to obtain the ``KEYCLOAK_SECRET`` by running the following command:
-
-.. code-block:: bash
-   :caption: Retrieve ``KEYCLOAK_SECRET``
-
-   $ KEYCLOAK_SECRET=$(univention-keycloak \
-      oidc/rp secret \
-      --client-name guardian-management-api \
-      | sed -n 2p \
-      | sed "s/.*'value': '\([[:alnum:]]*\)'.*/\1/")
-
-Create the machine-to-machine secret file for the :term:`Management API` and adjust the access permissions:
-
-.. code-block:: bash
-   :caption: Create machine-to-machine secret file
-
-   $ touch /var/lib/univention-appcenter/apps/guardian-management-api/conf/m2m.secret
-   $ chmod 600 /var/lib/univention-appcenter/apps/guardian-management-api/conf/m2m.secret
-
-Write the contents of ``KEYCLOAK_SECRET`` to the machine-to-machine secret file:
-
-.. code-block:: bash
-   :caption: Write ``KEYCLOAK_SECRET`` to the machine-to-machine secret file
-
-   $ echo $KEYCLOAK_SECRET > /var/lib/univention-appcenter/apps/guardian-management-api/conf/m2m.secret
-
-To apply the new secret file, run:
-
-.. code-block:: bash
-   :caption: Configure and restart the :term:`Management API`
-
-   $ univention-app configure guardian-management-api
-   $ univention-app restart guardian-management-api
-
-The configuration and restart is also necessary for the :term:`Authorization API`:
-
-.. code-block:: bash
-   :caption: Configure and restart the :term:`Authorization API`
-
-   $ univention-app configure guardian-authorization-api
-   $ univention-app restart guardian-authorization-api
-
 To use the Guardian *Management UI*,
 it's also necessary to give the user the required permissions.
 For this step the *Management UI* already utilizes the Guardian.
 The user needs to get the proper ``guardianRole`` assigned.
-To make the ``Administrator`` account the :term:`Guardian super user <guardian administrator>`,
+The ``Administrator`` user gets this roles automatically assigned during the app installation.
+To make a user account the :term:`Guardian super user <guardian administrator>`,
 who has all privileges, run the following command:
 
 .. code-block:: bash
-   :caption: Assign Guardian super user role to ``Administrator`` user
+   :caption: Assign Guardian super user role to a user
 
    $ udm users/user modify \
-      --dn uid=Administrator,cn=users,$(ucr get ldap/base) \
+      --dn "$USER_DN" \
       --set guardianRole=guardian:builtin:super-admin
 
 You have completed the Guardian setup.
