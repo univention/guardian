@@ -279,7 +279,7 @@ publish_guardian-lib:
     - APP_VERSION="$(sed -n 's/^Version\s*=\s*//p' ini)"
     - echo "updating $APP_NAME=$APP_VERSION"
     - ./scripts/generate-preinst
-    - univention-appcenter-control upload "$APP_NAME=$APP_VERSION" compose configure_host inst ini preinst README_UPDATE_DE README_UPDATE_EN settings uinst
+    - univention-appcenter-control upload "$APP_NAME=$APP_VERSION" configure compose configure_host inst ini preinst README_UPDATE_DE README_UPDATE_EN settings uinst
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
