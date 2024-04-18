@@ -10,6 +10,11 @@ component and version of the app.
 Authorization API
 =================
 
+2.0.3 (2024-04-18)
+------------------
+
+* The app installation has been simplified and doesn't need additional steps anymore.
+
 2.0.2 (2024-03-26)
 ------------------
 
@@ -52,6 +57,11 @@ Authorization API
 
 Management API
 ==============
+
+2.0.2 (2024-04-18)
+------------------
+
+* The app installation has been simplified and doesn't need additional steps anymore.
 
 2.0.1 (2024-03-26)
 ------------------
