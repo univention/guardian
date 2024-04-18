@@ -122,14 +122,10 @@ Management UI
 Guardian Manual
 ===============
 
-2.1 (2024-04-18)
-----------------
-
-* The app installation has been simplified and doesn't need additional steps anymore.
-
 2.0 (2024-01-15)
 ----------------
 
+* The app installation has been simplified and doesn't need additional steps anymore.
 * Style improvements.
 * Remove PDF version of the manual.
 * Add a new upgrade section: :ref:`upgrade-on-ucs-primary-node`.
