@@ -20,7 +20,7 @@ variables:
   UCS_TEST_PACKAGE: "ucs-test-guardian"
   SCOPE: "guardian"
   DOCS_DIR: "docs/guardian-manual"
-  DOC_TARGET_VERSION: "2.0"
+  DOC_TARGET_VERSION: "2.1"
   DOC_TARGET_NAME: "guardian-manual"
   DOC_TARGET_PATH: "$DOC_TARGET_NAME/$DOC_TARGET_VERSION"
 
