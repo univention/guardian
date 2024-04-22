@@ -44,6 +44,9 @@ Copy this into a release issue:
        and `there <https://appcenter.software-univention.de/univention-repository/5.0/maintained/component/>`_.
     - [ ] Verify the release with a test installation/upgrade.
     - [ ] Announce the release via mail and chat
+    - [ ] Create a new version for each component in the test appcenter (increase patch level) and set the docker images to `latest`.
+    - [ ] Adapt the repo (ini files & toml) to reference the new dev version.
+    - [ ] Create the next release issue.
 
 Guardian Management API
 =======================
