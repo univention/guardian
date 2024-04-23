@@ -51,3 +51,59 @@ Additional points:
 If the changes affect security features such as authentication or authorization:
 
 - [ ] The affected security feature has a dedicated end to end integration test.
+
+
+## QA
+
+Please explicitly check off all steps performed in the QA process.
+If certain steps are not applicable, please use ~strikethrough~ and node why these steps where not performed.
+
+## Technical QA
+
+Technical QA is focused on the code quality and basic runability of the code.
+All Technical QA steps should also be performed by the implementer before handing over to QA.
+
+- [ ] Code review on the merge request:
+  - [ ] Changelogs are present (`README_UPDATE_*`-files and `docs/guardian-manual/changelogs.rst`)
+  - [ ] Tests sufficiently cover the changed lines of code.
+- [ ] Pipelines pass.
+- [ ] App installation succeeds on a test VM.
+- [ ] App update succeeds on a test VM.
+- [ ] Basic smoke test:
+  - [ ] If a service was changed (added, modified) the service is running after the installation and restarting works without problems. If it was removed, it must not be running anymore.
+  - [ ] The apps guardian-management-api, guardian-authorization-api and guardian-management-ui are running.
+  - [ ] Log in to the guardian-management-ui as `Administrator` and try to list some roles, permissions and conditions.
+  - [ ] New Cron jobs, listeners, etc. actually run.
+  - [ ] Permissions are checked for new files (e.g., a script must be executable, right ownership of directories and created files in regard to data security).
+- [ ] Manual test run:
+  - [ ] New tests pass.
+
+## Functional QA
+
+Functional QA focuses on the user using the Guardian UI.
+
+- [ ] Post a QA plan on the gitlab issue of what will be tested:
+  - [ ] Include a happy path and multiple non-happy path scenarios.
+  - [ ] All software components that might be affected, not just the code that was changed.
+  - [ ] Verify that examples in the documentation of the changed components still work.
+  - [ ] Agree on QA plan with implementer.
+- [ ] Manually run the QA plan
+- [ ] Document all reproduction steps of the QA plan:
+  - [ ] What commands were used to test?
+  - [ ] What input values were used to test? Why were these values chosen?
+  - [ ] Get creative and try to break the implementation
+
+## Before merge
+
+ No merge without:
+
+- [ ] Verify again that the integration tests pass locally on your vm and pipelines pass.
+- [ ] [Branch tests for Guardian](https://jenkins2022.knut.univention.de/job/Guardian/job/guardian-tests-branch/) pass.
+
+## After Merge
+
+- [ ] [Daily Jenkins tests](https://jenkins2022.knut.univention.de/job/Guardian/job/guardian-tests-daily/) pass after build.
+- [ ] Installation succeeds on a test VM.
+- [ ] Smoke test installation: see section Technical QA.
+- [ ] It might be necessary to rebuild base images, like `user-management/dev/tests/integration_tests.cfg` which use the guardian.
+- [ ] Gitlab issue is added to release issue.
