@@ -8,35 +8,9 @@ APP_DIR="/var/lib/univention-appcenter/apps/$APP_ID"
 set -e
 eval "$(ucr shell)"
 
-CONF_DIR="$APP_DIR/conf"
 SCRIPTS_DIR="$APP_DIR/scripts"
-LOCALE_DIR="$APP_DIR/locale/DE/LC_MESSAGES"
 
-mkdir -p $CONF_DIR
 mkdir -p $SCRIPTS_DIR
-mkdir -p $LOCALE_DIR
-
-# guardian syntax file
-guardian_syntax_path="$CONF_DIR/guardian_syntax.py"
-echo "Installing Guardian syntax file"
-	cat <<%EOF >"$guardian_syntax_path"
-%GUARDIAN-SYNTAX%
-%EOF
-chmod 644 "$guardian_syntax_path"
-
-# guardian schema file
-guardian_schema_path="$CONF_DIR/guardian.schema"
-echo "Installing Guardian schema file"
-	cat <<%EOF >"$guardian_schema_path"
-%GUARDIAN-SCHEMA%
-%EOF
-chmod 644 "$guardian_schema_path"
-
-echo "Installing Guardian mo file"
-guardian_mo_path="$LOCALE_DIR/de.mo"
-base64 -d <<%EOF >"$guardian_mo_path"
-%GUARDIAN-MO%
-%EOF
 
 # keycloak client configuration script
 guardian_keycloak_script_path="$SCRIPTS_DIR/configure-keycloak"

@@ -25,25 +25,9 @@ if [ $JS_LAST_EXECUTED_VERSION -lt 1 ]; then
     --udm_syntax_messagecatalog "/var/lib/univention-appcenter/apps/$APP_ID/locale/DE/LC_MESSAGES/de.mo" \
     --ucsversionstart 5.0-0 || die
 
-  udm settings/extended_attribute create "$@" --ignore_exists \
-    --position "cn=custom attributes,cn=univention,$ldap_base" \
-    --set name="guardianRole" \
-    --set tabName="Guardian" \
-    --set shortDescription="Roles used by Guardian for access permissions" \
-    --set translationShortDescription='"de_DE" "Die Rollen, welche vom Guardian zur Authorisation genutzt werden."' \
-    --set longDescription="Lowercase ASCII alphanumeric string with underscores or dashes, in the format 'app:namespace:role' or 'app:namespace:role&app:namespace:context'" \
-    --set translationLongDescription="\"de_DE\" \"ASCII alphanumerischer Text in Kleinschrift mit Unter- und Bindestrichen im Format 'app:namespace:role' oder 'app:namespace:role&app:namespace:context'\"" \
-    --set mayChange=1 \
-    --set multivalue=1 \
-    --append module="users/user" \
-    --append module="groups/group" \
-    --set objectClass=univentionGuardianObject \
-    --set syntax=GuardianRole \
-    --set ldapMapping=univentionGuardianRole || die
-
   udm users/user modify "$@" \
     --dn "uid=Administrator,cn=users,$ldap_base" \
-    --set guardianRole="guardian:builtin:super-admin" || die
+    --append guardianRoles="guardian:builtin:super-admin" || die
 fi
 
 # Creating and configuring the Keycloak clients is safe to rerun multiple times
