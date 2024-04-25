@@ -91,16 +91,26 @@ class UDMPersistenceAdapter(PersistencePort, AsyncConfiguredAdapterMixin):
                 "An unexpected error occurred while fetching data from UDM."
             ) from exc
         try:
-            raw_object: Object = module.get(identifier)
+            raw_object: Object = module.get(
+                identifier, properties=["guardianInheritedRoles", "*"]
+            )
         except (UnprocessableEntity, NotFound) as exc:
             raise ObjectNotFoundError(
                 f"Could not find object of type '{object_type.name}' with identifier '{identifier}'."
             ) from exc
+
+        guardian_roles: list = raw_object.properties.get("guardianRoles", [])
+        guardian_inherited_roles: list = raw_object.properties.get(
+            "guardianInheritedRoles", []
+        )
+
+        all_guardian_roles = list(set(guardian_roles).union(guardian_inherited_roles))
+
         result = PersistenceObject(
             id=raw_object.dn,
             object_type=object_type,
             attributes=raw_object.properties,
-            roles=raw_object.properties.get("guardianRole", []),
+            roles=all_guardian_roles,
         )
         local_logger.debug("Object retrieved from UDM.")
         return result
@@ -139,8 +149,10 @@ class UDMPersistenceAdapter(PersistencePort, AsyncConfiguredAdapterMixin):
         roles = []
         for role in po.roles:
             roles.append(UDMPersistenceAdapter._to_policy_role(role))
-        if "guardianRole" in po.attributes:
-            po.attributes.pop("guardianRole")
+
+        for attr in ("guardianRoles", "guardianInheritedRoles"):
+            if attr in po.attributes:
+                po.attributes.pop(attr)
         return PolicyObject(id=po.id, roles=roles, attributes=po.attributes)
 
     async def lookup_actor_and_old_targets(

@@ -34,7 +34,9 @@ def patch_env():
     os.environ["GUARDIAN__AUTHZ__ADAPTER__SETTINGS_PORT"] = "env"
     os.environ["GUARDIAN__AUTHZ__ADAPTER__PERSISTENCE_PORT"] = "udm_data"
     os.environ["GUARDIAN__AUTHZ__ADAPTER__POLICY_PORT"] = "opa"
-    os.environ["OPA_ADAPTER__URL"] = "http://opa:8181"
+    os.environ["OPA_ADAPTER__URL"] = os.environ.get(
+        "OPA_ADAPTER__URL", "http://opa:8181"
+    )
     os.environ["UDM_DATA_ADAPTER__URL"] = os.environ.get(
         "UDM_DATA_ADAPTER__URL", "http://localhost"
     )

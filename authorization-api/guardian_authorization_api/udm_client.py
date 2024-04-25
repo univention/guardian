@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Univention GmbH
+# Copyright (C) 2024 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
@@ -121,7 +121,10 @@ class Session:
     def create_session(self):
         # type: () -> requests.Session
         sess = requests.session()
-        sess.auth = (self.credentials.username, self.credentials.password)
+        if self.credentials.bearer_token:
+            sess.headers['Authorization'] = 'Bearer %s' % (self.credentials.bearer_token,)
+        else:
+            sess.auth = (self.credentials.username, self.credentials.password)
         if not self.enable_caching:
             return sess
         try:
@@ -148,8 +151,8 @@ class Session:
         # type: (str, str, Dict, bool, **str) -> Any
         return self.make_request(method, uri, data, expect_json=expect_json, **headers).data  # type: ignore # <https://github.com/python/mypy/issues/10008>
 
-    def make_request(self, method, uri, data=None, expect_json=False, allow_redirects=True, **headers):
-        # type: (str, str, Dict, bool, bool, **str) -> Response
+    def make_request(self, method, uri, data=None, expect_json=False, allow_redirects=True, custom_redirect_handling=False, **headers):
+        # type: (str, str, Dict, bool, bool, bool, **str) -> Response
         if method in ('GET', 'HEAD'):
             params = data
             json = None
@@ -163,6 +166,8 @@ class Session:
                 response = self.get_method(method)(uri, params=params, json=json, headers=dict(self.default_headers, **headers), allow_redirects=allow_redirects)
             except requests.exceptions.ConnectionError as exc:
                 raise ConnectionError(exc)
+            if custom_redirect_handling:
+                response = self._follow_redirection(response)
             data = self.eval_response(response, expect_json=expect_json)
             return Response(response, data, uri)
 
@@ -180,6 +185,28 @@ class Session:
                 time.sleep(retry_after)
 
         return doit()
+
+    def _follow_redirection(self, response):
+        # type: (Response) -> Response
+        location = response.headers.get('Location')
+        # python-requests doesn't follow redirects for 202
+        if location and response.status_code in (201, 202):
+            response = self.make_request('GET', location, allow_redirects=False).response
+
+        # prevent allow_redirects because it does not wait Retry-After time causing a break up after 30 fast redirections
+        while 300 <= response.status_code <= 399 and 'Location' in response.headers:
+            location = response.headers['Location']
+            if response.headers.get('Retry-After', '').isdigit():
+                time.sleep(min(30, max(0, int(response.headers['Retry-After']))))
+            response = self.make_request(self._select_method(response), location, allow_redirects=False).response
+
+        return response
+
+    def _select_method(self, response):
+        # type: (Response) -> str
+        if response.status_code in (300, 301, 303) and response.request.method != 'HEAD':
+            return 'GET'
+        return response.request.method
 
     def eval_response(self, response, expect_json=False):
         # type: (requests.Response, bool) -> Any
@@ -210,6 +237,8 @@ class Session:
             return response.json()
         elif expect_json:
             raise UnexpectedResponse(response.text)
+        if response.status_code == 204:
+            return {}
         return response.text
 
     def get_relations(self, entry, relation, name=None, template=None):
@@ -264,11 +293,17 @@ class UDM(Client):
         # type: (str, str, str) -> UDM
         return cls(uri, username, password)
 
+    @classmethod
+    def bearer(cls, uri, bearer_token):
+        # type: (str, str) -> UDM
+        return cls(uri, None, None, bearer_token=bearer_token)
+
     def __init__(self, uri, username, password, *args, **kwargs):
         # type: (str, str, str, *Any, **Any) -> None
         self.uri = uri
         self.username = username
         self.password = password
+        self.bearer_token = kwargs.pop('bearer_token', None)
         self._api_version = None  # type: Optional[str]
         self.entry = None  # type: Any # Optional[Dict]
         super().__init__(Session(self, *args, **kwargs))
@@ -326,7 +361,7 @@ class UDM(Client):
 
     def __repr__(self):
         # type: () -> str
-        return f'UDM(uri={self.uri}, username={self.username}, password=****, version={self._api_version})'
+        return f'UDM(uri={self.uri!r}, username={self.username!r}, password=***)'
 
 
 class Module(Client):
@@ -350,7 +385,7 @@ class Module(Client):
 
     def __repr__(self):
         # type: () -> str
-        return f'Module(uri={self.uri}, name={self.name})'
+        return f'Module(uri={self.uri!r}, name={self.name!r})'
 
     def new(self, position=None, superordinate=None, template=None):
         # type: (Optional[str], Optional[str], Optional[Dict[str, Any]]) -> Object
@@ -359,48 +394,48 @@ class Module(Client):
         resp = self.client.resolve_relation(self.relations, 'create-form', template=data)
         return Object.from_data(self.udm, resp)
 
-    def get(self, dn):
-        # type: (str) -> Optional[Object]
+    def get(self, dn, properties=None):
+        # type: (str, Optional[List[str]]) -> Optional[Object]
         # TODO: use a link relation instead of a search
-        for obj in self._search_closed(position=dn, scope='base'):
+        for obj in self._search_closed(position=dn, scope='base', properties=properties):
             return obj.open()
         raise NotFound(404, 'Wrong object type!?', None)  # FIXME: object exists but is of different module. should be fixed on the server.
 
-    def get_by_entry_uuid(self, uuid):
-        # type: (str) -> Optional[Object]
+    def get_by_entry_uuid(self, uuid, properties=None):
+        # type: (str, Optional[List[str]]) -> Optional[Object]
         # TODO: use a link relation instead of a search
         # return self.udm.get_by_uuid(uuid)
-        for obj in self._search_closed(filter={'entryUUID': uuid}, scope='base'):
+        for obj in self._search_closed(filter={'entryUUID': uuid}, scope='base', properties=properties):
             return obj.open()
         raise NotFound(404, 'Wrong object type!?', None)  # FIXME: object exists but is of different module. should be fixed on the server.
 
-    def get_by_id(self, dn):
-        # type: (str) -> Optional[Object]
+    def get_by_id(self, id_, properties=None):
+        # type: (str, Optional[List[str]]) -> Optional[Object]
         # TODO: Needed?
         raise NotImplementedError()
 
-    def search(self, filter=None, position=None, scope='sub', hidden=False, superordinate=None, opened=False):
-        # type: (Union[Dict[str, str], Text, bytes, None], Optional[str], Optional[str], bool, Optional[str], bool) -> Iterator[Any]
+    def search(self, filter=None, position=None, scope='sub', hidden=False, superordinate=None, opened=False, properties=None):
+        # type: (Union[Dict[str, str], Text, bytes, None], Optional[str], Optional[str], bool, Optional[str], bool, Optional[List[str]]) -> Iterator[Any]
         if opened:
-            return self._search_opened(filter, position, scope, hidden, superordinate)
+            return self._search_opened(filter, position, scope, hidden, superordinate, properties)
         else:
-            return self._search_closed(filter, position, scope, hidden, superordinate)
+            return self._search_closed(filter, position, scope, hidden, superordinate, properties)
 
-    def _search_opened(self, filter=None, position=None, scope='sub', hidden=False, superordinate=None):
-        # type: (Union[Dict[str, str], Text, bytes, None], Optional[str], Optional[str], bool, Optional[str]) -> Iterator[Object]
-        for obj in self._search(filter, position, scope, hidden, superordinate, True):
+    def _search_opened(self, filter=None, position=None, scope='sub', hidden=False, superordinate=None, properties=None):
+        # type: (Union[Dict[str, str], Text, bytes, None], Optional[str], Optional[str], bool, Optional[str], Optional[List[str]]) -> Iterator[Object]
+        for obj in self._search(filter, position, scope, hidden, superordinate, True, properties):
             yield Object.from_data(self.udm, obj)  # NOTE: this is missing last-modified, therefore no conditional request is done on modification!
 
-    def _search_closed(self, filter=None, position=None, scope='sub', hidden=False, superordinate=None):
-        # type: (Union[Dict[str, str], Text, bytes, None], Optional[str], Optional[str], bool, Optional[str]) -> Iterator[ShallowObject]
-        for obj in self._search(filter, position, scope, hidden, superordinate, False):
+    def _search_closed(self, filter=None, position=None, scope='sub', hidden=False, superordinate=None, properties=None):
+        # type: (Union[Dict[str, str], Text, bytes, None], Optional[str], Optional[str], bool, Optional[str], Optional[List[str]]) -> Iterator[ShallowObject]
+        for obj in self._search(filter, position, scope, hidden, superordinate, False, properties):
             objself = self.client.get_relation(obj, 'self')
             uri = objself['href']
             dn = objself['name']
             yield ShallowObject(self.udm, dn, uri)
 
-    def _search(self, filter=None, position=None, scope='sub', hidden=False, superordinate=None, opened=False):
-        # type: (Union[Dict[str, str], Text, bytes, None], Optional[str], Optional[str], bool, Optional[str], bool) -> Iterator[Any]
+    def _search(self, filter=None, position=None, scope='sub', hidden=False, superordinate=None, opened=False, properties=None):
+        # type: (Union[Dict[str, str], Text, bytes, None], Optional[str], Optional[str], bool, Optional[str], bool, Optional[List[str]]) -> Iterator[Any]
         data = {
             'position': position,
             'scope': scope,
@@ -414,7 +449,10 @@ class Module(Client):
         if superordinate:
             data['superordinate'] = superordinate
         if not opened:
-            data['properties'] = 'dn'
+            data['opened'] = '0'
+            data['properties'] = ['dn']
+        if properties:
+            data['properties'] = properties
         self.load_relations()
         entries = self.client.resolve_relation(self.relations, 'search', template=data)
         yield from self.client.resolve_relations(entries, 'udm:object')
@@ -469,7 +507,7 @@ class ShallowObject(Client):
 
     def __repr__(self):
         # type: () -> str
-        return f'ShallowObject(dn={self.dn})'
+        return f'ShallowObject(dn={self.dn!r})'
 
 
 class References:
@@ -540,7 +578,7 @@ class Object(Client):
 
     @superordinate.setter
     def superordinate(self, superordinate):
-        # type. (str) -> None
+        # type: (str) -> None
         self.representation['superordinate'] = superordinate
 
     @property
@@ -550,7 +588,7 @@ class Object(Client):
 
     @position.setter
     def position(self, position):
-        # type. (str) -> None
+        # type: (str) -> None
         self.representation['position'] = position
 
     @property
@@ -589,7 +627,7 @@ class Object(Client):
 
     def __repr__(self):
         # type: () -> str
-        return f'Object(module={self.object_type}, dn={self.dn}, uri={self.uri})'
+        return f'Object(module={self.object_type!r}, dn={self.dn!r}, uri={self.uri!r})'
 
     def reload(self):
         # type: () -> None
@@ -607,15 +645,27 @@ class Object(Client):
         else:
             return self._create(reload)
 
+    def json_patch(self, patch, reload=True):
+        # type: (dict, bool) -> Response
+        if self.dn:
+            return self._patch(patch, reload=reload)
+        else:
+            uri = self.client.get_relation(self.hal, 'create')
+            return self._request('POST', uri['href'], patch, {'Content-Type': 'application/json-patch+json'})
+
     def delete(self, remove_referring=False):
         # type: (bool) -> bytes
         assert self.uri
-        return self.client.request('DELETE', self.uri)
+        headers = {key: value for key, value in {
+            'If-Unmodified-Since': self.last_modified,
+            'If-Match': self.etag,
+        }.items() if value}
+        return self.client.request('DELETE', self.uri, **headers)  # type: ignore # <https://github.com/python/mypy/issues/10008>
 
-    def move(self, position):
-        # type: (str) -> None
+    def move(self, position, reload=True):
+        # type: (str, bool) -> None
         self.position = position
-        self.save()
+        self.save(reload=reload)
 
     def _modify(self, reload=True):
         # type: (bool) -> Response
@@ -624,49 +674,44 @@ class Object(Client):
             'If-Unmodified-Since': self.last_modified,
             'If-Match': self.etag,
         }.items() if value}
+        return self._request('PUT', self.uri, self.representation, headers, reload=reload)
 
-        response = self.client.make_request('PUT', self.uri, data=self.representation, allow_redirects=False, **headers)  # type: ignore # <https://github.com/python/mypy/issues/10008>
-        response = self._follow_redirection(response, reload)  # move() causes multiple redirections!
-        return response
+    def _patch(self, data, reload=True):
+        # type: (dict, bool) -> Response
+        assert self.uri
+        headers = {key: value for key, value in {
+            'If-Unmodified-Since': self.last_modified,
+            'If-Match': self.etag,
+            'Content-Type': 'application/json-patch+json',
+        }.items() if value}
+        return self._request('PATCH', self.uri, data, headers, reload=reload)
 
     def _create(self, reload=True):
         # type: (bool) -> Response
         uri = self.client.get_relation(self.hal, 'create')
-        response = self.client.make_request('POST', uri['href'], data=self.representation, allow_redirects=False)
-        response = self._follow_redirection(response, reload)
+        return self._request('POST', uri['href'], self.representation, {}, reload=reload)
+
+    def _request(self, method, uri, data, headers, reload=True):
+        # type: (str, str, dict, dict, bool) -> Response
+        response = self.client.make_request(method, uri, data=data, allow_redirects=False, custom_redirect_handling=True, **headers)  # type: ignore # <https://github.com/python/mypy/issues/10008>
+        self._reload_from_response(response, reload)
         return response
 
     def _reload_from_response(self, response, reload):
         # type: (Response, bool) -> None
-        if 200 <= response.response.status_code <= 299 and 'Location' in response.response.headers:
+        if reload and 200 <= response.response.status_code <= 299 and 'Location' in response.response.headers:
             uri = response.response.headers['Location']
             obj = ShallowObject(self.udm, None, uri)
-            if reload:
-                self._copy_from_obj(obj.open())
-        elif reload:
-            self.reload()
+            self._copy_from_obj(obj.open())
+            return
 
-    def _follow_redirection(self, response, reload=True):
-        # type: (Response, bool) -> Response
-        location = None
-        # python-requests doesn't follow redirects for 202
-        if response.response.status_code in (201, 202) and 'Location' in response.response.headers:
-            location = response.response.headers['Location']
-            response = self.client.make_request('GET', location, allow_redirects=False)
-
-        # prevent allow_redirects because it does not wait Retry-After time causing a break up after 30 fast redirections
-        while 300 <= response.response.status_code <= 399 and 'Location' in response.response.headers:
-            location = response.response.headers['Location']
-            if response.response.headers.get('Retry-After', '').isdigit():
-                time.sleep(min(30, max(0, int(response.response.headers['Retry-After']))))
-            response = self.client.make_request('GET', location, allow_redirects=False)
-
-        if location and response.response.status_code == 200:
+        if response.response.status_code == 200:
             # the response already contains a new representation
             self._copy_from_obj(Object.from_response(self.udm, response))
-        elif reload:
-            self._reload_from_response(response, reload)
-        return response
+            return
+
+        if reload:
+            self.reload()
 
     def _copy_from_obj(self, obj):
         # type: (Object) -> None
@@ -701,3 +746,56 @@ class Object(Client):
         policy_result.pop('_links', None)
         policy_result.pop('_embedded', None)
         return policy_result
+
+
+class PatchDocument:
+    """application/json-patch+json representation"""
+
+    def __init__(self):
+        self.patch = []
+
+    def add(self, path_segments, value):
+        self.patch.append({
+            'op': 'add',
+            'path': self.expand_path(path_segments),
+            'value': value,
+        })
+
+    def replace(self, path_segments, value):
+        self.patch.append({
+            'op': 'replace',
+            'path': self.expand_path(path_segments),
+            'value': value,
+        })
+
+    def remove(self, path_segments, value):
+        self.patch.append({
+            'op': 'remove',
+            'path': self.expand_path(path_segments),
+            'value': value,  # TODO: not official
+        })
+
+    def move(self, path_segments, from_segments):
+        self.patch.append({
+            'op': 'move',
+            'path': self.expand_path(path_segments),
+            'from': self.expand_path(from_segments),
+        })
+
+    def copy(self, path_segments, from_segments):
+        self.patch.append({
+            'op': 'copy',
+            'path': self.expand_path(path_segments),
+            'from': self.expand_path(from_segments),
+        })
+
+    def test(self, path_segments, value):
+        self.patch.append({
+            'op': 'test',
+            'path': self.expand_path(path_segments),
+            'value': value,
+        })
+
+    def expand_path(self, path_segments):
+        return '/'.join(path.replace('~', '~0').replace('/', '~1') for path in [''] + path_segments)
+

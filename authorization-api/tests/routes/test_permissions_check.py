@@ -122,10 +122,10 @@ class TestPermissionsCheckUnittest:
         ]
         users = {
             target_id: MockUdmObject(
-                dn=target_id, properties={"guardianRole": ["ucsschool:users:student"]}
+                dn=target_id, properties={"guardianRoles": ["ucsschool:users:student"]}
             ),
             actor_id: MockUdmObject(
-                dn=actor_id, properties={"guardianRole": ["ucsschool:users:teacher"]}
+                dn=actor_id, properties={"guardianRoles": ["ucsschool:users:teacher"]}
             ),
         }
         udm_mock(users=users)
@@ -164,10 +164,10 @@ class TestPermissionsCheckUnittest:
         users = {
             target_lookup_id: MockUdmObject(
                 dn=target_lookup_id,
-                properties={"guardianRole": ["ucsschool:users:student"]},
+                properties={"guardianRoles": ["ucsschool:users:student"]},
             ),
             actor_id: MockUdmObject(
-                dn=actor_id, properties={"guardianRole": ["ucsschool:users:teacher"]}
+                dn=actor_id, properties={"guardianRoles": ["ucsschool:users:teacher"]}
             ),
         }
         udm_mock(users=users)
@@ -201,7 +201,7 @@ class TestPermissionsCheckUnittest:
         ]
         users = {
             actor_id: MockUdmObject(
-                dn=actor_id, properties={"guardianRole": ["ucsschool:users:teacher"]}
+                dn=actor_id, properties={"guardianRoles": ["ucsschool:users:teacher"]}
             ),
         }
         udm_mock(users=users)
@@ -216,7 +216,7 @@ class TestPermissionsCheckUnittest:
         }
         users = {
             target_id: MockUdmObject(
-                dn=target_id, properties={"guardianRole": ["ucsschool:users:student"]}
+                dn=target_id, properties={"guardianRoles": ["ucsschool:users:student"]}
             ),
         }
         _udm_mock = udm_mock(users=users)
@@ -436,10 +436,10 @@ class TestPermissionsCheck:
         data["targets"][0]["new_target"]["attributes"] = {}
         users = {
             target_id: MockUdmObject(
-                dn=target_id, properties={"guardianRole": ["ucsschool:users:student"]}
+                dn=target_id, properties={"guardianRoles": ["ucsschool:users:student"]}
             ),
             actor_id: MockUdmObject(
-                dn=actor_id, properties={"guardianRole": ["ucsschool:users:teacher"]}
+                dn=actor_id, properties={"guardianRoles": ["ucsschool:users:teacher"]}
             ),
         }
         udm_mock(users=users)
@@ -484,10 +484,10 @@ class TestPermissionsCheck:
         target_id = "uid=target-id"
         users = {
             target_id: MockUdmObject(
-                dn=target_id, properties={"guardianRole": ["ucsschool:users:student"]}
+                dn=target_id, properties={"guardianRoles": ["ucsschool:users:student"]}
             ),
             actor_id: MockUdmObject(
-                dn=actor_id, properties={"guardianRole": ["ucsschool:users:teacher"]}
+                dn=actor_id, properties={"guardianRoles": ["ucsschool:users:teacher"]}
             ),
         }
         udm_mock(users=users)
@@ -534,10 +534,10 @@ class TestPermissionsCheck:
         users = {
             lookup_target_id: MockUdmObject(
                 dn=lookup_target_id,
-                properties={"guardianRole": ["ucsschool:users:student"]},
+                properties={"guardianRoles": ["ucsschool:users:student"]},
             ),
             actor_id: MockUdmObject(
-                dn=actor_id, properties={"guardianRole": ["ucsschool:users:teacher"]}
+                dn=actor_id, properties={"guardianRoles": ["ucsschool:users:teacher"]}
             ),
         }
         udm_mock(users=users)
@@ -612,14 +612,14 @@ class TestPermissionsCheck:
             target_id: MockUdmObject(
                 dn=target_id,
                 properties={
-                    "guardianRole": ["ucsschool:users:student"],
+                    "guardianRoles": ["ucsschool:users:student"],
                     "school": "school1",
                 },
             ),
             actor_id: MockUdmObject(
                 dn=actor_id,
                 properties={
-                    "guardianRole": ["ucsschool:users:teacher"],
+                    "guardianRoles": ["ucsschool:users:teacher"],
                     "school": "school1",
                 },
             ),
@@ -665,14 +665,14 @@ class TestPermissionsCheck:
             target_id: MockUdmObject(
                 dn=target_id,
                 properties={
-                    "guardianRole": ["ucsschool:users:student"],
+                    "guardianRoles": ["ucsschool:users:student"],
                     "school": "school1",
                 },
             ),
             actor_id: MockUdmObject(
                 dn=actor_id,
                 properties={
-                    "guardianRole": ["ucsschool:users:teacher"],
+                    "guardianRoles": ["ucsschool:users:teacher"],
                     "school": "school1",
                 },
             ),

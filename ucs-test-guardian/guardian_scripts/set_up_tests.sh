@@ -8,5 +8,5 @@ udm users/user create \
   --set username=guardian \
   --set lastname=app-admin \
   --set password=univention \
-  --set guardianRole=guardian:builtin:app-admin \
+  --set guardianRoles=guardian:builtin:app-admin \
   --position cn=users,$(ucr get ldap/base)

@@ -139,7 +139,9 @@ class TestUDMDataAdapter:
         udm_mock.get.return_value = udm_module_mock
         udm_adapter._udm_client = udm_mock
         result = await udm_adapter.get_object("ID", object_type)
-        udm_module_mock.get.assert_called_once_with("ID")
+        udm_module_mock.get.assert_called_once_with(
+            "ID", properties=["guardianInheritedRoles", "*"]
+        )
         assert result == PersistenceObject(
             id="ID", object_type=object_type, attributes={"a": 1, "b": 2}, roles=[]
         )
@@ -151,7 +153,7 @@ class TestUDMDataAdapter:
             actor_id: MockUdmObject(
                 dn=actor_id,
                 properties={
-                    "guardianRole": ["ucsschool:users:teacher"],
+                    "guardianRoles": ["ucsschool:users:teacher"],
                     "school": "school1",
                 },
             ),
@@ -183,21 +185,21 @@ class TestUDMDataAdapter:
             user_id: MockUdmObject(
                 dn=user_id,
                 properties={
-                    "guardianRole": ["ucsschool:users:student"],
+                    "guardianRoles": ["ucsschool:users:student"],
                     "school": "school1",
                 },
             ),
             user_id_2: MockUdmObject(
                 dn=user_id_2,
                 properties={
-                    "guardianRole": ["ucsschool:users:teacher"],
+                    "guardianRoles": ["ucsschool:users:teacher"],
                     "school": "school2",
                 },
             ),
             actor_id: MockUdmObject(
                 dn=actor_id,
                 properties={
-                    "guardianRole": ["ucsschool:users:teacher"],
+                    "guardianRoles": ["ucsschool:users:teacher"],
                     "school": "school1",
                 },
             ),
@@ -246,7 +248,7 @@ class TestUDMDataAdapter:
             actor_id: MockUdmObject(
                 dn=actor_id,
                 properties={
-                    "guardianRole": ["ucsschool:users:teacher"],
+                    "guardianRoles": ["ucsschool:users:teacher"],
                     "school": "school1",
                 },
             ),
@@ -256,14 +258,14 @@ class TestUDMDataAdapter:
             group_id: MockUdmObject(
                 dn=group_id,
                 properties={
-                    "guardianRole": ["ucsschool:groups:class"],
+                    "guardianRoles": ["ucsschool:groups:class"],
                     "school": "school1",
                 },
             ),
             group_id_2: MockUdmObject(
                 dn=group_id_2,
                 properties={
-                    "guardianRole": ["ucsschool:groups:class"],
+                    "guardianRoles": ["ucsschool:groups:class"],
                     "school": "school2",
                 },
             ),

@@ -10,7 +10,7 @@ class MockUdmObject:
 
 
 class MockUDMModule(dict):
-    def get(self, key):
+    def get(self, key, properties=None):
         try:
             return super().__getitem__(key)
         except KeyError:
