@@ -42,7 +42,7 @@ run the following command:
 To use the Guardian *Management UI*,
 it's also necessary to give the user the required permissions.
 For this step the *Management UI* already utilizes the Guardian.
-The user needs to get the proper ``guardianRole`` assigned.
+The user needs to get the proper ``guardianRoles`` assigned.
 The ``Administrator`` user gets this roles automatically assigned during the app installation.
 To make a user account the :term:`Guardian super user <guardian administrator>`,
 who has all privileges, run the following command:
@@ -52,7 +52,7 @@ who has all privileges, run the following command:
 
    $ udm users/user modify \
       --dn "$USER_DN" \
-      --set guardianRole=guardian:builtin:super-admin
+      --append guardianRoles=guardian:builtin:super-admin
 
 You have completed the Guardian setup.
 You can reach the *Management UI* from the

@@ -206,9 +206,11 @@ people who can manage the Guardian.
 .. admonition:: Technical Note
 
    A guardian administrator has the :term:`role` ``guardian:builtin:super-admin``.
-   This means that in UCS applications that have UDM integration,
-   the user must have the ``guardianRole`` attribute include this string,
-   for example ``guardianRole=guardian:builtin:super-admin``.
+   This means that in UCS applications which have UDM integration,
+   the attribute ``guardianRoles`` of the user must include this string,
+   for example ``guardianRoles=guardian:builtin:super-admin``. Another option
+   is to add the user to a group which has the attribute ``guardianMemberRoles`` set to
+   ``guardian:builtin:super-admin``.
 
 Guardian administrators can manage all aspects of the Guardian and integrated apps,
 including the following:
@@ -231,8 +233,8 @@ that integrates with the Guardian.
    In the :program:`Cake Express` example from the previous section,
    the app administrator for Cake Express has the role ``cake-express:default:app-admin``.
    In UCS applications that have UDM integration,
-   the user must have the attribute ``guardianRole`` include this string,
-   for example ``guardianRole=cake-express:default:app-admin``.
+   the user must have the attribute ``guardianRoles`` include this string,
+   for example ``guardianRoles=cake-express:default:app-admin``.
 
 Guardian app administrators can manage all of the following aspects of their respective app:
 
@@ -341,7 +343,7 @@ A role string always follows the format :samp:`{<app-name>}:{<namespace-name>}:{
 
 The Guardian doesn't assign roles to users or objects.
 Instead, an :term:`app infrastructure maintainer` is responsible for assigning role strings
-to the ``guardianRole`` attribute in UDM,
+to the ``guardianRoles`` attribute in UDM,
 or an :term:`app developer` must assign roles to objects in their own internal database.
 
 .. _terminology-guardian-permission:

@@ -23,7 +23,7 @@ additionally need the UDM user ``guardian`` to exist with the right role. It can
       --set username=guardian \
       --set lastname=app-admin \
       --set password=univention \
-      --set guardianRole=guardian:builtin:app-admin \
+      --set guardianRoles=guardian:builtin:app-admin \
       --position cn=users,$(ucr get ldap/base)
 
 Then, set up the environment variables required by the tests with the following command in your :guilabel:`VAGRANT` environment:
