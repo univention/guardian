@@ -15,6 +15,7 @@ from faker import Faker
 from guardian_authorization_api.logging import configure_logger
 from guardian_authorization_api.main import app
 from guardian_authorization_api.models.policies import PolicyObject, Role
+from guardian_authorization_api.udm_client import UDM
 from opa_client import client as opa_client
 from starlette.testclient import TestClient
 
@@ -59,6 +60,78 @@ def patch_env():
 async def client(patch_env):
     with TestClient(app) as client:
         yield client
+
+
+@pytest.fixture()
+def create_test_user_with_udm(patch_env):
+    """Create a test user within UDM"""
+
+    udm_client = UDM(
+        os.environ["UDM_DATA_ADAPTER__URL"],
+        os.environ["UDM_DATA_ADAPTER__USERNAME"],
+        os.environ["UDM_DATA_ADAPTER__PASSWORD"],
+    )
+
+    users_module = udm_client.get("users/user")
+
+    users = []
+
+    def _create_user_with_udm(
+        guardian_roles: Optional[list[str]] = None, groups: Optional[list[str]] = None
+    ):
+        user_obj = users_module.new()
+        user_obj.properties["username"] = fake.unique.pystr(max_chars=15, prefix="test")
+        user_obj.properties["password"] = "univention"
+        user_obj.properties["lastname"] = fake.unique.pystr(max_chars=15, prefix="test")
+
+        if guardian_roles is not None:
+            user_obj.properties["guardianRoles"] = guardian_roles
+
+        if groups is not None:
+            user_obj.properties["groups"] = groups
+
+        user_obj.save(reload=False)
+        user_obj = users_module.get(
+            user_obj.dn, properties=["guardianInheritedRoles", "*"]
+        )
+        users.append(user_obj.dn)
+        return user_obj
+
+    yield _create_user_with_udm
+
+    for user_dn in users:
+        user = users_module.get(user_dn)
+        user.delete()
+
+
+@pytest.fixture()
+def create_test_group_with_udm(patch_env):
+    udm_client = UDM(
+        os.environ["UDM_DATA_ADAPTER__URL"],
+        os.environ["UDM_DATA_ADAPTER__USERNAME"],
+        os.environ["UDM_DATA_ADAPTER__PASSWORD"],
+    )
+
+    groups_module = udm_client.get("groups/group")
+
+    groups = []
+
+    def _create_group_with_udm(guardian_member_roles: Optional[list[str]] = None):
+        group_obj = groups_module.new()
+        group_obj.properties["name"] = fake.unique.pystr(max_chars=15, prefix="test")
+
+        if guardian_member_roles is not None:
+            group_obj.properties["guardianMemberRoles"] = guardian_member_roles
+
+        group_obj.save()
+        groups.append(group_obj.dn)
+        return group_obj
+
+    yield _create_group_with_udm
+
+    for group_dn in groups:
+        group = groups_module.get(group_dn)
+        group.delete()
 
 
 @pytest.fixture()

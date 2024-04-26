@@ -171,44 +171,80 @@ class TestUDMDataAdapter:
         )
 
     @pytest.mark.asyncio
-    async def test_lookup_targets_users(
-        self, udm_adapter: UDMPersistenceAdapter, udm_mock
-    ):
-        actor_id = "uid=demo_teacher,cn=lehrer,cn=users,ou=DEMOSCHOOL,dc=school,dc=test"
-        user_id = (
-            "uid=demo_student,cn=schueler,cn=users,ou=DEMOSCHOOL,dc=school,dc=test"
-        )
-        user_id_2 = (
-            "uid=demo_student_2,cn=schueler,cn=users,ou=DEMOSCHOOL,dc=school,dc=test"
-        )
-        users = {
-            user_id: MockUdmObject(
-                dn=user_id,
-                properties={
+    @pytest.mark.parametrize(
+        "properties",
+        [
+            {
+                "user_0": {
                     "guardianRoles": ["ucsschool:users:student"],
                     "school": "school1",
                 },
-            ),
-            user_id_2: MockUdmObject(
-                dn=user_id_2,
-                properties={
+                "user_1": {
                     "guardianRoles": ["ucsschool:users:teacher"],
                     "school": "school2",
                 },
-            ),
-            actor_id: MockUdmObject(
-                dn=actor_id,
-                properties={
+                "actor": {
                     "guardianRoles": ["ucsschool:users:teacher"],
                     "school": "school1",
                 },
-            ),
+            },
+            {
+                "user_0": {
+                    "guardianInheritedRoles": ["ucsschool:users:student"],
+                    "school": "school1",
+                },
+                "user_1": {
+                    "guardianInheritedRoles": ["ucsschool:users:teacher"],
+                    "school": "school2",
+                },
+                "actor": {
+                    "guardianInheritedRoles": ["ucsschool:users:teacher"],
+                    "school": "school1",
+                },
+            },
+            {
+                "user_0": {
+                    "guardianInheritedRoles": ["ucsschool:users:student"],
+                    "guardianRoles": ["ucsschool:users:student"],
+                    "school": "school1",
+                },
+                "user_1": {
+                    "guardianInheritedRoles": ["ucsschool:users:teacher"],
+                    "guardianRoles": ["ucsschool:users:teacher"],
+                    "school": "school2",
+                },
+                "actor": {
+                    "guardianInheritedRoles": ["ucsschool:users:teacher"],
+                    "guardianRoles": ["ucsschool:users:teacher"],
+                    "school": "school1",
+                },
+            },
+        ],
+    )
+    async def test_lookup_targets_users(
+        self, udm_adapter: UDMPersistenceAdapter, udm_mock, properties
+    ):
+        """Test the lookup of target users and their conversion to PolicyObjects
+
+        All listed `properties` parametrizations must be result in equivalent objects.
+        """
+        actor_id = "uid=demo_teacher,cn=lehrer,cn=users,ou=DEMOSCHOOL,dc=school,dc=test"
+        user_id_0 = (
+            "uid=demo_student,cn=schueler,cn=users,ou=DEMOSCHOOL,dc=school,dc=test"
+        )
+        user_id_1 = (
+            "uid=demo_student_2,cn=schueler,cn=users,ou=DEMOSCHOOL,dc=school,dc=test"
+        )
+        users = {
+            user_id_0: MockUdmObject(dn=user_id_0, properties=properties["user_0"]),
+            user_id_1: MockUdmObject(dn=user_id_1, properties=properties["user_1"]),
+            actor_id: MockUdmObject(dn=actor_id, properties=properties["actor"]),
         }
 
         udm_mock(users=users)
 
         actor_obj, targets = await udm_adapter.lookup_actor_and_old_targets(
-            actor_id=actor_id, old_target_ids=[user_id, None, user_id_2, None]
+            actor_id=actor_id, old_target_ids=[user_id_0, None, user_id_1, None]
         )
         assert actor_obj == PolicyObject(
             actor_id,
@@ -218,13 +254,13 @@ class TestUDMDataAdapter:
 
         assert targets == [
             PolicyObject(
-                id=user_id,
+                id=user_id_0,
                 roles=[Role("ucsschool", "users", "student")],
                 attributes={"school": "school1"},
             ),
             None,
             PolicyObject(
-                id=user_id_2,
+                id=user_id_1,
                 roles=[Role("ucsschool", "users", "teacher")],
                 attributes={"school": "school2"},
             ),
@@ -357,3 +393,52 @@ class TestUDMDataAdapterIntegration:
             == "Users are prevented from making accidental or intentional "
             "system-wide changes and can run most applications"
         )
+
+    @pytest.mark.asyncio
+    async def test_get_user_with_role(
+        self,
+        create_test_user_with_udm: callable,
+        udm_adapter: UDMPersistenceAdapter,
+    ):
+        guardian_roles = ["guardian:builtin:super-admin"]
+        user_obj = create_test_user_with_udm(guardian_roles=guardian_roles)
+
+        actual_persistence_object = await udm_adapter.get_object(
+            user_obj.dn, ObjectType.USER
+        )
+
+        expected_persistence_object = PersistenceObject(
+            id=user_obj.dn,
+            object_type=ObjectType.USER,
+            attributes=user_obj.properties,
+            roles=guardian_roles,
+        )
+        assert expected_persistence_object == actual_persistence_object
+
+    @pytest.mark.asyncio
+    async def test_get_user_with_inherited_role(
+        self,
+        create_test_user_with_udm: callable,
+        create_test_group_with_udm: callable,
+        udm_adapter: UDMPersistenceAdapter,
+    ):
+        guardian_member_roles = ["guardian:builtin:super-admin"]
+        group_obj = create_test_group_with_udm(
+            guardian_member_roles=guardian_member_roles
+        )
+
+        user_obj = create_test_user_with_udm(groups=[group_obj.dn])
+
+        actual_persistence_object = await udm_adapter.get_object(
+            user_obj.dn, ObjectType.USER
+        )
+
+        expected_persistence_object = PersistenceObject(
+            id=user_obj.dn,
+            object_type=ObjectType.USER,
+            attributes=user_obj.properties,
+            roles=guardian_member_roles,
+        )
+
+        breakpoint()
+        assert expected_persistence_object == actual_persistence_object
