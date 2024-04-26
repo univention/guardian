@@ -225,7 +225,8 @@ services:
       traefik.enable: "false"
   db:
     image: python:3.11.5-alpine
-    restart: always
+    restart: unless-stopped
+    stop_signal: SIGINT
     container_name: dummy-db-service
     command: python3 -m http.server
     networks:
