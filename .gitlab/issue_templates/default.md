@@ -105,5 +105,4 @@ Functional QA focuses on the user using the Guardian UI.
 - [ ] [Daily Jenkins tests](https://jenkins2022.knut.univention.de/job/Guardian/job/guardian-tests-daily/) pass after build.
 - [ ] Installation succeeds on a test VM.
 - [ ] Smoke test installation: see section Technical QA.
-- [ ] Rebuild base images, like `user-management/dev/tests/integration_tests.cfg` which use the guardian.
 - [ ] Gitlab issue is added to release issue.
