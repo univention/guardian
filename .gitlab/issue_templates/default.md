@@ -56,7 +56,7 @@ If the changes affect security features such as authentication or authorization:
 ## QA
 
 Please explicitly check off all steps performed in the QA process.
-If certain steps are not applicable, please use ~strikethrough~ and node why these steps where not performed.
+If certain steps are not applicable, please use ~strikethrough~ and note why these steps were not performed.
 
 ## Technical QA
 
