@@ -21,6 +21,7 @@ WebInterfacePortHttps = 8000
 WebInterfaceProxyScheme = http
 DockerScriptConfigure = /tmp/guardian-authorization-api-configure
 RequiredAppsInDomain = guardian-management-api, keycloak
+RequiredUCSVersion = 5.0-7 errata 1016
 UCSOverviewCategory = False
 AppCategories = Security
 Logo = logo.svg
