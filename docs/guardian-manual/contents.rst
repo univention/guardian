@@ -17,6 +17,7 @@ Guardian Manual
    configuration
    troubleshooting
    management-ui
+   assigning-roles
    management-and-authorization-api
    developer-quick-start
    limitations

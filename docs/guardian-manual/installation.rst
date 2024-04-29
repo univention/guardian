@@ -123,6 +123,26 @@ Otherwise, the only additionally needed configuration steps are:
    $ univention-app configure guardian-management-api
    $ univention-app restart guardian-management-api
 
+Upgrading from major version 2
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use the command ``univention-app upgrade`` to upgrade the Guardian:
+
+.. code-block:: bash
+   :caption: Install Guardian apps from command line
+
+   $ univention-app upgrade \
+       guardian-management-api \
+       guardian-authorization-api \
+       guardian-management-ui
+
+Up to major version 2 the Guardian used the extended attribute ``guardianRole`` to determine a users role
+for ``with-lookup`` requests to the :term:`Authorization API`.
+From version 3 on, UDM provides builtin attributes, which are described in :ref:`guardian-assigning-roles-to-users`.
+The upgrade does not remove the old extended attribute ``guardianRole`` automatically,
+but also does not automatically migrate the existing roles to the new attributes.
+This has to be done manually to allow for restructuring with the new ``guardianMemberRoles`` attribute.
+
 .. _installation-various-ucs-server-roles:
 
 Installation on various UCS server roles

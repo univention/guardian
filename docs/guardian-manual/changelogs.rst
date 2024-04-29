@@ -10,6 +10,12 @@ component and version of the app.
 Authorization API
 =================
 
+3.0.0 (2024-04-29)
+------------------
+
+* The authorization API now uses the UDM attributes ``guardianRoles`` and
+  ``guardianInheritedRoles`` instead of ``guardianRole``.
+
 2.0.3 (2024-04-18)
 ------------------
 
