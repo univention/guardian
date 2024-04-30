@@ -17,6 +17,11 @@ The components of the Guardian are versioned following `Semantic Versioning <htt
 The documentation of the Guardian follows semantic versioning as well, but omits the patch level version number.
 This means that the Guardian Manual in version ``1.1`` is valid for all components of version ``1.1.x``.
 
+*Version Synchronisation* is strict: Major and minor version changes must be in sync for all three applications.
+Only the patchlevel is allowed to be not synchronized.
+For example, there must never be a state were the latest release contains an Authorization API 2.3.0
+and a Management API 2.2.0.
+
 Checklist
 =========
 
