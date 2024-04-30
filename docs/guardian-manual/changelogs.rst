@@ -13,7 +13,7 @@ Authorization API
 3.0.0 (2024-04-29)
 ------------------
 
-* The authorization API now uses the UDM attributes ``guardianRoles`` and
+* The Authorization API now uses the UDM attributes ``guardianRoles`` and
   ``guardianInheritedRoles`` instead of ``guardianRole``.
 
 2.0.3 (2024-04-18)
@@ -64,6 +64,11 @@ Authorization API
 Management API
 ==============
 
+3.0.0 (2024-04-29)
+------------------
+
+* Breaking change in the Authorization API
+
 2.0.2 (2024-04-18)
 ------------------
 
@@ -101,6 +106,11 @@ Management API
 
 Management UI
 ==============
+
+3.0.0 (2024-04-29)
+------------------
+
+* Breaking change in the Authorization API
 
 2.0.1 (2024-03-26)
 ------------------
