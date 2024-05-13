@@ -17,7 +17,6 @@ variables:
   UCS_RELEASE: "5.0"
   DEB_IMAGE: docker-registry.knut.univention.de/phahn/ucs-debbase:$UCS_VERSION
   UCSLINT_IMAGE: gitregistry.knut.univention.de/univention/ucs
-  UCS_TEST_PACKAGE: "ucs-test-guardian"
   SCOPE: "guardian"
   DOCS_DIR: "docs/guardian-manual"
   DOC_TARGET_VERSION: "2.0"
@@ -266,7 +265,7 @@ publish_guardian-lib:
     - APP_VERSION="$(sed -n 's/^Version\s*=\s*//p' ini)"
     - echo "updating $APP_NAME=$APP_VERSION"
     - ./scripts/generate-preinst
-    - univention-appcenter-control upload "$APP_NAME=$APP_VERSION" configure compose configure_host inst ini preinst README_UPDATE_DE README_UPDATE_EN settings uinst
+    - univention-appcenter-control upload "$APP_NAME=$APP_VERSION" configure compose configure_host inst ini preinst README_UPDATE_DE README_UPDATE_EN settings uinst test test_preinstall
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
@@ -294,80 +293,6 @@ management_ui_app_to_test_appcenter:
     APP_ID: "guardian-management-ui"
     APP_DIR: "appcenter-management-ui"
     APP_NAME: "5.0/$APP_ID"
-
-ucs_test_deb_lint:
-  stage: lint
-  rules:
-    - changes:
-      - $UCS_TEST_PACKAGE/**/*
-  image:
-    name: $UCSLINT_IMAGE
-    entrypoint: [""]
-  script:
-    - cd $UCS_TEST_PACKAGE && ucslint -j ucslint.xml
-  artifacts:
-    reports:
-      junit: $UCS_TEST_PACKAGE/ucslint.xml
-
-ucs_test_deb_build_git:
-  stage: build
-  image: $DEB_IMAGE
-  rules:
-    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
-      changes:
-        - $UCS_TEST_PACKAGE/**/*
-  script:
-    - apt-get update
-    - cd $UCS_TEST_PACKAGE
-    - apt-get -q --assume-yes build-dep .
-    - dpkg-buildpackage -us -uc
-    - install -d -m 755 build
-    - mv ../*.tar.*z ../*.dsc ../*.deb ../*.buildinfo ../*.changes build/
-  artifacts:
-    paths:
-      - $UCS_TEST_PACKAGE/build/
-
-
-ucs_test_deb_repo_import:
-  stage: build
-  variables:
-    GIT_STRATEGY: none
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      changes:
-        - $UCS_TEST_PACKAGE/debian/changelog
-  tags:
-    - omar
-  script:
-    - >
-      repo_admin.py
-      -G $CI_REPOSITORY_URL
-      -b $CI_COMMIT_BRANCH
-      -P $UCS_TEST_PACKAGE
-      -r ${UCS_RELEASE}-0-0
-      -s $SCOPE
-      -p $UCS_TEST_PACKAGE
-
-ucs_test_deb_repo_build:
-  stage: build
-  needs:
-    - job: ucs_test_deb_repo_import
-      artifacts: false
-  variables:
-    GIT_STRATEGY: none
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      changes:
-        - $UCS_TEST_PACKAGE/debian/changelog
-  tags:
-    - ladda
-  script:
-    - >
-      build-package-ng
-      --no-pbuilder-update
-      -r ${UCS_RELEASE}-0-0
-      -s $SCOPE
-      -p $UCS_TEST_PACKAGE
 
 docs-linkcheck:
   extends: .sphinx-linkcheck-template

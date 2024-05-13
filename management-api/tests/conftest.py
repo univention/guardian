@@ -781,8 +781,13 @@ def create_capability(
     return _create_capability
 
 
+@pytest.fixture
+def ldap_base():
+    return os.environ["LDAP_BASE"]
+
+
 @pytest_asyncio.fixture(scope="function")
-async def set_up_auth():
+async def set_up_auth(ldap_base):
     _original_resource_authorization_adapter = AlwaysAuthorizedAdapter
     ADAPTER_REGISTRY.set_adapter(
         ResourceAuthorizationPort, GuardianAuthorizationAdapter
@@ -792,7 +797,7 @@ async def set_up_auth():
     )
     _original_get_actor_identifier = adapter.get_actor_identifier
     adapter.get_actor_identifier = AsyncMock(
-        return_value="uid=guardian,cn=users,dc=school,dc=test"
+        return_value=f"uid=guardian,cn=users,{ldap_base}"
     )
     yield
     ADAPTER_REGISTRY.set_adapter(

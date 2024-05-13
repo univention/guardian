@@ -1,0 +1,5 @@
+#!/bin/bash
+
+printf '%s' univention > /tmp/univention
+univention-app install --noninteractive --username "Administrator" --pwdfile  /tmp/univention keycloack || rv=$?
+univention-app install --noninteractive --username "Administrator" --pwdfile  /tmp/univention guardian-management-api || rv=$?

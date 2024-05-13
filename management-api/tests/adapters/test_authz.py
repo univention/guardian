@@ -411,7 +411,7 @@ class TestGuardianAuthorizationAdapter:
 class TestGuardianAuthorizationAdapterIntegration:
     @pytest.mark.asyncio
     async def test_authorize_operation_actor_not_allowed_condition(
-        self, registry_test_adapters
+        self, ldap_base, registry_test_adapters
     ):
         registry_test_adapters.register_adapter(
             ResourceAuthorizationPort, adapter_cls=GuardianAuthorizationAdapter
@@ -420,7 +420,7 @@ class TestGuardianAuthorizationAdapterIntegration:
             ResourceAuthorizationPort, GuardianAuthorizationAdapter
         )
         assert await adapter.authorize_operation(
-            Actor(id="uid=guardian,cn=users,dc=school,dc=test"),
+            Actor(id=f"uid=guardian,cn=users,{ldap_base}"),
             OperationType.DELETE_RESOURCE,
             [
                 Resource(
@@ -434,7 +434,7 @@ class TestGuardianAuthorizationAdapterIntegration:
 
     @pytest.mark.asyncio
     async def test_authorize_operation_actor_allowed_permission(
-        self, registry_test_adapters
+        self, ldap_base, registry_test_adapters
     ):
         registry_test_adapters.register_adapter(
             ResourceAuthorizationPort, adapter_cls=GuardianAuthorizationAdapter
@@ -443,7 +443,7 @@ class TestGuardianAuthorizationAdapterIntegration:
             ResourceAuthorizationPort, GuardianAuthorizationAdapter
         )
         assert await adapter.authorize_operation(
-            Actor(id="uid=guardian,cn=users,dc=school,dc=test"),
+            Actor(id=f"uid=guardian,cn=users,{ldap_base}"),
             OperationType.READ_RESOURCE,
             [
                 Resource(
@@ -457,7 +457,9 @@ class TestGuardianAuthorizationAdapterIntegration:
 
     @pytest.mark.asyncio
     async def test_authorize_operation_actor_not_allowed_app(
-        self, registry_test_adapters
+        self,
+        registry_test_adapters,
+        ldap_base,
     ):
         registry_test_adapters.register_adapter(
             ResourceAuthorizationPort, adapter_cls=GuardianAuthorizationAdapter
@@ -466,7 +468,7 @@ class TestGuardianAuthorizationAdapterIntegration:
             ResourceAuthorizationPort, GuardianAuthorizationAdapter
         )
         assert await adapter.authorize_operation(
-            Actor(id="uid=guardian,cn=users,dc=school,dc=test"),
+            Actor(id=f"uid=guardian,cn=users,{ldap_base}"),
             OperationType.DELETE_RESOURCE,
             [
                 Resource(
@@ -477,7 +479,9 @@ class TestGuardianAuthorizationAdapterIntegration:
         ) == {"other": False}
 
     @pytest.mark.asyncio
-    async def test_authorize_operation_actor_allowed_app(self, registry_test_adapters):
+    async def test_authorize_operation_actor_allowed_app(
+        self, ldap_base, registry_test_adapters
+    ):
         registry_test_adapters.register_adapter(
             ResourceAuthorizationPort, adapter_cls=GuardianAuthorizationAdapter
         )
@@ -485,7 +489,7 @@ class TestGuardianAuthorizationAdapterIntegration:
             ResourceAuthorizationPort, GuardianAuthorizationAdapter
         )
         assert await adapter.authorize_operation(
-            Actor(id="uid=guardian,cn=users,dc=school,dc=test"),
+            Actor(id=f"uid=guardian,cn=users,{ldap_base}"),
             OperationType.READ_RESOURCE,
             [
                 Resource(
