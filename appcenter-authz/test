@@ -1,18 +1,23 @@
-#!/usr/share/ucs-test/runner bash
-# SPDX-FileCopyrightText: 2023 Univention GmbH
-#
-# SPDX-License-Identifier: AGPL-3.0-only
-#
-## desc: run unit tests in container
-## tags: [guardian, guardian-authorization-api]
-## exposure: dangerous
-## packages: []
-## bugs: []
-## external-junit: /tmp/guardian-in_container_authorization_api.xml
-
+#!/bin/bash
 
 APP="guardian-authorization-api"
-/usr/share/guardian/scripts/guardian_scripts/set_up_tests.sh
+mkdir -p ~/test-reports/99_guardian
+
+univention-app configure "$APP"
+univention-app restart "$APP"
+univention-app configure guardian-management-api
+univention-app restart guardian-management-api
+
+udm users/user delete --dn=uid=guardian,cn=users,"$(ucr get ldap/base)" || true
+
+udm users/user create \
+  --ignore_exists \
+  --set username=guardian \
+  --set lastname=app-admin \
+  --set password=univention \
+  --set guardianRoles=guardian:builtin:app-admin \
+  --position cn=users,"$(ucr get ldap/base)"
+
 univention-app restart guardian-management-api && echo "Restarted guardian-management-api"
 echo "Waiting for app startup"
 sleep 10
@@ -26,10 +31,9 @@ declare -a CMD=(sh -c "
 cd /app/tests &&
 python3 -m pytest --junit-xml=/tmp/junit.xml --junit-prefix=99_guardian.10_in_container_authorization_api")
 
-
-echo "Running in container: ${CMD[@]}"
+echo "Running in container: " "${CMD[@]}"
 
 univention-app shell "$APP" "${CMD[@]}" || (rv=$?; pkill -f '^/usr/bin/python.*pytest$'; exit $rv)
 rm -f /tmp/guardian-in_container_authorization_api.xml
-univention-app shell "$APP" cat /tmp/junit.xml > /tmp/guardian-in_container_authorization_api.xml
+univention-app shell "$APP" cat /tmp/junit.xml > ~/test-reports/99_guardian/guardian-in_container_authorization_api.xml
 univention-app restart guardian-management-api

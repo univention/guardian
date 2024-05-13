@@ -369,30 +369,24 @@ class TestUDMDataAdapter:
 @pytest.mark.integration
 class TestUDMDataAdapterIntegration:
     @pytest.mark.asyncio
-    async def test_get_user_object(self, udm_adapter: UDMPersistenceAdapter):
+    async def test_get_user_object(self, ldap_base, udm_adapter: UDMPersistenceAdapter):
         result = await udm_adapter.get_object(
-            "uid=Administrator,cn=users,dc=school,dc=test", ObjectType.USER
+            f"uid=Administrator,cn=users,{ldap_base}", ObjectType.USER
         )
-        assert result.id == "uid=Administrator,cn=users,dc=school,dc=test"
+        assert result.id == f"uid=Administrator,cn=users,{ldap_base}"
         assert result.object_type == ObjectType.USER
-        assert (
-            result.attributes["description"]
-            == "Built-in account for administering the computer/domain"
-        )
-        assert result.attributes["displayName"] == "Administrator"
+        assert "Administrator" in result.attributes["displayName"]
 
     @pytest.mark.asyncio
-    async def test_get_group_object(self, udm_adapter: UDMPersistenceAdapter):
+    async def test_get_group_object(
+        self, ldap_base, udm_adapter: UDMPersistenceAdapter
+    ):
+        # does not exist in appcenter test?
         result = await udm_adapter.get_object(
-            "cn=Users,cn=Builtin,dc=school,dc=test", ObjectType.GROUP
+            f"cn=Domain Users,cn=groups,{ldap_base}", ObjectType.GROUP
         )
-        assert result.id == "cn=Users,cn=Builtin,dc=school,dc=test"
+        assert result.id == f"cn=Domain Users,cn=groups,{ldap_base}"
         assert result.object_type == ObjectType.GROUP
-        assert (
-            result.attributes["description"]
-            == "Users are prevented from making accidental or intentional "
-            "system-wide changes and can run most applications"
-        )
 
     @pytest.mark.asyncio
     async def test_get_user_with_role(

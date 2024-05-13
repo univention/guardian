@@ -56,6 +56,11 @@ def patch_env():
     os.environ.update(_environ)
 
 
+@pytest.fixture
+def ldap_base():
+    return os.environ["LDAP_BASE"]
+
+
 @pytest_asyncio.fixture(scope="session")
 async def client(patch_env):
     with TestClient(app) as client:

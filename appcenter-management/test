@@ -1,0 +1,35 @@
+#!/bin/bash
+
+APP="guardian-management-api"
+mkdir -p ~/test-reports/99_guardian
+
+printf '%s' univention > /tmp/univention
+univention-app install --noninteractive --username "Administrator" --pwdfile  /tmp/univention guardian-authorization-api
+
+univention-app configure guardian-authorization-api
+univention-app restart guardian-authorization-api
+univention-app configure "$APP"
+univention-app restart "$APP"
+
+udm users/user delete --dn=uid=guardian,cn=users,"$(ucr get ldap/base)" || true
+
+udm users/user create \
+  --ignore_exists \
+  --set username=guardian \
+  --set lastname=app-admin \
+  --set password=univention \
+  --set guardianRoles=guardian:builtin:app-admin \
+  --position cn=users,"$(ucr get ldap/base)"
+
+declare -a CMD=(sh -c "
+cd /app/management-api/tests &&
+python3 -m pytest --junit-xml=/tmp/junit.xml --junit-prefix=99_guardian.10_in_container_management_api")
+
+echo "Running in container: " "${CMD[@]}"
+
+univention-app shell "$APP" "${CMD[@]}" || (rv=$?; pkill -f '^/usr/bin/python.*pytest$'; exit $rv)
+rm -f /tmp/guardian-in_container_management_api.xml
+univention-app shell "$APP" cat /tmp/junit.xml > ~/test-reports/99_guardian/guardian-in_container_management_api.xml
+univention-app restart guardian-management-api
+
+univention-app remove --noninteractive --username "Administrator" --pwdfile  /tmp/univention guardian-authorization-api
