@@ -16,8 +16,6 @@
 #
 # import os
 import sys
-
-# sys.path.insert(0, os.path.abspath('.'))
 from datetime import date
 
 # -- Project information -----------------------------------------------------
@@ -137,9 +135,7 @@ html_theme_options = {
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 
-
 numfig = True
-
 
 suppress_warnings = ["git.too_shallow"]
 git_last_updated_timezone = "Europe/Berlin"
