@@ -17,14 +17,6 @@ eval "$(ucr shell)" || exit 1
 joinscript_init
 
 if [ $JS_LAST_EXECUTED_VERSION -lt 1 ]; then
-  ucs_registerLDAPExtension "$@" \
-    --packagename "$APP_ID" \
-    --packageversion "$VERSION" \
-    --schema "/var/lib/univention-appcenter/apps/$APP_ID/conf/guardian.schema" \
-    --udm_syntax "/var/lib/univention-appcenter/apps/$APP_ID/conf/guardian_syntax.py" \
-    --udm_syntax_messagecatalog "/var/lib/univention-appcenter/apps/$APP_ID/locale/DE/LC_MESSAGES/de.mo" \
-    --ucsversionstart 5.0-0 || die
-
   udm users/user modify "$@" \
     --dn "uid=Administrator,cn=users,$ldap_base" \
     --append guardianRoles="guardian:builtin:super-admin" || die
