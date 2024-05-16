@@ -440,5 +440,4 @@ class TestUDMDataAdapterIntegration:
             roles=guardian_member_roles,
         )
 
-        breakpoint()
         assert expected_persistence_object == actual_persistence_object
