@@ -1,3 +1,9 @@
+ucs-test-guardian (0.0.8) unstable; urgency=medium
+
+  * Fix bundle setup (Issue #221).
+
+ -- Ole Schwiegert <schwiegert@univention.de>  Thu, 16 May 2024 08:20:00 +0100
+
 ucs-test-guardian (0.0.7) unstable; urgency=medium
 
   * Fix bundle setup (Issue #134).
