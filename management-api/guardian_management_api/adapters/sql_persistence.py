@@ -247,5 +247,6 @@ class SQLAlchemyMixin:
     @session_wrapper
     async def _delete_obj(self, obj: ORMObj, session: AsyncSession) -> None:
         async with session.begin():
+            session.add(obj)
             await session.delete(obj)
         return None

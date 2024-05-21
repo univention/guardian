@@ -187,6 +187,7 @@ class DBCapability(Base):
     permissions: Mapped[set[DBPermission]] = relationship(
         secondary=capability_permission_table,
         lazy="joined",
+        passive_deletes=True,
     )
     relation: Mapped[CapabilityConditionRelation] = mapped_column(
         Enum(CapabilityConditionRelation, native_enum=False)
