@@ -7,6 +7,8 @@ RUN yarn build
 
 FROM gitregistry.knut.univention.de/univention/customers/dataport/upx/container-nginx/nginx:0.1.1
 
+EXPOSE 8080
+
 ARG commit
 ARG date
 

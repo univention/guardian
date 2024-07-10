@@ -237,3 +237,8 @@ If the standalone TypeScript plugin doesn't feel fast enough to you, Volar has a
 ### WebStorm
 
 [WebStorm](https://www.jetbrains.com/de-de/webstorm/) + [Vue setup](https://www.jetbrains.com/help/webstorm/vue-js.html#ws_vue_js_before_you_start)
+
+## Docker container
+
+If you want to deploy the docker container as readonly, you can deactivate the automatic generation of the config.json, by setting the environment
+variable `SKIP_CONFIG_GENERATION` in the container. You still need to manually provide the config.json in that path for the UI to work properly.
