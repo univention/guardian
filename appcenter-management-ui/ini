@@ -25,9 +25,9 @@ Logo = logo.svg
 LogoDetailPage = logo_detail_page.svg
 UCSOverviewCategory = False
 Description = Web interface to administrate the rights and roles of objects.
-LongDescription = <p>This app is part of the UCS product component "Guardian".
-	Via the web interface roles in the product can be created, deleted and
-	edited.</p>
+LongDescription = <p>
+		This app is part of the Nubus component &quot;Guardian&quot;. Via the web interface roles in the product can be created, deleted and edited.
+	</p>
 WebsiteVendor = https://www.univention.com/
 License = free
 Contact = sales@univention.de
@@ -37,8 +37,8 @@ NotificationEmail = appcenter-reporting@univention.de
 
 [de]
 Description = Web-Interface zur Verwaltung der Rollen und Rechte von Objekten.
-LongDescription = <p>Diese App ist Teil der UCS Produktkomponente "Guardian".
-	Über das Web-Interface können Rollen im Produkt angelegt, gelöscht und editiert
-	werden.</p>
+LongDescription = <p>
+		Diese App ist Teil der Nubus Komponente &quot;Guardian&quot;. Über das Web-Interface können Rollen im Produkt angelegt, gelöscht und editiert werden.
+	</p>
 WebsiteVendor = https://www.univention.de/
 SupportURL = https://www.univention.de/produkte/support/enterprise-support/

@@ -27,9 +27,9 @@ AppCategories = Security
 Logo = logo.svg
 LogoDetailPage = logo_detail_page.svg
 Description = Control instance to check the capabilities of a role.
-LongDescription = <p>This app is part of the UCS product component "Guardian".
-	The Authorization API is used as a control instance to check the capabilities
-	of a role.</p>
+LongDescription = <p>
+		This app is part of the Nubus component &quot;Guardian&quot;. The Authorization API is used as a control instance to check the capabilities of a role.
+	</p>
 WebsiteVendor = https://www.univention.com/
 License = free
 Contact = sales@univention.de
@@ -39,8 +39,8 @@ NotificationEmail = appcenter-reporting@univention.de
 
 [de]
 Description = Kontrollinstanz, um die Berechtigungen einer Rolle zu überprüfen.
-LongDescription = <p>Diese App ist Teil der UCS Produktkomponente "Guardian".
-	Die Autorisierungs-API wird als Kontrollinstanz eingesetzt, um die
-	Berechtigungen einer Rolle zu überprüfen.</p>
+LongDescription = <p>
+		Diese App ist Teil der Nubus Komponente &quot;Guardian&quot;. Die Autorisierungs-API wird als Kontrollinstanz eingesetzt, um die Berechtigungen einer Rolle zu überprüfen.
+	</p>
 WebsiteVendor = https://www.univention.de/
 SupportURL = https://www.univention.de/produkte/support/enterprise-support/
