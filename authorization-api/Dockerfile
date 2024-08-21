@@ -5,7 +5,7 @@
 ARG POETRY_VERSION="1.5.1"
 
 # Calculate Python dependencies
-FROM gitregistry.knut.univention.de/univention/components/ucs-base-image/ucs-base-520:latest as requirements_builder
+FROM gitregistry.knut.univention.de/univention/components/ucs-base-image/ucs-base-520:latest AS requirements_builder
 
 ARG POETRY_VERSION
 
@@ -20,7 +20,7 @@ COPY pyproject.toml poetry.lock ./
 RUN poetry export -f requirements.txt --output requirements.txt --dev --without-hashes
 
 # Live edit version for development
-FROM gitregistry.knut.univention.de/univention/components/ucs-base-image/ucs-base-520:latest as dev
+FROM gitregistry.knut.univention.de/univention/components/ucs-base-image/ucs-base-520:latest AS dev
 ARG POETRY_VERSION
 
 EXPOSE 8000

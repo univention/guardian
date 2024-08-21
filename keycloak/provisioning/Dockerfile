@@ -1,4 +1,4 @@
-FROM docker-registry.knut.univention.de/python:3.11-slim as builder
+FROM docker-registry.knut.univention.de/python:3.11-slim AS builder
 
 WORKDIR /build
 

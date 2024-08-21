@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-FROM gitregistry.knut.univention.de/univention/components/ucs-base-image/ucs-base-520:latest as builder
+FROM gitregistry.knut.univention.de/univention/components/ucs-base-image/ucs-base-520:latest AS builder
 
 ARG opa_version=0.53.0
 
@@ -13,7 +13,7 @@ ADD https://github.com/open-policy-agent/opa/releases/download/v${opa_version}/o
 RUN chmod +x /usr/bin/opa
 
 # Calculate Python dependencies
-FROM gitregistry.knut.univention.de/univention/components/ucs-base-image/ucs-base-520:latest as requirements_builder
+FROM gitregistry.knut.univention.de/univention/components/ucs-base-image/ucs-base-520:latest AS requirements_builder
 WORKDIR /build
 RUN apt-get update \
     && apt-get --assume-yes --verbose-versions --no-install-recommends install \
@@ -25,7 +25,7 @@ COPY pyproject.toml poetry.lock ./
 RUN poetry export -f requirements.txt --output requirements.txt --dev --without-hashes
 
 # Live edit version for development
-FROM gitregistry.knut.univention.de/univention/components/ucs-base-image/ucs-base-520:latest as dev
+FROM gitregistry.knut.univention.de/univention/components/ucs-base-image/ucs-base-520:latest AS dev
 
 ARG service_dir="/guardian_service_dir"
 
