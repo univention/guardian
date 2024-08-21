@@ -4,15 +4,18 @@
 
 services:
   proxy:
-    image: traefik:v2.10
+    image: traefik:v2.11
     hostname: traefik
     command:
-     - --providers.docker
+     - --providers.docker=true
+     - --providers.docker.exposedbydefault=false
      - --entryPoints.web.address=:80
+     - --api.insecure=true
     networks:
       - proxy-net
     ports:
       - 80:80
+      - 8888:8080  # dashboard for troubleshooting
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
   opa:
