@@ -8,7 +8,6 @@ services:
     hostname: traefik
     command:
      - --providers.docker=true
-     - --providers.docker.exposedbydefault=false
      - --entryPoints.web.address=:80
      - --api.insecure=true
     networks:
@@ -54,8 +53,8 @@ services:
         condition: service_started
       proxy:
         condition: service_started
-      keycloak:
-        condition: service_healthy
+      keycloak-provisioning:
+        condition: service_completed_successfully
     networks:
       - proxy-net
     volumes:
@@ -98,8 +97,8 @@ services:
       extra_hosts:
         - git.knut.univention.de:${GITLAB_IP}
     depends_on:
-      keycloak:
-        condition: service_healthy
+      keycloak-provisioning:
+        condition: service_completed_successfully
       db:
         condition: service_healthy
     volumes:
@@ -149,8 +148,8 @@ services:
         condition: service_started
       proxy:
         condition: service_started
-      keycloak:
-        condition: service_healthy
+      keycloak-provisioning:
+        condition: service_completed_successfully
       db:
         condition: service_healthy
     networks:
@@ -197,7 +196,7 @@ services:
     hostname: keycloak
     command: start --optimized
     healthcheck:
-      test: "/opt/keycloak/bin/kcadm.sh get realms/GuardianDev --server http://localhost:8080/guardian/keycloak --realm master --user admin --password admin"
+      test: "/opt/keycloak/bin/kcadm.sh get users -q username=admin --server http://localhost:8080/guardian/keycloak --realm master --user admin --password admin"
       interval: 30s
       timeout: 10s
       retries: 30
@@ -205,7 +204,6 @@ services:
       start_interval: 2s
     depends_on:
       - proxy
-      - keycloak-provisioning
     networks:
       - proxy-net
     labels:
@@ -215,13 +213,15 @@ services:
       traefik.http.services.keycloak.loadbalancer.server.port: 8080
       traefik.http.middlewares.customheaders.headers.customrequestheaders.X-Forwarded-Proto: http
       traefik.http.routers.keycloak.middlewares: customheaders
-
   keycloak-provisioning:
     container_name: keycloak-provisioning-dev
     image: keycloak-guardian-provisioning:dev
     build:
       context: ./
       dockerfile: keycloak/provisioning/Dockerfile
+    depends_on:
+      keycloak:
+        condition: service_healthy
     networks:
       - proxy-net
     labels:
@@ -236,7 +236,6 @@ services:
       - proxy-net
     healthcheck:
       test: ["CMD", "sleep", "0.1"]
-
   management-ui:
     container_name: management-ui
     image: management-ui:dev
@@ -245,6 +244,9 @@ services:
       dockerfile: management-ui/docker/Dockerfile
       extra_hosts:
         - git.knut.univention.de:${GITLAB_IP}
+    depends_on:
+      keycloak-provisioning:
+        condition: service_completed_successfully
     networks:
       - proxy-net
     environment:
@@ -259,7 +261,7 @@ services:
       traefik.http.routers.management-ui.entrypoints: web
       traefik.http.routers.management-ui.rule: PathPrefix(`/univention/guardian/management-ui`)
       traefik.http.routers.management-ui.service: management-ui
-      traefik.http.services.management-ui.loadbalancer.server.port: 80
+      traefik.http.services.management-ui.loadbalancer.server.port: 8080
 
 
 networks:

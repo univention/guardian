@@ -6,6 +6,10 @@ ENV KC_DB=dev-file
 # relative path needs to be set in build stage
 ENV KC_HTTP_RELATIVE_PATH=/guardian/keycloak
 
+# Enable health and metrics support
+# This needs to be set before build is called
+ENV KC_HEALTH_ENABLED=true
+ENV KC_METRICS_ENABLED=true
 
 WORKDIR /opt/keycloak
 # for demonstration purposes only, please make sure to use proper certificates in production instead
@@ -18,10 +22,6 @@ COPY --from=builder /opt/keycloak/ /opt/keycloak/
 # admin credentials
 ENV KEYCLOAK_ADMIN=admin
 ENV KEYCLOAK_ADMIN_PASSWORD=admin
-
-# Enable health and metrics support
-ENV KC_HEALTH_ENABLED=true
-ENV KC_METRICS_ENABLED=true
 
 # configuring keycloak
 ENV KC_HOSTNAME=traefik

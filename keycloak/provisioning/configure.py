@@ -6,7 +6,7 @@ import requests
 
 import keycloak
 
-KEYCLOAK_URL = "http://keycloak:8080/guardian/keycloak/"
+KEYCLOAK_URL = "http://traefik/guardian/keycloak/"
 
 logger = None
 
@@ -39,7 +39,7 @@ class KeycloakConfigurator:
         self.logger.info("Waiting for keycloak.")
         while True:
             try:
-                res = requests.get(KEYCLOAK_URL, timeout=5)
+                res = requests.get(KEYCLOAK_URL, timeout=5, allow_redirects=True)
                 if res.status_code == 200:
                     break
             except requests.exceptions.RequestException:
