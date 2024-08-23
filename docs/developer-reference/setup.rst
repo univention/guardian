@@ -34,8 +34,40 @@ Once the Guardian started, the components can be found under the following URLs:
 * `Management API <http://localhost/guardian/management/docs>`_
 * `Authorization API <http://localhost/guardian/authorization/docs>`_
 * `Keycloak <http://traefik/guardian/keycloak>`_
+* `Traefik Dashboard <http://traefik:8888/dashboard/>`_
 
 The credentials are documented in :ref:`changing_authentication`.
+
+App Troubleshooting
+-------------------
+
+If you receive 404s for any of the apps,
+the `Traefik dashboard <http://traefik:8888/dashboard/#/http/routers>`_
+provides a list of routers and other troubleshooting interfaces.
+
+In the app container configuration in ``dev-compose.yaml``,
+ensure that the ``PathPrefix`` listed in the compose file appears in the Traefik dashboard.
+If not, this may indicate that the app container is not healthy.
+Verify that the docker container is running and passes its health checks.
+If the app container is not running,
+verify that its dependencies started without error.
+
+If the docker container and its dependencies are healthy,
+verify that the ``PathPrefix`` listed in the ``dev-compose.yaml`` configuration matches the URL that nginx or uvicorn uses to serve the application.
+In the case of Keycloak,
+verify the ``KC_HTTP_RELATIVE_PATH`` in the Keycloak Dockerfile.
+
+If you receive a "Bad Gateway" instead of a 404,
+this may indicate a misconfigured proxy port.
+Verify the following:
+
+1. The nginx or uvicorn port matches the configured traefik loadbalancer port.
+2. The Docker container exposes the effected port.
+
+In the case of Keycloak,
+the `Keycloak Container Guide <https://www.keycloak.org/server/containers#_starting_the_optimized_keycloak_container_image>`_
+has more information on which ports the Docker container exposes.
+By default we expect port 8080 for the http service.
 
 Choice of database
 ==================
