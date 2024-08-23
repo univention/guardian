@@ -26,28 +26,24 @@ additionally need the UDM user ``guardian`` to exist with the right role. It can
       --set guardianRoles=guardian:builtin:app-admin \
       --position cn=users,$(ucr get ldap/base)
 
-Then, set up the environment variables required by the tests with the following command in your :guilabel:`VAGRANT` environment:
+Finally, run the tests for the desired component in your environment:
 
 .. code-block:: bash
 
-    cd /vagrant
-    cp .env.example .env
-    $EDITOR .env # adapt the variables at the top of the file
-    source .env
-
-Finally, run the tests for the desired component in your :guilabel:`VAGRANT` environment:
-
-.. code-block:: bash
-
-    . ~/venvs/management-api/bin/activate && pytest -lv management-api/; deactivate
-    . ~/venvs/authorization-api/bin/activate && pytest -lv authorization-api/; deactivate
-    . ~/venvs/guardian-lib/bin/activate && pytest -lv guardian-lib/; deactivate
+    # Activate your preferred python env, e.g.
+    # . ~/venvs/management-api/bin/activate
+    pytest -lv management-api/; deactivate
+    # . ~/venvs/authorization-api/bin/activate
+    pytest -lv authorization-api/; deactivate
+    #. ~/venvs/guardian-lib/bin/activate
+    pytest -lv guardian-lib/; deactivate
 
 If you don't want to test the integration with UDM and Keycloak, you can exclude the ``e2e_udm`` test in the management-api component:
 
 .. code-block:: bash
 
-    . ~/venvs/management-api/bin/activate && pytest -lv -k "not e2e_udm" management-api/ && deactivate
+    # . ~/venvs/management-api/bin/activate
+    pytest -lv -k "not e2e_udm" management-api/; deactivate
 
 For the Authorization API component, the UDM integration tests are automatically skipped if ``UDM_DATA_ADAPTER__URL`` is not set.
 

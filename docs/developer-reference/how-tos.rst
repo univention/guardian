@@ -42,7 +42,7 @@ License information is added to source files via `REUSE <https://reuse.software/
 like this:
 
 .. code-block:: bash
-   :caption: Add licensing information to sources in :guilabel:`VAGRANT`
+   :caption: Add licensing information to sources
 
    # Activate your preferred python env, e.g.
    # . ~/venvs/management-api/bin/activate
