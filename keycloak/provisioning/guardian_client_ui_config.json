@@ -79,6 +79,18 @@
     {
       "config": {
         "access.token.claim": "true",
+        "claim.name": "username",
+        "id.token.claim": "false",
+        "user.attribute": "username"
+      },
+      "consentRequired": false,
+      "name": "username",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-usermodel-attribute-mapper"
+    },
+    {
+      "config": {
+        "access.token.claim": "true",
         "access.tokenResponse.claim": "false",
         "claim.name": "dn",
         "claim.value": "dn=fake",

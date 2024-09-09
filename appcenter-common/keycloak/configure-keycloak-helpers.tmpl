@@ -66,6 +66,52 @@ def get_web_host(ucr: ConfigRegistry) -> str:
     return web_host
 
 
+def add_or_update_username(keycloak_session: KeycloakAdmin, client_name: str):
+    """
+    Add or update a mapper for `username`.
+
+    Keycloak version 25 replaces the `sub` mapper with the `username` mapper.
+    If the UCS version is on Keycloak 24,
+    this will add a `username` mapper to be forward-compatible.
+    If the UCS version is on Keycloak 25,
+    this will modify the `username` mapper to work with the Keycloak adapter.
+    """
+
+    client_config, client_id = get_client_config_and_id(keycloak_session, client_name)
+
+    mapper_config = {
+        "name": "username",
+        "protocol": "openid-connect",
+        "protocolMapper": "oidc-usermodel-attribute-mapper",
+        "consentRequired": False,
+        "config": {
+            "claim.name": "username",
+            "user.attribute": "username",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+        },
+    }
+    existing_mapper = list(
+        filter(
+            lambda_mapper: mapper["name"] == "username",
+            client_config["protocolMappers"],
+        )
+    )
+    if not existing_mapper:
+        client_config["protocolMappers"].append(mapper_config)
+    else:
+        protocol_mappers = []
+        for mapper in client_config["protocolMappers"]:
+            if mapper["name"] == "username":
+                # The default for this is "preferred_username".
+                # Let's set this to "username" to match the user object,
+                # as it will be easier to debug if we have issues.
+                mapper["config"]["claim.name"] = "username"
+            protocol_mappers.append(mapper)
+        client_config["protocolMappers"] = protocol_mappers
+    keycloak_session.update_client(client_id, client_config)
+
+
 def add_audience(keycloak_session: KeycloakAdmin, client_name: str, audience: str):
     """Add an audience mapper to the specified client"""
 

@@ -108,7 +108,7 @@ class FastAPIOAuth2(
                 audience="guardian",
                 issuer=self.oauth_settings["issuer"],
                 leeway=1,
-                options={"require": ["exp", "iss", "aud", "sub", "iat", "jti"]},
+                options={"require": ["exp", "iss", "aud", "username", "iat", "jti"]},
             )
         except jwt.exceptions.InvalidTokenError as exc:
             self.logger.warning(f'Invalid Token: "{exc}"', token=token)
