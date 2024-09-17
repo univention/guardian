@@ -542,13 +542,13 @@ test = ["objgraph", "psutil"]
 
 [[package]]
 name = "guardian-lib"
-version = "1.6.0"
+version = "0.0.0.dev0+jleadbetter.237.keycloak.token.configuration.0d491de6"
 description = ""
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "guardian_lib-1.6.0-py3-none-any.whl", hash = "sha256:97eec9d7f01577feb49120c6c6e0a7cad971159b33b978b67afdf52db97bdf37"},
-    {file = "guardian_lib-1.6.0.tar.gz", hash = "sha256:c8ebeae99c487c0f0a1f2484f43e7564dbd0587cd5c1a4b7c2c24452a6543f31"},
+    {file = "guardian_lib-0.0.0.dev0+jleadbetter.237.keycloak.token.configuration.0d491de6-py3-none-any.whl", hash = "sha256:7c70ca6c32ab8d6819031bcbe2a727e02a41b61f98fcd7a237c8b430b336386b"},
+    {file = "guardian_lib-0.0.0.dev0+jleadbetter.237.keycloak.token.configuration.0d491de6.tar.gz", hash = "sha256:1695a358c96ff1de622d5cd0f8c3f011e6dfb22c17b3a040a63f2353c95109e1"},
 ]
 
 [package.dependencies]
@@ -563,7 +563,7 @@ requests = ">=2.31.0,<3.0.0"
 [package.source]
 type = "legacy"
 url = "https://git.knut.univention.de/api/v4/projects/830/packages/pypi/simple"
-reference = "guardian"
+reference = "guardian-lib"
 
 [[package]]
 name = "gunicorn"
@@ -915,7 +915,7 @@ loguru = ">=0.7.0,<0.8.0"
 [package.source]
 type = "legacy"
 url = "https://git.knut.univention.de/api/v4/projects/908/packages/pypi/simple"
-reference = "guardian-lib"
+reference = "port-loader"
 
 [[package]]
 name = "pycparser"
@@ -1312,4 +1312,4 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "f22bca642ee7e187bd08fccfb697cedbd05b09c8b88d867b7b658645499bcd08"
+content-hash = "d69e66cfda7c43d619e0daf40cb4185795db0c8a1fbdabc5a8045fd35a2fc1a4"

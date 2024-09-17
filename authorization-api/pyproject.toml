@@ -54,7 +54,7 @@ priority = "explicit"
 
 
 [[tool.poetry.source]]
-name = "guardian"
+name = "guardian-lib"
 url = "https://git.knut.univention.de/api/v4/projects/830/packages/pypi/simple"
 priority = "supplemental"
 
@@ -65,7 +65,7 @@ priority = "primary"
 
 
 [[tool.poetry.source]]
-name = "guardian-lib"
+name = "port-loader"
 url = "https://git.knut.univention.de/api/v4/projects/908/packages/pypi/simple"
 priority = "supplemental"
 
