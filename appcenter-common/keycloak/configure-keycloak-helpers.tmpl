@@ -68,13 +68,13 @@ def get_web_host(ucr: ConfigRegistry) -> str:
 
 def add_or_update_username(keycloak_session: KeycloakAdmin, client_name: str):
     """
-    Add or update a mapper for `username`.
+    Add or update a mapper for 'username'.
 
-    Keycloak version 25 replaces the `sub` mapper with the `username` mapper.
+    Keycloak version 25 replaces the 'sub' mapper with the 'username' mapper.
     If the UCS version is on Keycloak 24,
-    this will add a `username` mapper to be forward-compatible.
+    this will add a 'username' mapper to be forward-compatible.
     If the UCS version is on Keycloak 25,
-    this will modify the `username` mapper to work with the Keycloak adapter.
+    this will modify the 'username' mapper to work with the Keycloak adapter.
     """
 
     client_config, client_id = get_client_config_and_id(keycloak_session, client_name)
