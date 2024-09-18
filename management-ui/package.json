@@ -47,5 +47,5 @@
     "test:unit": "vitest",
     "type-check": "vue-tsc --noEmit -p tsconfig.vitest.json --composite false"
   },
-  "version": "2.0.1"
+  "version": "0.0.0-jleadbetter-245"
 }

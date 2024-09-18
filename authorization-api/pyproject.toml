@@ -4,7 +4,7 @@
 
 [tool.poetry]
 name = "authorization-api"
-version = "3.0.0"
+version = "0.0.0rc245"
 description = ""
 authors = ["UCS School Maintainers <ucsschool-maintainers@univention.de>"]
 readme = "README.md"
