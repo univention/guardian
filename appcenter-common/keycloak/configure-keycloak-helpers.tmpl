@@ -186,6 +186,25 @@ def update_redirect_uris_and_web_origins(
 
     keycloak_session.update_client(client_id, client_config)
 
+def add_basic_scope(keycloak_session: KeycloakAdmin, client_name: str):
+    """Turn client into a public client (i.e., no secret)"""
+
+    client_config, client_id = get_client_config_and_id(keycloak_session, client_name)
+
+    scope_id = None
+    for scope in keycloak_session.get_client_scopes():
+        if scope["name"] == "basic":
+            scope_id = scope["id"]
+            break
+    keycloak_version = keycloak_session.get_server_info()["systemInfo"]["version"]
+    major_version = int(keycloak_version.split(".")[0])
+    if major_version >= 25:
+        response = keycloak_session.raw_put(
+                f"admin/realms/{DEFAULT_UCS_REALM}/clients/{client_id}/default-client-scopes/{scope_id}",
+                {"realm": DEFAULT_UCS_REALM, "client": client_id, "scope_id": scope_id}
+        )
+        if response.status_code != 204:
+            raise Exception(f"Request to add basic scope returned unexpected status code {response.status_code} with content {response.content}.")
 
 def make_public_client(keycloak_session: KeycloakAdmin, client_name: str):
     """Turn client into a public client (i.e., no secret)"""

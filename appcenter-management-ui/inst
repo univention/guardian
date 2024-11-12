@@ -6,7 +6,7 @@
 #  Join script that runs on the docker host.
 #
 
-VERSION=1
+VERSION=2
 APP_ID="guardian-management-ui"
 APP_DIR="/var/lib/univention-appcenter/apps/$APP_ID"
 COMPONENT_ID=$(univention-app get $APP_ID component_id | cut -f 2 -d ':' | tr -d '[:space:]')

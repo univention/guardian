@@ -20,6 +20,11 @@ def update_guardian_ui_client(keycloak_session: KeycloakAdmin, web_host: str) ->
         errors.append(f"Unable to add dn protocol mapper to {client_name} client: {exc}")
 
     try:
+        add_basic_scope(keycloak_session, client_name)
+    except Exception as exc:
+        errors.append(f"Unable to add 'basic' scope to {client_name} client: {exc}")
+
+    try:
         add_audience(keycloak_session, client_name, "guardian")
     except Exception as exc:
         errors.append(f"Unable to add guardian audience to {client_name} client: {exc}")
