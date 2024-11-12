@@ -5,7 +5,7 @@ WORKDIR /management-ui
 RUN yarn install
 RUN yarn build
 
-FROM gitregistry.knut.univention.de/univention/customers/dataport/upx/container-nginx/nginx:0.1.1
+FROM gitregistry.knut.univention.de/univention/customers/dataport/upx/container-nginx/nginx:0.3.0
 
 EXPOSE 8080
 
