@@ -97,6 +97,9 @@ class KeycloakConfigurator:
                 {
                     "username": self.user_name,
                     "enabled": True,
+                    "email": "example@example.com",
+                    "firstName": "example",
+                    "lastName": "example",
                     "credentials": [
                         {
                             "value": "univention",
