@@ -18,5 +18,8 @@
         "patch"
       ]
     }
-  ]
+  ],
+  "pre-commit": {
+    "enabled": true
+  }
 }
