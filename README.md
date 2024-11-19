@@ -4,7 +4,7 @@ Copyright (C) 2023 Univention GmbH
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
-[![Renovate](https://img.shields.io/badge/renovate-enabled-brightgreen.svg)](../issues/?label_name[]=Renovate)
+[![Renovate](https://img.shields.io/badge/renovate-enabled-brightgreen.svg)](../issues/?search=Dependency%20Dashboard)
 [![Renovate](https://img.shields.io/badge/renovate-pipeline-brightgreen.svg)](../pipelines/new?var[RUN_RENOVATE]=yes)
 
 # Guardian

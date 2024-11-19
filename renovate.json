@@ -1,15 +1,9 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "dependencyDashboardApproval": true,
-  "dependencyDashboardLabels": [
-    "Renovate"
-  ],
   "extends": [
     "config:base",
     ":dependencyDashboard"
-  ],
-  "labels": [
-    "Renovate"
   ],
   "packageRules": [
     {
