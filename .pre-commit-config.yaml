@@ -45,7 +45,7 @@ repos:
       args: []
       additional_dependencies: [fastapi==0.95.2, loguru==0.7.0, requests==2.31.0, types-requests==2.31.0, alembic==1.11.3, types-aiofiles, types-pymysql]
 - repo: https://github.com/jackdewinter/pymarkdown
-  rev: v0.9.9
+  rev: v0.9.25
   hooks:
     - id: pymarkdown
       name: general-markdown
