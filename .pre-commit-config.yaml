@@ -6,7 +6,7 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.4.0
+  rev: v4.6.0
   hooks:
     - id: check-added-large-files
       name: general-check-added-large-files
@@ -25,19 +25,19 @@ repos:
       name: general-pretty-format-json
       args: [--autofix]
 - repo: https://github.com/psf/black
-  rev: 23.3.0
+  rev: 23.12.1
   hooks:
     - id: black
       name: backend-black
       exclude: "udm_client.py"
 - repo: https://github.com/PyCQA/bandit
-  rev: 1.7.5
+  rev: 1.7.10
   hooks:
     - id: bandit
       name: backend-bandit
       exclude: "authorization-api/tests/|management-api/tests|udm_client.py|guardian-lib/tests"
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.3.0
+  rev: v1.13.0
   hooks:
     - id: mypy
       name: backend-mypy
@@ -62,7 +62,7 @@ repos:
         # MD041: First line in file should be a top level heading
 
 - repo: https://github.com/charliermarsh/ruff-pre-commit
-  rev: 'v0.0.270'
+  rev: 'v0.8.0'
   hooks:
     - id: ruff
       name: backend-ruff
@@ -70,7 +70,7 @@ repos:
       exclude: "udm_client.py"
 
 - repo: https://github.com/python-poetry/poetry
-  rev: '1.5.1'
+  rev: '1.8.4'
   hooks:
     - id: poetry-check
       name: backend-poetry-check-authorization-api
@@ -110,7 +110,7 @@ repos:
       args: [ "management-api/alembic/1.0.0_builtin_conditions", "--ignore=\"*.json\"" ]
 
 - repo: https://github.com/StyraInc/regal
-  rev: v0.8.0
+  rev: v0.29.2
   hooks:
     - id: regal-lint-use-path
       name: backend-opa-policy-file-linting
