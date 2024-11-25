@@ -4,7 +4,11 @@
 
 import pytest
 from guardian_authorization_api.business_logic import check_permissions, get_permissions
-from guardian_authorization_api.models.policies import CheckPermissionsQuery
+from guardian_authorization_api.models.policies import (
+    CheckPermissionsQuery,
+    GetPermissionsQuery,
+    PolicyObject,
+)
 
 
 @pytest.mark.asyncio
@@ -14,7 +18,10 @@ async def test_get_permissions(mocker):
     this chain is followed.
     """
     api_port_mock = mocker.AsyncMock()
-    api_port_mock.to_policy_query.return_value = 2
+    test_query = GetPermissionsQuery(
+        actor=PolicyObject(id="actor", roles=[], attributes={})
+    )
+    api_port_mock.to_policy_query.return_value = test_query
     api_port_mock.to_api_response.return_value = 4
     policy_mock = mocker.AsyncMock()
     policy_mock.get_permissions.return_value = 3
@@ -25,7 +32,7 @@ async def test_get_permissions(mocker):
     )
     api_port_mock.to_policy_query.assert_called_once_with(1)
     api_port_mock.to_api_response.assert_called_once_with(3)
-    policy_mock.get_permissions.assert_called_once_with(2)
+    policy_mock.get_permissions.assert_called_once_with(test_query)
     assert result == 4
 
 
