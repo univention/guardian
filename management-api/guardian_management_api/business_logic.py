@@ -29,6 +29,7 @@ from .models.routers.app import (
     AppSingleResponse,
 )
 from .models.routers.base import GetByAppRequest
+from .models.routers.capability import CapabilityMultipleResponse
 from .models.routers.context import (
     ContextCreateRequest,
     ContextEditRequest,
@@ -1064,6 +1065,10 @@ async def create_context(
     try:
         query = await api_port.to_context_create(api_request)
         actor_id: str = await authc_port.get_actor_identifier(request)
+        logger.bind(actor_id=actor_id, query=query).debug(
+            "Received request to create a context."
+        )
+
         resource: Resource = Resource(
             resource_type=ResourceType.CONTEXT,
             name=query.name,
@@ -1083,7 +1088,7 @@ async def create_context(
                 "The logged in user is not authorized to create this context."
             )
         created_context = await persistence_port.create(query)
-        logger.bind(query=query, created_context=created_context).debug(
+        logger.bind(query=query, created_context=created_context).info(
             "Context created."
         )
         return await api_port.to_api_create_response(created_context)
@@ -1121,7 +1126,7 @@ async def get_context(
                 "The logged in user is not authorized to read this context."
             )
         context = await persistence_port.read_one(query)
-        logger.bind(query=query, context=context).debug("Retrieved context.")
+        logger.bind(query=query, context_id=resource.id).info("Retrieved context.")
         return await api_port.to_api_get_response(context)
     except Exception as exc:
         raise (await api_port.transform_exception(exc)) from exc
@@ -1138,9 +1143,10 @@ async def get_contexts(
     try:
         query = await api_port.to_contexts_get(api_request)
         contexts = await persistence_port.read_many(query)
-        logger.bind(query=query, contexts=contexts).debug("Retrieved contexts.")
         actor_id: str = await authc_port.get_actor_identifier(request)
-        logger.debug(f"Actor {actor_id} requested to retrieve all contexts.")
+        logger.bind(actor_id=actor_id, query=query).debug(
+            "Received request to retrieve contexts."
+        )
         authz_result = await authz_port.authorize_operation(
             Actor(id=actor_id),
             OperationType.READ_RESOURCE,
@@ -1159,7 +1165,7 @@ async def get_contexts(
             for resource_id in authz_result.keys()
             if authz_result[resource_id]
         }
-        return await api_port.to_api_contexts_get_response(
+        response: ContextMultipleResponse = await api_port.to_api_contexts_get_response(
             [
                 context
                 for context in contexts.objects
@@ -1177,6 +1183,10 @@ async def get_contexts(
             else contexts.total_count,
             contexts.total_count,
         )
+        logger.bind(actor_id=actor_id, num_contexts=len(response.contexts)).info(
+            "Retrieved contexts."
+        )
+        return response
     except Exception as exc:
         raise (await api_port.transform_exception(exc)) from exc
 
@@ -1198,6 +1208,9 @@ async def edit_context(
             namespace_name=query.namespace_name,
             app_name=query.app_name,
         )
+        logger.bind(actor_id=actor_id, context_id=resource.id).debug(
+            "Received request to update context."
+        )
         allowed = (
             await authz_port.authorize_operation(
                 Actor(id=actor_id), OperationType.UPDATE_RESOURCE, [resource]
@@ -1214,7 +1227,7 @@ async def edit_context(
         for key, value in changed_values.items():
             setattr(obj, key, value)
         updated_context = await persistence_port.update(obj)
-        logger.bind(query=query, updated_context=updated_context).debug(
+        logger.bind(actor_id=actor_id, updated_context=updated_context).info(
             "Updated context."
         )
         return await api_port.to_api_edit_response(updated_context)
@@ -1234,11 +1247,8 @@ async def get_namespaces_by_app(
         query = await namespace_api_port.to_namespaces_by_appname_get(api_request)
         actor_id: str = await authc_port.get_actor_identifier(request)
         namespaces_persistence = await namespace_persistence_port.read_many(query)
-        logger.debug(
-            f"Actor {actor_id} requested to retrieve namespaces for app {query.app_name}."
-        )
-        logger.bind(query=query, namespaces=namespaces_persistence).trace(
-            "Retrieved Namespaces."
+        logger.bind(actor_id=actor_id, app_name=query.app_name).debug(
+            "Received request to retrieve namespaces by app name."
         )
         authz_result = await authz_port.authorize_operation(
             Actor(id=actor_id),
@@ -1257,23 +1267,31 @@ async def get_namespaces_by_app(
             for resource_id in authz_result.keys()
             if authz_result[resource_id]
         }
-        return await namespace_api_port.to_api_namespaces_get_response(
-            namespaces=[
-                ns
-                for ns in namespaces_persistence.objects
-                if Resource(
-                    resource_type=ResourceType.NAMESPACE,
-                    name=ns.name,
-                    app_name=ns.app_name,
-                ).id
-                in allowed_namespaces
-            ],
-            query_offset=query.pagination.query_offset,
-            query_limit=query.pagination.query_limit
-            if query.pagination.query_limit
-            else namespaces_persistence.total_count,
-            total_count=namespaces_persistence.total_count,
+        response: NamespaceMultipleResponse = (
+            await namespace_api_port.to_api_namespaces_get_response(
+                namespaces=[
+                    ns
+                    for ns in namespaces_persistence.objects
+                    if Resource(
+                        resource_type=ResourceType.NAMESPACE,
+                        name=ns.name,
+                        app_name=ns.app_name,
+                    ).id
+                    in allowed_namespaces
+                ],
+                query_offset=query.pagination.query_offset,
+                query_limit=query.pagination.query_limit
+                if query.pagination.query_limit
+                else namespaces_persistence.total_count,
+                total_count=namespaces_persistence.total_count,
+            )
         )
+        logger.bind(
+            actor_id=actor_id,
+            app_name=query.app_name,
+            num_namespaces=len(response.namespaces),
+        ).info("Retrieved namespaces by app name.")
+        return response
     except Exception as exc:
         raise (
             await namespace_api_port.transform_exception(exc)
@@ -1297,6 +1315,9 @@ async def get_capability(
             namespace_name=query.namespace_name,
             app_name=query.app_name,
         )
+        logger.bind(actor_id=actor_id, capability_id=resource.id).debug(
+            "Received request to retrieve capability."
+        )
         allowed = (
             await authz_port.authorize_operation(
                 Actor(id=actor_id),
@@ -1311,6 +1332,9 @@ async def get_capability(
             raise UnauthorizedError(
                 "The logged in user is not authorized to read this capability."
             )
+        logger.bind(actor_id=actor_id, capability_id=resource.id).info(
+            "Capability retrieved."
+        )
         capability = await persistence_port.read_one(query)
         return await api_port.to_api_get_single_response(capability)
     except Exception as exc:
@@ -1324,12 +1348,14 @@ async def get_capabilities(
     authc_port: AuthenticationPort,
     authz_port: ResourceAuthorizationPort,
     request: Request,
-) -> APIGetMultipleResponseObject:
+) -> CapabilityMultipleResponse:
     try:
         query = await api_port.to_obj_get_multiple(api_request)
         many_capabilities = await persistence_port.read_many(query)
         actor_id: str = await authc_port.get_actor_identifier(request)
-        logger.debug(f"Actor {actor_id} requested to retrieve all capbility.")
+        logger.bind(actor_id=actor_id).debug(
+            "Received request to retrieve all capabilities"
+        )
         authz_result = await authz_port.authorize_operation(
             Actor(id=actor_id),
             OperationType.READ_RESOURCE,
@@ -1348,22 +1374,28 @@ async def get_capabilities(
             for resource_id in authz_result.keys()
             if authz_result[resource_id]
         }
-        return await api_port.to_api_get_multiple_response(
-            [
-                capability
-                for capability in many_capabilities.objects
-                if Resource(
-                    resource_type=ResourceType.CAPABILITY,
-                    name=capability.name,
-                    namespace_name=capability.namespace_name,
-                    app_name=capability.app_name,
-                ).id
-                in allowed_capabilities
-            ],
-            query.pagination.query_offset,
-            query.pagination.query_limit,
-            many_capabilities.total_count,
+        response: CapabilityMultipleResponse = (
+            await api_port.to_api_get_multiple_response(
+                [
+                    capability
+                    for capability in many_capabilities.objects
+                    if Resource(
+                        resource_type=ResourceType.CAPABILITY,
+                        name=capability.name,
+                        namespace_name=capability.namespace_name,
+                        app_name=capability.app_name,
+                    ).id
+                    in allowed_capabilities
+                ],
+                query.pagination.query_offset,
+                query.pagination.query_limit,
+                many_capabilities.total_count,
+            )
         )
+        logger.bind(
+            actor_id=actor_id, capability_number=len(response.capabilities)
+        ).info("Retrieved capabilities.")
+        return response
     except Exception as exc:
         raise (await api_port.transform_exception(exc)) from exc
 
@@ -1386,6 +1418,9 @@ async def create_capability(
             namespace_name=query.namespace_name,
             app_name=query.app_name,
         )
+        logger.bind(actor_id=actor_id, capability_id=resource.id).debug(
+            "Request received to create capability."
+        )
         allowed = (
             await authz_port.authorize_operation(
                 Actor(id=actor_id),
@@ -1401,6 +1436,9 @@ async def create_capability(
                 "The logged in user is not authorized to create this capability."
             )
         capability = await persistence_port.create(query)
+        logger.bind(actor_id=actor_id, capability_id=resource.id).info(
+            "Capability created."
+        )
         await bundle_server_port.schedule_bundle_build(BundleType.data)
         return await api_port.to_api_get_single_response(capability)
     except Exception as exc:
@@ -1440,6 +1478,9 @@ async def update_capability(
                 "The logged in user is not authorized to update this capability."
             )
         capability = await persistence_port.update(edited_capability)
+        logger.bind(actor_id=actor_id, capability_id=resource.id).info(
+            "Capability updated."
+        )
         await bundle_server_port.schedule_bundle_build(BundleType.data)
         return await api_port.to_api_get_single_response(capability)
     except Exception as exc:
@@ -1465,6 +1506,10 @@ async def delete_capability(
             namespace_name=capability.namespace_name,
             app_name=capability.app_name,
         )
+        logger.bind(actor_id=actor_id, capability_id=resource.id).debug(
+            "Received request to delete capability."
+        )
+
         allowed = (
             await authz_port.authorize_operation(
                 Actor(id=actor_id),
@@ -1480,6 +1525,9 @@ async def delete_capability(
                 "The logged in user is not authorized to delete this capability."
             )
         await persistence_port.delete(query)
+        logger.bind(actor_id=actor_id, capability_id=resource.id).info(
+            "Capability deleted."
+        )
         await bundle_server_port.schedule_bundle_build(BundleType.data)
         return None
     except Exception as exc:
