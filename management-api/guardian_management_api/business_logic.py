@@ -106,6 +106,10 @@ async def create_app(
         query = await app_api_port.to_app_create(api_request)
         app = query.apps[0]
         actor_id: str = await authc_port.get_actor_identifier(request)
+        logger.bind(actor_id=actor_id, query=query, app_name=app.name).debug(
+            "Received request to create app."
+        )
+
         allowed = (
             await authz_port.authorize_operation(
                 Actor(id=actor_id),
@@ -114,10 +118,16 @@ async def create_app(
             )
         ).get(app.name, False)
         if not allowed:
+            logger.bind(actor_id=actor_id, query=query, app_name=app.name).warning(
+                "Denied permission to create app."
+            )
             raise UnauthorizedError(
                 "The logged in user is not authorized to create this app."
             )
         created_app = await persistence_port.create(app)
+        logger.bind(
+            actor_id=actor_id, query=query, app_name=app.name, created_app=created_app
+        ).debug("Created app.")
         return await app_api_port.to_api_create_response(created_app)
     except Exception as exc:
         raise (await app_api_port.transform_exception(exc)) from exc
@@ -135,12 +145,18 @@ async def get_app(
         query = await app_api_port.to_app_get(api_request)
         actor_id: str = await authc_port.get_actor_identifier(request)
         resource = Resource(resource_type=ResourceType.APP, name=query.name)
+        logger.bind(actor_id=actor_id, app_name=resource.id).debug(
+            "Received request to retrieve app."
+        )
         allowed = (
             await authz_port.authorize_operation(
                 Actor(id=actor_id), OperationType.READ_RESOURCE, [resource]
             )
         ).get(resource.id, False)
         if not allowed:
+            logger.bind(actor_id=actor_id, app_name=resource.id).warning(
+                "Permission denied to retrieve app."
+            )
             raise UnauthorizedError(
                 "The logged in user is not authorized to read this app."
             )
@@ -162,6 +178,7 @@ async def get_apps(
         query = await app_api_port.to_apps_get(api_request)
         many_apps = await persistence_port.read_many(query)
         actor_id: str = await authc_port.get_actor_identifier(request)
+        logger.bind(actor_id=actor_id).debug("Received request to to get all apps.")
         authz_result = await authz_port.authorize_operation(
             Actor(id=actor_id),
             OperationType.READ_RESOURCE,
@@ -208,6 +225,9 @@ async def create_namespace(
             name=query.name,
             app_name=query.app_name,
         )
+        logger.bind(actor_id=actor_id, namespace_id=resource.id).debug(
+            "Received request to create namespace."
+        )
         allowed = (
             await authz_port.authorize_operation(
                 Actor(id=actor_id),
@@ -216,13 +236,16 @@ async def create_namespace(
             )
         ).get(resource.id, False)
         if not allowed:
+            logger.bind(actor_id=actor_id, namespace_id=resource.id).warning(
+                "Permission denied to create namespace."
+            )
             raise UnauthorizedError(
                 "The logged in user is not authorized to create this namespace."
             )
         created_namespace = await namespace_persistence_port.create(query)
-        logger.bind(query=query, created_namespace=created_namespace).debug(
-            "Created Namespace."
-        )
+        logger.bind(
+            actor_id=actor_id, query=query, created_namespace=created_namespace
+        ).debug("Created Namespace.")
         return await namespace_api_port.to_api_create_response(created_namespace)
     except Exception as exc:
         raise (await namespace_api_port.transform_exception(exc)) from exc
@@ -245,6 +268,7 @@ async def edit_namespace(
             app_name=query.app_name,
             namespace_name=query.name,
         )
+        logger.debug(f"Actor {actor_id} requested to update namespace {resource.id}.")
         allowed = (
             await authz_port.authorize_operation(
                 Actor(id=actor_id),
@@ -253,6 +277,9 @@ async def edit_namespace(
             )
         ).get(resource.id, False)
         if not allowed:
+            logger.bind(actor_id=actor_id, namespace_id=resource.id).warning(
+                "Permission denied to update namespace."
+            )
             raise UnauthorizedError(
                 "The logged in user is not authorized to update this namespace."
             )
@@ -281,6 +308,7 @@ async def get_namespace(
             name=query.name,
             app_name=query.app_name,
         )
+        logger.debug(f"Actor {actor_id} requested to get namespace {resource.id}.")
         allowed = (
             await authz_port.authorize_operation(
                 Actor(id=actor_id),
@@ -289,6 +317,9 @@ async def get_namespace(
             )
         ).get(resource.id, False)
         if not allowed:
+            logger.bind(actor_id=actor_id, namespace_id=resource.id).warning(
+                "Permission denied to retrieve namespace."
+            )
             raise UnauthorizedError(
                 "The logged in user is not authorized to read this namespace."
             )
@@ -311,7 +342,8 @@ async def get_namespaces(
         query = await namespace_api_port.to_namespaces_get(api_request)
         actor_id: str = await authc_port.get_actor_identifier(request)
         namespaces_persistence = await namespace_persistence_port.read_many(query)
-        logger.bind(query=query, namespaces=namespaces_persistence).debug(
+        logger.debug(f"Actor {actor_id} requested to retrieve all namespaces.")
+        logger.bind(query=query, namespaces=namespaces_persistence).trace(
             "Retrieved Namespaces."
         )
         authz_result = await authz_port.authorize_operation(
@@ -374,6 +406,9 @@ async def register_app(
             )
         ).get(resource.id, False)
         if not allowed:
+            logger.bind(actor_id=actor_id, app_name=resource.id).warning(
+                "Permission denied to register app."
+            )
             raise UnauthorizedError(
                 "The logged in user is not authorized to register this app."
             )
@@ -490,6 +525,9 @@ async def edit_app(
             )
         ).get(resource.id, False)
         if not allowed:
+            logger.bind(actor_id=actor_id, app_name=resource.id).warning(
+                "Permission denied to edit app."
+            )
             raise UnauthorizedError(
                 "The logged in user is not authorized to edit this app."
             )
@@ -527,6 +565,9 @@ async def get_condition(
             )
         ).get(resource.id, False)
         if not allowed:
+            logger.bind(actor_id=actor_id, condition_id=resource.id).warning(
+                "Permission denied to retrieve condition."
+            )
             raise UnauthorizedError(
                 "The logged in user is not authorized to read this condition."
             )
@@ -548,6 +589,7 @@ async def get_conditions(
         query = await api_port.to_obj_get_multiple(api_request)
         many_conditions = await persistence_port.read_many(query)
         actor_id: str = await authc_port.get_actor_identifier(request)
+        logger.debug(f"Actor {actor_id} requested to retrieve all conditions.")
         authz_result = await authz_port.authorize_operation(
             Actor(id=actor_id),
             OperationType.READ_RESOURCE,
@@ -612,6 +654,9 @@ async def create_condition(
             )
         ).get(resource.id, False)
         if not allowed:
+            logger.bind(actor_id=actor_id, condition_id=resource.id).warning(
+                "Permission denied to create condition."
+            )
             raise UnauthorizedError(
                 "The logged in user is not authorized to create this condition."
             )
@@ -648,6 +693,9 @@ async def update_condition(
             )
         ).get(resource.id, False)
         if not allowed:
+            logger.bind(actor_id=actor_id, condition_id=resource.id).warning(
+                "Permission denied to update condition."
+            )
             raise UnauthorizedError(
                 "The logged in user is not authorized to update this condition."
             )
@@ -688,6 +736,9 @@ async def create_permission(
             )
         ).get(resource.id, False)
         if not allowed:
+            logger.bind(actor_id=actor_id, permission_id=resource.id).warning(
+                "Permission denied to create permission."
+            )
             raise UnauthorizedError(
                 "The logged in user is not authorized to create this permission."
             )
@@ -722,6 +773,9 @@ async def get_permission(
             )
         ).get(resource.id, False)
         if not allowed:
+            logger.bind(actor_id=actor_id, permission_id=resource.id).warning(
+                "Permission denied to retrieve permission."
+            )
             raise UnauthorizedError(
                 "The logged in user is not authorized to read this permission."
             )
@@ -743,6 +797,7 @@ async def get_permissions(
         query = await api_port.to_obj_get_multiple(api_request)
         many_permissions = await persistence_port.read_many(query)
         actor_id: str = await authc_port.get_actor_identifier(request)
+        logger.debug(f"Actor {actor_id} requested to retrieve all permissions.")
         authz_result = await authz_port.authorize_operation(
             Actor(id=actor_id),
             OperationType.READ_RESOURCE,
@@ -808,6 +863,9 @@ async def edit_permission(
             )
         ).get(resource.id, False)
         if not allowed:
+            logger.bind(actor_id=actor_id, permission_id=resource.id).warning(
+                "Permission denied to edit permission."
+            )
             raise UnauthorizedError(
                 "The logged in user is not authorized to edit this permission."
             )
@@ -851,6 +909,9 @@ async def get_role(
             )
         ).get(resource.id, False)
         if not allowed:
+            logger.bind(actor_id=actor_id, role_id=resource.id).warning(
+                "Permission denied to retrieve role."
+            )
             raise UnauthorizedError(
                 "The logged in user is not authorized to read this role."
             )
@@ -871,6 +932,7 @@ async def get_roles(
     try:
         query = await role_api_port.to_roles_get(api_request)
         actor_id: str = await authc_port.get_actor_identifier(request)
+        logger.debug(f"Actor {actor_id} requested to retrieve all roles.")
         many_roles = await persistence_port.read_many(query)
         authz_result = await authz_port.authorize_operation(
             Actor(id=actor_id),
@@ -938,6 +1000,9 @@ async def create_role(
             )
         ).get(resource.id, False)
         if not allowed:
+            logger.bind(actor_id=actor_id, role_id=resource.id).warning(
+                "Permission denied to create role."
+            )
             raise UnauthorizedError(
                 "The logged in user is not authorized to create this role."
             )
@@ -972,6 +1037,9 @@ async def edit_role(
             )
         ).get(resource.id, False)
         if not allowed:
+            logger.bind(actor_id=actor_id, role_id=resource.id).warning(
+                "Permission denied to update role."
+            )
             raise UnauthorizedError(
                 "The logged in user is not authorized to edit this role."
             )
@@ -1008,6 +1076,9 @@ async def create_context(
             )
         ).get(resource.id, False)
         if not allowed:
+            logger.bind(actor_id=actor_id, context_id=resource.id).warning(
+                "Permission denied to create context."
+            )
             raise UnauthorizedError(
                 "The logged in user is not authorized to create this context."
             )
@@ -1043,6 +1114,9 @@ async def get_context(
             )
         ).get(resource.id, False)
         if not allowed:
+            logger.bind(actor_id=actor_id, context_id=resource.id).warning(
+                "Permission denied to retrieve context."
+            )
             raise UnauthorizedError(
                 "The logged in user is not authorized to read this context."
             )
@@ -1066,6 +1140,7 @@ async def get_contexts(
         contexts = await persistence_port.read_many(query)
         logger.bind(query=query, contexts=contexts).debug("Retrieved contexts.")
         actor_id: str = await authc_port.get_actor_identifier(request)
+        logger.debug(f"Actor {actor_id} requested to retrieve all contexts.")
         authz_result = await authz_port.authorize_operation(
             Actor(id=actor_id),
             OperationType.READ_RESOURCE,
@@ -1129,6 +1204,9 @@ async def edit_context(
             )
         ).get(resource.id, False)
         if not allowed:
+            logger.bind(actor_id=actor_id, context_id=resource.id).warning(
+                "Permission denied to edit context."
+            )
             raise UnauthorizedError(
                 "The logged in user is not authorized to edit this context."
             )
@@ -1156,7 +1234,10 @@ async def get_namespaces_by_app(
         query = await namespace_api_port.to_namespaces_by_appname_get(api_request)
         actor_id: str = await authc_port.get_actor_identifier(request)
         namespaces_persistence = await namespace_persistence_port.read_many(query)
-        logger.bind(query=query, namespaces=namespaces_persistence).debug(
+        logger.debug(
+            f"Actor {actor_id} requested to retrieve namespaces for app {query.app_name}."
+        )
+        logger.bind(query=query, namespaces=namespaces_persistence).trace(
             "Retrieved Namespaces."
         )
         authz_result = await authz_port.authorize_operation(
@@ -1224,6 +1305,9 @@ async def get_capability(
             )
         ).get(resource.id, False)
         if not allowed:
+            logger.bind(actor_id=actor_id, capability_id=resource.id).warning(
+                "Permission denied to retrieve capability."
+            )
             raise UnauthorizedError(
                 "The logged in user is not authorized to read this capability."
             )
@@ -1245,6 +1329,7 @@ async def get_capabilities(
         query = await api_port.to_obj_get_multiple(api_request)
         many_capabilities = await persistence_port.read_many(query)
         actor_id: str = await authc_port.get_actor_identifier(request)
+        logger.debug(f"Actor {actor_id} requested to retrieve all capbility.")
         authz_result = await authz_port.authorize_operation(
             Actor(id=actor_id),
             OperationType.READ_RESOURCE,
@@ -1309,6 +1394,9 @@ async def create_capability(
             )
         ).get(resource.id, False)
         if not allowed:
+            logger.bind(actor_id=actor_id, capability_id=resource.id).warning(
+                "Permission denied to create capability."
+            )
             raise UnauthorizedError(
                 "The logged in user is not authorized to create this capability."
             )
@@ -1345,6 +1433,9 @@ async def update_capability(
             )
         ).get(resource.id, False)
         if not allowed:
+            logger.bind(actor_id=actor_id, capability_id=resource.id).warning(
+                "Permission denied to update capability."
+            )
             raise UnauthorizedError(
                 "The logged in user is not authorized to update this capability."
             )
@@ -1382,6 +1473,9 @@ async def delete_capability(
             )
         ).get(resource.id, False)
         if not allowed:
+            logger.bind(actor_id=actor_id, capability_id=resource.id).warning(
+                "Permission denied to delete capability."
+            )
             raise UnauthorizedError(
                 "The logged in user is not authorized to delete this capability."
             )
