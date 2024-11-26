@@ -25,6 +25,7 @@ async def get_permissions(
 ) -> GetPermissionsAPIResponseObject:
     try:
         query = await get_permission_api_port.to_policy_query(api_request)
+        logger.debug("test", query=query)
         logger.debug(
             "Received request to retrieve permissions.",
             actor_id=query.actor.id,
