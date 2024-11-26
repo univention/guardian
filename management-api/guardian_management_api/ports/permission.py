@@ -48,38 +48,32 @@ class PermissionAPIPort(
     ],
 ):
     @abstractmethod
-    async def transform_exception(self, exc: Exception):
-        ...  # pragma: no cover
+    async def transform_exception(self, exc: Exception): ...  # pragma: no cover
 
     @abstractmethod
     async def to_obj_create(
         self, api_request: PermissionAPICreateRequestObject
-    ) -> PermissionCreateQuery:
-        ...  # pragma: no cover
+    ) -> PermissionCreateQuery: ...  # pragma: no cover
 
     @abstractmethod
     async def to_obj_edit(
         self, api_request: PermissionAPIEditRequestObject
-    ) -> tuple[PermissionGetQuery, dict[str, Any]]:
-        ...  # pragma: no cover
+    ) -> tuple[PermissionGetQuery, dict[str, Any]]: ...  # pragma: no cover
 
     @abstractmethod
     async def to_api_get_single_response(
         self, permission_result: Permission
-    ) -> PermissionAPIGetSingleResponseObject:
-        ...  # pragma: no cover
+    ) -> PermissionAPIGetSingleResponseObject: ...  # pragma: no cover
 
     @abstractmethod
     async def to_obj_get_single(
         self, api_request: PermissionAPIGetSingleRequestObject
-    ) -> PermissionGetQuery:
-        ...  # pragma: no cover
+    ) -> PermissionGetQuery: ...  # pragma: no cover
 
     @abstractmethod
     async def to_obj_get_multiple(
         self, api_request: PermissionAPIGetMultipleRequestObject
-    ) -> PermissionsGetQuery:
-        ...  # pragma: no cover
+    ) -> PermissionsGetQuery: ...  # pragma: no cover
 
     @abstractmethod
     async def to_api_get_multiple_response(
@@ -88,8 +82,7 @@ class PermissionAPIPort(
         query_offset: int,
         query_limit: Optional[int],
         total_count: int,
-    ) -> PermissionAPIGetMultipleResponseObject:
-        ...  # pragma: no cover
+    ) -> PermissionAPIGetMultipleResponseObject: ...  # pragma: no cover
 
 
 ###############################################################################
@@ -101,5 +94,4 @@ class PermissionAPIPort(
 
 class PermissionPersistencePort(
     BasePersistencePort[Permission, PermissionGetQuery, PermissionsGetQuery], ABC
-):
-    ...
+): ...

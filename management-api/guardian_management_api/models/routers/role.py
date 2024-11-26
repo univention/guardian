@@ -24,12 +24,10 @@ from guardian_management_api.models.routers.base import (
 
 
 # request for route: GET .../roles/{app_name}/{namepace_name}/{name}
-class RoleGetFullIdentifierRequest(GetFullIdentifierRequest):
-    ...
+class RoleGetFullIdentifierRequest(GetFullIdentifierRequest): ...
 
 
-class RoleCreateData(GuardianBaseModel, DisplayNameObjectMixin, NameObjectMixin):
-    ...
+class RoleCreateData(GuardianBaseModel, DisplayNameObjectMixin, NameObjectMixin): ...
 
 
 # request for route: POST .../roles/{app_name}/{namespace_name}
@@ -37,8 +35,7 @@ class RoleCreateRequest(CreateBaseRequest):
     data: RoleCreateData
 
 
-class RoleEditData(GuardianBaseModel, DisplayNameObjectMixin):
-    ...
+class RoleEditData(GuardianBaseModel, DisplayNameObjectMixin): ...
 
 
 # request for route: PATCH .../roles/{app_name}/{namepace_name}/{name}
@@ -47,18 +44,15 @@ class RoleEditRequest(EditBaseRequest):
 
 
 # request for route: GET .../roles
-class RoleGetAllRequest(GetAllRequest):
-    ...
+class RoleGetAllRequest(GetAllRequest): ...
 
 
 # request for route: GET .../roles/{app_name}
-class RoleGetByAppRequest(GetByAppRequest):
-    ...
+class RoleGetByAppRequest(GetByAppRequest): ...
 
 
 # request for route: GET .../roles/{app_name}/{namespace_name}
-class RoleGetByNamespaceRequest(GetByNamespaceRequest):
-    ...
+class RoleGetByNamespaceRequest(GetByNamespaceRequest): ...
 
 
 #####
@@ -71,8 +65,7 @@ class Role(
     ResourceURLObjectMixin,
     DisplayNameObjectMixin,
     NamespacedObjectMixin,
-):
-    ...
+): ...
 
 
 class RoleSingleResponse(GuardianBaseModel):

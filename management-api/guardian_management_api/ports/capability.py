@@ -55,26 +55,22 @@ class CapabilityAPIPort(
     ],
 ):
     @abstractmethod
-    async def transform_exception(self, exc: Exception):
-        ...  # pragma: no cover
+    async def transform_exception(self, exc: Exception): ...  # pragma: no cover
 
     @abstractmethod
     async def to_obj_get_single(
         self, api_request: APIGetSingleRequestObject
-    ) -> CapabilityGetQuery:
-        ...  # pragma: no cover
+    ) -> CapabilityGetQuery: ...  # pragma: no cover
 
     @abstractmethod
     async def to_api_get_single_response(
         self, obj: Capability
-    ) -> APIGetSingleResponseObject:
-        ...  # pragma: no cover
+    ) -> APIGetSingleResponseObject: ...  # pragma: no cover
 
     @abstractmethod
     async def to_obj_get_multiple(
         self, api_request: APIGetMultipleRequestObject
-    ) -> CapabilitiesGetQuery | CapabilitiesByRoleQuery:
-        ...  # pragma: no cover
+    ) -> CapabilitiesGetQuery | CapabilitiesByRoleQuery: ...  # pragma: no cover
 
     @abstractmethod
     async def to_api_get_multiple_response(
@@ -83,13 +79,14 @@ class CapabilityAPIPort(
         query_offset: int,
         query_limit: Optional[int],
         total_count: int,
-    ) -> APIGetMultipleResponseObject:
-        ...  # pragma: no cover
+    ) -> APIGetMultipleResponseObject: ...  # pragma: no cover
 
     @abstractmethod
-    async def to_obj_create(self, api_request: APICreateRequestObject) -> Capability:
-        ...  # pragma: no cover
+    async def to_obj_create(
+        self, api_request: APICreateRequestObject
+    ) -> Capability: ...  # pragma: no cover
 
     @abstractmethod
-    async def to_obj_edit(self, api_request: APIEditRequestObject) -> Capability:
-        ...  # pragma: no cover
+    async def to_obj_edit(
+        self, api_request: APIEditRequestObject
+    ) -> Capability: ...  # pragma: no cover

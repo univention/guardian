@@ -10,8 +10,7 @@ from port_loader import Settings
 from port_loader.errors import SettingFormatError, SettingTypeError
 
 
-class BaseAdapter(BasePort):
-    ...
+class BaseAdapter(BasePort): ...
 
 
 class SettingsAdapter(SettingsPort):

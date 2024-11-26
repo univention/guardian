@@ -39,8 +39,7 @@ from .fastapi_utils import TransformExceptionMixin
 from .sql_persistence import SQLAlchemyMixin
 
 
-class TransformNamespaceExceptionMixin(TransformExceptionMixin):
-    ...
+class TransformNamespaceExceptionMixin(TransformExceptionMixin): ...
 
 
 class FastAPINamespaceAPIAdapter(

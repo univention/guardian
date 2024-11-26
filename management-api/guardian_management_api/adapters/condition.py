@@ -55,8 +55,7 @@ from .fastapi_utils import TransformExceptionMixin
 from .sql_persistence import SQLAlchemyMixin
 
 
-class TransformConditionExceptionMixin(TransformExceptionMixin):
-    ...
+class TransformConditionExceptionMixin(TransformExceptionMixin): ...
 
 
 class FastAPIConditionAPIAdapter(

@@ -10,16 +10,13 @@ from guardian_lib.ports import SettingsPort
 from port_loader import AsyncAdapterRegistry
 
 
-class TestPort:
-    ...
+class TestPort: ...
 
 
-class TestPort2:
-    ...
+class TestPort2: ...
 
 
-class TestAdapter:
-    ...
+class TestAdapter: ...
 
 
 @pytest.mark.asyncio

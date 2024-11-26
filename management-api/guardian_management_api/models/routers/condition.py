@@ -48,8 +48,7 @@ class ConditionCreateData(
     DocumentationObjectMixin,
     DisplayNameObjectMixin,
     NameObjectMixin,
-):
-    ...
+): ...
 
 
 class ConditionCreateRequest(CreateBaseRequest):
@@ -62,8 +61,7 @@ class ConditionEditData(
     ConditionParametersMixin,
     DocumentationObjectMixin,
     DisplayNameObjectMixin,
-):
-    ...
+): ...
 
 
 class ConditionEditRequest(EditBaseRequest):
@@ -82,8 +80,7 @@ class Condition(
     ResourceURLObjectMixin,
     DisplayNameObjectMixin,
     NamespacedObjectMixin,
-):
-    ...
+): ...
 
 
 class ConditionSingleResponse(GuardianBaseModel):

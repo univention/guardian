@@ -26,13 +26,11 @@ class NamespacedValue:
 
 
 @dataclass(frozen=True)
-class Permission(NamespacedValue):
-    ...
+class Permission(NamespacedValue): ...
 
 
 @dataclass(frozen=True)
-class Context(NamespacedValue):
-    ...
+class Context(NamespacedValue): ...
 
 
 @dataclass(frozen=True)

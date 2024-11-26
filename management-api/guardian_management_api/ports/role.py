@@ -100,5 +100,6 @@ class RoleAPIPort(
 ###############################################################################
 
 
-class RolePersistencePort(BasePersistencePort[Role, RoleGetQuery, RolesGetQuery], ABC):
-    ...
+class RolePersistencePort(
+    BasePersistencePort[Role, RoleGetQuery, RolesGetQuery], ABC
+): ...

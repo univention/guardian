@@ -58,26 +58,21 @@ class NamespacedValue:
 
 
 @dataclass
-class Context(NamespacedValue):
-    ...
+class Context(NamespacedValue): ...
 
 
 @dataclass
-class Permission(NamespacedValue):
-    ...
+class Permission(NamespacedValue): ...
 
 
-class Role(NamespacedValue):
-    ...
+class Role(NamespacedValue): ...
 
 
-class Policy(NamespacedValue):
-    ...
+class Policy(NamespacedValue): ...
 
 
 @dataclass
-class RequestRole(NamespacedValue):
-    ...
+class RequestRole(NamespacedValue): ...
 
 
 @dataclass
@@ -96,13 +91,11 @@ class RequestTarget:
 
 
 @dataclass
-class RequestContext(NamespacedValue):
-    ...
+class RequestContext(NamespacedValue): ...
 
 
 @dataclass
-class RequestPermission(NamespacedValue):
-    ...
+class RequestPermission(NamespacedValue): ...
 
 
 @dataclass
