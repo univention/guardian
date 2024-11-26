@@ -80,6 +80,11 @@ async def check_permissions_with_lookup(
                 api_request=api_request, actor=actor, old_looked_up_targets=old_targets
             )
         )
+        logger.debug(
+            "Received request to check permissions with lookup.",
+            actor_id=check_permissions_query.actor.id,
+            namespaces=check_permissions_query.namespaces,
+        )
         check_permissions_result = await policy_port.check_permissions(
             check_permissions_query
         )
@@ -106,6 +111,11 @@ async def get_permissions_with_lookup(
         )
         query = await get_permission_api.to_policy_lookup_query(
             api_request=api_request, actor=actor, old_looked_up_targets=old_targets
+        )
+        logger.debug(
+            "Received request to retrieve permissions with lookup.",
+            actor_id=query.actor.id,
+            namespaces=query.namespaces,
         )
         policy_result = await policy_port.get_permissions(query)
         return await get_permission_api.to_api_response(policy_result)
