@@ -133,6 +133,7 @@ async def create_app(
         logger.info("App created.", actor_id=actor_id, app_name=app.name)
         return await app_api_port.to_api_create_response(created_app)
     except Exception as exc:
+        logger.error("Error while creating app.")
         raise (await app_api_port.transform_exception(exc)) from exc
 
 
@@ -173,6 +174,7 @@ async def get_app(
         logger.info("App retrieved.", actor_id=actor_id, app_name=resource.id)
         return response
     except Exception as exc:
+        logger.error("Error while retrieving app.")
         raise (await app_api_port.transform_exception(exc)) from exc
 
 
@@ -222,6 +224,7 @@ async def get_apps(
         )
         return response
     except Exception as exc:
+        logger.error("Error while retrieving all allowed apps.")
         raise (await app_api_port.transform_exception(exc)) from exc
 
 
@@ -267,6 +270,7 @@ async def create_namespace(
         logger.info("Namespace created.", actor_id=actor_id, namespace_id=resource.id)
         return await namespace_api_port.to_api_create_response(created_namespace)
     except Exception as exc:
+        logger.error("Error while creting namespace.")
         raise (await namespace_api_port.transform_exception(exc)) from exc
 
 
@@ -313,6 +317,7 @@ async def edit_namespace(
         logger.info("Namespace updated.", actor_id=actor_id, namespace_id=resource.id)
         return await namespace_api_port.to_api_edit_response(updated_namespace)
     except Exception as exc:
+        logger.error("Error while editing namespace.")
         raise (await namespace_api_port.transform_exception(exc)) from exc
 
 
@@ -358,6 +363,7 @@ async def get_namespace(
         logger.info("Namespace retrieved.", actor_id=actor_id, namespace_id=resource.id)
         return await namespace_api_port.to_api_get_response(namespace)
     except Exception as exc:
+        logger.error("Error while retrieving namespace.")
         raise (await namespace_api_port.transform_exception(exc)) from exc
 
 
@@ -422,6 +428,7 @@ async def get_namespaces(
         )
         return response
     except Exception as exc:
+        logger.error("Error while retrieving all allowed namespaces.")
         raise (await namespace_api_port.transform_exception(exc)) from exc
 
 
@@ -551,7 +558,7 @@ async def register_app(
             app, default_namespace, admin_role
         )
     except Exception as exc:
-        logger.exception(exc)
+        logger.error("Error while registering app.")
         raise (await app_api_port.transform_exception(exc)) from exc
 
 
@@ -591,6 +598,7 @@ async def edit_app(
         logger.info("App updated.", actor_id=actor_id, app_name=resource.id)
         return await app_api_port.to_api_edit_response(updated_app)
     except Exception as exc:
+        logger.error("Error while updating app.")
         raise (await app_api_port.transform_exception(exc)) from exc
 
 
@@ -637,6 +645,7 @@ async def get_condition(
         logger.info("Condition retrieved.", actor_id=actor_id, condition_id=resource.id)
         return await api_port.to_api_get_single_response(condition)
     except Exception as exc:
+        logger.error("Error while retrieving condition.")
         raise (await api_port.transform_exception(exc)) from exc
 
 
@@ -700,6 +709,7 @@ async def get_conditions(
         )
         return response
     except Exception as exc:
+        logger.error("Error while retrieving all allowed conditions.")
         raise (await api_port.transform_exception(exc)) from exc
 
 
@@ -748,6 +758,7 @@ async def create_condition(
         logger.info("Condition created.", actor_id=actor_id, condition_id=resource.id)
         return await api_port.to_api_get_single_response(condition)
     except Exception as exc:
+        logger.error("Error while creating condition.")
         raise (await api_port.transform_exception(exc)) from exc
 
 
@@ -800,6 +811,7 @@ async def update_condition(
         return await api_port.to_api_get_single_response(condition)
 
     except Exception as exc:
+        logger.error("Error while updating condition.")
         raise (await api_port.transform_exception(exc)) from exc
 
 
@@ -847,6 +859,7 @@ async def create_permission(
         logger.info("Permission created.", actor_id=actor_id, permission_id=resource.id)
         return await api_port.to_api_get_single_response(created_permission)
     except Exception as exc:
+        logger.error("Error while creating permission.")
         raise (await api_port.transform_exception(exc)) from exc
 
 
@@ -895,6 +908,7 @@ async def get_permission(
         )
         return await api_port.to_api_get_single_response(permission)
     except Exception as exc:
+        logger.error("Error while retrieving permission.")
         raise (await api_port.transform_exception(exc)) from exc
 
 
@@ -929,7 +943,7 @@ async def get_permissions(
             for resource_id in authz_result.keys()
             if authz_result[resource_id]
         }
-        return await api_port.to_api_get_multiple_response(
+        response = await api_port.to_api_get_multiple_response(
             [
                 permission
                 for permission in many_permissions.objects
@@ -947,7 +961,14 @@ async def get_permissions(
             else many_permissions.total_count,
             total_count=many_permissions.total_count,
         )
+        logger.info(
+            "All allowed permissions retrieved.",
+            actor_id=actor_id,
+            num_permissions=len(response.permissions),
+        )
+        return response
     except Exception as exc:
+        logger.error("Error while retrieving all allowed permissions.")
         raise (await api_port.transform_exception(exc)) from exc
 
 
@@ -997,6 +1018,7 @@ async def edit_permission(
         logger.info("Permission updated.", actor_id=actor_id, permission_id=resource.id)
         return await api_port.to_api_get_single_response(update_permission)
     except Exception as exc:
+        logger.error("Error while editing permission.")
         raise (await api_port.transform_exception(exc)) from exc
 
 
@@ -1048,6 +1070,7 @@ async def get_role(
         logger.info("Role retrieved.", actor_id=actor_id, role_id=resource.id)
         return await role_api_port.to_role_get_response(role)
     except Exception as exc:
+        logger.error("Error while retrieving role.")
         raise (await role_api_port.transform_exception(exc)) from exc
 
 
@@ -1082,7 +1105,7 @@ async def get_roles(
             for resource_id in authz_result.keys()
             if authz_result[resource_id]
         }
-        return await role_api_port.to_roles_get_response(
+        response = await role_api_port.to_roles_get_response(
             roles=[
                 role
                 for role in many_roles.objects
@@ -1100,7 +1123,14 @@ async def get_roles(
             else many_roles.total_count,
             total_count=many_roles.total_count,
         )
+        logger.info(
+            "All allowed roles retrieved.",
+            actor_id=actor_id,
+            num_roles=len(response.roles),
+        )
+        return response
     except Exception as exc:
+        logger.error("Error while retrieving all allowed roles.")
         raise (await role_api_port.transform_exception(exc)) from exc
 
 
@@ -1143,8 +1173,10 @@ async def create_role(
                 "The logged in user is not authorized to create this role."
             )
         created_role = await persistence_port.create(role)
+        logger.info("Role created.", actor_id=actor_id, role_id=resource.id)
         return await role_api_port.to_role_create_response(created_role)
     except Exception as exc:
+        logger.error("Error while creating role.")
         raise (await role_api_port.transform_exception(exc)) from exc
 
 
@@ -1184,8 +1216,10 @@ async def edit_role(
             old_role=role, display_name=api_request.data.display_name
         )
         modified_role = await persistence_port.update(role)
+        logger.info("Role updated.", actor_id=actor_id, role_id=resource.id)
         return await role_api_port.to_role_get_response(modified_role)
     except Exception as exc:
+        logger.error("Error while updating role.")
         raise (await role_api_port.transform_exception(exc)) from exc
 
 
@@ -1228,6 +1262,7 @@ async def create_context(
         )
         return await api_port.to_api_create_response(created_context)
     except Exception as exc:
+        logger.error("Error while creating context.")
         raise (await api_port.transform_exception(exc)) from exc
 
 
@@ -1264,6 +1299,7 @@ async def get_context(
         logger.bind(query=query, context_id=resource.id).info("Context retrieved.")
         return await api_port.to_api_get_response(context)
     except Exception as exc:
+        logger.error("Error while retrieving context.")
         raise (await api_port.transform_exception(exc)) from exc
 
 
@@ -1325,6 +1361,7 @@ async def get_contexts(
         )
         return response
     except Exception as exc:
+        logger.error("Error while retrieving all allowed contexts.")
         raise (await api_port.transform_exception(exc)) from exc
 
 
@@ -1371,6 +1408,7 @@ async def edit_context(
         logger.info("Context updated.", actor_id=actor_id, context_id=resource.id)
         return await api_port.to_api_edit_response(updated_context)
     except Exception as exc:
+        logger.error("Error while updating context.")
         raise (await api_port.transform_exception(exc)) from exc
 
 
@@ -1439,6 +1477,7 @@ async def get_namespaces_by_app(
         )
         return response
     except Exception as exc:
+        logger.error("Error while retrieving all allowed namespaces by app name.")
         raise (
             await namespace_api_port.transform_exception(exc)
         ) from exc  # pragma: no cover
@@ -1488,6 +1527,7 @@ async def get_capability(
         capability = await persistence_port.read_one(query)
         return await api_port.to_api_get_single_response(capability)
     except Exception as exc:
+        logger.error("Error while retrieving capability.")
         raise (await api_port.transform_exception(exc)) from exc
 
 
@@ -1551,6 +1591,7 @@ async def get_capabilities(
         )
         return response
     except Exception as exc:
+        logger.error("Error while retrieving all allowed capabilities.")
         raise (await api_port.transform_exception(exc)) from exc
 
 
@@ -1598,6 +1639,7 @@ async def create_capability(
         await bundle_server_port.schedule_bundle_build(BundleType.data)
         return await api_port.to_api_get_single_response(capability)
     except Exception as exc:
+        logger.error("Error while creating capability.")
         raise (await api_port.transform_exception(exc)) from exc
 
 
@@ -1646,6 +1688,7 @@ async def update_capability(
         await bundle_server_port.schedule_bundle_build(BundleType.data)
         return await api_port.to_api_get_single_response(capability)
     except Exception as exc:
+        logger.error("Error while updating capability.")
         raise (await api_port.transform_exception(exc)) from exc
 
 
@@ -1695,4 +1738,5 @@ async def delete_capability(
         await bundle_server_port.schedule_bundle_build(BundleType.data)
         return None
     except Exception as exc:
+        logger.error("Error while deleting capability.")
         raise (await api_port.transform_exception(exc)) from exc
