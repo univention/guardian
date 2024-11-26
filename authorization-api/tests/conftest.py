@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-import asyncio
 import os
 from typing import Callable, Optional
 from unittest.mock import AsyncMock
@@ -262,15 +261,6 @@ def opa_is_running():
     except requests.exceptions.ConnectionError:
         return False
     return response.status_code == 200
-
-
-@pytest.fixture(scope="session")
-def event_loop():
-    """Overrides pytest default function scoped event loop"""
-    policy = asyncio.get_event_loop_policy()
-    loop = policy.new_event_loop()
-    yield loop
-    loop.close()
 
 
 @pytest.fixture
