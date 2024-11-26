@@ -204,7 +204,7 @@ async def get_apps(
             for resource_id in authz_result.keys()
             if authz_result[resource_id]
         }
-        response: AppMultipleResponse = await app_api_port.to_api_apps_get_response(
+        response = await app_api_port.to_api_apps_get_response(
             apps=[
                 app
                 for app in many_apps.objects
@@ -402,24 +402,22 @@ async def get_namespaces(
             for resource_id in authz_result.keys()
             if authz_result[resource_id]
         }
-        response: NamespaceMultipleResponse = (
-            await namespace_api_port.to_api_namespaces_get_response(
-                namespaces=[
-                    ns
-                    for ns in namespaces_persistence.objects
-                    if Resource(
-                        resource_type=ResourceType.NAMESPACE,
-                        name=ns.name,
-                        app_name=ns.app_name,
-                    ).id
-                    in allowed_namespaces
-                ],
-                query_offset=query.pagination.query_offset,
-                query_limit=query.pagination.query_limit
-                if query.pagination.query_limit
-                else namespaces_persistence.total_count,
-                total_count=namespaces_persistence.total_count,
-            )
+        response = await namespace_api_port.to_api_namespaces_get_response(
+            namespaces=[
+                ns
+                for ns in namespaces_persistence.objects
+                if Resource(
+                    resource_type=ResourceType.NAMESPACE,
+                    name=ns.name,
+                    app_name=ns.app_name,
+                ).id
+                in allowed_namespaces
+            ],
+            query_offset=query.pagination.query_offset,
+            query_limit=query.pagination.query_limit
+            if query.pagination.query_limit
+            else namespaces_persistence.total_count,
+            total_count=namespaces_persistence.total_count,
         )
         logger.info(
             "All allowed namespaces retrieved.",
@@ -684,23 +682,21 @@ async def get_conditions(
             for resource_id in authz_result.keys()
             if authz_result[resource_id]
         }
-        response: ConditionMultipleResponse = (
-            await api_port.to_api_get_multiple_response(
-                [
-                    condition
-                    for condition in many_conditions.objects
-                    if Resource(
-                        resource_type=ResourceType.CONDITION,
-                        name=condition.name,
-                        namespace_name=condition.namespace_name,
-                        app_name=condition.app_name,
-                    ).id
-                    in allowed_conditions
-                ],
-                query.pagination.query_offset,
-                query.pagination.query_limit,
-                many_conditions.total_count,
-            )
+        response = await api_port.to_api_get_multiple_response(
+            [
+                condition
+                for condition in many_conditions.objects
+                if Resource(
+                    resource_type=ResourceType.CONDITION,
+                    name=condition.name,
+                    namespace_name=condition.namespace_name,
+                    app_name=condition.app_name,
+                ).id
+                in allowed_conditions
+            ],
+            query.pagination.query_offset,
+            query.pagination.query_limit,
+            many_conditions.total_count,
         )
         logger.info(
             "All allowed conditions retrieved.",
@@ -1336,7 +1332,7 @@ async def get_contexts(
             for resource_id in authz_result.keys()
             if authz_result[resource_id]
         }
-        response: ContextMultipleResponse = await api_port.to_api_contexts_get_response(
+        response = await api_port.to_api_contexts_get_response(
             [
                 context
                 for context in contexts.objects
@@ -1450,24 +1446,22 @@ async def get_namespaces_by_app(
             for resource_id in authz_result.keys()
             if authz_result[resource_id]
         }
-        response: NamespaceMultipleResponse = (
-            await namespace_api_port.to_api_namespaces_get_response(
-                namespaces=[
-                    ns
-                    for ns in namespaces_persistence.objects
-                    if Resource(
-                        resource_type=ResourceType.NAMESPACE,
-                        name=ns.name,
-                        app_name=ns.app_name,
-                    ).id
-                    in allowed_namespaces
-                ],
-                query_offset=query.pagination.query_offset,
-                query_limit=query.pagination.query_limit
-                if query.pagination.query_limit
-                else namespaces_persistence.total_count,
-                total_count=namespaces_persistence.total_count,
-            )
+        response = await namespace_api_port.to_api_namespaces_get_response(
+            namespaces=[
+                ns
+                for ns in namespaces_persistence.objects
+                if Resource(
+                    resource_type=ResourceType.NAMESPACE,
+                    name=ns.name,
+                    app_name=ns.app_name,
+                ).id
+                in allowed_namespaces
+            ],
+            query_offset=query.pagination.query_offset,
+            query_limit=query.pagination.query_limit
+            if query.pagination.query_limit
+            else namespaces_persistence.total_count,
+            total_count=namespaces_persistence.total_count,
         )
         logger.info(
             "All allowed namespaces specific to {app_name} retrieved.",
@@ -1566,23 +1560,21 @@ async def get_capabilities(
             for resource_id in authz_result.keys()
             if authz_result[resource_id]
         }
-        response: CapabilityMultipleResponse = (
-            await api_port.to_api_get_multiple_response(
-                [
-                    capability
-                    for capability in many_capabilities.objects
-                    if Resource(
-                        resource_type=ResourceType.CAPABILITY,
-                        name=capability.name,
-                        namespace_name=capability.namespace_name,
-                        app_name=capability.app_name,
-                    ).id
-                    in allowed_capabilities
-                ],
-                query.pagination.query_offset,
-                query.pagination.query_limit,
-                many_capabilities.total_count,
-            )
+        response = await api_port.to_api_get_multiple_response(
+            [
+                capability
+                for capability in many_capabilities.objects
+                if Resource(
+                    resource_type=ResourceType.CAPABILITY,
+                    name=capability.name,
+                    namespace_name=capability.namespace_name,
+                    app_name=capability.app_name,
+                ).id
+                in allowed_capabilities
+            ],
+            query.pagination.query_offset,
+            query.pagination.query_limit,
+            many_capabilities.total_count,
         )
         logger.info(
             "All allowed capabilities retrieved.",
