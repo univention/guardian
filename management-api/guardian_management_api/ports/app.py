@@ -117,5 +117,4 @@ class AppAPIPort(
 ###############################################################################
 
 
-class AppPersistencePort(BasePersistencePort[App, AppGetQuery, AppsGetQuery], ABC):
-    ...
+class AppPersistencePort(BasePersistencePort[App, AppGetQuery, AppsGetQuery], ABC): ...

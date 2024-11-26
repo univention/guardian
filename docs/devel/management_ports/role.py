@@ -24,16 +24,14 @@ from .base import (
 ###############################################################################
 
 
-class Role(NamespacedPersistenceObject):
-    ...
+class Role(NamespacedPersistenceObject): ...
 
 
 class RoleQuery(QueryResponse):
     roles: List[Role]
 
 
-class ResponseRole(NamespacedResponseObject):
-    ...
+class ResponseRole(NamespacedResponseObject): ...
 
 
 @dataclass

@@ -22,16 +22,14 @@ from guardian_management_api.models.routers.base import (
 #####
 
 
-class ContextCreateData(GuardianBaseModel, DisplayNameObjectMixin, NameObjectMixin):
-    ...
+class ContextCreateData(GuardianBaseModel, DisplayNameObjectMixin, NameObjectMixin): ...
 
 
 class ContextCreateRequest(CreateBaseRequest):
     data: ContextCreateData
 
 
-class ContextEditData(GuardianBaseModel, DisplayNameObjectMixin):
-    ...
+class ContextEditData(GuardianBaseModel, DisplayNameObjectMixin): ...
 
 
 class ContextEditRequest(EditBaseRequest):
@@ -40,12 +38,10 @@ class ContextEditRequest(EditBaseRequest):
 
 class ContextGetRequest(
     GuardianBaseModel, NamePathMixin, NamespacePathMixin, AppNamePathMixin
-):
-    ...
+): ...
 
 
-class ContextsGetRequest(GuardianBaseModel, PaginationRequestMixin):
-    ...
+class ContextsGetRequest(GuardianBaseModel, PaginationRequestMixin): ...
 
 
 class ContextsByAppnameGetRequest(GuardianBaseModel, PaginationRequestMixin):
@@ -66,8 +62,7 @@ class Context(
     ResourceURLObjectMixin,
     DisplayNameObjectMixin,
     NamespacedObjectMixin,
-):
-    ...
+): ...
 
 
 class ContextSingleResponse(GuardianBaseModel):

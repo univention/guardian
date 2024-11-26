@@ -20,28 +20,26 @@ from .base import (
 #####
 
 
-class NamespaceGetRequest(GuardianBaseModel, NamePathMixin, AppNamePathMixin):
-    ...
+class NamespaceGetRequest(GuardianBaseModel, NamePathMixin, AppNamePathMixin): ...
 
 
-class NamespacesGetRequest(GuardianBaseModel, PaginationRequestMixin):
-    ...
+class NamespacesGetRequest(GuardianBaseModel, PaginationRequestMixin): ...
 
 
 class NamespacesByAppnameGetRequest(GuardianBaseModel, PaginationRequestMixin):
     app_name: str
 
 
-class NamespaceCreateData(GuardianBaseModel, DisplayNameObjectMixin, NameObjectMixin):
-    ...
+class NamespaceCreateData(
+    GuardianBaseModel, DisplayNameObjectMixin, NameObjectMixin
+): ...
 
 
 class NamespaceCreateRequest(GuardianBaseModel, AppNamePathMixin):
     data: NamespaceCreateData
 
 
-class NamespaceEditData(GuardianBaseModel, DisplayNameObjectMixin):
-    ...
+class NamespaceEditData(GuardianBaseModel, DisplayNameObjectMixin): ...
 
 
 class NamespaceEditRequest(NamespaceGetRequest):
@@ -59,8 +57,7 @@ class Namespace(
     DisplayNameObjectMixin,
     NameObjectMixin,
     AppNameObjectMixin,
-):
-    ...
+): ...
 
 
 class NamespaceSingleResponse(GuardianBaseModel):

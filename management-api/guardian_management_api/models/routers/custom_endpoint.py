@@ -26,8 +26,7 @@ class CustomEndpointCreateData(
     DocumentationObjectMixin,
     DisplayNameObjectMixin,
     NameObjectMixin,
-):
-    ...
+): ...
 
 
 class CustomEndpointCreateRequest(CreateBaseRequest):
@@ -39,8 +38,7 @@ class CustomEndpointEditData(
     RawCodeObjectMixin,
     DocumentationObjectMixin,
     DisplayNameObjectMixin,
-):
-    ...
+): ...
 
 
 class CustomEndpointEditRequest(EditBaseRequest):
@@ -58,8 +56,7 @@ class CustomEndpoint(
     ResourceURLObjectMixin,
     DisplayNameObjectMixin,
     NamespacedObjectMixin,
-):
-    ...
+): ...
 
 
 class CustomEndpointSingleResponse(GuardianBaseModel):

@@ -154,9 +154,9 @@ def patch_env(sqlite_db_name, bundle_server_base_dir, pytestconfig):
     os.environ["BUNDLE_SERVER_ADAPTER__POLICY_BUNDLE_TEMPLATE_SRC"] = str(
         Path(__file__).parents[1] / "rego_policy_bundle_template"
     )
-    os.environ[
-        "GUARDIAN__MANAGEMENT__ADAPTER__AUTHENTICATION_PORT"
-    ] = "fast_api_always_authorized"
+    os.environ["GUARDIAN__MANAGEMENT__ADAPTER__AUTHENTICATION_PORT"] = (
+        "fast_api_always_authorized"
+    )
     os.environ["GUARDIAN__MANAGEMENT__ADAPTER__RESOURCE_AUTHORIZATION_PORT"] = "always"
     if "OAUTH_ADAPTER__WELL_KNOWN_URL" not in os.environ:
         os.environ["OAUTH_ADAPTER__WELL_KNOWN_URL"] = "/dev/zero"

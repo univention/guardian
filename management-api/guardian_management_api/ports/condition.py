@@ -21,8 +21,7 @@ from .base import BasePersistencePort
 
 class ConditionPersistencePort(
     BasePersistencePort[Condition, ConditionGetQuery, ConditionsGetQuery], ABC
-):
-    ...
+): ...
 
 
 class ConditionAPIPort(
@@ -38,26 +37,22 @@ class ConditionAPIPort(
     ],
 ):
     @abstractmethod
-    async def transform_exception(self, exc: Exception):
-        ...  # pragma: no cover
+    async def transform_exception(self, exc: Exception): ...  # pragma: no cover
 
     @abstractmethod
     async def to_obj_get_single(
         self, api_request: APIGetSingleRequestObject
-    ) -> ConditionGetQuery:
-        ...  # pragma: no cover
+    ) -> ConditionGetQuery: ...  # pragma: no cover
 
     @abstractmethod
     async def to_api_get_single_response(
         self, obj: Condition
-    ) -> APIGetSingleResponseObject:
-        ...  # pragma: no cover
+    ) -> APIGetSingleResponseObject: ...  # pragma: no cover
 
     @abstractmethod
     async def to_obj_get_multiple(
         self, api_request: APIGetMultipleRequestObject
-    ) -> ConditionsGetQuery:
-        ...  # pragma: no cover
+    ) -> ConditionsGetQuery: ...  # pragma: no cover
 
     @abstractmethod
     async def to_api_get_multiple_response(
@@ -66,15 +61,14 @@ class ConditionAPIPort(
         query_offset: int,
         query_limit: Optional[int],
         total_count: int,
-    ) -> APIGetMultipleResponseObject:
-        ...  # pragma: no cover
+    ) -> APIGetMultipleResponseObject: ...  # pragma: no cover
 
     @abstractmethod
-    async def to_obj_create(self, api_request: APICreateRequestObject) -> Condition:
-        ...  # pragma: no cover
+    async def to_obj_create(
+        self, api_request: APICreateRequestObject
+    ) -> Condition: ...  # pragma: no cover
 
     @abstractmethod
     async def to_obj_edit(
         self, api_request: APIEditRequestObject
-    ) -> Tuple[ConditionGetQuery, dict[str, Any]]:
-        ...  # pragma: no cover
+    ) -> Tuple[ConditionGetQuery, dict[str, Any]]: ...  # pragma: no cover

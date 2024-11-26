@@ -24,16 +24,14 @@ from .base import (
 ###############################################################################
 
 
-class Permission(NamespacedPersistenceObject):
-    ...
+class Permission(NamespacedPersistenceObject): ...
 
 
 class PermissionQuery(QueryResponse):
     permissions: List[Permission]
 
 
-class ResponsePermission(NamespacedResponseObject):
-    ...
+class ResponsePermission(NamespacedResponseObject): ...
 
 
 @dataclass

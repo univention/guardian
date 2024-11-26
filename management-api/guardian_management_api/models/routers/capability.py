@@ -48,12 +48,10 @@ def check_permissions_in_namespace(cls, values: dict[str, Any]):
 #####
 
 
-class CapabilityRole(GuardianBaseModel, NamespacedObjectMixin):
-    ...
+class CapabilityRole(GuardianBaseModel, NamespacedObjectMixin): ...
 
 
-class CapabilityPermission(GuardianBaseModel, NamespacedObjectMixin):
-    ...
+class CapabilityPermission(GuardianBaseModel, NamespacedObjectMixin): ...
 
 
 class CapabilityConditionParameter(GuardianBaseModel):
@@ -140,8 +138,7 @@ class CapabilitiesGetByRoleRequest(
     NamespacePathMixin,
     AppNamePathMixin,
     PaginationRequestMixin,
-):
-    ...
+): ...
 
 
 #####

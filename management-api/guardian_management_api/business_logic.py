@@ -183,9 +183,11 @@ async def get_apps(
                 in allowed_apps
             ],
             query_offset=query.pagination.query_offset,
-            query_limit=query.pagination.query_limit
-            if query.pagination.query_limit
-            else many_apps.total_count,
+            query_limit=(
+                query.pagination.query_limit
+                if query.pagination.query_limit
+                else many_apps.total_count
+            ),
             total_count=many_apps.total_count,
         )
     except Exception as exc:
@@ -343,9 +345,11 @@ async def get_namespaces(
                 in allowed_namespaces
             ],
             query_offset=query.pagination.query_offset,
-            query_limit=query.pagination.query_limit
-            if query.pagination.query_limit
-            else namespaces_persistence.total_count,
+            query_limit=(
+                query.pagination.query_limit
+                if query.pagination.query_limit
+                else namespaces_persistence.total_count
+            ),
             total_count=namespaces_persistence.total_count,
         )
     except Exception as exc:
@@ -774,9 +778,11 @@ async def get_permissions(
                 in allowed_permissions
             ],
             query_offset=query.pagination.query_offset,
-            query_limit=query.pagination.query_limit
-            if query.pagination.query_limit
-            else many_permissions.total_count,
+            query_limit=(
+                query.pagination.query_limit
+                if query.pagination.query_limit
+                else many_permissions.total_count
+            ),
             total_count=many_permissions.total_count,
         )
     except Exception as exc:
@@ -903,9 +909,11 @@ async def get_roles(
                 in allowed_roles
             ],
             query_offset=query.pagination.query_offset,
-            query_limit=query.pagination.query_limit
-            if query.pagination.query_limit
-            else many_roles.total_count,
+            query_limit=(
+                query.pagination.query_limit
+                if query.pagination.query_limit
+                else many_roles.total_count
+            ),
             total_count=many_roles.total_count,
         )
     except Exception as exc:
@@ -1097,9 +1105,11 @@ async def get_contexts(
                 in allowed_contexts
             ],
             query.pagination.query_offset,
-            query.pagination.query_limit
-            if query.pagination.query_limit
-            else contexts.total_count,
+            (
+                query.pagination.query_limit
+                if query.pagination.query_limit
+                else contexts.total_count
+            ),
             contexts.total_count,
         )
     except Exception as exc:
@@ -1188,9 +1198,11 @@ async def get_namespaces_by_app(
                 in allowed_namespaces
             ],
             query_offset=query.pagination.query_offset,
-            query_limit=query.pagination.query_limit
-            if query.pagination.query_limit
-            else namespaces_persistence.total_count,
+            query_limit=(
+                query.pagination.query_limit
+                if query.pagination.query_limit
+                else namespaces_persistence.total_count
+            ),
             total_count=namespaces_persistence.total_count,
         )
     except Exception as exc:

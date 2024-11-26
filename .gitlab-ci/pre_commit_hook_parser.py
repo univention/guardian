@@ -12,6 +12,7 @@ Example:
 
     python3 pre_commit_hook_parser.py .pre-commit-config.yaml backend
 """
+
 import argparse
 
 import yaml  # type: ignore

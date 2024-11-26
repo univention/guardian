@@ -39,12 +39,10 @@ class NamespacedMappingObject:
     name: str
 
 
-class MappingPermission(NamespacedMappingObject):
-    ...
+class MappingPermission(NamespacedMappingObject): ...
 
 
-class MappingRole(NamespacedMappingObject):
-    ...
+class MappingRole(NamespacedMappingObject): ...
 
 
 @dataclass
@@ -89,16 +87,13 @@ class NamespacedAPIMappingObject:
     name: str
 
 
-class APIMappingRole(NamespacedMappingObject):
-    ...
+class APIMappingRole(NamespacedMappingObject): ...
 
 
-class APIMappingCondition(NamespacedMappingObject):
-    ...
+class APIMappingCondition(NamespacedMappingObject): ...
 
 
-class APIMappingPermission(NamespacedMappingObject):
-    ...
+class APIMappingPermission(NamespacedMappingObject): ...
 
 
 @dataclass

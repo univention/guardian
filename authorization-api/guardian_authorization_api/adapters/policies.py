@@ -73,12 +73,16 @@ class OPAAdapter(PolicyPort, AsyncConfiguredAdapterMixin):
             if query.targets is None
             else [
                 {
-                    "old": OPAPolicyObject.from_policy_object(target.old_target)
-                    if target.old_target
-                    else None,
-                    "new": OPAPolicyObject.from_policy_object(target.new_target)
-                    if target.new_target
-                    else None,
+                    "old": (
+                        OPAPolicyObject.from_policy_object(target.old_target)
+                        if target.old_target
+                        else None
+                    ),
+                    "new": (
+                        OPAPolicyObject.from_policy_object(target.new_target)
+                        if target.new_target
+                        else None
+                    ),
                 }
                 for target in query.targets
             ]
@@ -183,12 +187,16 @@ class OPAAdapter(PolicyPort, AsyncConfiguredAdapterMixin):
             if query.targets is None
             else [
                 {
-                    "old": OPAPolicyObject.from_policy_object(target.old_target)
-                    if target.old_target
-                    else None,
-                    "new": OPAPolicyObject.from_policy_object(target.new_target)
-                    if target.new_target
-                    else None,
+                    "old": (
+                        OPAPolicyObject.from_policy_object(target.old_target)
+                        if target.old_target
+                        else None
+                    ),
+                    "new": (
+                        OPAPolicyObject.from_policy_object(target.new_target)
+                        if target.new_target
+                        else None
+                    ),
                 }
                 for target in query.targets
             ]

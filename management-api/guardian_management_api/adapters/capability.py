@@ -78,8 +78,7 @@ from guardian_management_api.ports.capability import (
 from .fastapi_utils import TransformExceptionMixin
 
 
-class TransformCapabilityExceptionMixin(TransformExceptionMixin):
-    ...
+class TransformCapabilityExceptionMixin(TransformExceptionMixin): ...
 
 
 class SQLCapabilityPersistenceAdapter(
@@ -233,15 +232,15 @@ class SQLCapabilityPersistenceAdapter(
                 "The capabilities role could not be found.", object_type=Role
             )
         async with self.session() as session:
-            permissions: list[
-                DBPermission
-            ] = await self._get_db_child_objs_for_capability(
-                DBPermission, obj.permissions, session=session
+            permissions: list[DBPermission] = (
+                await self._get_db_child_objs_for_capability(
+                    DBPermission, obj.permissions, session=session
+                )
             )
-            conditions: list[
-                DBCondition
-            ] = await self._get_db_child_objs_for_capability(
-                DBCondition, obj.conditions, session=session
+            conditions: list[DBCondition] = (
+                await self._get_db_child_objs_for_capability(
+                    DBCondition, obj.conditions, session=session
+                )
             )
         db_cap = SQLCapabilityPersistenceAdapter._cap_to_db_cap(
             obj, db_namespace.id, db_role.id, permissions, conditions
@@ -392,9 +391,11 @@ class FastAPICapabilityAPIAdapter(
             namespace_name=ManagementObjectName(obj.namespace_name),
             name=ManagementObjectName(obj.name),
             display_name=obj.display_name,
-            relation=RelationChoices.AND
-            if obj.relation == CapabilityConditionRelation.AND
-            else RelationChoices.OR,
+            relation=(
+                RelationChoices.AND
+                if obj.relation == CapabilityConditionRelation.AND
+                else RelationChoices.OR
+            ),
             role=CapabilityRole(
                 app_name=ManagementObjectName(obj.role.app_name),
                 namespace_name=ManagementObjectName(obj.role.namespace_name),
@@ -474,13 +475,17 @@ class FastAPICapabilityAPIAdapter(
         return Capability(
             app_name=api_request.app_name,
             namespace_name=api_request.namespace_name,
-            name=api_request.data.name
-            if api_request.data.name
-            else f"cap-{str(uuid.uuid4())}",
+            name=(
+                api_request.data.name
+                if api_request.data.name
+                else f"cap-{str(uuid.uuid4())}"
+            ),
             display_name=api_request.data.display_name,
-            relation=CapabilityConditionRelation.AND
-            if api_request.data.relation == RelationChoices.AND
-            else CapabilityConditionRelation.OR,
+            relation=(
+                CapabilityConditionRelation.AND
+                if api_request.data.relation == RelationChoices.AND
+                else CapabilityConditionRelation.OR
+            ),
             role=Role(
                 app_name=api_request.data.role.app_name,
                 namespace_name=api_request.data.role.namespace_name,
@@ -514,9 +519,11 @@ class FastAPICapabilityAPIAdapter(
             namespace_name=api_request.namespace_name,
             name=api_request.name,
             display_name=api_request.data.display_name,
-            relation=CapabilityConditionRelation.AND
-            if api_request.data.relation == RelationChoices.AND
-            else CapabilityConditionRelation.OR,
+            relation=(
+                CapabilityConditionRelation.AND
+                if api_request.data.relation == RelationChoices.AND
+                else CapabilityConditionRelation.OR
+            ),
             role=Role(
                 app_name=api_request.data.role.app_name,
                 namespace_name=api_request.data.role.namespace_name,

@@ -24,16 +24,14 @@ from .base import (
 ###############################################################################
 
 
-class Context(NamespacedPersistenceObject):
-    ...
+class Context(NamespacedPersistenceObject): ...
 
 
 class ContextQuery(QueryResponse):
     contexts: List[Context]
 
 
-class ResponseContext(NamespacedResponseObject):
-    ...
+class ResponseContext(NamespacedResponseObject): ...
 
 
 @dataclass

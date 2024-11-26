@@ -72,13 +72,15 @@ class FastAPIAdapterUtils:
                 app_name=role.app_name,
                 namespace_name=role.namespace_name,
                 name=role.name,
-                context=PoliciesContext(
-                    app_name=role.context.app_name,
-                    namespace_name=role.context.namespace_name,
-                    name=role.context.name,
-                )
-                if role.context
-                else None,
+                context=(
+                    PoliciesContext(
+                        app_name=role.context.app_name,
+                        namespace_name=role.context.namespace_name,
+                        name=role.context.name,
+                    )
+                    if role.context
+                    else None
+                ),
             )
             for role in obj.roles
         ]
@@ -114,11 +116,13 @@ class FastAPIAdapterUtils:
             return FastAPIAdapterUtils.api_target_to_policy_target(request_target)
         else:
             return PoliciesTarget(
-                new_target=FastAPIAdapterUtils.authz_to_policy_object(
-                    request_target.new_target
-                )
-                if request_target.new_target
-                else None,
+                new_target=(
+                    FastAPIAdapterUtils.authz_to_policy_object(
+                        request_target.new_target
+                    )
+                    if request_target.new_target
+                    else None
+                ),
                 old_target=old_target,
             )
 
@@ -281,9 +285,11 @@ class FastAPIGetPermissionsAPIAdapter(TransformExceptionMixin, GetPermissionsAPI
         target_ids = []
         if api_request.targets:
             target_ids = [
-                str(target.old_target.id)
-                if isinstance(target.old_target, AuthzObjectLookup)
-                else None
+                (
+                    str(target.old_target.id)
+                    if isinstance(target.old_target, AuthzObjectLookup)
+                    else None
+                )
                 for target in api_request.targets
             ]
         return str(api_request.actor.id), target_ids
@@ -412,9 +418,11 @@ class FastAPICheckPermissionsAPIAdapter(
         target_ids = []
         if api_request.targets:
             target_ids = [
-                str(target.old_target.id)
-                if isinstance(target.old_target, AuthzObjectLookup)
-                else None
+                (
+                    str(target.old_target.id)
+                    if isinstance(target.old_target, AuthzObjectLookup)
+                    else None
+                )
                 for target in api_request.targets
             ]
         return str(api_request.actor.id), target_ids

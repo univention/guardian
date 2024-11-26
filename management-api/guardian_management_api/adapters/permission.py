@@ -45,8 +45,7 @@ from .fastapi_utils import TransformExceptionMixin
 from .sql_persistence import SQLAlchemyMixin
 
 
-class TransformPermissionExceptionMixin(TransformExceptionMixin):
-    ...
+class TransformPermissionExceptionMixin(TransformExceptionMixin): ...
 
 
 class FastAPIPermissionAPIAdapter(

@@ -395,13 +395,15 @@ class TestFastAPIAdapterUtils:
                     app_name="app",
                     namespace_name="namespace",
                     name="role",
-                    context=PoliciesContext(
-                        app_name=context.app_name,
-                        namespace_name=context.namespace_name,
-                        name=context.name,
-                    )
-                    if context
-                    else None,
+                    context=(
+                        PoliciesContext(
+                            app_name=context.app_name,
+                            namespace_name=context.namespace_name,
+                            name=context.name,
+                        )
+                        if context
+                        else None
+                    ),
                 )
             ],
             attributes={},

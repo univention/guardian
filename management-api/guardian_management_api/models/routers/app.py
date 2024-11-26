@@ -30,20 +30,17 @@ class AppCreateRequest(GuardianBaseModel):
     )
 
 
-class AppGetRequest(GuardianBaseModel, NamePathMixin):
-    ...
+class AppGetRequest(GuardianBaseModel, NamePathMixin): ...
 
 
-class AppEditData(GuardianBaseModel, DisplayNameObjectMixin):
-    ...
+class AppEditData(GuardianBaseModel, DisplayNameObjectMixin): ...
 
 
 class AppEditRequest(AppGetRequest):
     data: AppEditData
 
 
-class AppsGetRequest(GuardianBaseModel, PaginationRequestMixin):
-    ...
+class AppsGetRequest(GuardianBaseModel, PaginationRequestMixin): ...
 
 
 #####
@@ -56,20 +53,17 @@ class AppAdmin(
     ResourceURLObjectMixin,
     DisplayNameObjectMixin,
     NamespacedObjectMixin,
-):
-    ...
+): ...
 
 
 class AppDefaultNamespace(
     ResourceURLObjectMixin, DisplayNameObjectMixin, AppNameObjectMixin, NameObjectMixin
-):
-    ...
+): ...
 
 
 class App(
     GuardianBaseModel, ResourceURLObjectMixin, DisplayNameObjectMixin, NameObjectMixin
-):
-    ...
+): ...
 
 
 class AppSingleResponse(GuardianBaseModel):

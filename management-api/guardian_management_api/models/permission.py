@@ -32,8 +32,7 @@ class PermissionCreateQuery:
 
 
 @dataclass(frozen=True)
-class PermissionGetQuery(NamespacedObject):
-    ...
+class PermissionGetQuery(NamespacedObject): ...
 
 
 @dataclass(frozen=True)

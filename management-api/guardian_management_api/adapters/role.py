@@ -43,8 +43,7 @@ from .fastapi_utils import TransformExceptionMixin
 from .sql_persistence import SQLAlchemyMixin
 
 
-class TransformRoleExceptionMixin(TransformExceptionMixin):
-    ...
+class TransformRoleExceptionMixin(TransformExceptionMixin): ...
 
 
 class FastAPIRoleAPIAdapter(
@@ -79,9 +78,9 @@ class FastAPIRoleAPIAdapter(
                 app_name=role_result.app_name,
                 namespace_name=role_result.namespace_name,
                 name=role_result.name,
-                display_name=role_result.display_name
-                if role_result.display_name
-                else "",
+                display_name=(
+                    role_result.display_name if role_result.display_name else ""
+                ),
                 resource_url=f"{COMPLETE_URL}/roles/{role_result.app_name}/{role_result.namespace_name}/{role_result.name}",
             )
         )

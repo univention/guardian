@@ -11,8 +11,7 @@ from port_loader import Settings
 from port_loader.errors import SettingFormatError, SettingTypeError
 
 
-class TestPort(BasePort):
-    ...
+class TestPort(BasePort): ...
 
 
 def test_logger_property():
@@ -23,8 +22,7 @@ def test_logger_property():
     assert isinstance(logger1, type(loguru.logger))
 
 
-class BaseAdapter(BasePort):
-    ...
+class BaseAdapter(BasePort): ...
 
 
 class SettingsAdapter(SettingsPort):

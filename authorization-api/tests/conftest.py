@@ -46,9 +46,9 @@ def patch_env():
     os.environ["UDM_DATA_ADAPTER__PASSWORD"] = os.environ.get(
         "UDM_DATA_ADAPTER__PASSWORD", "univention"
     )
-    os.environ[
-        "GUARDIAN__AUTHZ__ADAPTER__AUTHENTICATION_PORT"
-    ] = "fast_api_always_authorized"
+    os.environ["GUARDIAN__AUTHZ__ADAPTER__AUTHENTICATION_PORT"] = (
+        "fast_api_always_authorized"
+    )
     os.environ["OAUTH_ADAPTER__WELL_KNOWN_URL"] = "/dev/zero"
     yield
     os.environ.clear()

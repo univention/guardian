@@ -24,24 +24,22 @@ from .base import (
 
 class PermissionGetRequest(
     GuardianBaseModel, NamePathMixin, NamespacePathMixin, AppNamePathMixin
-):
-    ...
+): ...
 
 
-class PermissionsGetRequest(GuardianBaseModel, PaginationRequestMixin):
-    ...
+class PermissionsGetRequest(GuardianBaseModel, PaginationRequestMixin): ...
 
 
-class PermissionCreateData(GuardianBaseModel, DisplayNameObjectMixin, NameObjectMixin):
-    ...
+class PermissionCreateData(
+    GuardianBaseModel, DisplayNameObjectMixin, NameObjectMixin
+): ...
 
 
 class PermissionCreateRequest(CreateBaseRequest):
     data: PermissionCreateData
 
 
-class PermissionEditData(GuardianBaseModel, DisplayNameObjectMixin):
-    ...
+class PermissionEditData(GuardianBaseModel, DisplayNameObjectMixin): ...
 
 
 class PermissionEditRequest(EditBaseRequest):
@@ -58,8 +56,7 @@ class FastAPIPermission(
     ResourceURLObjectMixin,
     DisplayNameObjectMixin,
     NamespacedObjectMixin,
-):
-    ...
+): ...
 
 
 class PermissionSingleResponse(GuardianBaseModel):

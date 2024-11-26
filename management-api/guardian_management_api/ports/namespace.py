@@ -133,5 +133,4 @@ class NamespaceAPIPort(
 
 class NamespacePersistencePort(
     BasePersistencePort[Namespace, NamespaceGetQuery, NamespacesGetQuery], ABC
-):
-    ...
+): ...

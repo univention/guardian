@@ -116,8 +116,9 @@ class GetPermissionsAPIPort(
     ],
 ):
     @abstractmethod
-    async def transform_exception(self, exc: Exception) -> Exception:
-        ...  # pragma: no cover
+    async def transform_exception(
+        self, exc: Exception
+    ) -> Exception: ...  # pragma: no cover
 
     @abstractmethod
     async def to_policy_query(
@@ -137,8 +138,7 @@ class GetPermissionsAPIPort(
         api_request: GetPermissionsWithLookupAPIRequestObject,
         actor: PolicyObject,
         old_looked_up_targets: list[PolicyObject | None],
-    ) -> GetPermissionsQuery:
-        ...  # pragma: no cover
+    ) -> GetPermissionsQuery: ...  # pragma: no cover
 
     @staticmethod
     def get_actor_and_target_ids(
@@ -162,20 +162,19 @@ class CheckPermissionsAPIPort(
     ],
 ):
     @abstractmethod
-    async def transform_exception(self, exc: Exception) -> Exception:
-        ...  # pragma: no cover
+    async def transform_exception(
+        self, exc: Exception
+    ) -> Exception: ...  # pragma: no cover
 
     @abstractmethod
     async def to_policy_query(
         self, api_request: CheckPermissionsAPIRequestObject
-    ) -> CheckPermissionsQuery:
-        ...  # pragma: no cover
+    ) -> CheckPermissionsQuery: ...  # pragma: no cover
 
     @abstractmethod
     async def to_api_response(
         self, actor_id, check_result: CheckPermissionsResult
-    ) -> CheckPermissionsAPIResponseObject:
-        ...  # pragma: no cover
+    ) -> CheckPermissionsAPIResponseObject: ...  # pragma: no cover
 
     @abstractmethod
     async def to_policy_lookup_query(
@@ -183,8 +182,7 @@ class CheckPermissionsAPIPort(
         api_request: CheckPermissionsWithLookupAPIRequestObject,
         actor: PolicyObject,
         old_looked_up_targets: list[PolicyObject | None],
-    ) -> CheckPermissionsQuery:
-        ...  # pragma: no cover
+    ) -> CheckPermissionsQuery: ...  # pragma: no cover
 
     @staticmethod
     def get_actor_and_target_ids(

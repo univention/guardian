@@ -114,5 +114,4 @@ class ContextAPIPort(
 
 class ContextPersistencePort(
     BasePersistencePort[Context, ContextGetQuery, ContextsGetQuery], ABC
-):
-    ...
+): ...
