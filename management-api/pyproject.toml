@@ -68,7 +68,7 @@ pytest = "<8"
 pytest-cov = "^4.1.0"
 pytest-asyncio = "<0.22"
 pytest-mock = "^3.11.1"
-cryptography = "^41.0.4"
+cryptography = "^43.0.0"
 
 [tool.poetry.group.testing.dependencies]
 pytest-env = "^0.8.2"
