@@ -560,17 +560,17 @@ files = [
 
 [[package]]
 name = "guardian-lib"
-version = "1.6.0"
+version = "1.7.0"
 description = ""
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "guardian_lib-1.6.0-py3-none-any.whl", hash = "sha256:97eec9d7f01577feb49120c6c6e0a7cad971159b33b978b67afdf52db97bdf37"},
-    {file = "guardian_lib-1.6.0.tar.gz", hash = "sha256:c8ebeae99c487c0f0a1f2484f43e7564dbd0587cd5c1a4b7c2c24452a6543f31"},
+    {file = "guardian_lib-1.7.0-py3-none-any.whl", hash = "sha256:44fd7645d72973a62bdccd729c061d820f057c1fffbc9d62bf3103e9c4c21d6e"},
+    {file = "guardian_lib-1.7.0.tar.gz", hash = "sha256:167fe782afc7ec2c1f4ca4e9d91de696c1b451b8fbce9035aef814fd225ac872"},
 ]
 
 [package.dependencies]
-fastapi = ">=0.100.0,<0.101.0"
+fastapi = "<0.200"
 lazy-object-proxy = ">=1.9.0,<2.0.0"
 loguru = ">=0.7.0,<0.8.0"
 port-loader = "1.2.0"
@@ -1405,4 +1405,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "19f800cc432c14598718ed24d76e36875483dfd4031609df8674400ccdcc0e34"
+content-hash = "848e2370750b5383715bf172253dca127236b2565ceab7c39bebd2e8e1000585"
