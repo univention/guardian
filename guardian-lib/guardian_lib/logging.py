@@ -15,6 +15,7 @@ from .ports import SettingsPort
 
 
 class LogLevel(StrEnum):
+    TRACE = "TRACE"
     DEBUG = "DEBUG"
     INFO = "INFO"
     WARNING = "WARNING"

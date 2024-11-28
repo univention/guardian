@@ -6,6 +6,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 # Changelog
 
+## 1.7.0
+
+* Enable TRACE as a possible log level setting
+
 ## 1.6.0
 
 * Update port-loader dependency to 1.2.0.

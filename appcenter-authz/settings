@@ -10,8 +10,8 @@ Show = Install,Settings
 [guardian-authorization-api/logging/level]
 Type = List
 InitialValue = INFO
-Values = DEBUG, INFO, WARNING, ERROR, CRITICAL
-Labels = DEBUG, INFO, WARNING, ERROR, CRITICAL
+Values = TRACE, DEBUG, INFO, WARNING, ERROR, CRITICAL
+Labels = TRACE, DEBUG, INFO, WARNING, ERROR, CRITICAL
 Description = Sets the log level of the application.
 Description[de] = Bestimmt das Loglevel der Applikation.
 Group = Logging
