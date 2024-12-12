@@ -18,6 +18,8 @@
 import sys
 from datetime import date
 
+from sphinx.errors import ConfigError
+
 # -- Project information -----------------------------------------------------
 
 
@@ -38,11 +40,16 @@ def read_version_from_ci() -> str:
 
     import yaml
 
-    with open("../../.gitlab-ci.yml", "r") as f:
+    filename = "../../.gitlab-ci/gitlab-ci.yml"
+    with open(filename, "r") as f:
         ci = yaml.safe_load(f)
-        return ci.get("variables", {"DOC_TARGET_VERSION": "1.0"}).get(
-            "DOC_TARGET_VERSION"
-        )
+        value = ci.get("variables").get("DOC_TARGET_VERSION")
+        if value is None or value == "":
+            raise ConfigError(
+                f"No `DOC_TARGET_VERSION` found in {filename}."
+                "You need it for the document configuration."
+            )
+        return value
 
 
 release = read_version_from_ci()
