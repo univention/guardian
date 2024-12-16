@@ -1,5 +1,5 @@
 <h1>Changelog</h1>
-<h2>v3.0.0 (2024-xx-xx)</h2>
+<h2>v3.0.0 (2024-12-16)</h2>
 <ul>
     <li>The Authorization API now uses the UDM attributes guardianRoles and guardianInheritedRoles instead of guardianRole.</li>
 </ul>
