@@ -1,7 +1,7 @@
 [Application]
 ID = guardian-authorization-api
 Code = 47
-Version = 3.0.0
+Version = 3.0.1
 Name = Guardian Authorization API
 Vendor = Univention GmbH
 DockerScriptRestoreDataAfterSetup =
