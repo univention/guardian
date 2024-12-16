@@ -19,7 +19,7 @@ variables:
   UCSLINT_IMAGE: gitregistry.knut.univention.de/univention/ucs
   SCOPE: "guardian"
   DOCS_DIR: "docs/guardian-manual"
-  DOC_TARGET_VERSION: "2.0"
+  DOC_TARGET_VERSION: "3.0"
   DOC_TARGET_NAME: "guardian-manual"
   DOC_TARGET_PATH: "$DOC_TARGET_NAME/$DOC_TARGET_VERSION"
 
