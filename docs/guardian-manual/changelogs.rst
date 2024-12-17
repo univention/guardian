@@ -10,7 +10,7 @@ component and version of the app.
 Authorization API
 =================
 
-3.0.0 (2024-04-29)
+3.0.0 (2024-12-16)
 ------------------
 
 * The Authorization API now uses the UDM attributes ``guardianRoles`` and
@@ -64,7 +64,7 @@ Authorization API
 Management API
 ==============
 
-3.0.0 (2024-04-29)
+3.0.0 (2024-12-16)
 ------------------
 
 * Breaking change in the Authorization API
@@ -107,10 +107,11 @@ Management API
 Management UI
 ==============
 
-3.0.0 (2024-04-29)
+3.0.0 (2024-12-16)
 ------------------
 
 * Breaking change in the Authorization API
+* Add compatibility for Keycloak versions 25 and up.
 
 2.0.1 (2024-03-26)
 ------------------
