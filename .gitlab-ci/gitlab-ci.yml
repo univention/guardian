@@ -9,6 +9,57 @@ include:
       - pre-commit.yml
   - project: 'univention/documentation/sphinx-docker'
     file: 'pipeline/sphinx.yml'
+  - component: $CI_SERVER_FQDN/univention/internal/ucsschool-ci-utils/app-release@2
+    inputs:
+      app_id: "guardian-authorization-api"
+      job_prefix: "authz-"
+      mail_sender: "ucsschool-maintainers@univention.de"
+      author_alias: "UCS@school Team"
+      changelog_link: "https://docs.software-univention.de/guardian-manual/latest/changelogs.html#authorization-api"
+      mail_recipient: "app-announcement@univention.de"
+      chat_destination: "#ucsschool"
+      ucs_base_version: "5.0"
+      additional_update_appcenter_needs:
+        - job: build_docker_image_authz
+          optional: true
+        - job: build_docker_image_opa
+          optional: true
+        - authz_keycloak_script
+      appcenter_file_dir: "appcenter-authz/"
+      release_tag_prefix: "authorization-api_"
+  - component: $CI_SERVER_FQDN/univention/internal/ucsschool-ci-utils/app-release@2
+    inputs:
+      app_id: "guardian-management-api"
+      job_prefix: "management-"
+      mail_sender: "ucsschool-maintainers@univention.de"
+      author_alias: "UCS@school Team"
+      changelog_link: "https://docs.software-univention.de/guardian-manual/latest/changelogs.html#management-api"
+      mail_recipient: "app-announcement@univention.de"
+      chat_destination: "#ucsschool"
+      ucs_base_version: "5.0"
+      additional_update_appcenter_needs:
+        - management_keycloak_script
+        - job: build_docker_image_management
+          optional: true
+      appcenter_file_dir: "appcenter-management/"
+      release_tag_prefix: "management-api_"
+  - component: $CI_SERVER_FQDN/univention/internal/ucsschool-ci-utils/app-release@2
+    inputs:
+      app_id: "guardian-management-ui"
+      job_prefix: "management-ui-"
+      mail_sender: "ucsschool-maintainers@univention.de"
+      author_alias: "UCS@school Team"
+      changelog_link: "https://docs.software-univention.de/guardian-manual/latest/changelogs.html#management-ui"
+      mail_recipient: "app-announcement@univention.de"
+      chat_destination: "#ucsschool"
+      ucs_base_version: "5.0"
+      additional_update_appcenter_needs:
+        - management-ui_keycloak_script
+        - job: build_docker_image_management_ui
+          optional: true
+      appcenter_file_dir: "appcenter-management-ui/"
+      release_tag_prefix: "management-ui_"
+
 
 variables:
   APPCENTER_CONTROL_IMAGE: "docker-registry.knut.univention.de/knut/univention-appcenter-control"
@@ -23,6 +74,8 @@ variables:
   DOC_TARGET_NAME: "guardian-manual"
   DOC_TARGET_PATH: "$DOC_TARGET_NAME/$DOC_TARGET_VERSION"
 
+#TODO: Stages should be merged and reduced by smart needs
+#and handling of the python packages in docker builds
 stages:
   - test
   - build_python
@@ -31,11 +84,12 @@ stages:
   - publish
   - build
   - merge
+  - release
   - production
-  - lint
+  - cleanup
 
 .pre_commit:
-  stage: lint
+  stage: test
   needs: []
   extends: .pre-commit
   variables:
@@ -65,35 +119,21 @@ run_precommit_frontend:
     - pre-commit run -a
 
 # No jobs for OPA code were created, since the form and structure of the OPA code is not final yet. TODO
-
-.test:
+.coverage:
   stage: test
   image: docker-registry.knut.univention.de/python:3.11-slim
   variables:
     GUARDIAN__MANAGEMENT__BASE_URL: "http://localhost:8001"
     GUARDIAN_COMPONENT: ""
     GUARDIAN_TEST_ARGS: ""
-  script:
-    - cd "$GUARDIAN_COMPONENT"
-    - pip install poetry=="$POETRY_VERSION"
-    - poetry config --local virtualenvs.create false
-    - poetry install
-    - pytest -vv "$GUARDIAN_TEST_ARGS" .
+    GUARDIAN_COVERAGE_COMPONENT: ""
+    GUARDIAN_COVERAGE_LIMIT: ""
   rules:
     - if: "$CI_COMMIT_MESSAGE =~ /skip-build/ || $pipeline =~ /skip-build/"
       when: never
     - if: "$CI_COMMIT_MESSAGE =~ /force-build/ || $pipeline =~ /force-build/"
     - changes:
         - $GUARDIAN_COMPONENT/**/*
-
-.coverage:
-  extends: .test
-  variables:
-    GUARDIAN__MANAGEMENT__BASE_URL: "http://localhost:8001"
-    GUARDIAN_COMPONENT: ""
-    GUARDIAN_TEST_ARGS: ""
-    GUARDIAN_COVERAGE_COMPONENT: ""
-    GUARDIAN_COVERAGE_LIMIT: ""
   script:
     - cd "$GUARDIAN_COMPONENT"
     - pip install poetry=="$POETRY_VERSION"
@@ -108,12 +148,6 @@ run_precommit_frontend:
         coverage_format: cobertura
         path: $GUARDIAN_COMPONENT/coverage.xml
 
-test_management:
-  extends: .test
-  variables:
-    GUARDIAN_COMPONENT: "management-api"
-    GUARDIAN_TEST_ARGS: "-k not e2e_udm"
-
 coverage_management:
   extends: .coverage
   variables:
@@ -122,22 +156,12 @@ coverage_management:
     GUARDIAN_COVERAGE_COMPONENT: "guardian_management_api"
     GUARDIAN_COVERAGE_LIMIT: $MANAGEMENT_COVERAGE_LIMIT
 
-test_authz:
-  extends: .test
-  variables:
-    GUARDIAN_COMPONENT: "authorization-api"
-
 coverage_authz:
   extends: .coverage
   variables:
     GUARDIAN_COMPONENT: "authorization-api"
     GUARDIAN_COVERAGE_COMPONENT: "guardian_authorization_api"
     GUARDIAN_COVERAGE_LIMIT: $AUTHZ_COVERAGE_LIMIT
-
-test_guardian_lib:
-  extends: .test
-  variables:
-    GUARDIAN_COMPONENT: "guardian-lib"
 
 coverage_guardian_lib:
   extends: .coverage
@@ -148,9 +172,6 @@ coverage_guardian_lib:
 
 build_guardian_lib:
   stage: build_python
-  needs:
-    - test_guardian_lib
-    - coverage_guardian_lib
   rules:
     - changes:
         - guardian-lib/**/*
@@ -174,10 +195,15 @@ build_guardian_lib:
 build_docker_image_opa:
   stage: build_docker
   rules:
+    - if: "$CI_COMMIT_TAG"
+      variables:
+        REGISTRY: "artifacts.software-univention.de"
+        REGISTRY_IMAGE: "$REGISTRY/ucsschool/guardian-opa"
     - changes:
         - opa/**/*
   extends: .kaniko
   variables:
+    IMAGE_TAG_ENV_NAME: "IMAGE_TAG_OPA"
     KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR/opa"
     CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-opa
     KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
@@ -185,6 +211,10 @@ build_docker_image_opa:
 build_docker_image_management_ui:
   stage: build_docker
   rules:
+    - if: "$CI_COMMIT_TAG"
+      variables:
+        REGISTRY: "artifacts.software-univention.de"
+        REGISTRY_IMAGE: "$REGISTRY/ucsschool/guardian-management-ui"
     - changes:
         - management-ui/**/*
   extends: .kaniko
@@ -195,24 +225,27 @@ build_docker_image_management_ui:
 
 build_docker_image_authz:
   stage: build_docker
-  needs:
-    - test_authz
-    - coverage_authz
   rules:
+    - if: "$CI_COMMIT_TAG"
+      variables:
+        REGISTRY: "artifacts.software-univention.de"
+        REGISTRY_IMAGE: "$REGISTRY/ucsschool/guardian-authorization-api"
     - changes:
         - authorization-api/**/*
   extends: .kaniko
   variables:
+    IMAGE_TAG_ENV_NAME: "IMAGE_TAG_AUTHZ"
     KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR/authorization-api"
     CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-authorization-api
     KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --skip-unused-stages --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
 
 build_docker_image_management:
   stage: build_docker
-  needs:
-    - test_management
-    - coverage_management
   rules:
+    - if: "$CI_COMMIT_TAG"
+      variables:
+        REGISTRY: "artifacts.software-univention.de"
+        REGISTRY_IMAGE: "$REGISTRY/ucsschool/guardian-management-api"
     - changes:
         - management-api/**/*
   extends: .kaniko
@@ -245,47 +278,35 @@ publish_guardian-lib:
     - poetry config --local repositories.project_local ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi
     - poetry publish -r project_local --username gitlab-ci-token --password ${CI_JOB_TOKEN}
 
-.app_to_test_appcenter:
-  stage: publish
-  image: $APPCENTER_CONTROL_IMAGE
-  needs: []
+.generate_keycloak_script:
+  stage: build_docker
+  image: gitregistry.knut.univention.de/univention/internal/ucsschool-ci-utils/app-release:latest
   variables:
-    APP_ID: "guardian-authorization-api"
-    APP_DIR: "appcenter-authz"
-    APP_NAME: "5.0/$APP_ID"
+    APP_NAME: "guardian-authorization-api"
+    CONFIGURE_KEYCLOAK_TEMPLATE: "appcenter-authz/includes/configure-keycloak.tmpl"
+    KEYCLOAK_TEMP_FILE: "appcenter-authz/includes/keycloak_script.include"
   script:
-    - cd "$APP_DIR"
-    - APP_VERSION="$(sed -n 's/^Version\s*=\s*//p' ini)"
-    - echo "updating $APP_NAME=$APP_VERSION"
-    - ./scripts/generate-preinst
-    - univention-appcenter-control upload "$APP_NAME=$APP_VERSION" configure compose configure_host inst ini preinst README_UPDATE_DE README_UPDATE_EN settings uinst test test_preinstall
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      changes:
-        - $APP_DIR/**/*
-    - when: manual
-      allow_failure: true
+    - ./appcenter-common/keycloak/generate-configure-keycloak.sh "$APP_NAME" "$CONFIGURE_KEYCLOAK_TEMPLATE" "$KEYCLOAK_TEMP_FILE"
+  artifacts:
+    paths:
+      - ${KEYCLOAK_TEMP_FILE}
 
-authz_app_to_test_appcenter:
-  extends: .app_to_test_appcenter
-  variables:
-    APP_ID: "guardian-authorization-api"
-    APP_DIR: "appcenter-authz"
-    APP_NAME: "5.0/$APP_ID"
+authz_keycloak_script:
+  extends: .generate_keycloak_script
 
-management_app_to_test_appcenter:
-  extends: .app_to_test_appcenter
+management_keycloak_script:
+  extends: .generate_keycloak_script
   variables:
-    APP_ID: "guardian-management-api"
-    APP_DIR: "appcenter-management"
-    APP_NAME: "5.0/$APP_ID"
+    APP_NAME: "guardian-management-api"
+    CONFIGURE_KEYCLOAK_TEMPLATE: "appcenter-management/includes/configure-keycloak.tmpl"
+    KEYCLOAK_TEMP_FILE: "appcenter-management/includes/keycloak_script.include"
 
-management_ui_app_to_test_appcenter:
-  extends: .app_to_test_appcenter
+management-ui_keycloak_script:
+  extends: .generate_keycloak_script
   variables:
-    APP_ID: "guardian-management-ui"
-    APP_DIR: "appcenter-management-ui"
-    APP_NAME: "5.0/$APP_ID"
+    APP_NAME: "guardian-management-ui"
+    CONFIGURE_KEYCLOAK_TEMPLATE: "appcenter-management-ui/includes/configure-keycloak.tmpl"
+    KEYCLOAK_TEMP_FILE: "appcenter-management-ui/includes/keycloak_script.include"
 
 docs-linkcheck:
   extends: .sphinx-linkcheck-template
