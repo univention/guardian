@@ -7,7 +7,7 @@ include:
     file:
       - kaniko.yml
       - pre-commit.yml
-  - project: 'univention/documentation/sphinx-docker'
+  - project: 'univention/dev/docs/sphinx-docker'
     file: 'pipeline/sphinx.yml'
   - component: $CI_SERVER_FQDN/univention/internal/ucsschool-ci-utils/app-release@2
     inputs:
