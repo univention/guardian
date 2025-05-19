@@ -199,8 +199,8 @@ build_docker_image_opa:
       variables:
         REGISTRY: "artifacts.software-univention.de"
         REGISTRY_IMAGE: "$REGISTRY/ucsschool/guardian-opa"
-    - changes:
-        - opa/**/*
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
   extends: .kaniko
   variables:
     IMAGE_TAG_ENV_NAME: "IMAGE_TAG_OPA"
@@ -215,8 +215,8 @@ build_docker_image_management_ui:
       variables:
         REGISTRY: "artifacts.software-univention.de"
         REGISTRY_IMAGE: "$REGISTRY/ucsschool/guardian-management-ui"
-    - changes:
-        - management-ui/**/*
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
   extends: .kaniko
   variables:
     DOCKERFILE_PATH: "$CI_PROJECT_DIR/management-ui/docker/Dockerfile"
@@ -230,8 +230,8 @@ build_docker_image_authz:
       variables:
         REGISTRY: "artifacts.software-univention.de"
         REGISTRY_IMAGE: "$REGISTRY/ucsschool/guardian-authorization-api"
-    - changes:
-        - authorization-api/**/*
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
   extends: .kaniko
   variables:
     IMAGE_TAG_ENV_NAME: "IMAGE_TAG_AUTHZ"
@@ -246,8 +246,8 @@ build_docker_image_management:
       variables:
         REGISTRY: "artifacts.software-univention.de"
         REGISTRY_IMAGE: "$REGISTRY/ucsschool/guardian-management-api"
-    - changes:
-        - management-api/**/*
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
   extends: .kaniko
   variables:
     KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR/management-api"
