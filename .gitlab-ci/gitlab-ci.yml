@@ -9,7 +9,7 @@ include:
       - pre-commit.yml
   - project: 'univention/dev/docs/sphinx-docker'
     file: 'pipeline/sphinx.yml'
-  - component: $CI_SERVER_FQDN/univention/internal/ucsschool-ci-utils/app-release@2
+  - component: $CI_SERVER_FQDN/univention/dev/internal/ucsschool-ci-utils/app-release@2
     inputs:
       app_id: "guardian-authorization-api"
       job_prefix: "authz-"
@@ -27,7 +27,7 @@ include:
         - authz_keycloak_script
       appcenter_file_dir: "appcenter-authz/"
       release_tag_prefix: "authorization-api_"
-  - component: $CI_SERVER_FQDN/univention/internal/ucsschool-ci-utils/app-release@2
+  - component: $CI_SERVER_FQDN/univention/dev/internal/ucsschool-ci-utils/app-release@2
     inputs:
       app_id: "guardian-management-api"
       job_prefix: "management-"
@@ -43,7 +43,7 @@ include:
           optional: true
       appcenter_file_dir: "appcenter-management/"
       release_tag_prefix: "management-api_"
-  - component: $CI_SERVER_FQDN/univention/internal/ucsschool-ci-utils/app-release@2
+  - component: $CI_SERVER_FQDN/univention/dev/internal/ucsschool-ci-utils/app-release@2
     inputs:
       app_id: "guardian-management-ui"
       job_prefix: "management-ui-"
@@ -280,7 +280,7 @@ publish_guardian-lib:
 
 .generate_keycloak_script:
   stage: build_docker
-  image: gitregistry.knut.univention.de/univention/internal/ucsschool-ci-utils/app-release:latest
+  image: gitregistry.knut.univention.de/univention/dev/internal/ucsschool-ci-utils/app-release:latest
   variables:
     APP_NAME: "guardian-authorization-api"
     CONFIGURE_KEYCLOAK_TEMPLATE: "appcenter-authz/includes/configure-keycloak.tmpl"
