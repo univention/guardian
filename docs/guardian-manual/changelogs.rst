@@ -10,6 +10,11 @@ component and version of the app.
 Authorization API
 =================
 
+Version 3.0.1 (2025-07-10)
+--------------------------
+
+* All Guardian apps are now available for UCS version 5.2-2.
+
 Version 3.0.0 (2024-12-16)
 --------------------------
 
