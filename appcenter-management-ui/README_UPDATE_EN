@@ -1,4 +1,8 @@
 <h1>Changelog</h1>
+<h2>v3.0.1 (2025-07-10)</h2>
+<ul>
+    <li>The Management UI app is now available for UCS 5.2.</li>
+</ul>
 <h2>v3.0.0 (2024-12-16)</h2>
 <ul>
     <li>Breaking change in the Authorization API.</li>
