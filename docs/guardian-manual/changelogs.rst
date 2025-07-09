@@ -69,6 +69,11 @@ Version 1.0.0 (2023-12-11)
 Management API
 ==============
 
+Version 3.0.1 (2025-07-10)
+--------------------------
+
+* All Guardian apps are now available for UCS version 5.2-2.
+
 Version 3.0.0 (2024-12-16)
 --------------------------
 
@@ -111,6 +116,11 @@ Version 1.0.0 (2023-12-11)
 
 Management UI
 ==============
+
+Version 3.0.1 (2025-07-10)
+--------------------------
+
+* All Guardian apps are now available for UCS version 5.2-2.
 
 Version 3.0.0 (2024-12-16)
 --------------------------
