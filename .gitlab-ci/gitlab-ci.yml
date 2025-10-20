@@ -7,6 +7,10 @@ include:
     file:
       - kaniko.yml
       - pre-commit.yml
+  - project: "univention/dev/nubus-for-k8s/common-ci"
+    ref: "v1.45.0"
+    file:
+      - "jobs/generate-filesystem-sbom.yaml"
   - project: 'univention/dev/docs/sphinx-docker'
     file: 'pipeline/sphinx.yml'
   - component: $CI_SERVER_FQDN/univention/dev/internal/ucsschool-ci-utils/app-release@2
@@ -169,6 +173,10 @@ coverage_guardian_lib:
     GUARDIAN_COMPONENT: "guardian-lib"
     GUARDIAN_COVERAGE_COMPONENT: "guardian_lib"
     GUARDIAN_COVERAGE_LIMIT: $GUARDIAN_LIB_COVERAGE_LIMIT
+
+generate-filesystem-sbom:
+  variables:
+    FOLDER: "management-ui"
 
 build_guardian_lib:
   stage: build_python
