@@ -8,8 +8,9 @@ include:
       - kaniko.yml
       - pre-commit.yml
   - project: "univention/dev/nubus-for-k8s/common-ci"
-    ref: "v1.45.0"
+    ref: "v1.47.0"
     file:
+      - "jobs/container-generate-sbom.yaml"
       - "jobs/generate-filesystem-sbom.yaml"
   - project: 'univention/dev/docs/sphinx-docker'
     file: 'pipeline/sphinx.yml'
@@ -174,8 +175,29 @@ coverage_guardian_lib:
     GUARDIAN_COVERAGE_COMPONENT: "guardian_lib"
     GUARDIAN_COVERAGE_LIMIT: $GUARDIAN_LIB_COVERAGE_LIMIT
 
+container-generate-sbom:
+  variables:
+    IMAGE_NAME: "guardian-management-ui"
+    IMAGE_TAG_ENV_NAME: $IMAGE_TAG
+  before_script:
+    - echo "TODO use digest from built image"
+  script:
+    - |
+      echo "IMAGE_TAG_ENV_NAME = ${IMAGE_TAG_ENV_NAME}"
+    - |
+      trivy image \
+        --exit-code 0 \
+        --format cyclonedx \
+        --output sbom-image-${IMAGE_NAME}.cyclonedx.json \
+      ${IMAGE_TAG_ENV_NAME}
+
 generate-filesystem-sbom:
   variables:
+    FOLDER: "management-ui"
+
+merge-fs-and-image-sboms:
+  variables:
+    IMAGE_NAME: "guardian-management-ui"
     FOLDER: "management-ui"
 
 build_guardian_lib:
