@@ -140,7 +140,7 @@ html_theme_options = {
     + "If you miss information, send us your "
     + "<a href='https://www.univention.com/feedback/?guardian-manual=missing-n4k' "
     + "target='blank' "
-    + "style='color: var(--pst-color-attention)'>feedback</a>.</p>",
+    + "style='color: var(--pst-color-secondary)'>feedback</a>.</p>",
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
