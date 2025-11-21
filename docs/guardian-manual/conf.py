@@ -135,6 +135,12 @@ html_theme_options = {
     "typesense_document": doc_basename,
     "typesense_document_version": version,  # or "latest"
     "univention_docs_deployment": True,
+    "announcement": "<p><i class='fa-solid fa-circle-exclamation'></i> "
+    + "This app documentation doesn't apply to Nubus for Kubernetes yet. "
+    + "If you miss information, send us your "
+    + "<a href='https://www.univention.com/feedback/?guardian-manual=missing-n4k' "
+    + "target='blank' "
+    + "style='color: var(--pst-color-attention)'>feedback</a>.</p>",
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
