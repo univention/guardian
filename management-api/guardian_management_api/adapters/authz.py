@@ -122,7 +122,7 @@ class GuardianAuthorizationAdapter(
             )
         # get an access token from the Guardian Management API
         await client.fetch_token(
-            self.oauth_settings["mtls_endpoint_aliases"]["token_endpoint"],
+            self.oauth_settings["mtls_endpoint_aliases"]["token_endpoint"], timeout=30
         )
 
         # query the Guardian Authorization API with httpx and m2m credentials
@@ -155,13 +155,14 @@ class GuardianAuthorizationAdapter(
                 "general_permissions_to_check": [],
                 "extra_request_data": {},
             },
+            timeout=30,
         )
         # check the response status code and raise a custom exception if needed
         try:
             response.raise_for_status()
         except httpx.HTTPStatusError:
             raise AuthorizationError(
-                f"Unsuccessful response from the Authorization API: {response.json()}"
+                f"Unsuccessful response from the Authorization API: {response.status_code}"
             )
 
         default_dict: dict[str, bool] = {}
