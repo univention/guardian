@@ -1,31 +1,35 @@
-# Copyright (C) 2023 Univention GmbH
+# Copyright (C) 2023-2025 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base-flex:5.2.2 AS builder
+FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base-flex:5.2.3 AS builder
 
-ARG opa_version=0.53.0
+ARG opa_version=1.11.0
+ARG opa_checksum=sha256:53451e1d1362dbb11d6703c159b05de5cd18278fa4aee0b75a0b9590d573fd0a
 
 WORKDIR /build
 
 # Download Open Policy Agent
-ADD https://github.com/open-policy-agent/opa/releases/download/v${opa_version}/opa_linux_amd64_static /usr/bin/opa
-RUN chmod +x /usr/bin/opa
+ADD --checksum=${opa_checksum} \
+    --chmod=555 \
+    --chown=1000:1000 \
+    https://github.com/open-policy-agent/opa/releases/download/v${opa_version}/opa_linux_amd64_static \
+    /usr/bin/opa
 
 # Calculate Python dependencies
-FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base-521:latest AS requirements_builder
+FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base:5.2.3-build.20251128 AS requirements_builder
 WORKDIR /build
 RUN apt-get update \
     && apt-get --assume-yes --verbose-versions --no-install-recommends install \
     python3-pip \
     && rm -fr /var/lib/apt/lists/* /var/cache/apt/archives/* \
 RUN rm -fv /usr/lib/python*/EXTERNALLY-MANAGED
-RUN pip install poetry==1.5.1
+RUN pip install poetry==2.2.1 poetry-plugin-export==1.9.0
 COPY pyproject.toml poetry.lock ./
-RUN poetry export -f requirements.txt --output requirements.txt --dev --without-hashes
+RUN poetry export -f requirements.txt --output requirements.txt --with dev --without-hashes
 
 # Live edit version for development
-FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base-521:latest AS dev
+FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base:5.2.3-build.20251128 AS dev
 
 ARG service_dir="/guardian_service_dir"
 
@@ -44,17 +48,17 @@ RUN apt-get update \
 RUN rm -fv /usr/lib/python*/EXTERNALLY-MANAGED
 
 # Install OPA
-COPY --from=builder /usr/bin/opa /usr/bin/opa
+COPY --chmod=555 --from=builder /usr/bin/opa /usr/bin/opa
 
 RUN mkdir -p $service_dir
-RUN pip install --no-cache-dir -U pip wheel && pip install --no-cache-dir poetry==1.5.1 && poetry config virtualenvs.create false
+RUN pip install --no-cache-dir -U pip wheel && pip install --no-cache-dir poetry==2.2.1 poetry-plugin-export==1.9.0 && poetry config virtualenvs.create false
 COPY management-api management-api
 COPY guardian-lib guardian-lib
 RUN cd management-api && poetry install && cd ..
 RUN cd guardian-lib && poetry install && cd ..
 
 
-FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base-521:latest
+FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base:5.2.3-build.20251128
 
 EXPOSE 8000
 
@@ -81,7 +85,7 @@ RUN rm -fv /usr/lib/python*/EXTERNALLY-MANAGED
 RUN adduser --no-create-home $service_user && mkdir -p $service_dir && chown $service_user:$service_user $service_dir
 
 # Install OPA
-COPY --from=builder /usr/bin/opa /usr/bin/opa
+COPY --chmod=555 --chown=$service_user:$service_user --from=builder /usr/bin/opa /usr/bin/opa
 
 # Install python requirements
 COPY --from=requirements_builder /build/requirements.txt .
