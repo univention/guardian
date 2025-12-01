@@ -176,7 +176,7 @@ async def create_permission(
         authz_port=authz_port,
         request=request,
     )
-    return response.dict()
+    return response.model_dump()
 
 
 @router.patch(
@@ -208,4 +208,4 @@ async def edit_permission(
         authz_port=authz_port,
         request=request,
     )
-    return response.dict()
+    return response.model_dump()

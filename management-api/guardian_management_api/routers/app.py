@@ -2,10 +2,9 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-from typing import Annotated, Any, Dict
+from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, Request
-from fastapi.params import Body
 from guardian_lib.adapter_registry import port_dep
 from guardian_lib.ports import AuthenticationPort
 from loguru import logger
@@ -55,7 +54,7 @@ async def get_app(
         authz_port=authz_port,
         request=request,
     )
-    return response.dict()
+    return response.model_dump()
 
 
 @router.get("/apps", response_model=AppMultipleResponse)
@@ -81,7 +80,7 @@ async def get_all_apps(
         request=request,
     )
 
-    return response.dict()
+    return response.model_dump()
 
 
 @router.post(
@@ -91,7 +90,7 @@ async def get_all_apps(
 )
 async def create_app(
     request: Request,
-    app_create_request: Annotated[AppCreateRequest, Body()],
+    app_create_request: AppCreateRequest,
     app_api: FastAPIAppAPIAdapter = Depends(port_dep(AppAPIPort, FastAPIAppAPIAdapter)),
     persistence: AppPersistencePort = Depends(port_dep(AppPersistencePort)),
     authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
@@ -107,13 +106,13 @@ async def create_app(
         authz_port=authz_port,
         request=request,
     )
-    return response.dict()
+    return response.model_dump()
 
 
 @router.post("/apps/register", response_model=AppRegisterResponse, status_code=201)
 async def register_app(
     request: Request,
-    request_data: Annotated[AppCreateRequest, Body()],
+    request_data: AppCreateRequest,
     api_port: FastAPIAppAPIAdapter = Depends(
         port_dep(AppAPIPort, FastAPIAppAPIAdapter)
     ),
@@ -149,7 +148,7 @@ async def register_app(
         authz_port=authz_port,
         request=request,
     )
-    return response.dict()
+    return response.model_dump()
 
 
 @router.patch("/apps/{name}", response_model=AppSingleResponse)
@@ -175,4 +174,4 @@ async def edit_app(
             authz_port=authz_port,
             request=request,
         )
-    ).dict()
+    ).model_dump()

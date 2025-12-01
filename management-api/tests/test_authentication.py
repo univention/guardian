@@ -116,12 +116,14 @@ class TestOauth:
         assert response.status_code == 401
 
 
-@pytest.fixture
-@pytest.mark.asyncio
+@pytest_asyncio.fixture
 async def get_keycloak_token():
-    oauth_settings = await get_oauth_settings(
-        os.getenv("OAUTH_ADAPTER__WELL_KNOWN_URL")
-    )
+    well_known_url = os.getenv("OAUTH_ADAPTER__WELL_KNOWN_URL")
+    if not well_known_url or well_known_url == "/dev/zero":
+        pytest.skip(
+            "OAUTH_ADAPTER__WELL_KNOWN_URL not configured for keycloak integration"
+        )
+    oauth_settings = await get_oauth_settings(well_known_url)
     response = requests.post(
         oauth_settings["token_endpoint"],
         data={

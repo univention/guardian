@@ -43,7 +43,7 @@ async def get_custom_endpoint(
             resource_url="http://fqdn/guardian/management/custom_endpoints/my-app/my-namespace/my-custom_endpoint",
             documentation="Some dummy custom endpoint.",
         )
-    ).dict()
+    ).model_dump()
 
 
 @router.get("/custom_endpoints", response_model=CustomEndpointMultipleResponse)
@@ -65,7 +65,7 @@ async def get_all_custom_endpoints(
             )
         ],
         pagination=PaginationInfo(limit=1000, offset=0, total_count=1),
-    ).dict()
+    ).model_dump()
 
 
 @router.get(
@@ -89,7 +89,7 @@ async def get_custom_endpoints_by_app(
             )
         ],
         pagination=PaginationInfo(limit=1000, offset=0, total_count=1),
-    ).dict()
+    ).model_dump()
 
 
 @router.get(
@@ -114,7 +114,7 @@ async def get_custom_endpoints_by_namespace(
             )
         ],
         pagination=PaginationInfo(limit=1000, offset=0, total_count=1),
-    ).dict()
+    ).model_dump()
 
 
 @router.post(
@@ -137,7 +137,7 @@ async def create_custom_endpoint(
             resource_url="http://fqdn/guardian/management/custom_endpoints/my-app/my-namespace/my-custom_endpoint",
             documentation="Some dummy custom endpoint.",
         )
-    ).dict()
+    ).model_dump()
 
 
 @router.patch(
@@ -159,4 +159,4 @@ async def edit_custom_endpoint(
             resource_url="http://fqdn/guardian/management/custom_endpoints/my-app/my-namespace/my-custom_endpoint",
             documentation="Some dummy custom endpoint.",
         )
-    ).dict()
+    ).model_dump()

@@ -39,7 +39,7 @@ from guardian_management_api.models.routers.role import (
     RoleCreateData,
     RoleCreateRequest,
 )
-from pydantic import ValidationError, parse_obj_as
+from pydantic import TypeAdapter, ValidationError
 
 
 class TestNameRegex:
@@ -51,17 +51,17 @@ class TestNameRegex:
         "999",
     ]
     validation_error_match = re.escape(
-        r'string does not match regex "^[a-z][a-z0-9\-_]*$"'
+        r"String should match pattern '^[a-z][a-z0-9\-_]*$'"
     )
 
     @pytest.mark.parametrize("value", ["valid", "valid_1-test", "also-valid_name123"])
     def test_management_object_happy_path(self, value):
-        parse_obj_as(ManagementObjectName, value)
+        TypeAdapter(ManagementObjectName).validate_python(value)
 
     @pytest.mark.parametrize("value", invalid_values)
     def test_management_object_name_validation(self, value):
         with pytest.raises(ValidationError, match=TestNameRegex.validation_error_match):
-            parse_obj_as(ManagementObjectName, value)
+            TypeAdapter(ManagementObjectName).validate_python(value)
 
     @pytest.mark.parametrize("value", invalid_values)
     def test_app_name_path_mixin_validation(self, value):
@@ -82,8 +82,7 @@ class TestNameRegex:
     def test_app_create_request_validation(self, value):
         with pytest.raises(
             ValidationError,
-            match=f"1 validation error for AppCreateRequest\nname\n"
-            f"  {TestNameRegex.validation_error_match}",
+            match=TestNameRegex.validation_error_match,
         ):
             AppCreateRequest(name=value)
 
@@ -91,8 +90,7 @@ class TestNameRegex:
     def test_role_create_request_validation(self, value):
         with pytest.raises(
             ValidationError,
-            match=f"1 validation error for RoleCreateData\nname\n"
-            f"  {TestNameRegex.validation_error_match}",
+            match=TestNameRegex.validation_error_match,
         ):
             RoleCreateRequest(
                 app_name="app",
@@ -104,8 +102,7 @@ class TestNameRegex:
     def test_permission_create_request_validation(self, value):
         with pytest.raises(
             ValidationError,
-            match=f"1 validation error for PermissionCreateData\nname\n"
-            f"  {TestNameRegex.validation_error_match}",
+            match=TestNameRegex.validation_error_match,
         ):
             PermissionCreateRequest(
                 app_name="app",
@@ -117,8 +114,7 @@ class TestNameRegex:
     def test_namespace_create_request_validation(self, value):
         with pytest.raises(
             ValidationError,
-            match=f"1 validation error for NamespaceCreateData\nname\n"
-            f"  {TestNameRegex.validation_error_match}",
+            match=TestNameRegex.validation_error_match,
         ):
             NamespaceCreateRequest(app_name="app", data=NamespaceCreateData(name=value))
 
@@ -126,8 +122,7 @@ class TestNameRegex:
     def test_custom_endpoint_create_request_validation(self, value):
         with pytest.raises(
             ValidationError,
-            match=f"1 validation error for CustomEndpointCreateData\nname\n"
-            f"  {TestNameRegex.validation_error_match}",
+            match=TestNameRegex.validation_error_match,
         ):
             CustomEndpointCreateRequest(
                 app_name="app",
@@ -139,8 +134,7 @@ class TestNameRegex:
     def test_context_create_request_validation(self, value):
         with pytest.raises(
             ValidationError,
-            match=f"1 validation error for ContextCreateData\nname\n"
-            f"  {TestNameRegex.validation_error_match}",
+            match=TestNameRegex.validation_error_match,
         ):
             ContextCreateRequest(
                 app_name="app", namespace_name="asd", data=ContextCreateData(name=value)
@@ -150,8 +144,7 @@ class TestNameRegex:
     def test_condition_create_request_validation(self, value):
         with pytest.raises(
             ValidationError,
-            match=f"1 validation error for ConditionCreateData\nname\n"
-            f"  {TestNameRegex.validation_error_match}",
+            match=TestNameRegex.validation_error_match,
         ):
             ConditionCreateRequest(
                 app_name="app",
@@ -163,8 +156,7 @@ class TestNameRegex:
     def test_capability_create_request_validation(self, value):
         with pytest.raises(
             ValidationError,
-            match=f"1 validation error for CapabilityCreateData\nname\n"
-            f"  {TestNameRegex.validation_error_match}",
+            match=TestNameRegex.validation_error_match,
         ):
             CapabilityCreateRequest(
                 app_name="app",

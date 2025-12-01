@@ -215,6 +215,7 @@ class TestSQLAppPersistenceAdapter:
             await app_sql_adapter.create(App(name=app.name, display_name="App"))
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures("drop_tables")
     async def test_create_unhandled_error(
         self, app_sql_adapter: SQLAppPersistenceAdapter
     ):
@@ -243,6 +244,7 @@ class TestSQLAppPersistenceAdapter:
             await app_sql_adapter.read_one(AppGetQuery(name="other_app"))
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures("drop_tables")
     async def test_read_one_unhandled_error(
         self, app_sql_adapter: SQLAppPersistenceAdapter
     ):
@@ -286,6 +288,7 @@ class TestSQLAppPersistenceAdapter:
         assert result == PersistenceGetManyResult(total_count=0, objects=[])
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures("drop_tables")
     async def test_read_many_unhandled_error(
         self, app_sql_adapter: SQLAppPersistenceAdapter
     ):

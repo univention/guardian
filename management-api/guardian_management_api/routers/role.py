@@ -54,7 +54,7 @@ async def get_role(
         request=request,
     )
 
-    return response.dict()
+    return response.model_dump()
 
 
 @router.get("/roles", response_model=RoleMultipleResponse)
@@ -82,7 +82,7 @@ async def get_all_roles(
         request=request,
     )
 
-    return response.dict()
+    return response.model_dump()
 
 
 @router.get("/roles/{app_name}", response_model=RoleMultipleResponse)
@@ -110,7 +110,7 @@ async def get_roles_by_app(
         request=request,
     )
 
-    return response.dict()
+    return response.model_dump()
 
 
 @router.get("/roles/{app_name}/{namespace_name}", response_model=RoleMultipleResponse)
@@ -138,7 +138,7 @@ async def get_roles_by_namespace(
         request=request,
     )
 
-    return response.dict()
+    return response.model_dump()
 
 
 @router.post(
@@ -169,7 +169,7 @@ async def create_role(
         authz_port=authz_port,
         request=request,
     )
-    return response.dict()
+    return response.model_dump()
 
 
 @router.patch(
@@ -199,4 +199,4 @@ async def edit_role(
         request=request,
     )
 
-    return response.dict()
+    return response.model_dump()

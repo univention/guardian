@@ -14,6 +14,7 @@ packages = [{include = "guardian_management_api"}, ]
 python = "^3.11"
 httpx = "^0.28.1"
 pydantic = "^2.12.5"
+pydantic-settings = "^2.12.0"
 fastapi = "<0.200"
 gunicorn = "^23.0.0"
 uvicorn = "^0.38.0"
@@ -23,12 +24,13 @@ sqlalchemy = "^2.0.44"
 alembic = "^1.17.2"
 aiosqlite = "^0.21.0"
 # FIXME: bump after merging
-guardian-lib = "0.0.0.dev0+jconde.bump.guardian.lib.43e98e32"
+guardian-lib = "0.0.0.dev0+jconde.bump.guardian.lib.7beddb4d"
 asyncpg = "^0.31.0"
 aiofiles = "^25.1.0"
 aioshutil = "^1.6"
 types-pymysql = "^1.1.0.1"
 authlib = "^1.6.5"
+packaging = "^24.1"
 
 [tool.poetry.plugins."guardian_management_api.SettingsPort"]
 "env" = "guardian_lib.adapters.settings:EnvSettingsAdapter"

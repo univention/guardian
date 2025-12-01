@@ -55,7 +55,7 @@ async def get_context(
         authz_port=authz_port,
         request=request,
     )
-    return response.dict()
+    return response.model_dump()
 
 
 @router.get("/contexts", response_model=ContextMultipleResponse)
@@ -84,7 +84,7 @@ async def get_all_contexts(
         authz_port=authz_port,
         request=request,
     )
-    return response.dict()
+    return response.model_dump()
 
 
 @router.get("/contexts/{app_name}", response_model=ContextMultipleResponse)
@@ -113,7 +113,7 @@ async def get_contexts_by_app(
         authz_port=authz_port,
         request=request,
     )
-    return response.dict()
+    return response.model_dump()
 
 
 @router.get(
@@ -144,7 +144,7 @@ async def get_contexts_by_namespace(
         authz_port=authz_port,
         request=request,
     )
-    return response.dict()
+    return response.model_dump()
 
 
 @router.post(
@@ -177,7 +177,7 @@ async def create_context(
         authz_port=authz_port,
         request=request,
     )
-    return response.dict()
+    return response.model_dump()
 
 
 @router.patch(
@@ -209,4 +209,4 @@ async def edit_context(
         authz_port=authz_port,
         request=request,
     )
-    return response.dict()
+    return response.model_dump()

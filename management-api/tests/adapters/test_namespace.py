@@ -250,6 +250,7 @@ class TestSQLNamespacePersistenceAdapter:
             )
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures("drop_tables")
     async def test_create_unhandled_error(
         self, namespace_sql_adapter: SQLNamespacePersistenceAdapter
     ):
@@ -293,6 +294,7 @@ class TestSQLNamespacePersistenceAdapter:
             )
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures("drop_tables")
     async def test_read_one_unhandled_error(
         self, namespace_sql_adapter: SQLNamespacePersistenceAdapter
     ):
@@ -312,6 +314,7 @@ class TestSQLNamespacePersistenceAdapter:
         assert result == PersistenceGetManyResult(total_count=0, objects=[])
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures("drop_tables")
     async def test_read_many_unhandled_error(
         self, namespace_sql_adapter: SQLNamespacePersistenceAdapter
     ):

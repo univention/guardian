@@ -93,7 +93,7 @@ from guardian_management_api.ports.role import (
     RolePersistencePort,
 )
 from port_loader import AsyncAdapterRegistry, AsyncAdapterSettingsProvider
-from sqlalchemy import select
+from sqlalchemy import create_engine, select, text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from starlette.testclient import TestClient
 
@@ -256,37 +256,137 @@ async def create_tables(sqlite_url, patch_env, sqlite_db_name, pytestconfig):
         raise Exception(f"Unknown dialect: '{dialect}'")
 
     engine = create_async_engine(url)
+    # Drop any existing tables first to ensure clean state, then create all tables
     async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     yield
 
-    if dialect not in [None, "sqlite"] or pytestconfig.getoption("real_db"):
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.drop_all)
+    # Clean up by dropping and recreating tables instead of deleting the file.
+    # The session-scoped client fixture creates a FastAPI app with cached SQLAlchemy
+    # engines. If we delete the SQLite file, those engines become stale and point
+    # to a non-existent file, causing subsequent tests to fail.
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
+
+
+@pytest_asyncio.fixture(scope="function")
+async def drop_tables(sqlite_url, patch_env, pytestconfig):
+    """
+    Fixture that drops all tables and does NOT recreate them.
+    Use this for tests that need to verify error handling when tables don't exist.
+    After the test, tables are recreated to allow subsequent tests to work.
+    """
+    from guardian_lib.adapter_registry import ADAPTER_REGISTRY
+
+    dialect = os.environ.get("SQL_PERSISTENCE_ADAPTER__DIALECT")
+    if dialect in [None, "sqlite"]:
+        if pytestconfig.getoption("real_db"):
+            url = f"sqlite+aiosqlite://{db_url()}"
+        else:
+            url = f"sqlite+aiosqlite://{sqlite_url}"
+    elif dialect == "postgresql":
+        url = f"postgresql+asyncpg://{db_url()}"
     else:
-        os.remove(sqlite_db_name)
+        raise Exception(f"Unknown dialect: '{dialect}'")
+
+    engine = create_async_engine(url)
+    # Drop all tables to simulate "no database tables" scenario
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+    await engine.dispose()
+    yield
+
+    # Recreate tables for subsequent tests
+    engine = create_async_engine(url)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    await engine.dispose()
+
+    # Reset any cached SQL adapter engines so they reconnect to the database
+    # with the newly recreated tables
+    for adapter in ADAPTER_REGISTRY._cached_adapters.values():
+        if hasattr(adapter, "_sql_engine") and adapter._sql_engine is not None:
+            await adapter._sql_engine.dispose()
+            adapter._sql_engine = None
+
+
+def _reset_sql_adapter_engines_sync():
+    """
+    Reset all cached SQL adapter engines synchronously.
+    This forces them to reconnect with fresh connections on next use.
+    """
+    import asyncio
+
+    from guardian_lib.adapter_registry import ADAPTER_REGISTRY
+
+    async def _dispose_engines():
+        for adapter in ADAPTER_REGISTRY._cached_adapters.values():
+            if hasattr(adapter, "_sql_engine") and adapter._sql_engine is not None:
+                await adapter._sql_engine.dispose()
+                adapter._sql_engine = None
+
+    # Run the async dispose in a new event loop if needed
+    try:
+        loop = asyncio.get_running_loop()
+        # We're in an async context, schedule it
+        loop.run_until_complete(_dispose_engines())
+    except RuntimeError:
+        # No running loop, create one
+        asyncio.run(_dispose_engines())
 
 
 @pytest.fixture
-def run_alembic_migrations(patch_env, sqlite_db_name):
-    try:
-        subprocess.check_call(
-            ["python3", "-m", "alembic", "downgrade", "base"],
-            cwd=Path(__file__).parents[1],
-        )
-    except subprocess.CalledProcessError:
-        pass  # we do not care if everything after works.
+def run_alembic_migrations(patch_env, sqlite_db_name, sqlite_url, pytestconfig):
+    # First, drop all tables to ensure clean state (handles case where create_tables
+    # fixture ran previously and created tables without alembic versioning)
+    dialect = os.environ.get("SQL_PERSISTENCE_ADAPTER__DIALECT")
+    if dialect in [None, "sqlite"]:
+        if pytestconfig.getoption("real_db"):
+            db_string = (
+                f"sqlite:///{os.environ.get('SQL_PERSISTENCE_ADAPTER__DB_NAME')}"
+            )
+        else:
+            db_string = f"sqlite://{sqlite_url}"
+    elif dialect == "postgresql":
+        db_string = f"postgresql://{db_url()}"
+    else:
+        raise Exception(f"Unknown dialect: '{dialect}'")
+
+    engine = create_engine(db_string)
+    Base.metadata.drop_all(engine)
+    # Also drop alembic_version table which is not part of Base.metadata
+    # This ensures a clean state for alembic migrations
+    with engine.begin() as conn:
+        conn.execute(text("DROP TABLE IF EXISTS alembic_version"))
+    engine.dispose()
+
+    # No need to downgrade since we dropped all tables including alembic_version
+    # Just upgrade to head from a clean state
     subprocess.check_call(
         ["python3", "-m", "alembic", "upgrade", "head"], cwd=Path(__file__).parents[1]
     )
+
+    # Reset SQL adapter engines so they reconnect with fresh schema
+    _reset_sql_adapter_engines_sync()
+
     yield
+    # Clean up by dropping all tables and recreating fresh schema via alembic.
+    # Note: We can't use alembic downgrade for SQLite as it doesn't support
+    # DROP COLUMN. Instead, drop all tables and then upgrade to get fresh state.
+    engine = create_engine(db_string)
+    Base.metadata.drop_all(engine)
+    # Also drop alembic_version table
+    with engine.begin() as conn:
+        conn.execute(text("DROP TABLE IF EXISTS alembic_version"))
+    engine.dispose()
     subprocess.check_call(
-        ["python3", "-m", "alembic", "downgrade", "base"], cwd=Path(__file__).parents[1]
+        ["python3", "-m", "alembic", "upgrade", "head"], cwd=Path(__file__).parents[1]
     )
-    try:
-        os.remove(sqlite_db_name)
-    except FileNotFoundError:
-        pass
+
+    # Reset SQL adapter engines for subsequent tests
+    _reset_sql_adapter_engines_sync()
 
 
 @pytest.fixture
@@ -783,11 +883,23 @@ def create_capability(
 
 @pytest.fixture
 def ldap_base():
-    return os.environ["LDAP_BASE"]
+    return os.environ.get("LDAP_BASE", "dc=example,dc=com")
 
 
 @pytest_asyncio.fixture(scope="function")
 async def set_up_auth(ldap_base):
+    # Skip if OAuth settings are not configured (required for GuardianAuthorizationAdapter)
+    required_settings = [
+        "OAUTH_ADAPTER__WELL_KNOWN_URL",
+        "OAUTH_ADAPTER__M2M_SECRET",
+        "GUARDIAN__MANAGEMENT__ADAPTER__AUTHORIZATION_API_URL",
+    ]
+    missing = [s for s in required_settings if not os.environ.get(s)]
+    if missing:
+        pytest.skip(
+            f"Skipping authorization test: missing environment variables: {', '.join(missing)}"
+        )
+
     _original_resource_authorization_adapter = AlwaysAuthorizedAdapter
     ADAPTER_REGISTRY.set_adapter(
         ResourceAuthorizationPort, GuardianAuthorizationAdapter

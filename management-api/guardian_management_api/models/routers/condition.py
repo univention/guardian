@@ -24,8 +24,8 @@ from guardian_management_api.models.routers.base import (
 #####
 
 
-class ConditionParameterName(ManagementObjectName):
-    pass
+# Type alias for condition parameter names (same constraints as ManagementObjectName)
+ConditionParameterName = ManagementObjectName
 
 
 class ConditionParameter(GuardianBaseModel):

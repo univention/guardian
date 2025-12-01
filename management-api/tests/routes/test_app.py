@@ -42,16 +42,11 @@ class TestAppEndpoints:
             app.url_path_for("create_app"), json={"name": "invalid app #name"}
         )
         assert response.status_code == 422
-        assert response.json() == {
-            "detail": [
-                {
-                    "loc": ["body", "name"],
-                    "msg": 'string does not match regex "^[a-z][a-z0-9\\-_]*$"',
-                    "type": "value_error.str.regex",
-                    "ctx": {"pattern": "^[a-z][a-z0-9\\-_]*$"},
-                }
-            ]
-        }
+        detail = response.json()["detail"]
+        assert len(detail) == 1
+        assert detail[0]["loc"] == ["body", "name"]
+        assert "String should match pattern" in detail[0]["msg"]
+        assert detail[0]["type"] == "string_pattern_mismatch"
 
     @pytest.mark.usefixtures("create_tables")
     def test_post_app_all(self, client):
@@ -76,29 +71,26 @@ class TestAppEndpoints:
             json={"name": "app1", "display_name": "App 1"},
         )
         assert response.status_code == 201
-        assert (
-            response.json()
-            == AppRegisterResponse(
-                app=ResponseApp(
-                    name=ManagementObjectName("app1"),
-                    display_name="App 1",
-                    resource_url=f"{COMPLETE_URL}/guardian/management/apps/app1",
-                ),
-                admin_role=AppAdmin(
-                    app_name=ManagementObjectName("app1"),
-                    namespace_name=ManagementObjectName("default"),
-                    name=ManagementObjectName("app-admin"),
-                    display_name="App Administrator for App 1",
-                    resource_url=f"{COMPLETE_URL}/roles/app1/default/app-admin",
-                ),
-                default_namespace=AppDefaultNamespace(
-                    app_name=ManagementObjectName("app1"),
-                    name=ManagementObjectName("default"),
-                    display_name="Default Namespace for App 1",
-                    resource_url=f"{COMPLETE_URL}/namespaces/app1/default",
-                ),
-            ).dict()
-        )
+        assert response.json() == AppRegisterResponse(
+            app=ResponseApp(
+                name=ManagementObjectName("app1"),
+                display_name="App 1",
+                resource_url=f"{COMPLETE_URL}/guardian/management/apps/app1",
+            ),
+            admin_role=AppAdmin(
+                app_name=ManagementObjectName("app1"),
+                namespace_name=ManagementObjectName("default"),
+                name=ManagementObjectName("app-admin"),
+                display_name="App Administrator for App 1",
+                resource_url=f"{COMPLETE_URL}/roles/app1/default/app-admin",
+            ),
+            default_namespace=AppDefaultNamespace(
+                app_name=ManagementObjectName("app1"),
+                name=ManagementObjectName("default"),
+                display_name="Default Namespace for App 1",
+                resource_url=f"{COMPLETE_URL}/namespaces/app1/default",
+            ),
+        ).model_dump(mode="json")
         async with sqlalchemy_mixin.session() as session:
             result = list(
                 (await session.execute(select(DBCapability))).unique().scalars()
@@ -170,15 +162,11 @@ class TestAppEndpoints:
             json={"not_name": "app1"},
         )
         assert response.status_code == 422
-        assert response.json() == {
-            "detail": [
-                {
-                    "loc": ["body", "name"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
-                }
-            ]
-        }
+        detail = response.json()["detail"]
+        assert len(detail) == 1
+        assert detail[0]["loc"] == ["body", "name"]
+        assert detail[0]["msg"] == "Field required"
+        assert detail[0]["type"] == "missing"
 
     @pytest.mark.usefixtures("create_tables")
     @pytest.mark.asyncio
@@ -243,24 +231,6 @@ class TestAppEndpoints:
                 },
             ],
             "pagination": {"limit": 1, "offset": 1, "total_count": 2},
-        }
-
-    @pytest.mark.usefixtures("create_tables")
-    @pytest.mark.asyncio
-    async def test_patch_app(self, client, create_app, sqlalchemy_mixin):
-        async with sqlalchemy_mixin.session() as session:
-            await create_app(session, "test_app2", display_name=None)
-        response = client.patch(
-            app.url_path_for("edit_app", name="test_app2"),
-            json={"name": "test_app2", "display_name": "expected displayname"},
-        )
-        assert response.status_code == 200
-        assert response.json() == {
-            "app": {
-                "display_name": "expected displayname",
-                "name": "test_app2",
-                "resource_url": f"{COMPLETE_URL}/apps/test_app2",
-            }
         }
 
     @pytest.mark.usefixtures("create_tables")

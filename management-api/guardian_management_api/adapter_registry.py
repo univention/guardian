@@ -10,7 +10,8 @@ from port_loader import (
     AsyncAdapterSettingsProvider,
     load_from_entry_point,
 )
-from pydantic import BaseSettings, Field
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from guardian_management_api.adapters.app import FastAPIAppAPIAdapter
 from guardian_management_api.adapters.context import FastAPIContextAPIAdapter
@@ -56,58 +57,25 @@ class AdapterSelection(BaseSettings):
     Settings class to access the adapter selection.
     """
 
-    settings_port: str = Field(
-        ..., alias="SettingsPort", env="GUARDIAN__MANAGEMENT__ADAPTER__SETTINGS_PORT"
+    model_config = SettingsConfigDict(
+        env_prefix="GUARDIAN__MANAGEMENT__ADAPTER__",
+        populate_by_name=True,
     )
-    app_persistence_port: str = Field(
-        ...,
-        alias="AppPersistencePort",
-        env="GUARDIAN__MANAGEMENT__ADAPTER__APP_PERSISTENCE_PORT",
-    )
-    condition_persistence_port: str = Field(
-        ...,
-        alias="ConditionPersistencePort",
-        env="GUARDIAN__MANAGEMENT__ADAPTER__CONDITION_PERSISTENCE_PORT",
-    )
-    context_persistence_port: str = Field(
-        ...,
-        alias="ContextPersistencePort",
-        env="GUARDIAN__MANAGEMENT__ADAPTER__CONTEXT_PERSISTENCE_PORT",
-    )
-    namespace_persistence_port: str = Field(
-        ...,
-        alias="NamespacePersistencePort",
-        env="GUARDIAN__MANAGEMENT__ADAPTER__NAMESPACE_PERSISTENCE_PORT",
-    )
-    permission_persistence_port: str = Field(
-        ...,
-        alias="PermissionPersistencePort",
-        env="GUARDIAN__MANAGEMENT__ADAPTER__PERMISSION_PERSISTENCE_PORT",
-    )
-    role_persistence_port: str = Field(
-        ...,
-        alias="RolePersistencePort",
-        env="GUARDIAN__MANAGEMENT__ADAPTER__ROLE_PERSISTENCE_PORT",
-    )
-    capability_persistence_port: str = Field(
-        ...,
-        alias="CapabilityPersistencePort",
-        env="GUARDIAN__MANAGEMENT__ADAPTER__CAPABILITY_PERSISTENCE_PORT",
-    )
-    authentication_port: str = Field(
-        ...,
-        alias="AuthenticationPort",
-        env="GUARDIAN__MANAGEMENT__ADAPTER__AUTHENTICATION_PORT",
-    )
-    resource_authorization_port: str = Field(
-        ...,
-        alias="ResourceAuthorizationPort",
-        env="GUARDIAN__MANAGEMENT__ADAPTER__RESOURCE_AUTHORIZATION_PORT",
-    )
+
+    settings_port: str = Field(..., alias="SettingsPort")
+    app_persistence_port: str = Field(..., alias="AppPersistencePort")
+    condition_persistence_port: str = Field(..., alias="ConditionPersistencePort")
+    context_persistence_port: str = Field(..., alias="ContextPersistencePort")
+    namespace_persistence_port: str = Field(..., alias="NamespacePersistencePort")
+    permission_persistence_port: str = Field(..., alias="PermissionPersistencePort")
+    role_persistence_port: str = Field(..., alias="RolePersistencePort")
+    capability_persistence_port: str = Field(..., alias="CapabilityPersistencePort")
+    authentication_port: str = Field(..., alias="AuthenticationPort")
+    resource_authorization_port: str = Field(..., alias="ResourceAuthorizationPort")
 
 
 def configure_registry(adapter_registry: AsyncAdapterRegistry):
-    selection = AdapterSelection().dict(by_alias=True)
+    selection = AdapterSelection().model_dump(by_alias=True)
     for port_cls in PORT_CLASSES:
         adapter_registry.register_port(port_cls)
         load_from_entry_point(

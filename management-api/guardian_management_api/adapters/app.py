@@ -75,7 +75,7 @@ class FastAPIAppAPIAdapter(
         self, api_request: AppEditRequest
     ) -> Tuple[AppGetQuery, dict[str, Any]]:
         query = AppGetQuery(name=api_request.name)
-        changed_data = api_request.data.dict(exclude_unset=True)
+        changed_data = api_request.data.model_dump(exclude_unset=True)
         return query, changed_data
 
     async def to_api_edit_response(self, app_result: App) -> AppSingleResponse:
