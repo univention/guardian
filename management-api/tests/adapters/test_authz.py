@@ -1,8 +1,10 @@
 import os
+from typing import cast
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 import requests
+from fastapi import HTTPException
 from guardian_lib.adapters.settings import EnvSettingsAdapter
 from guardian_lib.ports import SettingsPort
 from guardian_management_api.adapters.authz import (
@@ -410,6 +412,17 @@ class TestGuardianAuthorizationAdapter:
             str(exc.value)
             == f"Unsuccessful response from the Authorization API: {response_json or http_status_code}"
         )
+
+    @pytest.mark.parametrize(
+        "exc,expected",
+        [(AuthorizationError(), 401)],
+    )
+    @pytest.mark.asyncio
+    async def test_transform_exception(self, exc, expected, adapter):
+        result: HTTPException = cast(
+            HTTPException, await adapter.transform_exception(exc)
+        )
+        assert result.status_code == expected
 
 
 @pytest.mark.e2e
