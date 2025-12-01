@@ -65,25 +65,25 @@ const currentAdapter: Ref<TestAdapter | null> = ref(null);
 
 const switchToAuthenticatedAdapter = () => {
   currentAdapter.value = authenticatedInMemoryAdapter;
-  let queryParams = {...route.query};
+  const queryParams = {...route.query};
   queryParams.adapter = authenticatedInMemoryAdapter.name;
   router.push({name: 'testsAuthenticationAdapter', query: queryParams});
 };
 const switchToUnauthenticatedAdapter = () => {
   currentAdapter.value = unauthenticatedInMemoryAdapter;
-  let queryParams = {...route.query};
+  const queryParams = {...route.query};
   queryParams.adapter = unauthenticatedInMemoryAdapter.name;
   router.push({name: 'testsAuthenticationAdapter', query: queryParams});
 };
 const switchToKeycloakAdapter = () => {
   currentAdapter.value = keycloakAdapter;
-  let queryParams = {...route.query};
+  const queryParams = {...route.query};
   queryParams.adapter = keycloakAdapter.name;
   router.push({name: 'testsAuthenticationAdapter', query: queryParams});
 };
 const switchToConfiguredAdapter = () => {
   currentAdapter.value = configuredAdapter;
-  let queryParams = {...route.query};
+  const queryParams = {...route.query};
   queryParams.adapter = configuredAdapter.name;
   router.push({name: 'testsAuthenticationAdapter', query: queryParams});
 };
@@ -94,7 +94,7 @@ const login = async () => {
     // re-initialize when we come back
     await router.replace({query: {redirectLogin: 'true', ...route.query}});
 
-    let success = await currentAdapter.value.adapter.authenticate();
+    const success = await currentAdapter.value.adapter.authenticate();
     if (!success) {
       currentAdapter.value.token = null;
       currentAdapter.value.error = 'Unable to log in';
@@ -102,7 +102,7 @@ const login = async () => {
     }
 
     // We don't need to redirect to adapter login any more
-    let queryParams = {...route.query};
+    const queryParams = {...route.query};
     delete queryParams.redirectLogin;
     await router.replace({query: queryParams});
   }
@@ -136,7 +136,7 @@ const getAuthorizationHeader = async () => {
     }
 
     // We don't need to redirect to adapter login any more
-    let queryParams = {...route.query};
+    const queryParams = {...route.query};
     delete queryParams.redirectLogin;
     delete queryParams.getAuthorizationHeader;
     await router.replace({query: queryParams});
@@ -172,7 +172,7 @@ onMounted(async () => {
   const adapterStore = useAdapterStore(settingsStore.config);
   configuredAdapter.adapter = adapterStore.authenticationAdapter;
 
-  let startingAdapter = (() => {
+  const startingAdapter = (() => {
     switch (route.query.adapter) {
       case 'authenticatedInMemory':
         return authenticatedInMemoryAdapter;
@@ -207,7 +207,7 @@ onMounted(async () => {
     currentAdapter.value.token = await currentAdapter.value.adapter.getValidAuthorizationHeader();
 
     // We don't need to fetch the authorization header anymore
-    let queryParams = {...route.query};
+    const queryParams = {...route.query};
     delete queryParams.redirectLogin;
     delete queryParams.getAuthorizationHeader;
     await router.replace({query: queryParams});
@@ -215,7 +215,7 @@ onMounted(async () => {
     await currentAdapter.value.adapter.authenticate();
 
     // We don't need to redirect to adapter login anymore
-    let queryParams = {...route.query};
+    const queryParams = {...route.query};
     delete queryParams.redirectLogin;
     await router.replace({query: queryParams});
   }

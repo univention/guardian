@@ -826,8 +826,8 @@ const appsFilter: ComputedRef<Option[]> = computed((): Option[] => {
     });
   }
 
-  let appOptions: Option[] = [];
-  let seenValues: string[] = [];
+  const appOptions: Option[] = [];
+  const seenValues: string[] = [];
   namespaces.value.forEach(ns => {
     if (seenValues.indexOf(ns.appName) !== -1) {
       return;
@@ -884,8 +884,8 @@ const appsEditForm: ComputedRef<Option[]> = computed(() => {
     });
   }
 
-  let seenValues: string[] = [];
-  let appOptions: Option[] = [];
+  const seenValues: string[] = [];
+  const appOptions: Option[] = [];
   namespaces.value.forEach(ns => {
     if (seenValues.indexOf(ns.appName) !== -1) {
       return;
@@ -909,7 +909,7 @@ const namespacesEditForm: ComputedRef<Option[]> = computed(() => {
 
   const currentState = currentAdapter.value.state[currentAdapter.value.currentTab];
 
-  let namespaceOptions: Option[] = [];
+  const namespaceOptions: Option[] = [];
   namespaces.value.forEach(ns => {
     if (ns.appName === currentState.editForm.values.app) {
       namespaceOptions.push({
@@ -941,13 +941,13 @@ const roleEditForm: ComputedRef<Option[]> = computed(() => {
   return roleOptions;
 });
 const conditionsEditFormProps: ComputedRef<SubElementProps[]> = computed(() => {
-  let extensions: Record<string, any[]> = {};
-  let options: Option[] = [];
+  const extensions: Record<string, any[]> = {};
+  const options: Option[] = [];
   conditions.value.forEach(condition => {
     const conditionId = `${condition.appName}:${condition.namespaceName}:${condition.name}`;
 
     if (condition.parameters.length > 0) {
-      let inputs: {type: any; props: any}[] = [];
+      const inputs: {type: any; props: any}[] = [];
       condition.parameters.forEach(param => {
         inputs.push({
           type: SubElement.UInputText,
@@ -992,7 +992,7 @@ const permissionsEditFormProps: Ref<SubElementProps[]> = ref([
       name: 'permission',
       label: 'Permission',
       options: computed(() => {
-        let options: {label: string; value: string; disabled?: boolean | undefined}[] = [];
+        const options: {label: string; value: string; disabled?: boolean | undefined}[] = [];
         permissions.value.forEach(perm => {
           options.push({
             label: `${perm.displayName}`,
@@ -1110,7 +1110,7 @@ const setupFormData = async () => {
   // For namespaces only, we want to get all apps.
   // For other tabs that use namespaces, we only show apps that have namespaces.
   if (currentAdapter.value.currentTab == 'namespaces') {
-    let appData = await currentAdapter.value.adapter.fetchApps();
+    const appData = await currentAdapter.value.adapter.fetchApps();
     if (!appData.ok) {
       currentAdapter.value.state[currentAdapter.value.currentTab].error = `Fetching apps failed: ${appData.error}`;
       return;
@@ -1119,7 +1119,7 @@ const setupFormData = async () => {
   }
 
   if (currentConfig.filters.namespace.show || currentConfig.editForm?.namespace.show) {
-    let namespaceData = await currentAdapter.value.adapter.fetchNamespaces();
+    const namespaceData = await currentAdapter.value.adapter.fetchNamespaces();
     if (!namespaceData.ok) {
       currentAdapter.value.state[currentAdapter.value.currentTab].error =
         `Fetching namespaces failed: ${namespaceData.error}`;
@@ -1129,7 +1129,7 @@ const setupFormData = async () => {
   }
 
   if (currentConfig.filters.role.show) {
-    let roleData = await currentAdapter.value.adapter.fetchRoles();
+    const roleData = await currentAdapter.value.adapter.fetchRoles();
     if (!roleData.ok) {
       currentAdapter.value.state[currentAdapter.value.currentTab].error = `Fetching roles failed: ${roleData.error}`;
       return;
@@ -1138,7 +1138,7 @@ const setupFormData = async () => {
   }
 
   if (currentConfig.editForm?.conditions.show) {
-    let conditionData = await currentAdapter.value.adapter.fetchConditions();
+    const conditionData = await currentAdapter.value.adapter.fetchConditions();
     if (!conditionData.ok) {
       currentAdapter.value.state[currentAdapter.value.currentTab].error =
         `Fetching conditions failed: ${conditionData.error}`;
@@ -1184,7 +1184,7 @@ const switchEditModeToCreate = () => {
 const switchEditModeToUpdate = () => {
   const currentState = currentAdapter.value.state[currentAdapter.value.currentTab];
   if (currentState.all.length === 1) {
-    let editObj: any = currentState.all[0];
+    const editObj: any = currentState.all[0];
     currentState.editForm.values.app = editObj.attributes.appName?.value ?? '';
     currentState.editForm.values.name = editObj.attributes.name?.value ?? '';
     currentState.editForm.values.displayName = editObj.attributes.displayName?.value ?? '';
@@ -1192,13 +1192,13 @@ const switchEditModeToUpdate = () => {
     currentState.editForm.values.role = editObj.attributes.role?.value ?? '';
     currentState.editForm.values.relation = editObj.attributes.relation?.value ?? '';
 
-    let conditions: string[][] = [];
-    let conditionData: string[] = editObj.attributes.conditions?.value ?? [];
+    const conditions: string[][] = [];
+    const conditionData: string[] = editObj.attributes.conditions?.value ?? [];
     conditionData.forEach(conditionString => {
-      let condStrings: string[] = [];
-      let condition = JSON.parse(conditionString);
-      let conditionId = `${condition.appName}:${condition.namespaceName}:${condition.name}`;
-      let parameters: {name: string; value: string}[] = condition.parameters ?? [];
+      const condStrings: string[] = [];
+      const condition = JSON.parse(conditionString);
+      const conditionId = `${condition.appName}:${condition.namespaceName}:${condition.name}`;
+      const parameters: {name: string; value: string}[] = condition.parameters ?? [];
       parameters.sort((a, b) => {
         return a.name < b.name ? -1 : 1;
       });
@@ -1211,10 +1211,10 @@ const switchEditModeToUpdate = () => {
     });
     currentState.editForm.values.conditions = conditions;
 
-    let permissions: string[] = [];
-    let permissionData = editObj.attributes.permissions?.value ?? [];
+    const permissions: string[] = [];
+    const permissionData = editObj.attributes.permissions?.value ?? [];
     permissionData.forEach((permString: any) => {
-      let perm = JSON.parse(permString);
+      const perm = JSON.parse(permString);
       permissions.push(`${perm.appName}:${perm.namespaceName}:${perm.name}`);
     });
     currentState.editForm.values.permissions = permissions;
@@ -1228,14 +1228,14 @@ const switchEditModeToUpdate = () => {
 const setListDisplay = (data: any[]) => {
   const currentState = currentAdapter.value.state[currentAdapter.value.currentTab];
 
-  let rows: UGridRow[] = [];
-  let ids: string[] = [];
+  const rows: UGridRow[] = [];
+  const ids: string[] = [];
   data.forEach(obj => {
-    let id = `${obj.appName ?? ''}${obj.appName ? ':' : ''}${obj.namespaceName ?? ''}${obj.namespaceName ? ':' : ''}${
+    const id = `${obj.appName ?? ''}${obj.appName ? ':' : ''}${obj.namespaceName ?? ''}${obj.namespaceName ? ':' : ''}${
       obj.name
     }`;
-    let attributes: Record<string, Attribute> = {};
-    for (let key in obj) {
+    const attributes: Record<string, Attribute> = {};
+    for (const key in obj) {
       attributes[key] = {
         value: obj[key],
         access: 'read',
@@ -1269,14 +1269,14 @@ const formatConditions = (conditions?: DisplayCondition[]): any => {
     return [];
   }
 
-  let formattedConditions: any[] = [];
+  const formattedConditions: any[] = [];
   conditions.forEach(condition => {
     condition.parameters.sort((a, b) => {
       return a.name < b.name ? -1 : 1;
     });
 
-    let formattedCondition: any = {...condition};
-    let parameters: string[] = [];
+    const formattedCondition: any = {...condition};
+    const parameters: string[] = [];
     condition.parameters.forEach((parameter: any) => {
       parameters.push(JSON.stringify(parameter));
     });
@@ -1293,13 +1293,13 @@ const formatCapability = (capability?: DisplayCapability): any => {
     return {};
   }
 
-  let role = `${capability.role.appName}:${capability.role.namespaceName}:${capability.role.name}`;
-  let formattedCapability: any = {...capability};
-  let permissions: string[] = [];
+  const role = `${capability.role.appName}:${capability.role.namespaceName}:${capability.role.name}`;
+  const formattedCapability: any = {...capability};
+  const permissions: string[] = [];
   capability.permissions.forEach(permission => {
     permissions.push(JSON.stringify(permission));
   });
-  let conditions: string[] = [];
+  const conditions: string[] = [];
   capability.conditions.forEach(condition => {
     conditions.push(JSON.stringify(condition));
   });
@@ -1316,7 +1316,7 @@ const formatCapabilities = (capabilities?: DisplayCapability[]): any => {
     return [];
   }
 
-  let formattedCapabilities: any[] = [];
+  const formattedCapabilities: any[] = [];
   capabilities.forEach(capability => {
     formattedCapabilities.push(formatCapability(capability));
   });
@@ -1337,7 +1337,7 @@ const getMany = async () => {
     return [];
   }
 
-  let data = await (async (): Promise<any[]> => {
+  const data = await (async (): Promise<any[]> => {
     switch (currentAdapter.value.currentTab) {
       case 'apps': {
         const result = await adapter.fetchApps();
@@ -1385,9 +1385,9 @@ const getMany = async () => {
         const role = currentState.filters.role.split(':');
         const result = await adapter.fetchCapabilities(
           {
-            appName: role[0],
-            namespaceName: role[1],
-            name: role[2],
+            appName: role[0] ?? '',
+            namespaceName: role[1] ?? '',
+            name: role[2] ?? '',
           },
           currentState.filters.app,
           currentState.filters.namespace
@@ -1548,20 +1548,26 @@ const editOne = async () => {
         const outgoingConditions: any[] = [];
         const outgoingPermissions: any[] = [];
         formValues.conditions.forEach(conditionData => {
-          let conditionParts = conditionData[0].split(':');
-          let condition = conditions.value.filter(cond => {
+          const conditionId = conditionData[0];
+          if (!conditionId) return;
+          const conditionParts = conditionId.split(':');
+          const condition = conditions.value.filter(cond => {
             return (
               cond.appName === conditionParts[0] &&
               cond.namespaceName === conditionParts[1] &&
               cond.name === conditionParts[2]
             );
           })[0];
-          let parameters: any[] = [];
+          if (!condition) return;
+          const parameters: any[] = [];
           for (let i = 1; i < conditionData.length; i++) {
-            parameters.push({
-              name: condition.parameters[i - 1].name,
-              value: conditionData[i],
-            });
+            const param = condition.parameters[i - 1];
+            if (param) {
+              parameters.push({
+                name: param.name,
+                value: conditionData[i],
+              });
+            }
           }
           outgoingConditions.push({
             appName: condition.appName,
@@ -1571,11 +1577,11 @@ const editOne = async () => {
           });
         });
         formValues.permissions.forEach(permData => {
-          let permissionParts = permData.split(':');
+          const permissionParts = permData.split(':');
           outgoingPermissions.push({
-            appName: permissionParts[0],
-            namespaceName: permissionParts[1],
-            name: permissionParts[2],
+            appName: permissionParts[0] ?? '',
+            namespaceName: permissionParts[1] ?? '',
+            name: permissionParts[2] ?? '',
           });
         });
         const result = await editFunc({
@@ -1584,9 +1590,9 @@ const editOne = async () => {
           name: formValues.name,
           displayName: formValues.displayName,
           role: {
-            appName: outgoingRole[0],
-            namespaceName: outgoingRole[1],
-            name: outgoingRole[2],
+            appName: outgoingRole[0] ?? '',
+            namespaceName: outgoingRole[1] ?? '',
+            name: outgoingRole[2] ?? '',
           },
           conditions: outgoingConditions,
           relation: formValues.relation,

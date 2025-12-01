@@ -52,7 +52,10 @@ export class UrlSettingsAdapter implements SettingsPort {
     if (settingsResponse.ok) {
       const settings = (await settingsResponse.json()) as Record<string, string>;
       Object.keys(settings).forEach(key => {
-        this._settings.set(key, settings[key]);
+        const value = settings[key];
+        if (value !== undefined) {
+          this._settings.set(key, value);
+        }
       });
     } else {
       throw new Error(`SettingsPort: Unable to fetch ${this._configUrl}`);

@@ -42,20 +42,20 @@ const getCapabilityFromFormValues = (
     name: values.name as string,
     displayName: values.displayName as string,
     role: {
-      appName: roleIdSplit[0],
-      namespaceName: roleIdSplit[1],
-      name: roleIdSplit[2],
+      appName: roleIdSplit[0] ?? '',
+      namespaceName: roleIdSplit[1] ?? '',
+      name: roleIdSplit[2] ?? '',
     },
     conditions: (values.conditions as string[][]).map(condition => {
-      const conditionName = condition[0];
+      const conditionName = condition[0] ?? '';
       const conditionNameSplit = conditionName.split(':');
-      const params = conditionsExtensions[conditionName];
+      const params = conditionsExtensions[conditionName] ?? [];
       return {
-        appName: conditionNameSplit[0],
-        namespaceName: conditionNameSplit[1],
-        name: conditionNameSplit[2],
+        appName: conditionNameSplit[0] ?? '',
+        namespaceName: conditionNameSplit[1] ?? '',
+        name: conditionNameSplit[2] ?? '',
         parameters: condition.slice(1).map((val, idx) => ({
-          name: params[idx].props.name,
+          name: params[idx]?.props.name ?? '',
           value: val,
         })),
       };
@@ -306,9 +306,9 @@ export const fetchObjects = async (
     case 'capability': {
       const split = roleId.split(':');
       const role = {
-        appName: split[0],
-        namespaceName: split[1],
-        name: split[2],
+        appName: split[0] ?? '',
+        namespaceName: split[1] ?? '',
+        name: split[2] ?? '',
       };
       const result = await dataAdapter.fetchCapabilities(
         role,
@@ -357,9 +357,9 @@ export const fetchObject = async (
     case 'role': {
       const split = id.split(':');
       const role = {
-        appName: split[0],
-        namespaceName: split[1],
-        name: split[2],
+        appName: split[0] ?? '',
+        namespaceName: split[1] ?? '',
+        name: split[2] ?? '',
       };
       const result = await dataAdapter.fetchRole(role.appName, role.namespaceName, role.name);
       if (!result.ok) {
@@ -379,8 +379,8 @@ export const fetchObject = async (
     case 'namespace': {
       const split = id.split(':');
       const namespace = {
-        appName: split[0],
-        name: split[1],
+        appName: split[0] ?? '',
+        name: split[1] ?? '',
       };
       const result = await dataAdapter.fetchNamespace(namespace.appName, namespace.name);
       if (!result.ok) {
@@ -400,9 +400,9 @@ export const fetchObject = async (
     case 'context': {
       const split = id.split(':');
       const context = {
-        appName: split[0],
-        namespaceName: split[1],
-        name: split[2],
+        appName: split[0] ?? '',
+        namespaceName: split[1] ?? '',
+        name: split[2] ?? '',
       };
       const result = await dataAdapter.fetchContext(context.appName, context.namespaceName, context.name);
       if (!result.ok) {
@@ -422,9 +422,9 @@ export const fetchObject = async (
     case 'capability': {
       const split = id.split(':');
       const capability = {
-        appName: split[0],
-        namespaceName: split[1],
-        name: split[2],
+        appName: split[0] ?? '',
+        namespaceName: split[1] ?? '',
+        name: split[2] ?? '',
       };
       const result = await dataAdapter.fetchCapability(capability.appName, capability.namespaceName, capability.name);
       if (!result.ok) {
@@ -580,9 +580,9 @@ export const deleteCapabilities = async (ids: string[]): Promise<{id: string; er
     ids.map(id => {
       const split = id.split(':');
       const capability = {
-        appName: split[0],
-        namespaceName: split[1],
-        name: split[2],
+        appName: split[0] ?? '',
+        namespaceName: split[1] ?? '',
+        name: split[2] ?? '',
       };
       return dataAdapter.removeCapability(capability.appName, capability.namespaceName, capability.name);
     })
@@ -591,9 +591,10 @@ export const deleteCapabilities = async (ids: string[]): Promise<{id: string; er
   const fails: {id: string; error: string}[] = [];
   for (let x = 0; x < data.length; x++) {
     const error = errors[x];
-    if (error) {
+    const id = ids[x];
+    if (error && id) {
       fails.push({
-        id: ids[x],
+        id,
         error,
       });
     }

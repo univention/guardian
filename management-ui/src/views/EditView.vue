@@ -399,7 +399,7 @@ const validate = (resetCustomErrorMessage = true): boolean => {
   }
   if (firstInvalid !== null) {
     router.push({
-      ...route,
+      name: route.name ?? undefined,
       params: {
         ...route.params,
         page: firstInvalidPage,
@@ -520,7 +520,7 @@ const add = async (): Promise<void> => {
 const heading = computed(() => {
   function lastIdPart(id: string): string {
     const split = id.split(':');
-    return split[split.length - 1];
+    return split[split.length - 1] ?? '';
   }
   if (props.objectType === 'capability') {
     if (props.action === 'edit') {
@@ -788,7 +788,7 @@ const hideRoleEdit = computed(() => {
         <component :is="Component" />
       </KeepAlive>
     </RouterView>
-    <UStandbyFullScreen :active="standby.active" />
+    <UStandbyFullScreen :active="standby.active as unknown as boolean" />
   </div>
 </template>
 
