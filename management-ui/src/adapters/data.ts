@@ -95,7 +95,7 @@ const getError = async (response: Response): Promise<{detail: unknown} | null> =
       if (json && typeof json === 'object' && 'detail' in json) {
         detail = json;
       }
-    } catch (err) {
+    } catch (_err) {
       // Either not a JSON response, or unparsable. We'll just ignore this.
     }
     return detail;
@@ -1753,7 +1753,7 @@ export class ApiDataAdapter extends GenericDataAdapter {
       } else {
         try {
           errorMessage = JSON.stringify(err);
-        } catch (err) {
+        } catch (_err) {
           // ignore
         }
       }

@@ -384,7 +384,7 @@ const globalActions = computed(() => {
 const heading = computed(() => {
   function lastIdPart(id: string): string {
     const split = id.split(':');
-    return split[split.length - 1];
+    return split[split.length - 1] ?? '';
   }
   if (props.objectType === 'capability') {
     return `${t(`EditView.heading.edit.role`)} > ${lastIdPart(route.params['id'] as string)} > ${t(
@@ -595,7 +595,7 @@ const heading = computed(() => {
       </template>
     </UConfirmDialog>
   </main>
-  <UStandbyFullScreen :active="standby.active" />
+  <UStandbyFullScreen :active="standby.active as unknown as boolean" />
 </template>
 
 <style lang="stylus">

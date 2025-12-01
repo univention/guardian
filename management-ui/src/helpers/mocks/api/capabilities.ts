@@ -32,6 +32,7 @@ export const makeMockCapabilities = (): CapabilityResponseData[] => {
       const conditions: CapabilityConditionResponseData[] = [];
       for (let y = 1; y < x; y++) {
         const condition = mockConditions[Math.floor(Math.random() * mockConditions.length)];
+        if (!condition) continue;
         const parameters: CapabilityParameterResponseData[] = [];
         condition.parameters.forEach(param => {
           parameters.push({
