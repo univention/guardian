@@ -110,7 +110,10 @@ class FastAPIOAuth2(
                 leeway=1,
                 options={"require": ["exp", "iss", "aud", "sub", "iat", "jti"]},
             )
-        except jwt.exceptions.InvalidTokenError as exc:
+        except (
+            jwt.exceptions.InvalidTokenError,
+            jwt.exceptions.ExpiredSignatureError,
+        ) as exc:
             self.logger.warning(f'Invalid Token: "{exc}"', token=token)
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
