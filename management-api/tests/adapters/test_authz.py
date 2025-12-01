@@ -363,7 +363,15 @@ class TestGuardianAuthorizationAdapter:
         ) == {"app:namespace:resource": True}
 
     @pytest.mark.asyncio
-    async def test_authorize_operation_exception(self):
+    @pytest.mark.parametrize(
+        "http_status_code, response_json",
+        [
+            (400, {"detail": "message"}),
+            (502, None),
+            (666, None),
+        ],
+    )
+    async def test_authorize_operation_exception(self, http_status_code, response_json):
         adapter = GuardianAuthorizationAdapter()
         adapter.oauth_settings = {
             "mtls_endpoint_aliases": {
@@ -388,10 +396,8 @@ class TestGuardianAuthorizationAdapter:
                     fetch_token=AsyncMock(return_value="token"),
                     post=AsyncMock(
                         return_value=Response(
-                            400,
-                            json={
-                                "detail": "message",
-                            },
+                            http_status_code,
+                            json=response_json,
                             request=Request(
                                 "GET", "https://guardian-authz-api/api/v1/authorize"
                             ),
@@ -402,7 +408,7 @@ class TestGuardianAuthorizationAdapter:
 
         assert (
             str(exc.value)
-            == "Unsuccessful response from the Authorization API: {'detail': 'message'}"
+            == f"Unsuccessful response from the Authorization API: {response_json or http_status_code}"
         )
 
 
