@@ -1,10 +1,10 @@
-# Copyright (C) 2023 Univention GmbH
+# Copyright (C) 2023-2025 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
 [tool.poetry]
 name = "guardian-lib"
-version = "1.7.0"
+version = "1.8.0"
 description = ""
 authors = ["UCS School Maintainers <ucsschool-maintainers@univention.de>"]
 readme = "README.md"
@@ -12,20 +12,21 @@ packages = [{include = "guardian_lib"}, {include = "guardian_pytest"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-loguru = "^0.7.0"
+loguru = "^0.7.3"
 port-loader = "1.2.0"
-lazy-object-proxy = "^1.9.0"
-pydantic = "^1.8.2"
+lazy-object-proxy = "^1.12.0"
+pydantic = "^2.12.5"
+pydantic-settings = "^2.12.0"
 fastapi = "<0.200"
-pyjwt = "^2.8.0"
-requests = "^2.31.0"
+pyjwt = "^2.10.1"
+requests = "^2.32.5"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "<8"
-pytest-asyncio = "<0.25"
-pytest-mock = "^3.11.1"
-pytest-cov = "^4.1.0"
-cryptography = "^41.0.3"
+pytest = "^9.0.1"
+pytest-asyncio = "^1.3.0"
+pytest-mock = "^3.15.1"
+pytest-cov = "^7.0.0"
+cryptography = "^46.0.3"
 
 [[tool.poetry.source]]
 name = "guardian"
