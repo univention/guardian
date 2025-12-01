@@ -2,48 +2,33 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-from typing import Any, Optional
+from typing import Annotated, Any, Optional
 
-from pydantic import BaseModel, ConstrainedStr, Field
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 
 class GuardianBaseModel(BaseModel):
-    class Config:
-        allow_population_by_field_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
-class AuthzObjectIdentifier(ConstrainedStr):
-    """Identifies an object in an authz check"""
-
-    __root__: str = Field(example="6f8be20a-d463-454d-8ccf-bf6227437473", min_length=3)
+AuthzObjectIdentifier = Annotated[str, StringConstraints(min_length=3)]
 
 
-class AppName(ConstrainedStr):
-    """Name of an application"""
-
-    __root__: str = Field(
-        example="ucsschool-kelvin-rest-api", regex=r"^[a-z][a-z0-9\-]*$", min_length=3
-    )
+AppName = Annotated[str, StringConstraints(pattern=r"^[a-z][a-z0-9\-]*$", min_length=3)]
 
 
-class NamespaceName(ConstrainedStr):
-    """Name of a namespace"""
-
-    __root__: str = Field(
-        example="kelvin-rest-api", regex=r"^[a-z][a-z0-9\-]*$", min_length=3
-    )
+NamespaceName = Annotated[
+    str, StringConstraints(pattern=r"^[a-z][a-z0-9\-]*$", min_length=3)
+]
 
 
-class ContextName(ConstrainedStr):
-    __root__: str = Field(example="school_a", min_length=3)
+ContextName = Annotated[str, StringConstraints(min_length=3)]
 
 
-class ContextDisplayName(ConstrainedStr):
-    __root__: str = Field(example="School A", min_length=3)
+ContextDisplayName = Annotated[str, StringConstraints(min_length=3)]
 
 
-class PermissionName(ConstrainedStr):
-    __root__: str = Field(example="reset_password", min_length=3)
+PermissionName = Annotated[str, StringConstraints(min_length=3)]
 
 
 class NamespaceMinimal(GuardianBaseModel):
@@ -63,7 +48,7 @@ class Role(GuardianBaseModel):
     app_name: AppName
     namespace_name: NamespaceName
     name: AuthzObjectIdentifier
-    context: Optional[Context]
+    context: Optional[Context] = None
 
 
 class AuthzObject(GuardianBaseModel):
@@ -110,8 +95,8 @@ class TargetLookup(GuardianBaseModel):
 class AuthzPermissionsPostRequest(GuardianBaseModel):
     namespaces: Optional[list[NamespaceMinimal]] = Field(default=None)
     actor: Actor
-    targets: Optional[list[Target]]
-    contexts: Optional[list[Context]]
+    targets: Optional[list[Target]] = None
+    contexts: Optional[list[Context]] = None
     include_general_permissions: bool = False
     extra_request_data: dict[str, Any]
 
@@ -119,8 +104,8 @@ class AuthzPermissionsPostRequest(GuardianBaseModel):
 class AuthzPermissionsLookupPostRequest(GuardianBaseModel):
     namespaces: Optional[list[NamespaceMinimal]] = Field(default=None)
     actor: ActorLookup
-    targets: Optional[list[Target | TargetLookup]]
-    contexts: Optional[list[Context]]
+    targets: Optional[list[Target | TargetLookup]] = None
+    contexts: Optional[list[Context]] = None
     include_general_permissions: bool = False
     extra_request_data: dict[str, Any]
 
@@ -128,8 +113,8 @@ class AuthzPermissionsLookupPostRequest(GuardianBaseModel):
 class AuthzPermissionsCheckPostRequest(GuardianBaseModel):
     namespaces: Optional[list[NamespaceMinimal]] = Field(default=None)
     actor: Actor
-    targets: Optional[list[Target]]
-    contexts: Optional[list[Context]]
+    targets: Optional[list[Target]] = None
+    contexts: Optional[list[Context]] = None
     targeted_permissions_to_check: list[Permission]
     general_permissions_to_check: list[Permission]
     extra_request_data: dict[str, Any]
@@ -138,8 +123,8 @@ class AuthzPermissionsCheckPostRequest(GuardianBaseModel):
 class AuthzPermissionsCheckLookupPostRequest(GuardianBaseModel):
     namespaces: Optional[list[NamespaceMinimal]] = Field(default=None)
     actor: ActorLookup
-    targets: Optional[list[Target | TargetLookup]]
-    contexts: Optional[list[Context]]
+    targets: Optional[list[Target | TargetLookup]] = None
+    contexts: Optional[list[Context]] = None
     targeted_permissions_to_check: list[Permission]
     general_permissions_to_check: list[Permission]
     extra_request_data: dict[str, Any]

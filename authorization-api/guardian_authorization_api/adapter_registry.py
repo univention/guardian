@@ -10,7 +10,8 @@ from port_loader import (
     AsyncAdapterSettingsProvider,
     load_from_entry_point,
 )
-from pydantic import BaseSettings, Field
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from guardian_authorization_api.adapters.api import (
     FastAPICheckPermissionsAPIAdapter,
@@ -31,28 +32,19 @@ class AdapterSelection(BaseSettings):
     Settings class to access the adapter selection.
     """
 
-    settings_port: str = Field(
-        ..., alias="SettingsPort", env="GUARDIAN__AUTHZ__ADAPTER__SETTINGS_PORT"
+    model_config = SettingsConfigDict(
+        env_prefix="GUARDIAN__AUTHZ__ADAPTER__",
+        populate_by_name=True,
     )
-    persistence_port: str = Field(
-        ...,
-        alias="PersistencePort",
-        env="GUARDIAN__AUTHZ__ADAPTER__PERSISTENCE_PORT",
-    )
-    policy_port: str = Field(
-        ...,
-        alias="PolicyPort",
-        env="GUARDIAN__AUTHZ__ADAPTER__POLICY_PORT",
-    )
-    authentication_port: str = Field(
-        ...,
-        alias="AuthenticationPort",
-        env="GUARDIAN__AUTHZ__ADAPTER__AUTHENTICATION_PORT",
-    )
+
+    settings_port: str = Field(..., alias="SettingsPort")
+    persistence_port: str = Field(..., alias="PersistencePort")
+    policy_port: str = Field(..., alias="PolicyPort")
+    authentication_port: str = Field(..., alias="AuthenticationPort")
 
 
 def configure_registry(adapter_registry: AsyncAdapterRegistry):
-    selection = AdapterSelection().dict(by_alias=True)
+    selection = AdapterSelection().model_dump(by_alias=True)
     for port_cls in PORT_CLASSES:
         adapter_registry.register_port(port_cls)
         load_from_entry_point(

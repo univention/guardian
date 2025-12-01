@@ -57,7 +57,7 @@ def patch_env():
 
 @pytest.fixture
 def ldap_base():
-    return os.environ["LDAP_BASE"]
+    return os.environ.get("LDAP_BASE", "dc=example,dc=com")
 
 
 @pytest_asyncio.fixture(scope="session")
@@ -162,27 +162,32 @@ def get_policy_object() -> Callable:
     return _get_policy_object
 
 
+def _generate_valid_name() -> str:
+    """Generate a name that matches the pattern ^[a-z][a-z0-9\\-]*$ with min 3 chars."""
+    return fake.pystr(min_chars=3, max_chars=15).lower()
+
+
 def get_authz_permission_dict() -> dict:
     return {
-        "app_name": fake.pystr(),
-        "namespace_name": fake.pystr(),
-        "name": fake.pystr(),
+        "app_name": _generate_valid_name(),
+        "namespace_name": _generate_valid_name(),
+        "name": _generate_valid_name(),
     }
 
 
 def get_authz_context_dict() -> dict:
     return {
-        "app_name": fake.pystr(),
-        "namespace_name": fake.pystr(),
-        "name": fake.pystr(),
+        "app_name": _generate_valid_name(),
+        "namespace_name": _generate_valid_name(),
+        "name": _generate_valid_name(),
     }
 
 
 def get_authz_roles_dict() -> dict:
     return {
-        "app_name": fake.pystr(),
-        "namespace_name": fake.pystr(),
-        "name": fake.pystr(),
+        "app_name": _generate_valid_name(),
+        "namespace_name": _generate_valid_name(),
+        "name": _generate_valid_name(),
     }
 
 
@@ -208,7 +213,7 @@ def get_target_dict(id=None) -> dict:
 
 
 def get_namespace_dict() -> dict:
-    return {"app_name": fake.pystr(), "name": fake.pystr()}
+    return {"app_name": _generate_valid_name(), "name": _generate_valid_name()}
 
 
 def get_authz_permissions_check_request_dict(
