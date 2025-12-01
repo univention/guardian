@@ -415,10 +415,11 @@ class TestGuardianAuthorizationAdapter:
 
     @pytest.mark.parametrize(
         "exc,expected",
-        [(AuthorizationError(), 401)],
+        [(AuthorizationError(), 401), (HTTPException(status_code=401), 401)],
     )
     @pytest.mark.asyncio
-    async def test_transform_exception(self, exc, expected, adapter):
+    async def test_transform_exception(self, exc, expected):
+        adapter = GuardianAuthorizationAdapter()
         result: HTTPException = cast(
             HTTPException, await adapter.transform_exception(exc)
         )

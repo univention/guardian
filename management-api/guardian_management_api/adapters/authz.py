@@ -9,6 +9,7 @@ from guardian_lib.adapters.authentication import get_oauth_settings
 from port_loader import AsyncConfiguredAdapterMixin
 from port_loader.models import SETTINGS_NAME_METADATA
 
+from guardian_management_api.adapters.fastapi_utils import TransformExceptionMixin
 from guardian_management_api.errors import AuthorizationError
 from guardian_management_api.models.authz import (
     Actor,
@@ -83,7 +84,9 @@ class GuardianAuthorizationAdapterSettings:
 
 
 class GuardianAuthorizationAdapter(
-    ResourceAuthorizationPort, AsyncConfiguredAdapterMixin
+    ResourceAuthorizationPort,
+    AsyncConfiguredAdapterMixin,
+    TransformExceptionMixin,
 ):
     class Config:
         alias = "guardian"

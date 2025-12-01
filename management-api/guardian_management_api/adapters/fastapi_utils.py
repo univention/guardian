@@ -49,6 +49,8 @@ class TransformExceptionMixin(ABC):
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail={"message": str(exc)},
             )
+        if isinstance(exc, HTTPException):
+            return exc
         return HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={"message": "Internal Server Error"},
