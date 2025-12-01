@@ -55,7 +55,7 @@ class TestSetup:
                 )
             )
             assert len(cors_middleware) == 1
-            assert cors_middleware[0].options["allow_origins"] == ["*"]
+            assert cors_middleware[0].kwargs["allow_origins"] == ["*"]
 
     @patch(
         "guardian_management_api.main.ADAPTER_REGISTRY",
@@ -74,7 +74,7 @@ class TestSetup:
                 )
             )
             assert len(cors_middleware) == 1
-            assert cors_middleware[0].options["allow_origins"] == [
+            assert cors_middleware[0].kwargs["allow_origins"] == [
                 "http://localhost",
                 "http://univention.de",
             ]

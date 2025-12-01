@@ -49,7 +49,7 @@ async def get_namespace(
         authz_port=authz_port,
         request=request,
     )
-    return response.dict()
+    return response.model_dump()
 
 
 @router.get("/namespaces", response_model=NamespaceMultipleResponse)
@@ -78,7 +78,7 @@ async def get_all_namespaces(
         authz_port=authz_port,
         request=request,
     )
-    return response.dict()
+    return response.model_dump()
 
 
 @router.get("/namespaces/{app_name}", response_model=NamespaceMultipleResponse)
@@ -107,7 +107,7 @@ async def get_namespaces_by_app(
         authz_port=authz_port,
         request=request,
     )
-    return response.dict()
+    return response.model_dump()
 
 
 @router.post(
@@ -138,7 +138,7 @@ async def create_namespace(
         authz_port=authz_port,
         request=request,
     )
-    return response.dict()
+    return response.model_dump()
 
 
 @router.patch(
@@ -171,4 +171,4 @@ async def edit_namespace(
         authz_port=authz_port,
         request=request,
     )
-    return response.dict()
+    return response.model_dump()

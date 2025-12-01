@@ -438,8 +438,7 @@ class TestRoleEndpoints:
                 "namespace_name": namespace_names[0],
                 "display_name": role_names[0] + "_display_name",
                 "resource_url": (
-                    f"{COMPLETE_URL}/roles/{app_names[0]}"
-                    f"/{namespace_names[0]}/{role_names[0]}"
+                    f"{COMPLETE_URL}/roles/{app_names[0]}/{namespace_names[0]}/{role_names[0]}"
                 ),
             },
             {
@@ -448,8 +447,7 @@ class TestRoleEndpoints:
                 "namespace_name": namespace_names[1],
                 "display_name": role_names[1] + "_display_name",
                 "resource_url": (
-                    f"{COMPLETE_URL}/roles/{app_names[1]}"
-                    f"/{namespace_names[1]}/{role_names[1]}"
+                    f"{COMPLETE_URL}/roles/{app_names[1]}/{namespace_names[1]}/{role_names[1]}"
                 ),
             },
         ]
@@ -464,7 +462,7 @@ class TestRoleEndpoints:
             assert json_response["roles"][i] == scoped_roles[i]
 
     @pytest.mark.asyncio
-    # @pytest.mark.usefixtures("create_tables")
+    @pytest.mark.usefixtures("drop_tables")
     async def test_get_roles_500(self, client):
         response = client.get(client.app.url_path_for("get_all_roles"))
         assert response.status_code == 500

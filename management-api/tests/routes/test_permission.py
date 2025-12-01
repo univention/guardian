@@ -125,6 +125,7 @@ class TestPermissionEndpoints:
             }
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures("drop_tables")
     async def test_get_permissions_error(self, client):
         response = client.get(client.app.url_path_for("get_all_permissions"))
         assert response.status_code == 500
@@ -241,6 +242,7 @@ class TestPermissionEndpoints:
             assert result_data["permission"][key] == value, result_data
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures("drop_tables")
     async def test_edit_permission_error(self, client):
         new_values = {"display_name": "NEW DISPLAY NAME"}
         result = client.patch(

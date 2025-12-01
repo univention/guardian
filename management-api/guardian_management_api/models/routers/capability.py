@@ -5,7 +5,7 @@
 from enum import StrEnum
 from typing import Any, Optional
 
-from pydantic import Field, root_validator
+from pydantic import Field, model_validator
 
 from guardian_management_api.models.condition import ConditionParameterType
 from guardian_management_api.models.routers.base import (
@@ -119,17 +119,19 @@ class CapabilityEditData(GuardianBaseModel, DisplayNameObjectMixin):
 class CapabilityCreateRequest(CreateBaseRequest):
     data: CapabilityCreateData
 
-    _check_permissions_in_namespace = root_validator(allow_reuse=True, pre=True)(
-        check_permissions_in_namespace
-    )
+    @model_validator(mode="before")
+    @classmethod
+    def _check_permissions_in_namespace(cls, values: dict[str, Any]) -> dict[str, Any]:
+        return check_permissions_in_namespace(cls, values)
 
 
 class CapabilityEditRequest(EditBaseRequest):
     data: CapabilityEditData
 
-    _check_permissions_in_namespace = root_validator(allow_reuse=True, pre=True)(
-        check_permissions_in_namespace
-    )
+    @model_validator(mode="before")
+    @classmethod
+    def _check_permissions_in_namespace(cls, values: dict[str, Any]) -> dict[str, Any]:
+        return check_permissions_in_namespace(cls, values)
 
 
 class CapabilitiesGetByRoleRequest(

@@ -86,7 +86,7 @@ class FastAPIContextAPIAdapter(
             namespace_name=api_request.namespace_name,
             app_name=api_request.app_name,
         )
-        changed_data = api_request.data.dict(exclude_unset=True)
+        changed_data = api_request.data.model_dump(exclude_unset=True)
         return query, changed_data
 
     async def to_contexts_get(

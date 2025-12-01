@@ -320,6 +320,7 @@ class TestSQLContextPersistenceAdapter:
             )
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures("drop_tables")
     async def test_create_unhandled_error(
         self, context_sql_adapter: SQLContextPersistenceAdapter
     ):
@@ -366,6 +367,7 @@ class TestSQLContextPersistenceAdapter:
             )
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures("drop_tables")
     async def test_read_one_unhandled_error(
         self, context_sql_adapter: SQLContextPersistenceAdapter
     ):
@@ -385,6 +387,7 @@ class TestSQLContextPersistenceAdapter:
         assert result == PersistenceGetManyResult(total_count=0, objects=[])
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures("drop_tables")
     async def test_read_many_unhandled_error(
         self, context_sql_adapter: SQLContextPersistenceAdapter
     ):

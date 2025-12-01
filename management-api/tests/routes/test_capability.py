@@ -123,6 +123,7 @@ class TestCapabilityEndpoints:
         assert capabilities == []
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures("drop_tables")
     async def test_get_capabilities_error(self, client):
         response = client.get(client.app.url_path_for("get_all_capabilities"))
         assert response.status_code == 500

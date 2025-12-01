@@ -3,28 +3,28 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 import base64
 import binascii
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import Path, Query
-from pydantic import AnyHttpUrl, BaseModel, ConstrainedStr, Field, validator
+from pydantic import AnyHttpUrl, BaseModel, ConfigDict, Field, StringConstraints
+from pydantic.functional_validators import field_validator
 
 from guardian_management_api.constants import STRING_MAX_LENGTH
 
 
 class GuardianBaseModel(BaseModel):
-    class Config:
-        allow_population_by_field_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 MANAGEMENT_OBJECT_NAME_REGEX = r"^[a-z][a-z0-9\-_]*$"
 
 
-class ManagementObjectName(ConstrainedStr):
-    """Name of an object"""
-
-    regex = MANAGEMENT_OBJECT_NAME_REGEX
-    min_length = 1
-    max_length = STRING_MAX_LENGTH
+ManagementObjectName = Annotated[
+    str,
+    StringConstraints(
+        pattern=MANAGEMENT_OBJECT_NAME_REGEX, min_length=1, max_length=STRING_MAX_LENGTH
+    ),
+]
 
 
 class PaginationInfo(GuardianBaseModel):
@@ -54,7 +54,8 @@ class RawCodeObjectMixin(BaseModel):
         None, description="Raw code, as a base64 encoded string."
     )
 
-    @validator("code")
+    @field_validator("code")
+    @classmethod
     def ensure_code_base64(cls, value: Optional[bytes]) -> Optional[bytes]:
         if value is not None:
             try:

@@ -144,6 +144,7 @@ class TestConditionEndpoints:
             }
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures("drop_tables")
     async def test_get_conditions_error(self, client):
         response = client.get(client.app.url_path_for("get_all_conditions"))
         assert response.status_code == 500
@@ -184,6 +185,10 @@ class TestConditionEndpoints:
         assert result.status_code == 201, result.json()
         expected_result = asdict(condition_to_create)
         del expected_result["code"]
+        # Parameters are Pydantic models, not dataclasses, so asdict doesn't convert them
+        expected_result["parameters"] = [
+            p.model_dump(mode="json") for p in condition_to_create.parameters
+        ]
         expected_result["resource_url"] = (
             f"{COMPLETE_URL}/conditions/{condition_to_create.app_name}/"
             f"{condition_to_create.namespace_name}/{condition_to_create.name}"
@@ -287,6 +292,7 @@ class TestConditionEndpoints:
             assert result_data["condition"][key] == value, result_data
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures("drop_tables")
     async def test_edit_condition_error(self, client):
         new_values = {"documentation": "NEW DOC", "display_name": "NEW DISPLAY NAME"}
         result = client.patch(

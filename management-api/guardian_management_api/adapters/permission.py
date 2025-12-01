@@ -104,7 +104,7 @@ class FastAPIPermissionAPIAdapter(
             namespace_name=api_request.namespace_name,
             name=api_request.name,
         )
-        changed_data = api_request.data.dict(exclude_unset=True)
+        changed_data = api_request.data.model_dump(exclude_unset=True)
         return query, changed_data
 
     async def to_api_get_single_response(

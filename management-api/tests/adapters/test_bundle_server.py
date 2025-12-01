@@ -408,7 +408,7 @@ class TestBundleServerAdapter:
     async def test__generate_mapping_error(
         self, adapter: BundleServerAdapter, mocker, tmpdir
     ):
-        cap_persistence_mock = mocker.AsyncMock
+        cap_persistence_mock = mocker.AsyncMock()
         cap_persistence_mock.read_many = mocker.AsyncMock(side_effect=RuntimeError)
         with pytest.raises(
             BundleGenerationIOError,
