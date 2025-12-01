@@ -6,6 +6,7 @@ from pydantic import ValidationError
 from starlette import status
 
 from guardian_management_api.errors import (
+    AuthorizationError,
     ObjectExistsError,
     ObjectNotFoundError,
     ParentNotFoundError,
@@ -25,8 +26,13 @@ class TransformExceptionMixin(ABC):
             )
         if isinstance(exc, ObjectExistsError):
             return HTTPException(
-                status_code=400,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail={"message": str(exc)},
+            )
+        if isinstance(exc, AuthorizationError):
+            return HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail={"message": "Not authorized."},
             )
         if isinstance(exc, UnauthorizedError):
             return HTTPException(
@@ -35,7 +41,7 @@ class TransformExceptionMixin(ABC):
             )
         if isinstance(exc, ValidationError):  # pragma: no cover
             return HTTPException(
-                status_code=422,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail={"message": str(exc)},
             )
         if isinstance(exc, ParentNotFoundError):
