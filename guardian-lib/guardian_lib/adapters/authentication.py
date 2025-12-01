@@ -8,7 +8,6 @@ import jwt
 import requests
 from fastapi import HTTPException, status
 from fastapi.security import OAuth2AuthorizationCodeBearer
-from guardian_management_api.errors import AuthorizationError
 from port_loader import AsyncConfiguredAdapterMixin
 from starlette.requests import Request
 
@@ -113,10 +112,16 @@ class FastAPIOAuth2(
             )
         except jwt.exceptions.InvalidTokenError as exc:
             self.logger.warning(f'Invalid Token: "{exc}"', token=token)
-            raise AuthorizationError()
-        except jwt.exceptions.ExpiredSignatureError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid Token",
+            )
+        except jwt.exceptions.ExpiredSignatureError as exc:  # pragma: no cover
             self.logger.warning(f'Expired Signature: "{exc}"', token=token)
-            raise AuthorizationError()
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Expired Signature",
+            )
 
         return decoded_token
 
