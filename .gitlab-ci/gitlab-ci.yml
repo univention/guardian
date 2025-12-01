@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Univention GmbH
+# Copyright (C) 2023-2025 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
@@ -67,7 +67,7 @@ include:
 
 variables:
   APPCENTER_CONTROL_IMAGE: "docker-registry.knut.univention.de/knut/univention-appcenter-control"
-  POETRY_VERSION: "1.5.1"
+  POETRY_VERSION: "2.2.1"
   UCS_VERSION: "505"
   UCS_RELEASE: "5.0"
   DEB_IMAGE: docker-registry.knut.univention.de/phahn/ucs-debbase:$UCS_VERSION

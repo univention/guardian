@@ -1,11 +1,11 @@
-# Copyright (C) 2023 Univention GmbH
+# Copyright (C) 2023-2025 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-ARG POETRY_VERSION="1.5.1"
+ARG POETRY_VERSION="2.2.1"
 
 # Calculate Python dependencies
-FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base-flex:5.2.2 AS requirements_builder
+FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base-flex:5.2.3 AS requirements_builder
 
 ARG POETRY_VERSION
 
@@ -15,12 +15,12 @@ RUN apt-get update \
     python3-pip \
     && rm -fr /var/lib/apt/lists/* /var/cache/apt/archives/* \
 RUN rm -fv /usr/lib/python*/EXTERNALLY-MANAGED
-RUN pip install poetry==${POETRY_VERSION}
+RUN pip install poetry==${POETRY_VERSION} poetry-plugin-export==1.9.0
 COPY pyproject.toml poetry.lock ./
-RUN poetry export -f requirements.txt --output requirements.txt --dev --without-hashes
+RUN poetry export -f requirements.txt --output requirements.txt --with dev --without-hashes
 
 # Live edit version for development
-FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base-521:latest AS dev
+FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base:5.2.3-build.20251128 AS dev
 ARG POETRY_VERSION
 
 EXPOSE 8000
@@ -34,14 +34,14 @@ RUN apt-get update \
     && rm -fr /var/lib/apt/lists/* /var/cache/apt/archives/* \
 RUN rm -fv /usr/lib/python*/EXTERNALLY-MANAGED
 
-RUN pip install --no-cache-dir -U pip wheel && pip install --no-cache-dir poetry==${POETRY_VERSION} && poetry config virtualenvs.create false
+RUN pip install --no-cache-dir -U pip wheel && pip install --no-cache-dir poetry==${POETRY_VERSION} poetry-plugin-export==1.9.0 && poetry config virtualenvs.create false
 COPY authorization-api authorization-api
 COPY guardian-lib guardian-lib
 RUN cd authorization-api && poetry install
 RUN cd guardian-lib && poetry install
 
 
-FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base-521:latest
+FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base:5.2.3-build.20251128
 
 EXPOSE 8000
 
