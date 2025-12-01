@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from json.decoder import JSONDecodeError
 from typing import Any, Type
 
 import httpx
@@ -126,45 +127,55 @@ class GuardianAuthorizationAdapter(
         )
 
         # query the Guardian Authorization API with httpx and m2m credentials
-        response = await client.post(
-            f"{self._settings.authorization_api_url}/permissions/check/with-lookup",
-            json={
-                "actor": {"id": actor.id},
-                "targets": [
-                    {
-                        "old_target": {
-                            "id": resource.id,
-                            "roles": [],
-                            "attributes": _get_resource_target(resource),
-                        },
-                        "new_target": {
-                            "id": resource.id,
-                            "roles": [],
-                            "attributes": {},
-                        },
-                    }
-                    for resource in resources
-                ],
-                "targeted_permissions_to_check": [
-                    {
-                        "app_name": "guardian",
-                        "namespace_name": "management-api",
-                        "name": operation_type.value,
-                    }
-                ],
-                "general_permissions_to_check": [],
-                "extra_request_data": {},
-            },
-            timeout=60,
-        )
-        # check the response status code and raise a custom exception if needed
-        try:
-            response.raise_for_status()
-        except httpx.HTTPStatusError:
-            msg = response.json() if hasattr(response, "json") else response.status_code
-            raise AuthorizationError(
-                f"Unsuccessful response from the Authorization API: {msg}"
-            )
+        url = f"{self._settings.authorization_api_url}/permissions/check/with-lookup"
+        data = {
+            "actor": {"id": actor.id},
+            "targets": [
+                {
+                    "old_target": {
+                        "id": resource.id,
+                        "roles": [],
+                        "attributes": _get_resource_target(resource),
+                    },
+                    "new_target": {
+                        "id": resource.id,
+                        "roles": [],
+                        "attributes": {},
+                    },
+                }
+                for resource in resources
+            ],
+            "targeted_permissions_to_check": [
+                {
+                    "app_name": "guardian",
+                    "namespace_name": "management-api",
+                    "name": operation_type.value,
+                }
+            ],
+            "general_permissions_to_check": [],
+            "extra_request_data": {},
+        }
+        max_retries = 3
+        for i in range(1, max_retries + 1):
+            response = await client.post(url, json=data, timeout=60)
+            # check the response status code and raise a custom exception if needed
+            try:
+                response.raise_for_status()
+            except httpx.HTTPStatusError:
+                if response.status_code == 502:
+                    if i == max_retries:
+                        raise AuthorizationError(
+                            "Unsuccessful response from the Authorization API: 502"
+                        )
+                    pass
+                else:
+                    try:
+                        msg = response.json()
+                    except JSONDecodeError:
+                        msg = response.status_code
+                    raise AuthorizationError(
+                        f"Unsuccessful response from the Authorization API: {msg}"
+                    )
 
         default_dict: dict[str, bool] = {}
         return {
