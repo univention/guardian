@@ -22,4 +22,4 @@ import future.keywords.in
 # This condition evaluates to true only if the parameter "result" is true
 condition("guardian:builtin:only_if_param_result_true", parameters, condition_data) if {
 	parameters.result == true
-} else = false
+} else := false

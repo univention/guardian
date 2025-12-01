@@ -18,7 +18,16 @@ import data.univention.utils.extract_target_id
 # result: Boolean indicating whether the namespace is contained in the set of namespaces
 has_namespace(namespaces, app_name, namespace) if {
 	namespace in namespaces[app_name]
-} else = false
+} else := false
+
+# check if namespaces is null or contains the given namespace
+_namespace_match(namespaces, app_name, namespace) if {
+	is_null(namespaces)
+}
+
+_namespace_match(namespaces, app_name, namespace) if {
+	has_namespace(namespaces, app_name, namespace)
+}
 
 # actor: The acting object
 # roleCapabilityMapping: Dictionary of role names to set of capabilities
@@ -34,7 +43,7 @@ _get_permissions(actor, target_object, roleCapabilityMapping, namespaces, contex
 	some capability in roleCapabilityMapping[role_name]
 	app_name := capability.appName
 	namespace := capability.namespace
-	any([is_null(namespaces), has_namespace(namespaces, app_name, namespace)])
+	_namespace_match(namespaces, app_name, namespace)
 	condition_data := {
 		"actor": actor,
 		"actor_role": role_and_context,
@@ -93,13 +102,35 @@ check_permissions contains result if {
 		input.contexts,
 		input.extra_args,
 	)
-	has_all_permissions := all([
-		is_null(input.permissions) == false,
-		object.subset(permissions, {permission | some permission in input.permissions}),
-	])
+	is_null(input.permissions) == false
+	object.subset(permissions, {permission | some permission in input.permissions})
 
 	result := {
 		"target_id": extract_target_id(target_object),
-		"result": has_all_permissions,
+		"result": true,
 	}
+}
+
+check_permissions contains result if {
+	input.targets
+	some target_object in input.targets
+	permissions := _get_permissions(
+		input.actor,
+		target_object,
+		roleCapabilityMapping,
+		input.namespaces,
+		input.contexts,
+		input.extra_args,
+	)
+	not _has_all_permissions(permissions)
+
+	result := {
+		"target_id": extract_target_id(target_object),
+		"result": false,
+	}
+}
+
+_has_all_permissions(permissions) if {
+	is_null(input.permissions) == false
+	object.subset(permissions, {permission | some permission in input.permissions})
 }

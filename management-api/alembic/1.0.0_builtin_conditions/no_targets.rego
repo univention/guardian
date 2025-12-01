@@ -11,4 +11,4 @@ condition("guardian:builtin:no_targets", parameters, condition_data) if {
 } else if {
 	condition_data.target.old == {}
 	condition_data.target.new == {}
-} else = false
+} else := false

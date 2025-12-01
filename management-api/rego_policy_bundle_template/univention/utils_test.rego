@@ -1,6 +1,7 @@
 package univention.utils_test
 
 import future.keywords.every
+import future.keywords.if
 import future.keywords.in
 
 import data.univention.mapping.role_capability_mapping
@@ -12,14 +13,14 @@ import data.univention.utils.extract_target_id
 # evaluate_conditions #
 #######################
 
-test_evaluate_conditions {
+test_evaluate_conditions if {
 	evaluate_conditions("OR", [], {})
 	not evaluate_conditions("OR", [{"name": "doesnotexist", "parameters": {}}], {})
 	evaluate_conditions("AND", [], {})
 	not evaluate_conditions("AND", [{"name": "doesnotexist", "parameters": {}}], {})
 }
 
-test_evaluate_conditions_integration {
+test_evaluate_conditions_integration if {
 	evaluate_conditions(
 		"OR",
 		[{"name": "only_if_param_result_true", "parameters": {"result": true}}],
@@ -93,7 +94,7 @@ extract_role_and_context_parametrize := [
 	},
 ]
 
-test_extract_role_and_context {
+test_extract_role_and_context if {
 	every case in extract_role_and_context_parametrize {
 		result := extract_role_and_context(case.input)
 
@@ -130,7 +131,7 @@ extract_target_id_parametrize := [
 	},
 ]
 
-test_extract_target_id {
+test_extract_target_id if {
 	every case in extract_target_id_parametrize {
 		result := extract_target_id(case.input)
 

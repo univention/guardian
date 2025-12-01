@@ -10,4 +10,4 @@ condition("guardian:builtin:target_has_role", parameters, condition_data) if {
 	role_and_context := extract_role_and_context(crole)
 	role_name := role_and_context.role
 	role_name == parameters.role
-} else = false
+} else := false

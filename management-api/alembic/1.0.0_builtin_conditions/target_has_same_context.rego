@@ -10,4 +10,4 @@ condition("guardian:builtin:target_has_same_context", parameters, condition_data
 	some target_crole in condition_data.target.old.roles
 	target_role_and_context := extract_role_and_context(target_crole)
 	actor_context == target_role_and_context.context
-} else = false
+} else := false
