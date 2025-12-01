@@ -36,7 +36,6 @@ from guardian_authorization_api.models.routes import (
     AuthzPermissionsPostRequest,
     AuthzPermissionsPostResponse,
     Context,
-    ContextDisplayName,
     ContextName,
     NamespaceMinimal,
     NamespaceName,
@@ -55,7 +54,7 @@ from ..conftest import get_authz_permissions_check_request_dict
 def get_route_object() -> Callable[[], AuthzObject]:
     def _get_route_object() -> AuthzObject:
         return AuthzObject(
-            id=AuthzObjectIdentifier("id"),
+            id=AuthzObjectIdentifier("test-id"),
             roles=[
                 Role(
                     app_name=AppName("app"),
@@ -99,7 +98,7 @@ class TestFastAPICheckPermissionsAPIAdapter:
     @pytest.mark.asyncio
     async def test_to_policy_query(self, adapter_instance):
         data = get_authz_permissions_check_request_dict()
-        permissions_check_result = AuthzPermissionsCheckPostRequest.parse_obj(data)
+        permissions_check_result = AuthzPermissionsCheckPostRequest.model_validate(data)
 
         query = await adapter_instance.to_policy_query(permissions_check_result)
 
@@ -189,7 +188,7 @@ class TestFastAPIGetPermissionsAPIAdapter:
         obj = get_route_object()
         result = FastAPIAdapterUtils.authz_to_policy_object(obj)
         assert result == PolicyObject(
-            id="id",
+            id="test-id",
             roles=[
                 PoliciesRole(app_name="app", namespace_name="namespace", name="role")
             ],
@@ -203,7 +202,7 @@ class TestFastAPIGetPermissionsAPIAdapter:
         old = get_route_object() if has_old else None
         new = get_route_object() if has_new else None
         expected_policy_obj = PolicyObject(
-            id="id",
+            id="test-id",
             roles=[
                 PoliciesRole(app_name="app", namespace_name="namespace", name="role")
             ],
@@ -232,7 +231,6 @@ class TestFastAPIGetPermissionsAPIAdapter:
             app_name=AppName("app"),
             namespace_name=NamespaceName("namespace"),
             name=ContextName("context"),
-            display_name=ContextDisplayName("ctx"),
         )
         result = FastAPIAdapterUtils.api_context_to_policy_context(input_ctx)
         assert result == PoliciesContext(
@@ -247,7 +245,7 @@ class TestFastAPIGetPermissionsAPIAdapter:
                     app_name=AppName("app"), name=NamespaceName("namespace")
                 )
             ],
-            actor=Actor(**get_route_object().dict()),
+            actor=Actor(**get_route_object().model_dump()),
             targets=[
                 Target(old_target=get_route_object(), new_target=get_route_object())
             ],
@@ -256,7 +254,6 @@ class TestFastAPIGetPermissionsAPIAdapter:
                     app_name=AppName("app"),
                     namespace_name=NamespaceName("namespace"),
                     name=ContextName("context"),
-                    display_name=ContextDisplayName("ctx"),
                 )
             ],
             include_general_permissions=True,
@@ -265,7 +262,7 @@ class TestFastAPIGetPermissionsAPIAdapter:
         result = await adapter_instance.to_policy_query(input_obj)
         assert result == GetPermissionsQuery(
             actor=PolicyObject(
-                id="id",
+                id="test-id",
                 roles=[
                     PoliciesRole(
                         app_name="app", namespace_name="namespace", name="role"
@@ -276,7 +273,7 @@ class TestFastAPIGetPermissionsAPIAdapter:
             targets=[
                 PoliciesTarget(
                     old_target=PolicyObject(
-                        id="id",
+                        id="test-id",
                         roles=[
                             PoliciesRole(
                                 app_name="app", namespace_name="namespace", name="role"
@@ -285,7 +282,7 @@ class TestFastAPIGetPermissionsAPIAdapter:
                         attributes={"a": "b"},
                     ),
                     new_target=PolicyObject(
-                        id="id",
+                        id="test-id",
                         roles=[
                             PoliciesRole(
                                 app_name="app", namespace_name="namespace", name="role"
@@ -309,7 +306,7 @@ class TestFastAPIGetPermissionsAPIAdapter:
     async def test_to_api_response(self, adapter_instance):
         input_obj = GetPermissionsResult(
             actor=PolicyObject(
-                id="id",
+                id="test-id",
                 roles=[
                     PoliciesRole(
                         app_name="app", namespace_name="namespace", name="role"
@@ -319,7 +316,7 @@ class TestFastAPIGetPermissionsAPIAdapter:
             ),
             target_permissions=[
                 TargetPermissions(
-                    target_id="id",
+                    target_id="test-id",
                     permissions=[
                         PoliciesPermission(
                             app_name="app",
@@ -339,10 +336,10 @@ class TestFastAPIGetPermissionsAPIAdapter:
         )
         result = await adapter_instance.to_api_response(input_obj)
         assert result == AuthzPermissionsPostResponse(
-            actor_id=AuthzObjectIdentifier("id"),
+            actor_id=AuthzObjectIdentifier("test-id"),
             target_permissions=[
                 PermissionResult(
-                    target_id=AuthzObjectIdentifier("id"),
+                    target_id=AuthzObjectIdentifier("test-id"),
                     permissions=[
                         Permission(
                             app_name=AppName("app"),
@@ -376,7 +373,7 @@ class TestFastAPIAdapterUtils:
     )
     def test_preserve_context(self, context):
         authz_obj = AuthzObject(
-            id=AuthzObjectIdentifier("id"),
+            id=AuthzObjectIdentifier("test-id"),
             roles=[
                 Role(
                     app_name=AppName("app"),
@@ -389,7 +386,7 @@ class TestFastAPIAdapterUtils:
         )
         result = FastAPIAdapterUtils.authz_to_policy_object(authz_obj)
         assert result == PolicyObject(
-            id="id",
+            id="test-id",
             roles=[
                 PoliciesRole(
                     app_name="app",

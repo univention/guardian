@@ -42,7 +42,7 @@ class TestPermissionsCheckUnittest:
     async def test_permissions_check_minimal(self, client, opa_async_mock):
         data = {
             "actor": {
-                "id": "1",
+                "id": "actor-1",
                 "roles": [
                     {
                         "app_name": "app1",
@@ -71,7 +71,7 @@ class TestPermissionsCheckUnittest:
         assert response.status_code == 200, response.json()
 
         assert response.json() == {
-            "actor_id": "1",
+            "actor_id": "actor-1",
             "permissions_check_results": [
                 {"target_id": "id1", "actor_has_permissions": False},
                 {"target_id": "id2", "actor_has_permissions": True},
