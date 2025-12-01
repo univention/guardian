@@ -425,7 +425,7 @@ def upgrade() -> None:
     bind = op.get_bind()
     session = orm.Session(bind=bind)
     app_id, builtin_ns_id = create_guardian_app(session, app_table, ns_table)
-    management_ns_id = session.execute(
+    management_ns_id = session.execute(  # type: ignore[attr-defined]
         insert(ns_table).values(
             {
                 "app_id": app_id,
