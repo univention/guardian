@@ -703,7 +703,7 @@ const hideRoleEdit = computed(() => {
                         :is="components[field.type]"
                         v-for="field in getRow(row)"
                         :key="field.props.name"
-                        :ref="(el) => refFormElem(page.name, fieldset.name, field.props.name, el as unknown as FormElem)"
+                        :ref="el => refFormElem(page.name, fieldset.name, field.props.name, el as unknown as FormElem)"
                         v-bind="field.props"
                         v-model:modelValue="currentValues[field.props.name]"
                       />

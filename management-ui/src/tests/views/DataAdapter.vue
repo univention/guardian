@@ -1121,9 +1121,8 @@ const setupFormData = async () => {
   if (currentConfig.filters.namespace.show || currentConfig.editForm?.namespace.show) {
     let namespaceData = await currentAdapter.value.adapter.fetchNamespaces();
     if (!namespaceData.ok) {
-      currentAdapter.value.state[
-        currentAdapter.value.currentTab
-      ].error = `Fetching namespaces failed: ${namespaceData.error}`;
+      currentAdapter.value.state[currentAdapter.value.currentTab].error =
+        `Fetching namespaces failed: ${namespaceData.error}`;
       return;
     }
     namespaces.value = namespaceData.value.namespaces ?? [];
@@ -1141,9 +1140,8 @@ const setupFormData = async () => {
   if (currentConfig.editForm?.conditions.show) {
     let conditionData = await currentAdapter.value.adapter.fetchConditions();
     if (!conditionData.ok) {
-      currentAdapter.value.state[
-        currentAdapter.value.currentTab
-      ].error = `Fetching conditions failed: ${conditionData.error}`;
+      currentAdapter.value.state[currentAdapter.value.currentTab].error =
+        `Fetching conditions failed: ${conditionData.error}`;
       return;
     }
     conditions.value = conditionData.value.conditions ?? [];

@@ -1,11 +1,15 @@
-FROM node:18 AS builder
+# Copyright (C) 2023-2025 Univention GmbH
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
+FROM node:24 AS builder
 
 COPY management-ui /management-ui
 WORKDIR /management-ui
 RUN yarn install
 RUN yarn build
 
-FROM gitregistry.knut.univention.de/univention/dev/nubus-for-k8s/nginx/nginx:0.6.0 AS final
+FROM gitregistry.knut.univention.de/univention/dev/nubus-for-k8s/nginx/nginx:0.7.30 AS final
 
 EXPOSE 8080
 
