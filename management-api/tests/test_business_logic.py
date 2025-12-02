@@ -290,6 +290,48 @@ class TestBusinessLogic:
             )
 
     @pytest.mark.asyncio
+    async def test_edit_app_success(self, mocker):
+        api_request_mock = mocker.MagicMock()
+        query_mock = mocker.Mock()
+        query_mock.name = "test_app"
+        changed_data = {"display_name": "Updated Display Name"}
+        old_app_mock = mocker.Mock()
+        updated_app_mock = mocker.Mock()
+        expected_response = mocker.Mock()
+
+        persistence_mock = mocker.AsyncMock()
+        persistence_mock.read_one.return_value = old_app_mock
+        persistence_mock.update.return_value = updated_app_mock
+
+        api_port_mock = mocker.AsyncMock()
+        api_port_mock.to_app_edit.return_value = (query_mock, changed_data)
+        api_port_mock.to_api_edit_response.return_value = expected_response
+        api_port_mock.transform_exception = transform_exception_identity
+
+        authz_mock = mocker.AsyncMock()
+        authz_mock.authorize_operation = mocker.AsyncMock(
+            return_value={"test_app": True}
+        )
+        authc_mock = mocker.AsyncMock()
+        authc_mock.get_actor_identifier.return_value = "test_actor"
+        request = mocker.Mock()
+
+        result = await business_logic.edit_app(
+            api_request_mock,
+            api_port_mock,
+            persistence_mock,
+            authc_mock,
+            authz_mock,
+            request,
+        )
+
+        assert result == expected_response
+        persistence_mock.read_one.assert_called_once_with(query_mock)
+        persistence_mock.update.assert_called_once_with(old_app_mock)
+        api_port_mock.to_api_edit_response.assert_called_once_with(updated_app_mock)
+        assert old_app_mock.display_name == "Updated Display Name"
+
+    @pytest.mark.asyncio
     async def test_get_capability_unauthorized_error(self, mocker):
         api_request_mock = mocker.MagicMock()
         api_port_mock = mocker.AsyncMock()
