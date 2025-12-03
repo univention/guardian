@@ -5,7 +5,7 @@ WORKDIR /management-ui
 RUN yarn install
 RUN yarn build
 
-FROM gitregistry.knut.univention.de/univention/dev/nubus-for-k8s/nginx/nginx:0.6.0 AS final
+FROM gitregistry.knut.univention.de/univention/dev/nubus-for-k8s/nginx/nginx:0.7.32 AS final
 
 EXPOSE 8080
 
