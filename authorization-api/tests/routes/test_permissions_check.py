@@ -334,7 +334,7 @@ class TestPermissionsCheck:
 
         data["namespaces"] = [
             {"app_name": "ucsschool", "name": "users"},
-            {"app_name": "OX", "name": "mail"},
+            {"app_name": "oxmail", "name": "mail"},
         ]
         data["actor"]["roles"] = [
             {"app_name": "ucsschool", "namespace_name": "users", "name": "teacher"}
@@ -349,7 +349,7 @@ class TestPermissionsCheck:
         ]
         data["general_permissions_to_check"] = [
             {
-                "app_name": "OX",
+                "app_name": "oxmail",
                 "namespace_name": "mail",
                 "name": "export",
             }

@@ -2,7 +2,7 @@
   "roleCapabilityMapping": {
     "ucsschool:users:head_master": [
       {
-        "appName": "contextApp",
+        "appName": "context-app",
         "conditions": [
           {
             "name": "guardian:builtin:target_has_same_context",
@@ -84,7 +84,7 @@
         "relation": "AND"
       },
       {
-        "appName": "OX",
+        "appName": "oxmail",
         "conditions": [],
         "namespace": "mail",
         "permissions": [

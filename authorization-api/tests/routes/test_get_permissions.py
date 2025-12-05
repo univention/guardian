@@ -487,7 +487,7 @@ class TestGetPermissions:
                 ["ucsschool:users:student&ucsschool:users:school1"],
                 [
                     {
-                        "app_name": "contextApp",
+                        "app_name": "context-app",
                         "namespace_name": "test",
                         "name": "context_test_permission",
                     }
@@ -500,7 +500,7 @@ class TestGetPermissions:
                 ],
                 [
                     {
-                        "app_name": "contextApp",
+                        "app_name": "context-app",
                         "namespace_name": "test",
                         "name": "context_test_permission",
                     }
@@ -520,7 +520,7 @@ class TestGetPermissions:
           the actor should always have the checked permissions
         """
         data = get_authz_permissions_get_request_dict(n_actor_roles=1, n_targets=1)
-        data["namespaces"] = [{"app_name": "contextApp", "name": "test"}]
+        data["namespaces"] = [{"app_name": "context-app", "name": "test"}]
         actor_id = "actor-id"
         target_id = "uid=target-id"
         data["actor"] = {"id": actor_id}
