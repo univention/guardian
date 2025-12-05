@@ -12,4 +12,4 @@ condition("guardian:builtin:actor_does_not_have_role", parameters, condition_dat
 		role_name := role_and_context.role
 		role_name != parameters.role
 	}
-} else := false
+} else = false

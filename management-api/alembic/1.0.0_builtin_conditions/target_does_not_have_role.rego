@@ -12,4 +12,4 @@ condition("guardian:builtin:target_does_not_have_role", parameters, condition_da
 		role_name := role_and_context.role
 		role_name != parameters.role
 	}
-} else := false
+} else = false

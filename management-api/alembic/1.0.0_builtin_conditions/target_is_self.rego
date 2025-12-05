@@ -8,4 +8,4 @@ condition("guardian:builtin:target_is_self", parameters, condition_data) if {
 } else if {
 	not parameters.field
 	condition_data.actor.id == condition_data.target.old.id
-} else := false
+} else = false
