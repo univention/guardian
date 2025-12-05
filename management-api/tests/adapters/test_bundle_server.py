@@ -146,7 +146,7 @@ class TestBundleServerAdapter:
         )
         await adapter._build_bundle(bundle_type, mocker.AsyncMock(), mocker.AsyncMock())
         build_cmd = (
-            f"opa build -b {Path(bundle_server_base_dir) / 'build' / subpath} -o "
+            f"opa build --v0-compatible -b {Path(bundle_server_base_dir) / 'build' / subpath} -o "
             f"{Path(bundle_server_base_dir) / 'bundles' / subpath}.tar.gz"
         )
         assert subprocess_mock.call_args_list == [call(build_cmd)]

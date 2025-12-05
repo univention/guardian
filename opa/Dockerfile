@@ -43,4 +43,4 @@ COPY --chown=$service_user:$service_user opa_config.yaml $service_dir/opa_config
 
 USER $service_user
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["opa", "run", "--disable-telemetry", "--server", "-c", "opa_config.yaml", "--addr",  "0.0.0.0:8181"]
+CMD ["opa", "run", "--disable-telemetry", "--server", "--v0-compatible", "-c", "opa_config.yaml", "--addr",  "0.0.0.0:8181"]

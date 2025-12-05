@@ -275,7 +275,7 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
                 cond_persistence_port, base_dir / "build" / bundle_name
             )
         build_cmd = (
-            f"opa build -b {base_dir / 'build' / bundle_name} -o "
+            f"opa build --v0-compatible -b {base_dir / 'build' / bundle_name} -o "
             f"{base_dir / 'bundles' / bundle_name}.tar.gz"
         )
         local_logger = local_logger.bind(build_cmd=build_cmd)
