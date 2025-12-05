@@ -409,20 +409,6 @@ class TestGuardianAuthorizationAdapter:
 @pytest.mark.e2e
 @pytest.mark.e2e_udm
 class TestGuardianAuthorizationAdapterIntegration:
-    @pytest.fixture(autouse=True)
-    def skip_if_oauth_not_configured(self):
-        """Skip tests if OAuth settings are not configured."""
-        required_settings = [
-            "OAUTH_ADAPTER__WELL_KNOWN_URL",
-            "OAUTH_ADAPTER__M2M_SECRET",
-            "GUARDIAN__MANAGEMENT__ADAPTER__AUTHORIZATION_API_URL",
-        ]
-        missing = [s for s in required_settings if not os.environ.get(s)]
-        if missing:
-            pytest.skip(
-                f"Skipping authorization test: missing environment variables: {', '.join(missing)}"
-            )
-
     @pytest.mark.asyncio
     async def test_authorize_operation_actor_not_allowed_condition(
         self, ldap_base, registry_test_adapters

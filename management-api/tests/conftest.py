@@ -888,18 +888,6 @@ def ldap_base():
 
 @pytest_asyncio.fixture(scope="function")
 async def set_up_auth(ldap_base):
-    # Skip if OAuth settings are not configured (required for GuardianAuthorizationAdapter)
-    required_settings = [
-        "OAUTH_ADAPTER__WELL_KNOWN_URL",
-        "OAUTH_ADAPTER__M2M_SECRET",
-        "GUARDIAN__MANAGEMENT__ADAPTER__AUTHORIZATION_API_URL",
-    ]
-    missing = [s for s in required_settings if not os.environ.get(s)]
-    if missing:
-        pytest.skip(
-            f"Skipping authorization test: missing environment variables: {', '.join(missing)}"
-        )
-
     _original_resource_authorization_adapter = AlwaysAuthorizedAdapter
     ADAPTER_REGISTRY.set_adapter(
         ResourceAuthorizationPort, GuardianAuthorizationAdapter
