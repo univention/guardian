@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 from collections import defaultdict
+from dataclasses import asdict
 from typing import Any, Optional, Type
 
 from opa_client.client import OPAClient
@@ -24,6 +25,15 @@ from guardian_authorization_api.models.policies import (
 from guardian_authorization_api.ports import PolicyPort
 
 from ..models.opa import OPAPermission, OPAPolicyObject, OPATarget
+
+
+def _serialize_target(target_dict: dict[str, OPAPolicyObject | None]) -> dict[str, Any]:
+    """Convert a target dict with OPAPolicyObject values to a serializable dict."""
+    return {
+        "old": asdict(target_dict["old"]) if target_dict["old"] else None,
+        "new": asdict(target_dict["new"]) if target_dict["new"] else None,
+    }
+
 
 EMPTY_TARGET = OPATarget(
     old_target=OPAPolicyObject(id="", attributes={}, roles=[]),
@@ -100,17 +110,19 @@ class OPAAdapter(PolicyPort, AsyncConfiguredAdapterMixin):
         opa_response_targeted_permissions = []
         if query.target_permissions:
             targeted_permissions = [
-                OPAPermission(
-                    appName=permission.app_name,
-                    namespace=permission.namespace_name,
-                    permission=permission.name,
+                asdict(
+                    OPAPermission(
+                        appName=permission.app_name,
+                        namespace=permission.namespace_name,
+                        permission=permission.name,
+                    )
                 )
                 for permission in query.target_permissions
             ]
             try:
                 data = {
-                    "actor": actor,
-                    "targets": targets,
+                    "actor": asdict(actor),
+                    "targets": [_serialize_target(t) for t in targets],
                     "permissions": targeted_permissions,
                     "namespaces": namespaces,
                     "contexts": contexts,
@@ -131,17 +143,19 @@ class OPAAdapter(PolicyPort, AsyncConfiguredAdapterMixin):
                 {"old": EMPTY_TARGET.old_target, "new": EMPTY_TARGET.new_target}
             )
             general_permissions = [
-                OPAPermission(
-                    appName=permission.app_name,
-                    namespace=permission.namespace_name,
-                    permission=permission.name,
+                asdict(
+                    OPAPermission(
+                        appName=permission.app_name,
+                        namespace=permission.namespace_name,
+                        permission=permission.name,
+                    )
                 )
                 for permission in query.general_permissions
             ]
             try:
                 data = {
-                    "actor": actor,
-                    "targets": targets,
+                    "actor": asdict(actor),
+                    "targets": [_serialize_target(t) for t in targets],
                     "permissions": general_permissions,
                     "namespaces": namespaces,
                     "contexts": contexts,
@@ -217,8 +231,8 @@ class OPAAdapter(PolicyPort, AsyncConfiguredAdapterMixin):
             opa_response = await self.opa_client.check_policy(
                 self.OPA_GET_PERMISSIONS_POLICY,
                 data=dict(
-                    actor=actor,
-                    targets=targets,
+                    actor=asdict(actor),
+                    targets=[_serialize_target(t) for t in targets],
                     namespaces=namespaces,
                     contexts=contexts,
                     extra_args=extra_args,
