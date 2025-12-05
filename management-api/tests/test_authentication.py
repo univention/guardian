@@ -159,7 +159,7 @@ class TestAuthenticationIntegration:
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session, "guardian", display_name=None)
-        token = await get_keycloak_token
+        token = get_keycloak_token
 
         response = client.get(
             app.url_path_for("get_app", name="guardian"),
