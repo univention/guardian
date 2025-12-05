@@ -55,8 +55,8 @@ test_get_permissions_null_namespaces if {
 	result == {{
 		"target_id": "target_id_1",
 		"permissions": {
-			{"appName": "OX", "namespace": "mail", "permission": "edit-spam-filter"},
-			{"appName": "OX", "namespace": "mail", "permission": "export"},
+			{"appName": "oxmail", "namespace": "mail", "permission": "edit-spam-filter"},
+			{"appName": "oxmail", "namespace": "mail", "permission": "export"},
 			{"appName": "ucsschool", "namespace": "users", "permission": "export"},
 			{"appName": "ucsschool", "namespace": "users", "permission": "read_first_name"},
 			{"appName": "ucsschool", "namespace": "users", "permission": "read_last_name"},
@@ -113,7 +113,7 @@ test_get_permissions_filtering if {
 				"relation": "AND",
 			},
 			{
-				"appName": "OX",
+				"appName": "oxmail",
 				"conditions": [],
 				"namespace": "mail",
 				"permissions": [
@@ -167,7 +167,7 @@ test_get_permissions_filtering if {
 		],
 		#  The namespaces were chosen to show that we can return multiple apps and namespaces
 		#  while still filtering apps (radius) and namespaces (namespace exams from app ucsschool)
-		"namespaces": {"ucsschool": {"users", "groups"}, "OX": {"mail"}},
+		"namespaces": {"ucsschool": {"users", "groups"}, "oxmail": {"mail"}},
 		"contexts": {},
 		"extra_args": {},
 	}
@@ -183,8 +183,8 @@ test_get_permissions_filtering if {
 				{"appName": "ucsschool", "namespace": "users", "permission": "read_first_name"},
 				{"appName": "ucsschool", "namespace": "users", "permission": "read_last_name"},
 				{"appName": "ucsschool", "namespace": "users", "permission": "write_password"},
-				{"appName": "OX", "namespace": "mail", "permission": "edit-spam-filter"},
-				{"appName": "OX", "namespace": "mail", "permission": "export"},
+				{"appName": "oxmail", "namespace": "mail", "permission": "edit-spam-filter"},
+				{"appName": "oxmail", "namespace": "mail", "permission": "export"},
 				{"appName": "ucsschool", "namespace": "groups", "permission": "read_display_name"},
 				{"appName": "ucsschool", "namespace": "users", "permission": "read_password"},
 			},
@@ -195,8 +195,8 @@ test_get_permissions_filtering if {
 				{"appName": "ucsschool", "namespace": "users", "permission": "read_first_name"},
 				{"appName": "ucsschool", "namespace": "users", "permission": "read_last_name"},
 				{"appName": "ucsschool", "namespace": "users", "permission": "write_password"},
-				{"appName": "OX", "namespace": "mail", "permission": "edit-spam-filter"},
-				{"appName": "OX", "namespace": "mail", "permission": "export"},
+				{"appName": "oxmail", "namespace": "mail", "permission": "edit-spam-filter"},
+				{"appName": "oxmail", "namespace": "mail", "permission": "export"},
 				{"appName": "ucsschool", "namespace": "groups", "permission": "read_display_name"},
 				{"appName": "ucsschool", "namespace": "users", "permission": "read_password"},
 			},

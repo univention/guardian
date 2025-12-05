@@ -53,7 +53,7 @@ DUMMY_MAPPING_JSON = {
                 "relation": "AND",
             },
             {
-                "appName": "OX",
+                "appName": "oxmail",
                 "conditions": [],
                 "namespace": "mail",
                 "permissions": ["edit-spam-filter", "export"],
