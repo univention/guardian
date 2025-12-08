@@ -4,7 +4,7 @@
 
 [tool.poetry]
 name = "management-api"
-version = "3.0.3"
+version = "3.0.4"
 description = ""
 authors = ["UCS School Maintainers <ucsschool-maintainers@univention.de>"]
 readme = "README.md"
