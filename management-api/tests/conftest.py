@@ -158,6 +158,7 @@ def patch_env(sqlite_db_name, bundle_server_base_dir, pytestconfig):
         "fast_api_always_authorized"
     )
     os.environ["GUARDIAN__MANAGEMENT__ADAPTER__RESOURCE_AUTHORIZATION_PORT"] = "always"
+    os.environ["LDAP_BASE"] = os.environ.get("LDAP_BASE", "dc=school,dc=test")
     if "OAUTH_ADAPTER__WELL_KNOWN_URL" not in os.environ:
         os.environ["OAUTH_ADAPTER__WELL_KNOWN_URL"] = "/dev/zero"
     yield
@@ -883,7 +884,7 @@ def create_capability(
 
 @pytest.fixture
 def ldap_base():
-    return os.environ.get("LDAP_BASE", "dc=example,dc=com")
+    return os.environ.get("LDAP_BASE", "dc=school,dc=test")
 
 
 @pytest_asyncio.fixture(scope="function")

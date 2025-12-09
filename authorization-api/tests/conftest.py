@@ -50,6 +50,7 @@ def patch_env():
         "fast_api_always_authorized"
     )
     os.environ["OAUTH_ADAPTER__WELL_KNOWN_URL"] = "/dev/zero"
+    os.environ["LDAP_BASE"] = os.environ.get("LDAP_BASE", "dc=school,dc=test")
     yield
     os.environ.clear()
     os.environ.update(_environ)
@@ -57,7 +58,7 @@ def patch_env():
 
 @pytest.fixture
 def ldap_base():
-    return os.environ.get("LDAP_BASE", "dc=example,dc=com")
+    return os.environ.get("LDAP_BASE", "dc=school,dc=test")
 
 
 @pytest_asyncio.fixture(scope="session")

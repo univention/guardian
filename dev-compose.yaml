@@ -78,6 +78,7 @@ services:
       - OAUTH_ADAPTER__WELL_KNOWN_URL
       - REQUESTS_CA_BUNDLE
       - SSL_CERT_FILE
+      - LDAP_BASE
     labels:
       traefik.http.routers.authz.entrypoints: web
       traefik.http.routers.authz.rule: PathPrefix(`/guardian/authorization`)
@@ -182,6 +183,7 @@ services:
       - OAUTH_ADAPTER__M2M_SECRET
       - REQUESTS_CA_BUNDLE
       - SSL_CERT_FILE
+      - LDAP_BASE
     labels:
       traefik.http.routers.management.entrypoints: web
       traefik.http.routers.management.rule: PathPrefix(`/guardian/management`)
