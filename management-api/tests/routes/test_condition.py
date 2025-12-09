@@ -96,6 +96,28 @@ class TestConditionEndpoints:
                 "resource_url": urljoin(BASE_URL, resource),
             }
 
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("run_alembic_migrations")
+    async def test_builtin_conditions(
+        self, client, sqlalchemy_mixin, builtin_conditions
+    ):
+        response = client.get(client.app.url_path_for("get_all_conditions"))
+        assert response.status_code == 200
+        conditions = response.json()["conditions"]
+        pagination = response.json()["pagination"]
+        assert pagination == {
+            "offset": 0,
+            "limit": len(builtin_conditions),
+            "total_count": len(builtin_conditions),
+        }
+        for condition in conditions:
+            del condition["resource_url"]
+            assert condition["name"] in builtin_conditions
+            assert builtin_conditions[condition["name"]] == condition
+            del builtin_conditions[condition["name"]]
+
+        assert builtin_conditions == {}
+
     @pytest.mark.parametrize(
         "offset,limit", [(0, None), (1, None), (0, None), (0, 3), (0, 20)]
     )

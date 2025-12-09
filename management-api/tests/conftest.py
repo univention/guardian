@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 import asyncio
+import json
 import os
 import subprocess
 from base64 import b64encode
@@ -910,3 +911,23 @@ async def set_up_auth(ldap_base):
 @pytest.fixture
 def base_url() -> str:
     return os.getenv("GUARDIAN__MANAGEMENT__BASE_URL", "http://localhost:8001")
+
+
+@pytest.fixture
+def builtin_conditions():
+    alembic_path = Path(__file__).resolve().parent / "../alembic/"
+    builtin_conditions = {}
+    for revision in alembic_path.glob("*_builtin_conditions"):
+        for data_file in revision.glob("*.json"):
+            with open(data_file, "r") as f:
+                data = json.load(f)
+
+            cond = {
+                **data,
+                "name": data_file.stem,
+                "namespace_name": "builtin",
+                "app_name": "guardian",
+            }
+            builtin_conditions[data_file.stem] = cond
+
+    return builtin_conditions
