@@ -25,7 +25,7 @@ Then run the [`dev-run`](../dev-run) script just as you would for other projects
 
 ### Requirements
 
-- [Node.js](https://nodejs.org/en/) (18.x, LTS until 2023-10-24 and supported until 2025-04-30)
+- [Node.js](https://nodejs.org/en/) (24.X, LTS supported until April 2028)
 - [yarn](https://yarnpkg.com/getting-started/install)
   - We use `yarn` as package manager instead of `npm`
   - Enable corepack `corepack enable` to use `yarn` (`corepack` comes with Node.js)

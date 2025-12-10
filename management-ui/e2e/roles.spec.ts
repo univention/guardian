@@ -1,15 +1,27 @@
 import {test, expect, Locator, Page} from '@playwright/test';
 
 test('ListView - page tabs are correct', async ({page}) => {
-  await page.goto('/guardian/management-ui/roles');
+  await page.goto('/univention/guardian/management-ui/roles');
   const buttons = page.locator('.routeButtons');
+  await expect(buttons).toBeVisible();
   await expect(buttons.getByText('Rollen')).toHaveAttribute('aria-current', 'page');
   await expect(buttons.getByText('Namespaces')).not.toHaveAttribute('aria-current', 'page');
   await expect(buttons.getByText('Contexts')).not.toHaveAttribute('aria-current', 'page');
 });
 
-async function uComboBoxLocator(page: Page, label: string): Promise<{ standbyLoc: Locator; inputLoc: Locator; selectOption: (option: string) => Promise<void>; optionsLoc: Locator; buttonLoc: Locator; expectToHaveOptions: (expectedOptions: string[]) => Promise<void> }> {
+async function uComboBoxLocator(
+  page: Page,
+  label: string
+): Promise<{
+  standbyLoc: Locator;
+  inputLoc: Locator;
+  selectOption: (option: string) => Promise<void>;
+  optionsLoc: Locator;
+  buttonLoc: Locator;
+  expectToHaveOptions: (expectedOptions: string[]) => Promise<void>;
+}> {
   const inputLoc = page.getByLabel(label);
+  await inputLoc.waitFor({state: 'attached'});
   const optionsLoc = inputLoc.locator('~ .uComboBox__popup');
   const standbyLoc = page.locator(`div.uStandby:has(+ input[id="${await inputLoc.getAttribute('id')}"])`);
   const buttonLoc = inputLoc.locator('+ button');
@@ -20,20 +32,24 @@ async function uComboBoxLocator(page: Page, label: string): Promise<{ standbyLoc
       await expect(optionsLoc.getByRole('option')).toHaveCount(expectedOptions.length);
     }
     for (const o of expectedOptions) {
-      await expect(optionsLoc.getByRole('option', {
-        name: o,
-        exact: true,
-      })).toBeAttached();
+      await expect(
+        optionsLoc.getByRole('option', {
+          name: o,
+          exact: true,
+        })
+      ).toBeAttached();
     }
     await buttonLoc.click();
   }
 
   async function selectOption(option: string) {
     await inputLoc.click();
-    await optionsLoc.getByRole('option', {
-      name: option,
-      exact: true,
-    }).click();
+    await optionsLoc
+      .getByRole('option', {
+        name: option,
+        exact: true,
+      })
+      .click();
   }
 
   return {
@@ -46,9 +62,8 @@ async function uComboBoxLocator(page: Page, label: string): Promise<{ standbyLoc
   };
 }
 
-
 test('ListView - search form has correct options', async ({page}) => {
-  await page.goto('/guardian/management-ui/roles');
+  await page.goto('/univention/guardian/management-ui/roles');
 
   const appComboBox = await uComboBoxLocator(page, 'App');
   const namespaceComboBox = await uComboBoxLocator(page, 'Namensraum');
@@ -60,24 +75,12 @@ test('ListView - search form has correct options', async ({page}) => {
   await expect(appComboBox.inputLoc).toBeEditable();
   await expect(namespaceComboBox.inputLoc).not.toBeEditable();
 
-  await appComboBox.expectToHaveOptions([
-    'Alle',
-    'App 1',
-    'App 2'
-  ]);
+  await appComboBox.expectToHaveOptions(['Alle', 'App 1', 'App 2']);
 
   // check namespaceComboBox.input options
   const expectedNamespaceOptions = {
-    'App 1': [
-      'Alle',
-      'Namespace 1 for App 1',
-      'Namespace 2 for App 1',
-    ],
-    'App 2': [
-      'Alle',
-      'Namespace 1 for App 2',
-      'Namespace 2 for App 2',
-    ],
+    'App 1': ['Alle', 'Namespace 1 for App 1', 'Namespace 2 for App 1'],
+    'App 2': ['Alle', 'Namespace 1 for App 2', 'Namespace 2 for App 2'],
   };
   for (const app in expectedNamespaceOptions) {
     await appComboBox.selectOption(app);
@@ -91,7 +94,7 @@ test('ListView - search form has correct options', async ({page}) => {
 });
 
 test('ListView - behaviour of namespace selection in conjunction with app selection', async ({page}) => {
-  await page.goto('/guardian/management-ui/roles');
+  await page.goto('/univention/guardian/management-ui/roles');
 
   const appComboBox = await uComboBoxLocator(page, 'App');
   const namespaceComboBox = await uComboBoxLocator(page, 'Namensraum');
@@ -122,7 +125,7 @@ test('ListView - behaviour of namespace selection in conjunction with app select
 });
 
 test('ListView - search form reset button', async ({page}) => {
-  await page.goto('/guardian/management-ui/roles');
+  await page.goto('/univention/guardian/management-ui/roles');
 
   const appComboBox = await uComboBoxLocator(page, 'App');
   const namespaceComboBox = await uComboBoxLocator(page, 'Namensraum');
@@ -139,14 +142,14 @@ test('ListView - search form reset button', async ({page}) => {
 test('ListView - grid layout', async ({page, browserName}) => {
   test.skip(browserName !== 'chromium', 'Only check screenshot on chromium for now');
 
-  await page.goto('/guardian/management-ui/roles');
+  await page.goto('/univention/guardian/management-ui/roles');
   await expect(page.locator('.uStandbyFullScreen').first()).toBeVisible();
   await expect(page.locator('.uStandbyFullScreen').first()).not.toBeAttached();
   await expect(page).toHaveScreenshot('ListView-layout.png');
 });
 
 test('ListView - search', async ({page}) => {
-  await page.goto('/guardian/management-ui/roles');
+  await page.goto('/univention/guardian/management-ui/roles');
 
   const tbody = page.locator('tbody').nth(0);
   const rows = tbody.getByRole('row');
@@ -157,7 +160,7 @@ test('ListView - search', async ({page}) => {
     app: string;
     namespace: string;
   }
-  async function searchAndExpect(expectation: Expectation[], app?: string, namespace?: string, ) {
+  async function searchAndExpect(expectation: Expectation[], app?: string, namespace?: string) {
     const _app = app || 'Alle';
     const appComboBox = await uComboBoxLocator(page, 'App');
     const namespaceComboBox = await uComboBoxLocator(page, 'Namensraum');
@@ -170,7 +173,6 @@ test('ListView - search', async ({page}) => {
       const _namespace = namespace || 'Alle';
       await namespaceComboBox.selectOption(_namespace);
     }
-
 
     await page.getByRole('button', {name: 'Suchen', exact: true}).click();
     await expect(page.locator('.uStandbyFullScreen')).toBeVisible();
@@ -187,135 +189,187 @@ test('ListView - search', async ({page}) => {
     }
   }
 
-  await searchAndExpect([{
-    role: '1',
-    app: '1',
-    namespace: '1',
-  }, {
-    role: '2',
-    app: '1',
-    namespace: '1',
-  }, {
-    role: '1',
-    app: '1',
-    namespace: '2',
-  }, {
-    role: '2',
-    app: '1',
-    namespace: '2',
-  }, {
-    role: '1',
-    app: '2',
-    namespace: '1',
-  }, {
-    role: '2',
-    app: '2',
-    namespace: '1',
-  }, {
-    role: '1',
-    app: '2',
-    namespace: '2',
-  }, {
-    role: '2',
-    app: '2',
-    namespace: '2',
-  }]);
+  await searchAndExpect([
+    {
+      role: '1',
+      app: '1',
+      namespace: '1',
+    },
+    {
+      role: '2',
+      app: '1',
+      namespace: '1',
+    },
+    {
+      role: '1',
+      app: '1',
+      namespace: '2',
+    },
+    {
+      role: '2',
+      app: '1',
+      namespace: '2',
+    },
+    {
+      role: '1',
+      app: '2',
+      namespace: '1',
+    },
+    {
+      role: '2',
+      app: '2',
+      namespace: '1',
+    },
+    {
+      role: '1',
+      app: '2',
+      namespace: '2',
+    },
+    {
+      role: '2',
+      app: '2',
+      namespace: '2',
+    },
+  ]);
 
-  await searchAndExpect([{
-    role: '1',
-    app: '1',
-    namespace: '1',
-  }, {
-    role: '2',
-    app: '1',
-    namespace: '1',
-  }, {
-    role: '1',
-    app: '1',
-    namespace: '2',
-  }, {
-    role: '2',
-    app: '1',
-    namespace: '2',
-  }], 'App 1');
+  await searchAndExpect(
+    [
+      {
+        role: '1',
+        app: '1',
+        namespace: '1',
+      },
+      {
+        role: '2',
+        app: '1',
+        namespace: '1',
+      },
+      {
+        role: '1',
+        app: '1',
+        namespace: '2',
+      },
+      {
+        role: '2',
+        app: '1',
+        namespace: '2',
+      },
+    ],
+    'App 1'
+  );
 
-  await searchAndExpect([{
-    role: '1',
-    app: '1',
-    namespace: '1',
-  }, {
-    role: '2',
-    app: '1',
-    namespace: '1',
-  }], 'App 1', 'Namespace 1 for App 1');
+  await searchAndExpect(
+    [
+      {
+        role: '1',
+        app: '1',
+        namespace: '1',
+      },
+      {
+        role: '2',
+        app: '1',
+        namespace: '1',
+      },
+    ],
+    'App 1',
+    'Namespace 1 for App 1'
+  );
 
-  await searchAndExpect([{
-    role: '1',
-    app: '1',
-    namespace: '2',
-  }, {
-    role: '2',
-    app: '1',
-    namespace: '2',
-  }], 'App 1', 'Namespace 2 for App 1');
+  await searchAndExpect(
+    [
+      {
+        role: '1',
+        app: '1',
+        namespace: '2',
+      },
+      {
+        role: '2',
+        app: '1',
+        namespace: '2',
+      },
+    ],
+    'App 1',
+    'Namespace 2 for App 1'
+  );
 
-  await searchAndExpect([{
-    role: '1',
-    app: '2',
-    namespace: '1',
-  }, {
-    role: '2',
-    app: '2',
-    namespace: '1',
-  }, {
-    role: '1',
-    app: '2',
-    namespace: '2',
-  }, {
-    role: '2',
-    app: '2',
-    namespace: '2',
-  }], 'App 2');
+  await searchAndExpect(
+    [
+      {
+        role: '1',
+        app: '2',
+        namespace: '1',
+      },
+      {
+        role: '2',
+        app: '2',
+        namespace: '1',
+      },
+      {
+        role: '1',
+        app: '2',
+        namespace: '2',
+      },
+      {
+        role: '2',
+        app: '2',
+        namespace: '2',
+      },
+    ],
+    'App 2'
+  );
 
-  await searchAndExpect([{
-    role: '1',
-    app: '2',
-    namespace: '1',
-  }, {
-    role: '2',
-    app: '2',
-    namespace: '1',
-  }], 'App 2', 'Namespace 1 for App 2');
+  await searchAndExpect(
+    [
+      {
+        role: '1',
+        app: '2',
+        namespace: '1',
+      },
+      {
+        role: '2',
+        app: '2',
+        namespace: '1',
+      },
+    ],
+    'App 2',
+    'Namespace 1 for App 2'
+  );
 
-  await searchAndExpect([{
-    role: '1',
-    app: '2',
-    namespace: '2',
-  }, {
-    role: '2',
-    app: '2',
-    namespace: '2',
-  }], 'App 2', 'Namespace 2 for App 2');
+  await searchAndExpect(
+    [
+      {
+        role: '1',
+        app: '2',
+        namespace: '2',
+      },
+      {
+        role: '2',
+        app: '2',
+        namespace: '2',
+      },
+    ],
+    'App 2',
+    'Namespace 2 for App 2'
+  );
 });
 
 test('ListView - add button in grid redirects correctly', async ({page}) => {
-  await page.goto('/guardian/management-ui/roles');
+  await page.goto('/univention/guardian/management-ui/roles');
   await page.locator('.uGrid__header').getByRole('button', {name: 'Hinzufügen', exact: true}).click();
   await expect(page).toHaveURL(/\/guardian\/management-ui\/roles/);
 });
 
-
 test('EditView; create - layout', async ({page, browserName}) => {
   test.skip(browserName !== 'chromium', 'Only check screenshot on chromium for now');
 
-  await page.goto('/guardian/management-ui/roles/add');
+  await page.goto('/univention/guardian/management-ui/roles/add');
   await expect(page.locator('.uStandbyFullScreen').first()).toBeVisible();
   await expect(page.locator('.uStandbyFullScreen').first()).not.toBeAttached();
   await expect(page).toHaveScreenshot('EditView-create-layout.png');
 });
 
 test('EditView; create - form fields have correct values', async ({page}) => {
-  await page.goto('/guardian/management-ui/roles/add');
+  await page.goto('/univention/guardian/management-ui/roles/add');
 
   const appComboBox = await uComboBoxLocator(page, 'App');
   const namespaceComboBox = await uComboBoxLocator(page, 'Namensraum');
@@ -323,20 +377,11 @@ test('EditView; create - form fields have correct values', async ({page}) => {
   await expect(appComboBox.inputLoc).toHaveValue('');
   await expect(namespaceComboBox.inputLoc).toHaveValue('');
 
-  await appComboBox.expectToHaveOptions([
-    'App 1',
-    'App 2',
-  ]);
+  await appComboBox.expectToHaveOptions(['App 1', 'App 2']);
   await namespaceComboBox.expectToHaveOptions([]);
   const expectedNamespaceOptions = {
-    'App 1': [
-      'Namespace 1 for App 1',
-      'Namespace 2 for App 1',
-    ],
-    'App 2': [
-      'Namespace 1 for App 2',
-      'Namespace 2 for App 2',
-    ],
+    'App 1': ['Namespace 1 for App 1', 'Namespace 2 for App 1'],
+    'App 2': ['Namespace 1 for App 2', 'Namespace 2 for App 2'],
   };
   for (const app in expectedNamespaceOptions) {
     await appComboBox.selectOption(app);
@@ -351,14 +396,14 @@ test('EditView; create - form fields have correct values', async ({page}) => {
 
 test('EditView; create - back button', async ({page}) => {
   // if no inputs have been made the back button will just return to /roles
-  await page.goto('/guardian/management-ui/roles/add');
+  await page.goto('/univention/guardian/management-ui/roles/add');
   await page.getByRole('button', {name: 'Zurück', exact: true}).click();
   await expect(page).toHaveURL(/\/guardian\/management-ui\/roles/);
 
   // if inputs have been made a modal should appear
   const dialog = page.getByRole('dialog');
 
-  await page.goto('/guardian/management-ui/roles/add');
+  await page.goto('/univention/guardian/management-ui/roles/add');
   await page.getByLabel('Name', {exact: true}).fill('test');
 
   await page.getByRole('button', {name: 'Zurück', exact: true}).click();
@@ -374,7 +419,7 @@ test('EditView; create - back button', async ({page}) => {
 });
 
 test('EditView; create - required fields are checked', async ({page}) => {
-  await page.goto('/guardian/management-ui/roles/add');
+  await page.goto('/univention/guardian/management-ui/roles/add');
 
   const labels = ['App', 'Namensraum', 'Name'];
   for (const label of labels) {
@@ -388,11 +433,10 @@ test('EditView; create - required fields are checked', async ({page}) => {
   }
 });
 
-
 const gridShouldReload = [true, false];
 for (const doesGridReload of gridShouldReload) {
   test(`EditView; create - create object and grid reloads afterwards (${doesGridReload})`, async ({page}) => {
-    await page.goto('/guardian/management-ui/roles');
+    await page.goto('/univention/guardian/management-ui/roles');
     if (doesGridReload) {
       await page.getByRole('button', {name: 'Suchen', exact: true}).click();
       await expect(page.locator('.uStandbyFullScreen')).toBeVisible();
@@ -400,8 +444,8 @@ for (const doesGridReload of gridShouldReload) {
     }
     await page.locator('.uGrid__header').getByRole('button', {name: 'Hinzufügen', exact: true}).click();
 
-    await (await uComboBoxLocator(page,'App')).selectOption('App 1');
-    await (await uComboBoxLocator(page,'Namensraum')).selectOption('Namespace 1 for App 1');
+    await (await uComboBoxLocator(page, 'App')).selectOption('App 1');
+    await (await uComboBoxLocator(page, 'Namensraum')).selectOption('Namespace 1 for App 1');
     const name = 'somename';
     await page.getByLabel('Name', {exact: true}).fill(name);
 
@@ -431,7 +475,7 @@ for (const doesGridReload of gridShouldReload) {
 }
 
 test('ListView - grid edit button opens correct page', async ({page}) => {
-  await page.goto('/guardian/management-ui/roles');
+  await page.goto('/univention/guardian/management-ui/roles');
   await page.getByRole('button', {name: 'Suchen', exact: true}).click();
 
   const rows = page.locator('tbody').nth(0).getByRole('row');
@@ -448,7 +492,7 @@ test('ListView - grid edit button opens correct page', async ({page}) => {
 test('EditView; update - layout', async ({page, browserName}) => {
   test.skip(browserName !== 'chromium', 'Only check screenshot on chromium for now');
 
-  await page.goto('/guardian/management-ui/roles/edit/app-1:namespace-1:role-1');
+  await page.goto('/univention/guardian/management-ui/roles/edit/app-1:namespace-1:role-1');
   await expect(page.locator('.uStandbyFullScreen').first()).toBeVisible();
   await expect(page.locator('.uStandbyFullScreen').first()).not.toBeAttached();
   await expect(page).toHaveScreenshot('EditView-update-layout.png');
@@ -456,14 +500,14 @@ test('EditView; update - layout', async ({page, browserName}) => {
 
 test('EditView; update - back button', async ({page}) => {
   // if no inputs have been made the back button will just return to /roles
-  await page.goto('/guardian/management-ui/roles/edit/app-1:namespace-1:role-1');
+  await page.goto('/univention/guardian/management-ui/roles/edit/app-1:namespace-1:role-1');
   await page.getByRole('button', {name: 'Zurück', exact: true}).click();
   await expect(page).toHaveURL(/\/guardian\/management-ui\/roles/);
 
   // if inputs have been made a modal should appear
   const dialog = page.getByRole('dialog');
 
-  await page.goto('/guardian/management-ui/roles/edit/app-1:namespace-1:role-1');
+  await page.goto('/univention/guardian/management-ui/roles/edit/app-1:namespace-1:role-1');
   await page.getByLabel('Anzeigename', {exact: true}).fill('test');
 
   await page.getByRole('button', {name: 'Zurück', exact: true}).click();
@@ -479,7 +523,7 @@ test('EditView; update - back button', async ({page}) => {
 });
 
 test('EditView; update - update object and grid reloads afterwards', async ({page}) => {
-  await page.goto('/guardian/management-ui/roles');
+  await page.goto('/univention/guardian/management-ui/roles');
 
   await page.getByRole('button', {name: 'Suchen', exact: true}).click();
   await expect(page.locator('.uStandbyFullScreen')).toBeVisible();
@@ -500,7 +544,11 @@ test('EditView; update - update object and grid reloads afterwards', async ({pag
   const newDisplayName = 'newdisplayname';
   await page.getByLabel('Anzeigename', {exact: true}).fill(newDisplayName);
 
-  await page.locator('.listView__header__buttons').getByRole('button', {name: 'Speichern', exact: true}).filter({}).click();
+  await page
+    .locator('.listView__header__buttons')
+    .getByRole('button', {name: 'Speichern', exact: true})
+    .filter({})
+    .click();
 
   await expect(page).toHaveURL(/\/guardian\/management-ui\/roles/);
 
@@ -511,12 +559,11 @@ test('EditView; update - update object and grid reloads afterwards', async ({pag
   await expect(row.getByText(newDisplayName)).toBeAttached();
 });
 
-
 // For some reason the vue RouterLink does not have aria-current="page" set when navigating to the page directly.
 // It is set when getting there vie the ListView.
 // Not sure if user error in router setup or vue but.
 test.skip('EditView; update - page tabs are correct', async ({page}) => {
-  await page.goto('/guardian/management-ui/roles/edit/app-1:namespace-1:role-1');
+  await page.goto('/univention/guardian/management-ui/roles/edit/app-1:namespace-1:role-1');
   await expect(page.locator('.uStandbyFullScreen').first()).toBeVisible();
   await expect(page.locator('.uStandbyFullScreen').first()).not.toBeAttached();
   const buttons = await page.locator('.routeButtons');

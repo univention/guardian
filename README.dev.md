@@ -93,3 +93,43 @@ To run the integration tests:
 the test data will be overwritten with production data. You'll need to repeat step 2.
 
 For more details, see the [authorization-api README](authorization-api/README.md).
+
+### Management UI E2E Tests
+
+The Management UI has end-to-end tests using Playwright. To run them:
+
+1. Navigate to the management-ui directory:
+
+   ```bash
+   cd management-ui
+   ```
+
+1. Install dependencies if you haven't already:
+
+   ```bash
+   yarn install
+   ```
+
+1. Run the e2e tests:
+
+   ```bash
+   CI=1 yarn test:e2e --project=chromium
+   ```
+
+   **Note:** The `CI=1` environment variable enables headless mode, which is required for stable test execution.
+
+1. To run tests for all browsers (chromium, firefox, webkit):
+
+   ```bash
+   CI=1 yarn test:e2e
+   ```
+
+1. To update screenshot snapshots after intentional UI changes:
+
+   ```bash
+   CI=1 yarn playwright test --project=chromium --update-snapshots
+   ```
+
+The tests use the "test" data adapter which provides mock data. The configuration is automatically loaded from `.env.development` when running the dev server.
+
+For more details about the Management UI, see the [management-ui README](management-ui/README.md).
