@@ -37,3 +37,7 @@ Some documentation was not yet migrated to the developer reference and can be fo
 
 The information contained in those README files might be incomplete or faulty and should be migrated
 to the developer reference as soon as possible.
+
+## Development environment and local testing
+
+See [README.dev.md](README.dev.md).
