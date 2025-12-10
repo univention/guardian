@@ -692,14 +692,14 @@ files = [
 
 [[package]]
 name = "guardian-lib"
-version = "0.0.0.dev0+jconde.bump.guardian.lib.7beddb4d"
+version = "1.8.0"
 description = ""
 optional = false
 python-versions = ">=3.11,<4.0"
 groups = ["main"]
 files = [
-    {file = "guardian_lib-0.0.0.dev0+jconde.bump.guardian.lib.7beddb4d-py3-none-any.whl", hash = "sha256:f64c7e305cf5565e6566ea5fecaab1f6a7ed5e7769aed6007af7020c4f82cf03"},
-    {file = "guardian_lib-0.0.0.dev0+jconde.bump.guardian.lib.7beddb4d.tar.gz", hash = "sha256:f43e9a1a0d29f5c4e4a55b8b5cb68b73f451931079ce4bf8f8c6fef156cc25b6"},
+    {file = "guardian_lib-1.8.0-py3-none-any.whl", hash = "sha256:d1af393d2e5c448562e132809a6480f904eee10a6dc6dd028c46ba54bdca6d4f"},
+    {file = "guardian_lib-1.8.0.tar.gz", hash = "sha256:bec74c675328555dbcd676ab645ed366b96c144eabe9f981f37d5af2de28f5bf"},
 ]
 
 [package.dependencies]
@@ -1731,4 +1731,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "496446d0e2bd253044a0a2ed128b1f048c13de77c24ebe7e68b9507fab741762"
+content-hash = "15281e31c24aea3370c1e35c13b9aae55299709b84d0876b754ec5d8c3dbf310"
