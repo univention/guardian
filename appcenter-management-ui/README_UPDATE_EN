@@ -1,4 +1,8 @@
 <h1>Changelog</h1>
+<h2>v3.0.2 (2025-12-15)</h2>
+<ul>
+    <li>The Management UI uses NodeJS 24 and latest dependencies.</li>
+</ul>
 <h2>v3.0.1 (2025-07-10)</h2>
 <ul>
     <li>The Management UI app is now available for UCS 5.2.</li>

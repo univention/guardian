@@ -1,4 +1,8 @@
 <h1>Changelog</h1>
+<h2>v3.0.2 (2025-12-15)</h2>
+<ul>
+    <li>Update dependencies to their latest stable releases</li>
+</ul>
 <h2>v3.0.1 (2025-07-10)</h2>
 <ul>
     <li>The Management API app is now available for UCS 5.2.</li>
