@@ -183,6 +183,11 @@ class Session:
                 except ValueError:
                     retry_after = 1
                 time.sleep(retry_after)
+            except (BadRequest, Unauthorized):
+                self.session = self.create_session()
+                if _i == 4:
+                    raise
+
 
         return doit()
 
