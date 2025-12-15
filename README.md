@@ -41,3 +41,8 @@ to the developer reference as soon as possible.
 ## Development environment and local testing
 
 See [README.dev.md](README.dev.md).
+
+## Release
+
+To create an App Center release,
+follow the instructions in [releases](docs/developer-reference/releases.rst).
