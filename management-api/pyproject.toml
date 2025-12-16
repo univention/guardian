@@ -4,7 +4,7 @@
 
 [tool.poetry]
 name = "management-api"
-version = "3.0.2"
+version = "3.0.3"
 description = ""
 authors = ["UCS School Maintainers <ucsschool-maintainers@univention.de>"]
 readme = "README.md"
@@ -23,7 +23,7 @@ orjson = "^3.11.4"
 sqlalchemy = "^2.0.44"
 alembic = "^1.17.2"
 aiosqlite = "^0.21.0"
-guardian-lib = "1.8.0"
+guardian-lib = "1.8.1"
 asyncpg = "^0.31.0"
 aiofiles = "^25.1.0"
 aioshutil = "^1.6"
