@@ -10,6 +10,11 @@ component and version of the app.
 Authorization API
 =================
 
+Version 3.0.3 (2025-12-16)
+--------------------------
+
+* Update sub-dependencies to their latest versions.
+
 Version 3.0.2 (2025-12-15)
 --------------------------
 
@@ -73,6 +78,10 @@ Version 1.0.0 (2023-12-11)
 
 Management API
 ==============
+Version 3.0.3 (2025-12-16)
+--------------------------
+
+* Update sub-dependencies to their latest versions.
 
 Version 3.0.2 (2025-12-15)
 --------------------------
@@ -126,6 +135,11 @@ Version 1.0.0 (2023-12-11)
 
 Management UI
 ==============
+
+Version 3.0.3 (2025-12-16)
+--------------------------
+
+* Update sub-dependencies to their latest versions.
 
 Version 3.0.2 (2025-12-15)
 --------------------------
