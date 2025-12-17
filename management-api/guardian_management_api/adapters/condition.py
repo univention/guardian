@@ -296,7 +296,7 @@ class SQLConditionPersistenceAdapter(
             documentation=condition.documentation,
             parameters=[
                 DBConditionParameter(
-                    name=cond_param['name'], value_type=cond_param['value_type'], position=idx
+                    name=cond_param.name, value_type=cond_param.value_type, position=idx
                 )
                 for idx, cond_param in enumerate(condition.parameters)
             ],

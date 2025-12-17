@@ -17,6 +17,7 @@ from .models.capability import (
     CapabilityConditionRelation,
     ParametrizedCondition,
 )
+from .models.condition import ConditionParameter
 from .models.namespace import Namespace
 from .models.permission import Permission
 from .models.role import Role
@@ -804,7 +805,17 @@ async def update_condition(
             )
         old_condition = await persistence_port.read_one(query)
         for key, value in changed_values.items():
-            setattr(old_condition, key, value)
+            if key == "parameters" and isinstance(value, list):
+                cond_params = []
+                for param in value:
+                    cond_params.append(
+                        ConditionParameter(
+                            name=param.get("name"), value_type=param.get("value_type")
+                        )
+                    )
+                setattr(old_condition, key, cond_params)
+            else:
+                setattr(old_condition, key, value)
         condition = await persistence_port.update(old_condition)
         await bundle_server_port.schedule_bundle_build(BundleType.policies)
         logger.info("Condition updated.", actor_id=actor_id, condition_id=resource.id)
