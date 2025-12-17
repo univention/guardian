@@ -709,6 +709,34 @@ class TestBusinessLogic:
             )
 
     @pytest.mark.asyncio
+    async def test_update_condition(self, mocker):
+        api_request_mock = mocker.MagicMock()
+        persistence_mock = mocker.AsyncMock()
+        api_port_mock = mocker.AsyncMock()
+        api_port_mock.to_obj_edit.return_value = (
+            mocker.Mock(),
+            {"parameters": [{"name": "my_param", "type_value": "STRING"}]},
+        )
+        api_port_mock.transform_exception = transform_exception_identity
+        api_port_mock.to_api_get_single_response = mocker.AsyncMock(return_value=True)
+        bundle_server_mock = mocker.AsyncMock()
+        authz_mock = mocker.AsyncMock()
+        mock_dict = mocker.MagicMock()
+        mock_dict.get.return_value = True
+        authz_mock.authorize_operation = mocker.AsyncMock(return_value=mock_dict)
+        authc_mock = mocker.AsyncMock()
+        request_mock = mocker.Mock()
+        assert await business_logic.update_condition(
+            api_request_mock,
+            api_port_mock,
+            bundle_server_mock,
+            persistence_mock,
+            authc_mock,
+            authz_mock,
+            request_mock,
+        )
+
+    @pytest.mark.asyncio
     async def test_update_condition_unauthorized_error(self, mocker):
         api_request_mock = mocker.MagicMock()
         persistence_mock = mocker.AsyncMock()
