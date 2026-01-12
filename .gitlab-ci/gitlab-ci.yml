@@ -1,4 +1,4 @@
-# Copyright (C) 2023-2025 Univention GmbH
+# Copyright (C) 2023-2026 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
@@ -11,6 +11,7 @@ include:
     ref: "v1.52.1"
     file:
       - "jobs/generate-filesystem-sbom.yaml"
+      - "templates/pip-package-and-publish.yaml"
   - project: 'univention/dev/docs/sphinx-docker'
     file: 'pipeline/sphinx.yml'
   - component: $CI_SERVER_FQDN/univention/dev/internal/ucsschool-ci-utils/app-release@2
@@ -201,6 +202,28 @@ build_guardian_lib:
     - poetry config --local virtualenvs.create false
     - poetry build
 
+build_authorization_client:
+  stage: build_python
+  rules:
+    - changes:
+        - authorization-client/**/*
+  artifacts:
+    paths:
+      - authorization-client/dist/
+    expire_in: 1 week
+  image: docker-registry.knut.univention.de/python:3.11-slim
+  script:
+    - cd authorization-client
+    - pip install poetry=="$POETRY_VERSION"
+    - |-
+      if [ "$CI_COMMIT_BRANCH" != "$CI_DEFAULT_BRANCH" ]; then
+        poetry version "0.0.0.dev0+${CI_COMMIT_REF_SLUG//-/.}.$CI_COMMIT_SHORT_SHA"
+      else
+        true
+      fi
+    - poetry config --local virtualenvs.create false
+    - poetry build
+
 build_docker_image_opa:
   stage: build_docker
   rules:
@@ -277,6 +300,30 @@ publish_guardian-lib:
   image: docker-registry.knut.univention.de/python:3.11-slim
   script:
     - cd guardian-lib
+    - pip install poetry=="$POETRY_VERSION"
+    - |-
+      if [ "$CI_COMMIT_BRANCH" != "$CI_DEFAULT_BRANCH" ]; then
+        poetry version "0.0.0.dev0+${CI_COMMIT_REF_SLUG//-/.}.$CI_COMMIT_SHORT_SHA"
+      else
+        true
+      fi
+    - poetry config --local virtualenvs.create false
+    - poetry config --local repositories.project_local ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi
+    - poetry publish -r project_local --username gitlab-ci-token --password ${CI_JOB_TOKEN}
+
+publish_authorization_client:
+  stage: publish
+  when: manual
+  rules:
+    - changes:
+        - authorization-client/**/*
+  dependencies:
+    - build_authorization_client
+  needs:
+    - build_authorization_client
+  image: docker-registry.knut.univention.de/python:3.11-slim
+  script:
+    - cd authorization-client
     - pip install poetry=="$POETRY_VERSION"
     - |-
       if [ "$CI_COMMIT_BRANCH" != "$CI_DEFAULT_BRANCH" ]; then
@@ -378,4 +425,3 @@ docs-create-production-merge-request:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
       - docs/guardian-manual/**/*
-

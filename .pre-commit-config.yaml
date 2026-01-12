@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Univention GmbH
+# Copyright (C) 2023-2026 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
@@ -36,15 +36,15 @@ repos:
   hooks:
     - id: bandit
       name: backend-bandit
-      exclude: "authorization-api/tests/|management-api/tests|udm_client.py|guardian-lib/tests"
+      exclude: "authorization-api/tests/|management-api/tests|udm_client.py|guardian-lib/tests|authorization-client/tests"
 - repo: https://github.com/pre-commit/mirrors-mypy
   rev: v1.13.0
   hooks:
     - id: mypy
       name: backend-mypy
-      exclude: "docs/|authorization-api/tests/|management-api/tests|guardian-lib/tests"
+      exclude: "docs/|authorization-api/tests/|management-api/tests|guardian-lib/tests|authorization-client/tests"
       args: []
-      additional_dependencies: [pydantic>=2.0.0, pydantic-settings>=2.0.0, fastapi>=0.100.0, loguru==0.7.0, requests==2.31.0, types-requests==2.31.0, alembic==1.11.3, types-aiofiles, types-pymysql]
+      additional_dependencies: [pydantic>=2.0.0, pydantic-settings>=2.0.0, fastapi>=0.100.0, loguru==0.7.0, requests==2.31.0, types-requests==2.31.0, alembic==1.11.3, types-aiofiles, types-pymysql, types-PyYAML]
 - repo: https://github.com/jackdewinter/pymarkdown
   rev: v0.9.25
   hooks:
@@ -82,6 +82,9 @@ repos:
     - id: poetry-check
       name: backend-poetry-check-guardian-lib
       args: [ "-C", "guardian-lib" ]
+    - id: poetry-check
+      name: backend-poetry-check-authorization-client
+      args: [ "-C", "authorization-client" ]
     - id: poetry-lock
       name: backend-poetry-lock-authorization-api
       args: ["-C", "authorization-api", "--check"]
@@ -91,6 +94,9 @@ repos:
     - id: poetry-lock
       name: backend-poetry-lock-guardian-lib
       args: [ "-C", "guardian-lib", "--check" ]
+    - id: poetry-lock
+      name: backend-poetry-lock-authorization-client
+      args: [ "-C", "authorization-client", "--check" ]
 
 - repo: https://github.com/anderseknert/pre-commit-opa
   rev: v1.5.1
