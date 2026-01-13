@@ -21,13 +21,34 @@ poetry add guardian-authorization-client
 ```python
 from guardian_authorization_client import GuardianAuthorizationClient
 
-# Create a client
+# Create a client (uses HTTPS by default)
 client = GuardianAuthorizationClient(
     fqdn="guardian.example.com",
     keycloak_fqdn="keycloak.example.com",
     username="admin",
     password="secret",
     realm="ucs"
+)
+
+# Create a client with HTTP (e.g., for local development)
+client = GuardianAuthorizationClient(
+    fqdn="localhost:8000",
+    keycloak_fqdn="localhost:8080",
+    username="admin",
+    password="secret",
+    realm="ucs",
+    scheme="http"  # Uses HTTP for both Guardian and Keycloak
+)
+
+# Use different schemes for Guardian and Keycloak
+client = GuardianAuthorizationClient(
+    fqdn="guardian.example.com",
+    keycloak_fqdn="localhost:8080",
+    username="admin",
+    password="secret",
+    realm="ucs",
+    scheme="https",           # HTTPS for Guardian
+    keycloak_scheme="http"    # HTTP for Keycloak
 )
 
 # Check permissions

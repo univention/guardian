@@ -64,7 +64,6 @@ class DN:
 
 
 class LocalGuardianAuthorizationClient:
-
     def __init__(self, base_path):
         self.base_path = base_path
 
@@ -85,17 +84,17 @@ class LocalGuardianAuthorizationClient:
                 "fullname": _rol(x, d),
                 "conditions": [
                     (
-                        f'{c["app_name"]}:{c["namespace_name"]}:{c["name"]}',
+                        f"{c['app_name']}:{c['namespace_name']}:{c['name']}",
                         {item["name"]: item["value"] for item in c["parameters"]},
                     )
                     for c in d["conditions"]
                 ],
                 "permissions": [
-                    f'{p["app_name"]}:{p["namespace_name"]}:{p["name"]}'
+                    f"{p['app_name']}:{p['namespace_name']}:{p['name']}"
                     for p in d["permissions"]
                 ],
                 "relation": {"AND": all, "OR": any}[d["relation"]],
-                "role": f'{d["role"]["app_name"]}:{d["role"]["namespace_name"]}:{d["role"]["name"]}',
+                "role": f"{d['role']['app_name']}:{d['role']['namespace_name']}:{d['role']['name']}",
             }
 
         def _rol(x, d):
@@ -478,7 +477,6 @@ class TokenInvalidError(Exception):
 
 
 class GuardianAuthorizationClient:
-
     def __init__(
         self,
         fqdn,
@@ -486,13 +484,28 @@ class GuardianAuthorizationClient:
         username,
         password,
         realm="ucs",
+        scheme="https",
+        keycloak_scheme=None,
     ):
-        self._base_url = f"https://{fqdn}/guardian/authorization/".rstrip("/")
+        """
+        Initialize the Guardian Authorization Client.
+
+        Args:
+            fqdn: The fully qualified domain name of the Guardian server.
+            keycloak_fqdn: The fully qualified domain name of the Keycloak server.
+            username: Username for authentication.
+            password: Password for authentication.
+            realm: The Keycloak realm (default: "ucs").
+            scheme: URL scheme for Guardian endpoints ("http" or "https", default: "https").
+            keycloak_scheme: URL scheme for Keycloak endpoints. If not specified,
+                            uses the same value as `scheme`.
+        """
+        if keycloak_scheme is None:
+            keycloak_scheme = scheme
+        self._base_url = f"{scheme}://{fqdn}/guardian/authorization/".rstrip("/")
         self.username = username
         self.password = password
-        self.oidc_token_endpoint_url = (
-            f"https://{keycloak_fqdn}/realms/{realm}/protocol/openid-connect/token"
-        )
+        self.oidc_token_endpoint_url = f"{keycloak_scheme}://{keycloak_fqdn}/realms/{realm}/protocol/openid-connect/token"
         self.oidc_client_id = "guardian-scripts"
 
     def __enter__(self):
@@ -751,7 +764,7 @@ def expand_role_string(string):
 
 
 def implode_permission(data):
-    return f'{data["app_name"]}:{data["namespace_name"]}:{data["name"]}'
+    return f"{data['app_name']}:{data['namespace_name']}:{data['name']}"
 
 
 def expand_namespace(app_name, name):
