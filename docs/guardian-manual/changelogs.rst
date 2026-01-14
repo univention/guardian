@@ -10,6 +10,11 @@ component and version of the app.
 Authorization API
 =================
 
+Version 3.0.4 (2026-04-15)
+--------------------------
+
+* Update container images.
+
 Version 3.0.3 (2025-12-16)
 --------------------------
 
@@ -78,6 +83,14 @@ Version 1.0.0 (2023-12-11)
 
 Management API
 ==============
+
+Version 3.0.4 (2026-01-15)
+--------------------------
+
+* Add condition to test the value of an actor attribute.
+
+* Update container images.
+
 Version 3.0.3 (2025-12-16)
 --------------------------
 
@@ -135,6 +148,11 @@ Version 1.0.0 (2023-12-11)
 
 Management UI
 ==============
+
+Version 3.0.4 (2026-01-15)
+--------------------------
+
+* Update container image.
 
 Version 3.0.3 (2025-12-16)
 --------------------------

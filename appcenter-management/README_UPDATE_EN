@@ -1,4 +1,9 @@
 <h1>Changelog</h1>
+<h2>v3.0.4 (2026-01-15)</h2>
+<ul>
+    <li>Update container images.</li>
+    <li>Add condition to test the value of an actor attribute.</li>
+</ul>
 <h2>v3.0.3 (2025-12-16)</h2>
 <ul>
     <li>Update sub-dependencies to their latest stable releases</li>
