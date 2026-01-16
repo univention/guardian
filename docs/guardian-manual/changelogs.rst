@@ -10,7 +10,7 @@ component and version of the app.
 Authorization API
 =================
 
-Version 3.0.4 (2026-04-15)
+Version 3.0.4 (2026-01-15)
 --------------------------
 
 * Update container images.
