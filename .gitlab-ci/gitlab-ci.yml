@@ -126,7 +126,7 @@ run_precommit_frontend:
 # No jobs for OPA code were created, since the form and structure of the OPA code is not final yet. TODO
 .coverage:
   stage: test
-  image: docker-registry.knut.univention.de/python:3.11-slim
+  image: docker-registry.knut.univention.de/python:3.12-slim
   variables:
     GUARDIAN__MANAGEMENT__BASE_URL: "http://localhost:8001"
     GUARDIAN_COMPONENT: ""
@@ -189,7 +189,7 @@ build_guardian_lib:
     paths:
       - guardian-lib/dist/
     expire_in: 1 week
-  image: docker-registry.knut.univention.de/python:3.11-slim
+  image: docker-registry.knut.univention.de/python:3.12-slim
   script:
     - cd guardian-lib
     - pip install poetry=="$POETRY_VERSION"
@@ -211,7 +211,7 @@ build_authorization_client:
     paths:
       - authorization-client/dist/
     expire_in: 1 week
-  image: docker-registry.knut.univention.de/python:3.11-slim
+  image: docker-registry.knut.univention.de/python:3.12-slim
   script:
     - cd authorization-client
     - pip install poetry=="$POETRY_VERSION"
@@ -297,7 +297,7 @@ publish_guardian-lib:
     - build_guardian_lib
   needs:
     - build_guardian_lib
-  image: docker-registry.knut.univention.de/python:3.11-slim
+  image: docker-registry.knut.univention.de/python:3.12-slim
   script:
     - cd guardian-lib
     - pip install poetry=="$POETRY_VERSION"
@@ -321,7 +321,7 @@ publish_authorization_client:
     - build_authorization_client
   needs:
     - build_authorization_client
-  image: docker-registry.knut.univention.de/python:3.11-slim
+  image: docker-registry.knut.univention.de/python:3.12-slim
   script:
     - cd authorization-client
     - pip install poetry=="$POETRY_VERSION"
