@@ -16,7 +16,7 @@ ADD --checksum=${opa_checksum} \
     https://github.com/open-policy-agent/opa/releases/download/v${opa_version}/opa_linux_amd64_static \
     /usr/bin/opa
 
-FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base:5.2.4-build.20260108
+FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base:5.2.4-build.20260224
 
 ARG commit
 ARG date
