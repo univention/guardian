@@ -1,10 +1,10 @@
-# Copyright (C) 2023-2025 Univention GmbH
+# Copyright (C) 2023-2026 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
 [tool.poetry]
 name = "authorization-api"
-version = "3.0.3"
+version = "3.0.6"
 description = ""
 authors = ["UCS School Maintainers <ucsschool-maintainers@univention.de>"]
 readme = "README.md"
@@ -14,7 +14,7 @@ packages = [{include = "guardian_authorization_api"}, ]
 python = "^3.11"
 pydantic = "^2.12.5"
 pydantic-settings = "^2.12.0"
-fastapi = "^0.115.0"
+fastapi = "^0.135.1"
 gunicorn = "^23.0.0"
 uvicorn = "^0.38.0"
 loguru = "^0.7.3"

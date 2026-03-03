@@ -1,10 +1,10 @@
-# Copyright (C) 2023-2025 Univention GmbH
+# Copyright (C) 2023-2026 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
 [tool.poetry]
 name = "management-api"
-version = "3.0.4"
+version = "3.0.6"
 description = ""
 authors = ["UCS School Maintainers <ucsschool-maintainers@univention.de>"]
 readme = "README.md"
