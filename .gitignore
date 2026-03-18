@@ -22,3 +22,4 @@ appcenter-authz/files/compose
 appcenter-management/files/compose
 appcenter-management-ui/files/compose
 .mypy_cache/
+_bmad/_memory/

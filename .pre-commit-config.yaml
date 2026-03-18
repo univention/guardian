@@ -50,7 +50,6 @@ repos:
   hooks:
     - id: pymarkdown
       name: general-markdown
-      exclude: ".gitlab/issue_templates/|helm/"
       args:
         - --disable-rules
         - MD013,MD024,MD034,MD041
@@ -151,3 +150,5 @@ repos:
       pass_filenames: false
       additional_dependencies:
         - "yarn"
+
+exclude: ".opencode|_bmad|_bmad-output"
