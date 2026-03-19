@@ -12,6 +12,7 @@ include:
     file:
       - "jobs/generate-filesystem-sbom.yaml"
       - "templates/pip-package-and-publish.yaml"
+      - "templates/sonarqube.yaml"
   - project: 'univention/dev/docs/sphinx-docker'
     file: 'pipeline/sphinx.yml'
   - component: $CI_SERVER_FQDN/univention/dev/internal/ucsschool-ci-utils/app-release@2
@@ -124,7 +125,7 @@ run_precommit_frontend:
     - pre-commit run -a
 
 # No jobs for OPA code were created, since the form and structure of the OPA code is not final yet. TODO
-.coverage:
+.test:
   stage: test
   image: docker-registry.knut.univention.de/python:3.11-slim
   variables:
@@ -133,43 +134,41 @@ run_precommit_frontend:
     GUARDIAN_TEST_ARGS: ""
     GUARDIAN_COVERAGE_COMPONENT: ""
     GUARDIAN_COVERAGE_LIMIT: ""
-  rules:
-    - if: "$CI_COMMIT_MESSAGE =~ /skip-build/ || $pipeline =~ /skip-build/"
-      when: never
-    - if: "$CI_COMMIT_MESSAGE =~ /force-build/ || $pipeline =~ /force-build/"
-    - changes:
-        - $GUARDIAN_COMPONENT/**/*
   script:
     - cd "$GUARDIAN_COMPONENT"
     - pip install poetry=="$POETRY_VERSION"
     - poetry config --local virtualenvs.create false
     - poetry install
-    - pytest -vv "$GUARDIAN_TEST_ARGS" --cov="$GUARDIAN_COVERAGE_COMPONENT" --cov-report=term --cov-report=xml:coverage.xml .
-    - coverage report --fail-under="$GUARDIAN_COVERAGE_LIMIT"  # Variable set in Gitlab UI
+    - pytest -lvv "$GUARDIAN_TEST_ARGS" --cov="$GUARDIAN_COVERAGE_COMPONENT" --cov-fail-under="$GUARDIAN_COVERAGE_LIMIT" --cov-report=term-missing --cov-report=xml:coverage.xml --junit-xml=pytest-junit.xml .
   coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
   artifacts:
+    paths:
+      - $GUARDIAN_COMPONENT/coverage.xml
     reports:
       coverage_report:
         coverage_format: cobertura
         path: $GUARDIAN_COMPONENT/coverage.xml
+      junit: $GUARDIAN_COMPONENT/pytest-junit.xml
+    expire_in: "1 day"
+    when: "always"
 
-coverage_management:
-  extends: .coverage
+test_management:
+  extends: .test
   variables:
     GUARDIAN_COMPONENT: "management-api"
     GUARDIAN_TEST_ARGS: "-k not e2e_udm"
     GUARDIAN_COVERAGE_COMPONENT: "guardian_management_api"
     GUARDIAN_COVERAGE_LIMIT: $MANAGEMENT_COVERAGE_LIMIT
 
-coverage_authz:
-  extends: .coverage
+test_authz:
+  extends: .test
   variables:
     GUARDIAN_COMPONENT: "authorization-api"
     GUARDIAN_COVERAGE_COMPONENT: "guardian_authorization_api"
     GUARDIAN_COVERAGE_LIMIT: $AUTHZ_COVERAGE_LIMIT
 
-coverage_guardian_lib:
-  extends: .coverage
+test_guardian_lib:
+  extends: .test
   variables:
     GUARDIAN_COMPONENT: "guardian-lib"
     GUARDIAN_COVERAGE_COMPONENT: "guardian_lib"
@@ -425,3 +424,8 @@ docs-create-production-merge-request:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
       - docs/guardian-manual/**/*
+
+sonarqube:
+  extends: .sonarqube
+  stage: test
+  needs: [test_authz, test_guardian_lib, test_management]
