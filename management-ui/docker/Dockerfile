@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-FROM node:24 AS builder
+FROM ${DOCKER_PROXY}node:24 AS builder
 
 COPY management-ui /management-ui
 WORKDIR /management-ui
