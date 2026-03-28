@@ -5,7 +5,7 @@
 ARG POETRY_VERSION="2.2.1"
 
 # Calculate Python dependencies
-FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base-flex:5.2.5@sha256:ae8fa09121beede5b14aafbfc21b79da45f430d1050fb900eab7becda270c14d AS requirements_builder
+FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base-flex:5.2.5@sha256:fa97151da8ac7b124ca66157588bd31eceeed6a061f1082501a7c97768197b27 AS requirements_builder
 
 ARG POETRY_VERSION
 

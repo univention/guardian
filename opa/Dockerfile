@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base-flex:5.2.5@sha256:ae8fa09121beede5b14aafbfc21b79da45f430d1050fb900eab7becda270c14d AS builder
+FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base-flex:5.2.5@sha256:fa97151da8ac7b124ca66157588bd31eceeed6a061f1082501a7c97768197b27 AS builder
 
 ARG opa_version=1.11.0
 ARG opa_checksum=sha256:53451e1d1362dbb11d6703c159b05de5cd18278fa4aee0b75a0b9590d573fd0a
