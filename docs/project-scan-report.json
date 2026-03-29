@@ -1,0 +1,140 @@
+{
+  "completed_steps": [
+    {
+      "status": "completed",
+      "step": "step_1",
+      "summary": "Classified as monorepo with 5 parts",
+      "timestamp": "2026-03-29T00:00:00Z"
+    },
+    {
+      "status": "completed",
+      "step": "step_2",
+      "summary": "Found 65+ existing docs",
+      "timestamp": "2026-03-29T00:00:30Z"
+    },
+    {
+      "status": "completed",
+      "step": "step_3",
+      "summary": "Tech stack analyzed for all 5 parts + infrastructure",
+      "timestamp": "2026-03-29T00:01:00Z"
+    },
+    {
+      "status": "completed",
+      "step": "step_4",
+      "summary": "7 conditional analysis docs written (APIs, data models, state, UI)",
+      "timestamp": "2026-03-29T00:02:00Z"
+    },
+    {
+      "status": "completed",
+      "step": "step_5",
+      "summary": "Source tree with annotations for all 5 parts + infrastructure",
+      "timestamp": "2026-03-29T00:02:30Z"
+    },
+    {
+      "status": "completed",
+      "step": "step_6",
+      "summary": "Development guide with setup, testing, linting, env vars, CI/CD, deployment",
+      "timestamp": "2026-03-29T00:03:00Z"
+    },
+    {
+      "status": "completed",
+      "step": "step_7",
+      "summary": "7 integration points documented with data flow diagrams",
+      "timestamp": "2026-03-29T00:03:30Z"
+    },
+    {
+      "status": "completed",
+      "step": "step_8",
+      "summary": "5 architecture docs written (one per part)",
+      "timestamp": "2026-03-29T00:04:00Z"
+    },
+    {
+      "status": "completed",
+      "step": "step_9",
+      "summary": "Project overview written",
+      "timestamp": "2026-03-29T00:04:30Z"
+    },
+    {
+      "status": "completed",
+      "step": "step_10",
+      "summary": "Master index generated",
+      "timestamp": "2026-03-29T00:04:45Z"
+    },
+    {
+      "status": "completed",
+      "step": "step_11",
+      "summary": "Validation complete, no incomplete markers",
+      "timestamp": "2026-03-29T00:05:00Z"
+    },
+    {
+      "status": "completed",
+      "step": "step_12",
+      "summary": "Workflow complete",
+      "timestamp": "2026-03-29T00:05:00Z"
+    }
+  ],
+  "current_step": "completed",
+  "findings": {
+    "project_classification": "Monorepo, 5 parts, Python/FastAPI + Vue 3",
+    "technology_stack": "Python 3.11, FastAPI, SQLAlchemy 2, Pydantic v2, Vue 3, TypeScript, Vite, Pinia, OPA 1.11, Keycloak"
+  },
+  "mode": "initial_scan",
+  "outputs_generated": [
+    "project-scan-report.json",
+    "technology-stack.md",
+    "api-contracts-management-api.md",
+    "api-contracts-authorization-api.md",
+    "api-contracts-management-ui.md",
+    "data-models-management-api.md",
+    "data-models-authorization-api.md",
+    "state-management-management-ui.md",
+    "ui-components-management-ui.md",
+    "source-tree-analysis.md",
+    "development-guide.md",
+    "integration-architecture.md",
+    "architecture-management-api.md",
+    "architecture-authorization-api.md",
+    "architecture-guardian-lib.md",
+    "architecture-authorization-client.md",
+    "architecture-management-ui.md",
+    "project-overview.md",
+    "index.md"
+  ],
+  "project_knowledge": "/home/dtroeder/git/guardian/docs",
+  "project_root": "/home/dtroeder/git/guardian",
+  "project_types": [
+    {
+      "display_name": "Management API",
+      "part_id": "management-api",
+      "project_type_id": "backend"
+    },
+    {
+      "display_name": "Authorization API",
+      "part_id": "authorization-api",
+      "project_type_id": "backend"
+    },
+    {
+      "display_name": "Guardian Lib",
+      "part_id": "guardian-lib",
+      "project_type_id": "library"
+    },
+    {
+      "display_name": "Authorization Client",
+      "part_id": "authorization-client",
+      "project_type_id": "library"
+    },
+    {
+      "display_name": "Management UI",
+      "part_id": "management-ui",
+      "project_type_id": "web"
+    }
+  ],
+  "resume_instructions": "Workflow complete. All 19 documents generated.",
+  "scan_level": "exhaustive",
+  "timestamps": {
+    "completed": "2026-03-29T00:05:00Z",
+    "last_updated": "2026-03-29T00:05:00Z",
+    "started": "2026-03-29T00:00:00Z"
+  },
+  "workflow_version": "1.2.0"
+}
