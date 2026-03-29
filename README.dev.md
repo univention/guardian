@@ -1,5 +1,9 @@
 # Developing Guardian
 
+A thorough project documentation including developer guidance can be found at [docs/index.md](docs/index.md).
+
+## Running Guardian
+
 - `./dev-run`: Run Guardian in development mode with hot-reloading.
 - `./.env.example`: Example environment variables for development.
 

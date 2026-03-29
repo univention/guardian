@@ -18,6 +18,12 @@ access control (ABAC) and enables the integration with various UCS and third par
 
 The Guardian manual can be found [here](https://docs.software-univention.de/guardian-manual/latest/index.html).
 
+## Project Documentation
+
+A thorough project documentation including developer guidance can be found at [docs/index.md](docs/index.md).
+
+## Developer reference
+
 The Guardian developer reference is not yet published anywhere and has to be build locally.
 This can be done by running:
 
