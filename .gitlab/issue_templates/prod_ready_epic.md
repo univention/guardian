@@ -17,8 +17,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 ## Story
 
-As a \<role\><br/>
-I can \<capability\>,<br/>
+As a \<role\> \
+I can \<capability\>, \
 so that \<receive benefit\>.
 
 ## Context/description
