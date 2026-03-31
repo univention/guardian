@@ -19,8 +19,8 @@ include:
     inputs:
       app_id: "guardian-authorization-api"
       job_prefix: "authz-"
-      mail_sender: "ucsschool-maintainers@univention.de"
-      author_alias: "UCS@school Team"
+      mail_sender: "nubus-core@univention.de"
+      author_alias: "Nubus Core Team"
       changelog_link: "https://docs.software-univention.de/guardian-manual/latest/changelogs.html#authorization-api"
       mail_recipient: "app-announcement@univention.de"
       chat_destination: "#ucsschool"
@@ -37,8 +37,8 @@ include:
     inputs:
       app_id: "guardian-management-api"
       job_prefix: "management-"
-      mail_sender: "ucsschool-maintainers@univention.de"
-      author_alias: "UCS@school Team"
+      mail_sender: "nubus-core@univention.de"
+      author_alias: "Nubus Core Team"
       changelog_link: "https://docs.software-univention.de/guardian-manual/latest/changelogs.html#management-api"
       mail_recipient: "app-announcement@univention.de"
       chat_destination: "#ucsschool"
@@ -53,8 +53,8 @@ include:
     inputs:
       app_id: "guardian-management-ui"
       job_prefix: "management-ui-"
-      mail_sender: "ucsschool-maintainers@univention.de"
-      author_alias: "UCS@school Team"
+      mail_sender: "nubus-core@univention.de"
+      author_alias: "Nubus Core Team"
       changelog_link: "https://docs.software-univention.de/guardian-manual/latest/changelogs.html#management-ui"
       mail_recipient: "app-announcement@univention.de"
       chat_destination: "#ucsschool"
