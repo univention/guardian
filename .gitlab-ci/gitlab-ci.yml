@@ -139,6 +139,7 @@ run_precommit_frontend:
     - pip install poetry=="$POETRY_VERSION"
     - poetry config --local virtualenvs.create false
     - poetry install
+    - if [ "$GUARDIAN_COMPONENT" != "guardian-lib" ]; then poetry run pip install -e ../guardian-lib; fi
     - pytest -lvv "$GUARDIAN_TEST_ARGS" --cov="$GUARDIAN_COVERAGE_COMPONENT" --cov-fail-under="$GUARDIAN_COVERAGE_LIMIT" --cov-report=term-missing --cov-report=xml:coverage.xml --junit-xml=pytest-junit.xml .
   coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
   artifacts:
