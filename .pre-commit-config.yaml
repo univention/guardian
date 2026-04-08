@@ -36,7 +36,7 @@ repos:
   hooks:
     - id: bandit
       name: backend-bandit
-      exclude: "authorization-api/tests/|management-api/tests|udm_client.py|guardian-lib/tests|authorization-client/tests"
+      exclude: "authorization-api/tests/|management-api/tests|udm_client.py|guardian-lib/guardian_pytest|guardian-lib/tests|authorization-client/tests"
 - repo: https://github.com/pre-commit/mirrors-mypy
   rev: v1.13.0
   hooks:
