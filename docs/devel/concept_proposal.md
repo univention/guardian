@@ -4,6 +4,15 @@ Copyright (C) 2023 Univention GmbH
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
+<!-- FOR AI AGENTS: This document is written for humans (requirements,
+     user stories, deliberation, historical context). A compressed,
+     agent-oriented version of the domain model -- definitions,
+     rolestring grammar, context semantics, invariants, built-in
+     conditions, RCM shape -- lives at
+     docs/devel/concept_proposal_ai-optimized.md. Read that file
+     instead unless you specifically need requirement IDs (C1..SUPP3)
+     or historical rationale from this document. -->
+
 # Requirements and concept for the UCS authorization engine
 
 [[_TOC_]]
