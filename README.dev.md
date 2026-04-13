@@ -2,6 +2,8 @@
 
 A thorough project documentation including developer guidance can be found at [docs/index.md](docs/index.md).
 
+A "cheat sheet" for roles, privilege/capabilities, and permissions is in [Guardian 3.0 Cheat Sheet](docs/guardian_cheat_sheet.pdf).
+
 ## Running Guardian
 
 - `./dev-run`: Run Guardian in development mode with hot-reloading.
