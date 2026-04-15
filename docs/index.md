@@ -30,32 +30,32 @@
 
 ### Overview & Cross-Cutting
 
-- [Project Overview](./project-overview.md) -- Purpose, structure, tech stack summary
-- [Technology Stack](./technology-stack.md) -- Full dependency analysis per part
-- [Source Tree Analysis](./source-tree-analysis.md) -- Annotated directory structure
-- [Integration Architecture](./integration-architecture.md) -- How parts communicate, data flows
-- [Development Guide](./development-guide.md) -- Setup, testing, linting, CI/CD, deployment
+- [Project Overview](./generated/project-overview.md) -- Purpose, structure, tech stack summary
+- [Technology Stack](./generated/technology-stack.md) -- Full dependency analysis per part
+- [Source Tree Analysis](./generated/source-tree-analysis.md) -- Annotated directory structure
+- [Integration Architecture](./generated/integration-architecture.md) -- How parts communicate, data flows
+- [Development Guide](./generated/development-guide.md) -- Setup, testing, linting, CI/CD, deployment
 
 ### Architecture (Per Part)
 
-- [Architecture -- Management API](./architecture-management-api.md)
-- [Architecture -- Authorization API](./architecture-authorization-api.md)
-- [Architecture -- Guardian Lib](./architecture-guardian-lib.md)
-- [Architecture -- Authorization Client](./architecture-authorization-client.md)
-- [Architecture -- Management UI](./architecture-management-ui.md)
+- [Architecture -- Management API](./generated/architecture-management-api.md)
+- [Architecture -- Authorization API](./generated/architecture-authorization-api.md)
+- [Architecture -- Guardian Lib](./generated/architecture-guardian-lib.md)
+- [Architecture -- Authorization Client](./generated/architecture-authorization-client.md)
+- [Architecture -- Management UI](./generated/architecture-management-ui.md)
 
 ### API Contracts
 
-- [API Contracts -- Management API](./api-contracts-management-api.md) -- 50 REST endpoints
-- [API Contracts -- Authorization API](./api-contracts-authorization-api.md) -- 5 REST endpoints
-- [API Contracts -- Management UI](./api-contracts-management-ui.md) -- Client-side DataPort interface
+- [API Contracts -- Management API](./generated/api-contracts-management-api.md) -- 50 REST endpoints
+- [API Contracts -- Authorization API](./generated/api-contracts-authorization-api.md) -- 5 REST endpoints
+- [API Contracts -- Management UI](./generated/api-contracts-management-ui.md) -- Client-side DataPort interface
 
 ### Data & State
 
-- [Data Models -- Management API](./data-models-management-api.md) -- 10 SQL tables, ER diagram, migrations
-- [Data Models -- Authorization API](./data-models-authorization-api.md) -- 4 model layers, UDM integration
-- [State Management -- Management UI](./state-management-management-ui.md) -- 3 Pinia stores
-- [UI Components -- Management UI](./ui-components-management-ui.md) -- Views, routes, field types, i18n
+- [Data Models -- Management API](./generated/data-models-management-api.md) -- 10 SQL tables, ER diagram, migrations
+- [Data Models -- Authorization API](./generated/data-models-authorization-api.md) -- 4 model layers, UDM integration
+- [State Management -- Management UI](./generated/state-management-management-ui.md) -- 3 Pinia stores
+- [UI Components -- Management UI](./generated/ui-components-management-ui.md) -- Views, routes, field types, i18n
 
 ---
 
@@ -92,8 +92,8 @@
 
 ### For New Developers
 
-1. Read this index and the [Project Overview](./project-overview.md)
-2. Follow the [Development Guide](./development-guide.md) to set up your environment
+1. Read this index and the [Project Overview](./generated/project-overview.md)
+2. Follow the [Development Guide](./generated/development-guide.md) to set up your environment
 3. Read the architecture doc for the part you'll work on
 4. Run `pre-commit run --all-files` after every change
 
@@ -102,7 +102,7 @@
 1. Read the relevant architecture doc(s) for your feature's scope
 2. Check API contracts for existing endpoints
 3. Review data models for schema understanding
-4. For full-stack features, read [Integration Architecture](./integration-architecture.md)
+4. For full-stack features, read [Integration Architecture](./generated/integration-architecture.md)
 
 ### For AI-Assisted Development (Brownfield PRD)
 
