@@ -26,17 +26,39 @@ SQLAlchemy DB models) -- never shared across layers.
 
 ## Quick-Reference Commands
 
+Prerequisites: Python 3.11+, Poetry 2.2.1, Node.js 24+, Yarn 1.22.22,
+Docker + Docker Compose, pre-commit.
+
 ```bash
 poetry install                                      # Install Python deps (from subproject dir)
 cd management-ui && yarn install                    # Install frontend deps
 pre-commit run --all-files                          # All linters (MANDATORY after any change)
 ```
 
+**Linter discipline:** Black, Ruff, mypy, and Bandit are NOT dev dependencies --
+they live only in pre-commit's isolated environments. Never install or run
+them directly; always go through `pre-commit`.
+
 ```bash
-# Management API tests (from management-api/)
+# Start full dev stack (8 services via Docker Compose: proxy, management-api,
+# authorization-api, management-ui, opa, keycloak, keycloak-provisioning, db)
+docker compose -f dev-compose.yaml up --build
+# PostgreSQL mode instead of SQLite:
+docker compose -f dev-compose.yaml -f dev-compose-postgres.yaml up --build
+
+# Local backend (without Docker, from management-api/ or authorization-api/)
+poetry run uvicorn guardian_management_api.main:app --reload --host 0.0.0.0 --port 8000
+
+# Local frontend (from management-ui/)
+yarn dev
+```
+
+```bash
+# Backend tests (from management-api/, authorization-api/, or guardian-lib/)
 poetry run pytest tests/                            # All tests
 poetry run pytest tests/test_business_logic.py      # Single file
 poetry run pytest -k "test_post_app"                # By name pattern
+poetry run pytest -m "not e2e"                      # Skip e2e
 
 # Inside Docker dev containers
 docker exec management-guardian-dev pytest -v /app/management-api/tests/
@@ -45,44 +67,45 @@ docker exec authz-guardian-dev pytest -v /app/authorization-api/tests/
 # Management UI
 yarn test:unit --run                                # Vitest (single run)
 CI=1 yarn test:e2e --project=chromium               # Playwright E2E (headless)
+
+# OPA policy tests
+opa test -b management-api/rego_policy_bundle_template -v
 ```
 
-For Docker Compose setup, individual linter commands, CI/CD details, and full
-dev environment docs see [`docs/development-guide.md`](docs/development-guide.md).
+Env var naming convention: `GUARDIAN__MANAGEMENT__*` (management-api),
+`GUARDIAN__AUTHZ__*` (authorization-api), `VITE__*` (management-ui). For
+specific variables and values, read the service's `config.py` / settings
+module -- the code is the source of truth.
 
 ## Context Loading
 
-Before answering any question or starting any task, consult the "Where to Find
-What" table below to identify relevant documentation. Use the Read or Glob tool
-to load those files before proceeding. Only load files relevant to the task at
-hand -- do not preemptively load everything.
+Two sources are authoritative for agents:
 
-Examples:
+1. **Intent and conventions** -- everything under `_bmad-output/` plus
+   [`docs/devel/concept_proposal_ai-optimized.md`](docs/devel/concept_proposal_ai-optimized.md)
+   (domain model). These are curated for agent use. Read them for architecture
+   rules, conventions, design decisions, and the meaning of domain terms.
+2. **Current behavior** -- the **code**. For any claim about what an endpoint
+   returns, what fields a model has, how a function is called, or what tests
+   exist, verify with Read/Grep/Glob and cite `file:line`.
 
-- Questions about REST endpoints or API design → load `docs/api-contracts-*.md`
-- Questions about data models or schema → load `docs/data-models-*.md`
-- Questions about project/component structure → load `docs/project-overview.md`
-  and/or `docs/source-tree-analysis.md`
-- Questions about architecture or hexagonal boundaries → load the matching
-  `docs/architecture-*.md` and `_bmad-output/project-context.md`
-- Questions about the domain model (roles, capabilities, namespaces, ...) →
-  load `docs/devel/concept_proposal.md`
-- Implementation work → always load `_bmad-output/project-context.md` plus any
-  architecture or API-contract docs matching the component being changed
-- Dev setup, testing, linting, CI/CD → load `docs/development-guide.md`
+**Do not load `docs/generated/`.** Those files are generated snapshots
+maintained for human developers and may be stale. If you encounter
+`docs/generated/*.md` via Grep or Glob, treat them as non-authoritative and
+do not rely on their content. Other `docs/` subdirectories
+(`docs/guardian-manual/`, `docs/developer-reference/`) are also human-facing --
+prefer code or `_bmad-output/` for agent tasks.
+
+Use the "Where to Find What" table below to find a starting point, then read
+only what is relevant to the task. If the code and an agent-authoritative doc
+disagree, the code wins -- flag the discrepancy in your response so the user
+can decide which side to correct.
 
 ## Where to Find What
 
 | Topic | Location |
 |-------|----------|
-| Project overview, tech stack, component diagrams | [`docs/project-overview.md`](docs/project-overview.md) |
-| Directory tree, per-file descriptions | [`docs/source-tree-analysis.md`](docs/source-tree-analysis.md) |
-| Per-component architecture deep dives | [`docs/architecture-*.md`](docs/) |
-| API contracts (50+ REST endpoints) | [`docs/api-contracts-*.md`](docs/) |
-| Data models & SQL schema | [`docs/data-models-*.md`](docs/) |
-| Integration architecture & data flows | [`docs/integration-architecture.md`](docs/integration-architecture.md) |
-| Domain model (actors, roles, capabilities, ...) | [`docs/devel/concept_proposal.md`](docs/devel/concept_proposal.md) |
-| Dev setup, testing, linting, CI/CD, env vars | [`docs/development-guide.md`](docs/development-guide.md) |
+| Domain model (actors, roles, capabilities/privileges, namespaces, ...) | [`docs/devel/concept_proposal_ai-optimized.md`](docs/devel/concept_proposal_ai-optimized.md) |
 | Technology stack & version pins | [`project-context.md` > Technology Stack](_bmad-output/project-context.md) |
 | Import, typing, exception, logging conventions | [`project-context.md` > Language-Specific Rules](_bmad-output/project-context.md) |
 | Hexagonal architecture & boundary rules | [`project-context.md` > Framework-Specific Rules](_bmad-output/project-context.md) |
@@ -93,4 +116,4 @@ Examples:
 | Phase 1 architectural decisions & patterns | [`_bmad-output/planning-artifacts/architecture.md`](_bmad-output/planning-artifacts/architecture.md) |
 | Phase 1 product requirements | [`_bmad-output/planning-artifacts/prd.md`](_bmad-output/planning-artifacts/prd.md) |
 | Phase 1 UX design specification | [`_bmad-output/planning-artifacts/ux-design-specification.md`](_bmad-output/planning-artifacts/ux-design-specification.md) |
-| Full documentation index | [`docs/index.md`](docs/index.md) |
+| Current behavior (endpoints, models, schema, structure, config) | **the code** -- use Read/Grep/Glob |
