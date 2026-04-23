@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base-flex:5.2.5@sha256:6258277e68aea5971408fb28409c002e852c398aacd28c7293d14611766206ea AS builder
+FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base-flex:5.2.5@sha256:fa70bdf702e30093d33233ce00040398ccf58dfc65ae1978f11a8f9fc64ee223 AS builder
 
 ARG opa_version=1.11.0
 ARG opa_checksum=sha256:53451e1d1362dbb11d6703c159b05de5cd18278fa4aee0b75a0b9590d573fd0a
@@ -17,7 +17,7 @@ ADD --checksum=${opa_checksum} \
     /usr/bin/opa
 
 # Calculate Python dependencies
-FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base:5.2.5-build.20260417@sha256:01d93ca22e4312a1d3d47322bc93448e5cf0b55206ec5b3e019493f632debe36 AS requirements_builder
+FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base:5.2.5-build.20260423@sha256:039b52ec345d7b4fe37b549c9b906bbe1ec0a9cbce607824bd32fcd20b65dbdd AS requirements_builder
 WORKDIR /build
 RUN apt-get update \
     && apt-get --assume-yes --verbose-versions --no-install-recommends install \
@@ -29,7 +29,7 @@ COPY pyproject.toml poetry.lock ./
 RUN poetry export -f requirements.txt --output requirements.txt --with dev --without-hashes
 
 # Live edit version for development
-FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base:5.2.5-build.20260417@sha256:01d93ca22e4312a1d3d47322bc93448e5cf0b55206ec5b3e019493f632debe36 AS dev
+FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base:5.2.5-build.20260423@sha256:039b52ec345d7b4fe37b549c9b906bbe1ec0a9cbce607824bd32fcd20b65dbdd AS dev
 
 ARG service_dir="/guardian_service_dir"
 
@@ -58,7 +58,7 @@ RUN cd management-api && poetry install && cd ..
 RUN cd guardian-lib && poetry install && cd ..
 
 
-FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base:5.2.5-build.20260417@sha256:01d93ca22e4312a1d3d47322bc93448e5cf0b55206ec5b3e019493f632debe36
+FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base:5.2.5-build.20260423@sha256:039b52ec345d7b4fe37b549c9b906bbe1ec0a9cbce607824bd32fcd20b65dbdd
 
 EXPOSE 8000
 
