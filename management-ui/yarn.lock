@@ -245,9 +245,7 @@
   integrity sha512-EriSTlt5OC9/7SXkRSCAhfSxxoSUgBm33OH+IkwbdpgoqsSsUg7y3uh+IICI/Qg4BBWr3U2i39RpmycbxMq4ew==
 
 "@eslint/config-array@^0.23.2":
-  version "0.23.2"
-  resolved "https://registry.yarnpkg.com/@eslint/config-array/-/config-array-0.23.2.tgz#db85beeff7facc685a5775caacb1c845669b9470"
-  integrity sha512-YF+fE6LV4v5MGWRGj7G404/OZzGNepVF8fxk7jqmqo3lrza7a0uUcDnROGRBG1WFC1omYUS/Wp1f42i0M+3Q3A==
+  version "0.23.5"
   dependencies:
     "@eslint/object-schema" "^3.0.2"
     debug "^4.3.1"
@@ -1928,9 +1926,7 @@ i18next@^23.2.11:
     "@babel/runtime" "^7.23.2"
 
 i18next@^25.6.3:
-  version "25.8.13"
-  resolved "https://registry.yarnpkg.com/i18next/-/i18next-25.8.13.tgz#1f9df59329f1706f02b2b58b5d1f75196ddb6e4a"
-  integrity sha512-E0vzjBY1yM+nsFrtgkjLhST2NBkirkvOVoQa0MSldhsuZ3jUge7ZNpuwG0Cfc74zwo5ZwRzg3uOgT+McBn32iA==
+  version "25.10.10"
   dependencies:
     "@babel/runtime" "^7.28.4"
 
@@ -3400,9 +3396,7 @@ vue-tsc@^3.1.5:
     "@vue/language-core" "3.2.5"
 
 vue@^3.2.37, vue@^3.5.25:
-  version "3.5.29"
-  resolved "https://registry.yarnpkg.com/vue/-/vue-3.5.29.tgz#859a1cc5219eb1228c7ce6f355b27de080517111"
-  integrity sha512-BZqN4Ze6mDQVNAni0IHeMJ5mwr8VAJ3MQC9FmprRhcBYENw+wOAAjRj8jfmN6FLl0j96OXbR+CjWhmAmM+QGnA==
+  version "3.5.33"
   dependencies:
     "@vue/compiler-dom" "3.5.29"
     "@vue/compiler-sfc" "3.5.29"
