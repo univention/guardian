@@ -74,7 +74,7 @@
 
 ### Project Context (BMAD)
 
-- [Project Context](./../_bmad-output/project-context.md) -- 127 AI-optimized rules for code generation
+- [Project Context](project-context.md) -- 127 AI-optimized rules for code generation
 
 ### READMEs
 

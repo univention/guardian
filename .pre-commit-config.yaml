@@ -50,7 +50,7 @@ repos:
   hooks:
     - id: pymarkdown
       name: general-markdown
-      exclude: ".gitlab/issue_templates/|helm/"
+      exclude: ".gitlab/issue_templates/|helm/|docs/project-context.md"
       args:
         - --disable-rules
         - MD013,MD024,MD034,MD041
@@ -151,3 +151,5 @@ repos:
       pass_filenames: false
       additional_dependencies:
         - "yarn"
+
+exclude: ".claude|.opencode|_bmad*"
