@@ -328,6 +328,4 @@ Do not assume these exist:
 - Current behaviour and implementation of these concepts: **the code**
   (router -> business_logic -> ports -> adapters)
 - Architecture invariants, conventions, layering rules:
-  [`../../_bmad-output/project-context.md`](../../_bmad-output/project-context.md)
-- Phase 1 architectural decisions:
-  [`../../_bmad-output/planning-artifacts/architecture.md`](../../_bmad-output/planning-artifacts/architecture.md)
+  [`../project-context.md`](../project-context.md)

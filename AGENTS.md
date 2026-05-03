@@ -1,13 +1,8 @@
 # AGENTS.md -- Guardian
 
-> **Read [`_bmad-output/project-context.md`](_bmad-output/project-context.md)
+> **Read [`docs/project-context.md`](docs/project-context.md)
 > before implementing any code.** It contains all critical rules and conventions
 > (127 rules covering imports, typing, testing, architecture, anti-patterns).
->
-> **When implementing Phase 1 features**, also read
-> [`_bmad-output/planning-artifacts/architecture.md`](_bmad-output/planning-artifacts/architecture.md)
-> for architectural decisions, implementation patterns, new file layout, and
-> anti-patterns.
 
 Guardian is an **Attribute-Based Access Control (ABAC) authorization engine** for
 Univention Corporate Server (UCS) -- a monorepo with 4 Python packages
@@ -81,9 +76,10 @@ module -- the code is the source of truth.
 
 Two sources are authoritative for agents:
 
-1. **Intent and conventions** -- everything under `_bmad-output/` plus
-   [`docs/devel/concept_proposal_ai-optimized.md`](docs/devel/concept_proposal_ai-optimized.md)
-   (domain model). These are curated for agent use. Read them for architecture
+1. **Intent and conventions** -- [`docs/project-context.md`](docs/project-context.md) (critical rules and conventions),
+   [`docs/devel/concept_proposal_ai-optimized.md`](docs/devel/concept_proposal_ai-optimized.md) (domain model),
+   and everything under `_bmad/output/`.
+   These are curated for agent use. Read them for architecture
    rules, conventions, design decisions, and the meaning of domain terms.
 2. **Current behavior** -- the **code**. For any claim about what an endpoint
    returns, what fields a model has, how a function is called, or what tests
@@ -94,7 +90,7 @@ maintained for human developers and may be stale. If you encounter
 `docs/generated/*.md` via Grep or Glob, treat them as non-authoritative and
 do not rely on their content. Other `docs/` subdirectories
 (`docs/guardian-manual/`, `docs/developer-reference/`) are also human-facing --
-prefer code or `_bmad-output/` for agent tasks.
+prefer code, `docs/project-context.md`, or `_bmad/output/` for agent tasks.
 
 Use the "Where to Find What" table below to find a starting point, then read
 only what is relevant to the task. If the code and an agent-authoritative doc
@@ -106,14 +102,11 @@ can decide which side to correct.
 | Topic | Location |
 |-------|----------|
 | Domain model (actors, roles, capabilities/privileges, namespaces, ...) | [`docs/devel/concept_proposal_ai-optimized.md`](docs/devel/concept_proposal_ai-optimized.md) |
-| Technology stack & version pins | [`project-context.md` > Technology Stack](_bmad-output/project-context.md) |
-| Import, typing, exception, logging conventions | [`project-context.md` > Language-Specific Rules](_bmad-output/project-context.md) |
-| Hexagonal architecture & boundary rules | [`project-context.md` > Framework-Specific Rules](_bmad-output/project-context.md) |
-| Testing patterns, fixtures, mocking | [`project-context.md` > Testing Rules](_bmad-output/project-context.md) |
-| Formatting, naming, linting, SPDX headers | [`project-context.md` > Code Quality & Style Rules](_bmad-output/project-context.md) |
-| CI/CD, release process, dependency management | [`project-context.md` > Development Workflow Rules](_bmad-output/project-context.md) |
-| Anti-patterns, edge cases, gotchas | [`project-context.md` > Critical Don't-Miss Rules](_bmad-output/project-context.md) |
-| Phase 1 architectural decisions & patterns | [`_bmad-output/planning-artifacts/architecture.md`](_bmad-output/planning-artifacts/architecture.md) |
-| Phase 1 product requirements | [`_bmad-output/planning-artifacts/prd.md`](_bmad-output/planning-artifacts/prd.md) |
-| Phase 1 UX design specification | [`_bmad-output/planning-artifacts/ux-design-specification.md`](_bmad-output/planning-artifacts/ux-design-specification.md) |
+| Technology stack & version pins | [`project-context.md` > Technology Stack](docs/project-context.md) |
+| Import, typing, exception, logging conventions | [`project-context.md` > Language-Specific Rules](docs/project-context.md) |
+| Hexagonal architecture & boundary rules | [`project-context.md` > Framework-Specific Rules](docs/project-context.md) |
+| Testing patterns, fixtures, mocking | [`project-context.md` > Testing Rules](docs/project-context.md) |
+| Formatting, naming, linting, SPDX headers | [`project-context.md` > Code Quality & Style Rules](docs/project-context.md) |
+| CI/CD, release process, dependency management | [`project-context.md` > Development Workflow Rules](docs/project-context.md) |
+| Anti-patterns, edge cases, gotchas | [`project-context.md` > Critical Don't-Miss Rules](docs/project-context.md) |
 | Current behavior (endpoints, models, schema, structure, config) | **the code** -- use Read/Grep/Glob |

@@ -35,9 +35,6 @@ guardian/
 ├── opa/                            # [INFRA] OPA container config
 ├── keycloak/                       # [INFRA] Keycloak IdP config + provisioning
 ├── docs/                           # Generated + manual documentation
-├── _bmad/                          # BMAD method configuration
-├── _bmad-output/                   # BMAD generated artifacts (project-context.md)
-├── .opencode/                      # OpenCode AI configuration + skills
 ├── .gitlab-ci/                     # CI pipeline includes and helpers
 ├── .reuse/                         # REUSE license compliance
 │
