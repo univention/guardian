@@ -5,7 +5,7 @@
 ARG POETRY_VERSION="2.2.1"
 
 # Calculate Python dependencies
-FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base-flex:5.2.5@sha256:6258277e68aea5971408fb28409c002e852c398aacd28c7293d14611766206ea AS requirements_builder
+FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base-flex:5.2.5@sha256:383524b2a06de7a7fc8e7c8711b4f36cb24b91f360cd842cd377c1a8dd5742db AS requirements_builder
 
 ARG POETRY_VERSION
 
@@ -20,7 +20,7 @@ COPY pyproject.toml poetry.lock ./
 RUN poetry export -f requirements.txt --output requirements.txt --with dev --without-hashes
 
 # Live edit version for development
-FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base:5.2.5-build.20260417@sha256:01d93ca22e4312a1d3d47322bc93448e5cf0b55206ec5b3e019493f632debe36 AS dev
+FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base:5.2.5-build.20260504@sha256:852c6b66dfa7d3f4ae0cacd81c69b979811869f5bf597e3baea61d9fb3849cb1 AS dev
 ARG POETRY_VERSION
 
 EXPOSE 8000
@@ -41,7 +41,7 @@ RUN cd authorization-api && poetry install
 RUN cd guardian-lib && poetry install
 
 
-FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base:5.2.5-build.20260417@sha256:01d93ca22e4312a1d3d47322bc93448e5cf0b55206ec5b3e019493f632debe36
+FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base:5.2.5-build.20260504@sha256:852c6b66dfa7d3f4ae0cacd81c69b979811869f5bf597e3baea61d9fb3849cb1
 
 EXPOSE 8000
 
