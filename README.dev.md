@@ -26,6 +26,18 @@
    ./dev-run
    ```
 
+1. Add `127.0.0.1 traefik` to your `/etc/hosts`, needed for the keycloak redirect to work
+
+## Access to UI/API
+
+- management-ui: http://localhost/univention/guardian/management-ui
+  creds: `dev:univention` (see keycloak/provisioning/configure.py)
+- keycloak admin console: http://traefik/guardian/keycloak/admin
+  creds: `admin:admin` (see dev-compose.yaml)
+- management API docs: http://localhost/guardian/management/docs
+- authoriation API docs: http://localhost/guardian/authorization/docs
+- OPA: http://localhost/guardian/opa/
+
 ## Troubleshooting
 
 1. If you are having issues with Alembic, remove the folder `./management_service_dir`.
