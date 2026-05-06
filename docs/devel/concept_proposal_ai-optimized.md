@@ -17,22 +17,33 @@ SPDX-License-Identifier: AGPL-3.0-only
 Guardian is an **ABAC authorization engine** for UCS. It is a **Policy
 Decision Point (PDP) only** -- it does not enforce decisions or mutate data
 on behalf of applications. The calling application remains the Policy
-Enforcement Point (PEP). Actor/target role storage lives in UDM (the
-Policy Information Point, PIP), not in Guardian.
+Enforcement Point (PEP). Actor/target role storage lives in the IAM
+(the Policy Information Point, PIP), not in Guardian. The IAM is
+typically UDM, but may be a sibling system such as UCS@school.
 
-Policies are expressed as OPA/Rego, built from **Role-Capability-Mappings**
+Policies are expressed as OPA/Rego, built from **Role-Privilege-Mappings**
 (RCMs, JSON) plus Rego **conditions** -- either built-in to Guardian or
-registered by apps during join scripts.
+registered by apps during join scripts. (`Privilege` is the doc-level
+term for what code and the RCM wire format still call `capability`;
+see "Terminology Rename" below.)
 
 ## Core Concepts
 
 **Actor** -- an authenticated entity (user, machine account, server) that
 acts within an application. Actors carry **roles**. Group roles apply
-transitively to members (via a group's `member_roles` field).
+transitively to members (via a group's `member_roles` field), but
+Guardian does not compute that merge itself: it expects the actor's
+`roles` field to already contain both directly assigned roles and
+roles inherited from group membership. Producing that merged list is
+the IAM's responsibility.
 
-**Target** -- the object a permission applies to. Usually an LDAP object,
-but can be any JSON-serialisable object. Optional in authz requests --
-when omitted, only **general permissions** apply.
+**Target** -- the object a permission applies to. Usually a UDM object,
+but can be any JSON-serialisable object. Guardian never sees raw LDAP
+objects: UDM is the only component that talks to LDAP, and from
+Guardian's point of view LDAP is a private DB whose contents reach
+Guardian only via UDM (with very different structure, encoding, and
+representation). Optional in authz requests -- when omitted, only
+**general permissions** apply.
 
 **Application (app)** -- a component that registers and owns one or more
 **namespaces**. In UCS, typically an App Center app ID.
@@ -47,16 +58,16 @@ this actor have this permission for this target?". Applications
 interpret and enforce.
 
 **General permission** -- a permission granted when the target is the
-empty object `{}`. A capability whose conditions make claims about
-target content cannot be a general permission.
+empty object `{}`. A privilege whose conditions make claims about
+target content cannot grant a general permission.
 
-**Role** -- a named set of capabilities a principal can carry. Always
-scoped to an app+namespace, and optionally to a context. Stored on
-LDAP objects as rolestrings in a `roles` field (or `member_roles` for
-groups). **Apps don't parse rolestrings themselves** -- UDM returns
-role fields on its object responses in the format Guardian expects,
-so apps pass UDM objects straight through to Guardian's authz
-endpoints.
+**Role** -- a named container of **privileges** a principal can carry.
+Always scoped to an app+namespace, and optionally to a context.
+Stored on UDM objects as rolestrings in a `roles` field (or
+`member_roles` for groups). **Apps don't parse rolestrings
+themselves** -- UDM returns role fields on its object responses in
+the format Guardian expects, so apps pass UDM objects straight
+through to Guardian's authz endpoints.
 
 **Context** -- an arbitrary string tag that narrows a role to targets
 sharing the same tag (primary use case: UCS@school per-school scoping).
@@ -64,15 +75,24 @@ Contexts are themselves namespaced. Optional feature -- most apps don't
 use contexts.
 
 **Condition** -- a Rego function returning a boolean, deciding whether a
-capability applies given actor/target/context. May take parameters from
+privilege applies given actor/target/context. May take parameters from
 the RCM and extra data from the authz request.
 
-**Capability** -- the tuple `(permissions, conditions, relation)`, where
-`relation` is `AND` or `OR` across conditions. A role holds a list of
-capabilities per namespace.
+**Privilege** (legacy name: `capability`, still used in code and the
+RCM JSON) -- a container of `Permission`-`Condition` pairs. A
+Privilege holds zero or more Permissions, each of which may be
+constrained by zero or more Conditions that gate when it applies. A
+Role holds a list of Privileges per namespace.
 
-**Role-Capability-Mapping (RCM)** -- JSON mapping each rolestring to
-its list of capabilities. Compiled into OPA policy bundles.
+On the wire (and in the code), a Privilege is the tuple
+`(permissions, conditions, relation)`:
+Permission are combined by `relation` (`AND`/`OR`) with Conditions. A
+Privilege with no Conditions grants its Permissions unconditionally.
+
+**Role-Privilege-Mapping (RCM)** -- JSON mapping each rolestring to
+its list of privileges. Compiled into OPA policy bundles. The wire
+JSON key remains `roleCapabilityMapping` (see "Terminology Rename"
+below).
 
 **Policy** -- the compiled OPA/Rego output of an RCM plus the condition
 library. Policy propagation to OPA is bounded at **1 minute**.
@@ -242,12 +262,32 @@ Each entry reads: "When `<rolestring>` is evaluated against
 grant these permissions." A role can have multiple entries across
 namespaces.
 
+## Permission Calculation
+
+To compute the permissions an actor has on a given target, Guardian:
+
+1. **Filter Roles by Context.** Take all of the actor's Roles, keep
+   those that are unrestricted by a Context, plus those whose Context
+   matches the target's Context (per the matching table above).
+2. **Walk Privileges.** For each surviving Role, look up its
+   Privileges via the RCM.
+3. **Evaluate Conditions.** For each Privilege, evaluate its
+   Conditions against actor/target/extra-data; emit the Privilege's
+   Permissions for this target only if the Conditions hold (combined
+   per `relation`). A Privilege with no Conditions emits its
+   Permissions unconditionally.
+
+The actor's permissions for the target are the union of the
+Permissions emitted across all surviving Roles.
+
 ## Authz Endpoints (semantic summary)
 
 Two primary questions:
 
 1. **Check permissions**: "Does actor A have permissions P1..Pn for
-   target T?" -> boolean per target.
+   target T?" -> for each target, a `permission -> boolean` mapping
+   (the endpoint accepts a list of targets, so the response is a list
+   of such mappings, one per target).
 2. **List permissions**: "What permissions does actor A have for
    target T in namespace/context X?" -> list.
 
@@ -261,21 +301,22 @@ Both take:
 - Optional `contexts` array
 - Optional namespace filter (for question 2)
 
-There are **two endpoint variants with different auth profiles**:
+There are **two endpoint variants** that differ in how actor/target
+data is supplied -- not in their authentication requirements:
 
 - **Standard endpoints** take the full actor and target objects in the
   request body. Guardian does no LDAP/UDM lookup; it evaluates
-  policies purely on the data supplied. These endpoints **can be
-  unauthenticated** (and often are, when Guardian runs as a per-service
-  sidecar -- see Deployment Topology below).
+  policies purely on the data supplied.
 - **Lookup endpoints** take actor/targets as references only (DN,
-  `uid`, `entryUUID`) and Guardian resolves them via UDM. These
-  **must be authenticated**. Without authentication an attacker could
-  probe for valid usernames and discover privileged accounts by
-  observing authz responses, so this variant is always behind authn.
-  Lookup endpoints also return only the reference fields supplied in
-  the request (not the full resolved object), to avoid leaking data
-  the caller didn't already possess.
+  `uid`, `entryUUID`) and Guardian resolves them via UDM. They return
+  only the reference fields supplied in the request (not the full
+  resolved object), to avoid leaking data the caller didn't already
+  possess.
+
+**Both variants require authentication**: every request must carry a
+valid OIDC token. Without authentication an attacker could probe for
+valid usernames and discover privileged accounts by observing authz
+responses, so neither endpoint is ever exposed unauthenticated.
 
 ## Policy Lifecycle
 
@@ -292,19 +333,32 @@ There are **two endpoint variants with different auth profiles**:
 
 ## Deployment Topology
 
-The intended runtime model is **one OPA instance per service, deployed
-as a sidecar**. Each OPA knows only the policies relevant to its
-service, and scales with the service's pods rather than being a shared
-resource. Caching of authz results is recommended for hot paths. The
-sidecar model is also the reason the standard (non-lookup) authz
-endpoints can safely run unauthenticated -- in that topology they are
-reachable only from the co-located service.
+Guardian is a **stand-alone, central authorization service** for
+multiple applications -- it does **not** run as a per-service sidecar.
+From an outside perspective it is composed of three components:
+
+- **Guardian Authorization API** -- evaluates authz requests at runtime.
+- **Guardian Management API** -- manages roles, RCMs, namespaces, etc.,
+  and serves the compiled OPA policy bundle from a bundle-server
+  endpoint.
+- **Guardian Management UI** -- web UI in front of the Management API.
+
+The only sidecar in the system is an **Open Policy Agent (OPA)
+instance running alongside each Guardian Authorization API instance**.
+Every OPA pulls **the same, full policy bundle** from the Management
+API's bundle-server endpoint -- because Guardian is the central PDP
+for many applications, each OPA needs the complete policy set, not a
+service-scoped slice. Caching of authz results is recommended for hot
+paths.
 
 ## Terminology Rename (in progress)
 
-The code still uses **`capability`** where newer documents use
-**`privilege`**. Treat them as synonyms. When writing code, follow the
-code's current naming. When writing docs, follow the newer term.
+The term **`capability`** is **deprecated** in favour of
+**`privilege`**. The source code and the RCM JSON wire format (e.g.
+the `roleCapabilityMapping` key) still use `capability`;
+documentation uses `privilege`. Treat them as synonyms. The code
+rename is planned but not yet done -- when writing code, follow the
+code's current naming; when writing docs, follow `privilege`.
 
 ## Not in Scope (First Release)
 
@@ -313,12 +367,12 @@ Do not assume these exist:
 - DELETE endpoints for anything except RCMs
 - Bulk operations
 - DENY rules
-- Capability bundles
+- Privilege bundles (formerly "capability bundles")
 - READ endpoints for custom Rego code
 - Export / import / merge tools
 - Management UIs for custom conditions (join scripts only)
 - JWT verification inside Guardian
-- Guardian maintaining the list of roles per user (UDM does this)
+- Guardian maintaining the list of roles per user (the IAM does this)
 
 ## Where to Go for More Detail
 
