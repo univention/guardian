@@ -69,6 +69,7 @@
 ### Developer Reference
 
 - [Guardian 3.0 Cheat Sheet](./guardian_cheat_sheet.pdf) -- Quick-reference overview of roles, capabilities, permissions, actors/targets, and request flow (2-page PDF)
+- [Guardian ABAC System](./Guardian-ABAC-system.md) -- How Guardian implements ABAC: authorization path, management path, and deployment overview
 - [Concept Proposal](../docs/devel/concept_proposal.md) -- Core domain model document (1,584 lines)
 - [Developer Setup](../docs/devel/) -- Setup, testing, releases, adapter how-tos
 
