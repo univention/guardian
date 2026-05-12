@@ -2,16 +2,16 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-
-__pycache__/
-_build/
+.agents/skills/.gitignore
+.claude/skills/.gitignore
 .coverage
 .env
-dist/
-*.db
-management_service_dir/
+.mypy_cache/
 .yarn
+*.db
 *.temp
+__pycache__/
+_build/
 appcenter-authz/files/preinst
 appcenter-management/files/preinst
 appcenter-management-ui/files/preinst
@@ -21,4 +21,6 @@ appcenter-management-ui/files/ini
 appcenter-authz/files/compose
 appcenter-management/files/compose
 appcenter-management-ui/files/compose
-.mypy_cache/
+dist/
+management_service_dir/
+
