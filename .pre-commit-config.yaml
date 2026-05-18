@@ -107,6 +107,7 @@ repos:
 
 - repo: local
   hooks:
+    # Frontend
     - id: frontend-type-check
       name: frontend-type-check
       files: \.([jt]sx?|vue)$  # *.js, *.jsx, *.ts and *.tsx, as well as .vue
