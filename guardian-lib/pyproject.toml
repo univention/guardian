@@ -2,48 +2,41 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-[tool.poetry]
+[project]
 name = "guardian-lib"
 version = "1.8.1"
 description = ""
-authors = ["UCS School Maintainers <ucsschool-maintainers@univention.de>"]
+authors = [
+    {name = "UCS School Maintainers", email = "ucsschool-maintainers@univention.de"},
+]
 readme = "README.md"
-packages = [{include = "guardian_lib"}, {include = "guardian_pytest"}]
+requires-python = ">=3.11"
+dependencies = [
+    "loguru>=0.7.3",
+    "port-loader==1.2.0",
+    "lazy-object-proxy>=1.12.0",
+    "pydantic>=2.12.5",
+    "pydantic-settings>=2.12.0",
+    "fastapi<0.200",
+    "pyjwt>=2.10.1",
+    "requests>=2.32.5",
+]
 
-[tool.poetry.dependencies]
-python = "^3.11"
-loguru = "^0.7.3"
-port-loader = "1.2.0"
-lazy-object-proxy = "^1.12.0"
-pydantic = "^2.12.5"
-pydantic-settings = "^2.12.0"
-fastapi = "<0.200"
-pyjwt = "^2.10.1"
-requests = "^2.32.5"
+[dependency-groups]
+dev = [
+    "pytest>=9.0.1",
+    "pytest-asyncio>=1.3.0",
+    "pytest-mock>=3.15.1",
+    "pytest-cov>=7.0.0",
+    "cryptography>=46.0.3",
+]
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^9.0.1"
-pytest-asyncio = "^1.3.0"
-pytest-mock = "^3.15.1"
-pytest-cov = "^7.0.0"
-cryptography = "^46.0.3"
+[tool.uv.sources]
+port-loader = { index = "port-loader" }
 
-[[tool.poetry.source]]
-name = "guardian"
-url = "https://git.knut.univention.de/api/v4/projects/830/packages/pypi/simple"
-priority = "supplemental"
-
-
-[[tool.poetry.source]]
-name = "PyPI"
-priority = "primary"
-
-
-[[tool.poetry.source]]
-name = "port-loader"
-url = "https://git.knut.univention.de/api/v4/projects/908/packages/pypi/simple"
-priority = "supplemental"
+[tool.hatch.build.targets.wheel]
+packages = ["guardian_lib", "guardian_pytest"]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"

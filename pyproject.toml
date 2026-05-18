@@ -1,0 +1,33 @@
+# Copyright (C) 2023-2026 Univention GmbH
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
+[tool.uv.workspace]
+members = [
+    "guardian-lib",
+    "authorization-api",
+    "management-api",
+]
+
+[tool.uv.sources]
+guardian-lib = { workspace = true }
+
+[[tool.uv.index]]
+name = "port-loader"
+url = "https://git.knut.univention.de/api/v4/projects/908/packages/pypi/simple"
+explicit = true
+
+[[tool.uv.index]]
+name = "opa-client"
+url = "https://git.knut.univention.de/api/v4/projects/688/packages/pypi/simple"
+explicit = true
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: marks test as requiring services outside of the guardian",
+    "in_container_test: marked test is relying on services outside the authorization-api (e.g.: opa)",
+    "e2e: marks test that test the routes with full integration",
+    "e2e_udm: marks test that need an UDM instance",
+]
+filterwarnings = ["ignore::DeprecationWarning:gunicorn.util:25"]
+env = ["GUARDIAN__MANAGEMENT__BASE_URL=http://localhost:8001"]
