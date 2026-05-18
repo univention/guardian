@@ -74,32 +74,40 @@ repos:
   rev: '1.8.4'
   hooks:
     - id: poetry-check
-      name: backend-poetry-check-authorization-api
-      args: ["-C", "authorization-api"]
-    - id: poetry-check
-      name: backend-poetry-check-management-api
-      args: [ "-C", "management-api" ]
-    - id: poetry-check
-      name: backend-poetry-check-guardian-lib
-      args: [ "-C", "guardian-lib" ]
-    - id: poetry-check
       name: backend-poetry-check-authorization-client
       args: [ "-C", "authorization-client" ]
-    - id: poetry-lock
-      name: backend-poetry-lock-authorization-api
-      args: ["-C", "authorization-api", "--check"]
-    - id: poetry-lock
-      name: backend-poetry-lock-management-api
-      args: [ "-C", "management-api", "--check" ]
-    - id: poetry-lock
-      name: backend-poetry-lock-guardian-lib
-      args: [ "-C", "guardian-lib", "--check" ]
     - id: poetry-lock
       name: backend-poetry-lock-authorization-client
       args: [ "-C", "authorization-client", "--check" ]
 
+- repo: https://github.com/anderseknert/pre-commit-opa
+  rev: v1.5.1
+  hooks:
+    - id: opa-fmt
+      name: backend-opa-fmt
+      args: ["--v0-compatible"]
+    - id: opa-check
+      name: backend-opa-check-bundle-template
+      args: ["management-api/rego_policy_bundle_template", "--v0-compatible"]
+    - id: opa-check
+      name: backend-opa-check-builtin-conditions
+      args: ["management-api/alembic/1.0.0_builtin_conditions", "--ignore=\"*.json\""]
+    - id: opa-test
+      name: backend-opa-test-bundle-template
+      args: ["management-api/rego_policy_bundle_template", "--v0-compatible"]
+    - id: opa-test
+      name: backend-opa-test-builtin-conditions
+      args: ["management-api/alembic/1.0.0_builtin_conditions", "--ignore=\"*.json\"", "--v0-compatible"]
+
+- repo: https://github.com/open-policy-agent/regal
+  rev: v0.40.0
+  hooks:
+    - id: regal-lint-use-path
+      name: backend-opa-policy-file-linting
+
 - repo: local
   hooks:
+    # Frontend
     - id: frontend-type-check
       name: frontend-type-check
       files: \.([jt]sx?|vue)$  # *.js, *.jsx, *.ts and *.tsx, as well as .vue
@@ -127,31 +135,30 @@ repos:
       pass_filenames: false
       additional_dependencies:
         - "yarn"
-
-- repo: https://github.com/anderseknert/pre-commit-opa
-  rev: v1.5.1
-  hooks:
-    - id: opa-fmt
-      name: backend-opa-fmt
-      args: ["--v0-compatible"]
-    - id: opa-check
-      name: backend-opa-check-bundle-template
-      args: ["management-api/rego_policy_bundle_template", "--v0-compatible"]
-    - id: opa-check
-      name: backend-opa-check-builtin-conditions
-      args: ["management-api/alembic/1.0.0_builtin_conditions", "--ignore=\"*.json\""]
-    - id: opa-test
-      name: backend-opa-test-bundle-template
-      args: ["management-api/rego_policy_bundle_template", "--v0-compatible"]
-    - id: opa-test
-      name: backend-opa-test-builtin-conditions
-      args: ["management-api/alembic/1.0.0_builtin_conditions", "--ignore=\"*.json\"", "--v0-compatible"]
-
-- repo: https://github.com/open-policy-agent/regal
-  rev: v0.40.0
-  hooks:
-    - id: regal-lint-use-path
-      name: backend-opa-policy-file-linting
-
+    # Backend
+    - id: uv-lock-check
+      name: backend-uv-lock-check
+      language: system
+      entry: uv lock --check
+      pass_filenames: false
+      files: ^(guardian-lib|authorization-api|management-api)/pyproject\.toml$
+    - id: unittests-guardian-lib
+      name: unittests-guardian-lib
+      language: system
+      entry: uv run pytest guardian-lib/tests/ -q
+      pass_filenames: false
+      files: ^guardian-lib/
+    - id: unittests-authorization-api
+      name: unittests-authorization-api
+      language: system
+      entry: uv run pytest authorization-api/tests/ -q
+      pass_filenames: false
+      files: ^(authorization-api|guardian-lib)/
+    - id: unittests-management-api
+      name: unittests-management-api
+      language: system
+      entry: uv run pytest management-api/tests/ -q
+      pass_filenames: false
+      files: ^(management-api|guardian-lib)/
 
 exclude: ".claude|.opencode|_bmad*"
