@@ -285,8 +285,3 @@ docs-create-production-merge-request:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
       - docs/guardian-manual/**/*
-
-sonarqube:
-  extends: .sonarqube
-  stage: test
-  needs: [test_authz, test_guardian_lib, test_management]
