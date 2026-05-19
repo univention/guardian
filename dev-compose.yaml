@@ -44,7 +44,6 @@ services:
     build:
       context: ./
       dockerfile: authorization-api/Dockerfile
-      target: dev
       extra_hosts:
         - git.knut.univention.de:${GITLAB_IP}
         - ucs-sso-ng.school.test:${UCS_HOST_IP}
@@ -97,7 +96,6 @@ services:
     build:
       context: ./
       dockerfile: management-api/Dockerfile
-      target: dev
       extra_hosts:
         - git.knut.univention.de:${GITLAB_IP}
     depends_on:
@@ -223,6 +221,8 @@ services:
     build:
       context: ./
       dockerfile: keycloak/provisioning/Dockerfile
+      extra_hosts:
+        - git.knut.univention.de:${GITLAB_IP}
     depends_on:
       keycloak:
         condition: service_healthy
@@ -247,6 +247,7 @@ services:
     build:
       context: ./
       dockerfile: management-ui/docker/Dockerfile
+      target: final
       extra_hosts:
         - git.knut.univention.de:${GITLAB_IP}
     depends_on:
