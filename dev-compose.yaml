@@ -17,6 +17,7 @@ services:
       - 8888:8080  # dashboard for troubleshooting
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+
   opa:
     container_name: opa-guardian-dev
     image: guardian-opa:dev
@@ -36,6 +37,7 @@ services:
       traefik.http.middlewares.opa-stripprefix.stripprefix.prefixes: /guardian/opa
       traefik.http.routers.opa.service: opa
       traefik.http.services.opa.loadbalancer.server.port: 8181
+
   authorization-api:
     container_name: authz-guardian-dev
     image: guardian-authorization-api:dev
@@ -84,6 +86,7 @@ services:
       traefik.http.routers.authz.rule: PathPrefix(`/guardian/authorization`)
       traefik.http.routers.authz.service: authz
       traefik.http.services.authz.loadbalancer.server.port: 8000
+
   db_provisioning:
     container_name: db_provisioning
     image: guardian-management-api:dev
@@ -132,6 +135,7 @@ services:
       - SSL_CERT_FILE
     networks:
       - proxy-net
+
   management-api:
     container_name: management-guardian-dev
     image: guardian-management-api:dev
@@ -139,9 +143,6 @@ services:
     build:
       context: ./
       dockerfile: management-api/Dockerfile
-      target: dev
-      extra_hosts:
-        - git.knut.univention.de:${GITLAB_IP}
     extra_hosts:
       - ucs-sso-ng.school.test:${UCS_HOST_IP}
     depends_on:
@@ -189,6 +190,7 @@ services:
       traefik.http.routers.management.rule: PathPrefix(`/guardian/management`)
       traefik.http.routers.management.service: management
       traefik.http.services.management.loadbalancer.server.port: 8000
+
   keycloak:
     container_name: keycloak-guardian-dev
     image: keycloak-guardian:dev
@@ -228,6 +230,7 @@ services:
       - proxy-net
     labels:
       traefik.enable: "false"
+
   db:
     image: python:3.11.5-alpine
     restart: unless-stopped
