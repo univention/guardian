@@ -1,101 +1,96 @@
-# Copyright (C) 2023-2025 Univention GmbH
-#
 # SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-FileCopyrightText: 2025 Univention GmbH
 
-FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base-flex:5.2.5@sha256:907fb7a8378e64118350e293bb68f6dbb71a2950ffa45360d93116ecf568c310 AS builder
+ARG UCS_BASE_IMAGE=gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base-python
+ARG UCS_BASE_IMAGE_TAG=5.2.3-build.20251030@sha256:36f081b5f57553bb1b5d714cca5f4853d985ba09ed03a5f3ef7e0042acc47963
+
+###############################################
+# Stage 1: build dependencies and software
+FROM ${UCS_BASE_IMAGE}:${UCS_BASE_IMAGE_TAG} AS build
+SHELL ["/bin/bash", "-uxo", "pipefail", "-c"]
 
 ARG opa_version=1.11.0
 ARG opa_checksum=sha256:53451e1d1362dbb11d6703c159b05de5cd18278fa4aee0b75a0b9590d573fd0a
 
-WORKDIR /build
-
-# Download Open Policy Agent
 ADD --checksum=${opa_checksum} \
     --chmod=555 \
-    --chown=1000:1000 \
     https://github.com/open-policy-agent/opa/releases/download/v${opa_version}/opa_linux_amd64_static \
-    /usr/bin/opa
+    /usr/local/bin/opa
 
-# Calculate Python dependencies
-FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base:5.2.5-build.20260514@sha256:81b104694a78cf36043f84b5d9e4b3b0cbbe6777e46877239a44f08249379119 AS requirements_builder
-WORKDIR /build
-RUN apt-get update \
-    && apt-get --assume-yes --verbose-versions --no-install-recommends install \
-    python3-pip \
-    && rm -fr /var/lib/apt/lists/* /var/cache/apt/archives/* \
-RUN rm -fv /usr/lib/python*/EXTERNALLY-MANAGED
-RUN pip install poetry==2.2.1 poetry-plugin-export==1.9.0
-COPY pyproject.toml poetry.lock ./
-RUN poetry export -f requirements.txt --output requirements.txt --with dev --without-hashes
+COPY --from=ghcr.io/astral-sh/uv:0.11.14@sha256:1025398289b62de8269e70c45b91ffa37c373f38118d7da036fb8bb8efc85d97 /uv /usr/local/bin/uv
 
-# Live edit version for development
-FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base:5.2.5-build.20260514@sha256:81b104694a78cf36043f84b5d9e4b3b0cbbe6777e46877239a44f08249379119 AS dev
+ENV UV_LINK_MODE=copy \
+  UV_COMPILE_BYTECODE=1 \
+  UV_PYTHON_DOWNLOADS=never \
+  UV_PYTHON=python3.11
 
-ARG service_dir="/guardian_service_dir"
+COPY ./pyproject.toml ./uv.lock /app/
+COPY ./authorization-api/pyproject.toml /app/authorization-api/
+COPY ./guardian-lib/pyproject.toml /app/guardian-lib/
+COPY ./management-api/pyproject.toml /app/management-api/
 
-EXPOSE 8000
 WORKDIR /app
-ENTRYPOINT ["/entrypoint.sh"]
-CMD ["uvicorn", "--reload", "--log-level", "debug", "--host", "0.0.0.0", "--port", "8000", "guardian_management_api.main:app"]
-#CMD uvicorn --reload --log-level debug --host 0.0.0.0 --port 8000 guardian_management_api.main:app
+RUN --mount=type=cache,target=/root/.cache \
+  uv sync \
+  --locked \
+  --no-dev \
+  --no-install-workspace \
+  --package management-api && \
+  uv export --no-dev -o ./requirements.txt
 
-ENV SERVICE_DIR $service_dir
+COPY ./management-api/README.md /app/management-api/
+COPY ./management-api/guardian_management_api /app/management-api/guardian_management_api
+COPY ./guardian-lib/README.md /app/guardian-lib/
+COPY ./guardian-lib/guardian_lib /app/guardian-lib/guardian_lib
 
-RUN apt-get update \
-    && apt-get --assume-yes --verbose-versions --no-install-recommends install \
-    python3-pip \
-    && rm -fr /var/lib/apt/lists/* /var/cache/apt/archives/* \
-RUN rm -fv /usr/lib/python*/EXTERNALLY-MANAGED
+RUN uv sync \
+  --locked \
+  --no-dev \
+  --no-editable \
+  --package management-api
 
-# Install OPA
-COPY --chmod=555 --from=builder /usr/bin/opa /usr/bin/opa
-
-RUN mkdir -p $service_dir
-RUN pip install --no-cache-dir -U pip wheel && pip install --no-cache-dir poetry==2.2.1 poetry-plugin-export==1.9.0 && poetry config virtualenvs.create false
-COPY management-api management-api
-COPY guardian-lib guardian-lib
-RUN cd management-api && poetry install && cd ..
-RUN cd guardian-lib && poetry install && cd ..
-
-
-FROM gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base:5.2.5-build.20260514@sha256:81b104694a78cf36043f84b5d9e4b3b0cbbe6777e46877239a44f08249379119
+###############################################
+# Stage 2: final image
+FROM ${UCS_BASE_IMAGE}:${UCS_BASE_IMAGE_TAG} AS final
+SHELL ["/bin/bash", "-uxo", "pipefail", "-c"]
 
 EXPOSE 8000
 
 ARG commit
 ARG date
-ARG service_user="guardian"
-ARG service_dir="/guardian_service_dir"
+ARG USER=guardian
 
 LABEL "description"="Guardian Management API." \
     "release date"="$date" \
     "commit"="$commit"
 
+ENV PYTHONUNBUFFERED=1 \
+  PATH=/app/.venv/bin:$PATH \
+  SERVICE_USER=${USER}
+
+RUN apt-get --assume-yes --verbose-versions --no-install-recommends install \
+  ca-certificates \
+  && rm -fv /usr/lib/python*/EXTERNALLY-MANAGED \
+  && rm -fr /var/lib/apt/lists/* /var/cache/apt/archives/* \
+  && groupadd -r ${USER} -g 1000 \
+  && useradd -r -d /app -g ${USER} -N ${USER} -u 1000 \
+  && mkdir -p /guardian_service_dir/conf \
+  && touch /guardian_service_dir/conf/m2m.secret
+
+COPY --from=build --chmod=555 /usr/local/bin/opa /usr/local/bin/opa
+COPY --from=build --chown=${USER}:${USER} /app/.venv /app/.venv
+
+COPY --chown=${USER}:${USER} ./management-api/alembic /app/management-api/alembic
+COPY --chown=${USER}:${USER} ./management-api/alembic.ini /app/management-api/alembic.ini
+COPY --chown=${USER}:${USER} ./management-api/rego_policy_bundle_template /app/management-api/rego_policy_bundle_template
+
+USER ${USER}
 WORKDIR /app/management-api
 
-ENV SERVICE_USER $service_user
-ENV SERVICE_DIR $service_dir
-
-RUN mkdir -p /guardian_service_dir/conf; touch /guardian_service_dir/conf/m2m.secret
-RUN apt-get update \
-    && apt-get --assume-yes --verbose-versions --no-install-recommends install \
-    python3-pip \
-    && rm -fr /var/lib/apt/lists/* /var/cache/apt/archives/* \
-RUN rm -fv /usr/lib/python*/EXTERNALLY-MANAGED
-RUN adduser --no-create-home $service_user && mkdir -p $service_dir && chown $service_user:$service_user $service_dir
-
-# Install OPA
-COPY --chmod=555 --chown=$service_user:$service_user --from=builder /usr/bin/opa /usr/bin/opa
-
-# Install python requirements
-COPY --from=requirements_builder /build/requirements.txt .
-RUN pip install --no-cache-dir -U pip wheel && pip install --no-cache-dir -r requirements.txt
-
-# Install project
-COPY . .
-RUN pip install --no-cache-dir . && pip list
-RUN mkdir -p /guardian_service_dir/conf && touch /guardian_service_dir/conf/m2m.secret
-
-USER $service_user
-ENTRYPOINT ["/entrypoint.sh"]
 CMD ["gunicorn", "--log-level", "info", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "guardian_management_api.main:app"]
+
+RUN \
+  python3.11 -V && \
+  python3.11 -m site && \
+  GUARDIAN__MANAGEMENT__BASE_URL="foobar" \
+  python3.11 -c 'import guardian_management_api.main'
