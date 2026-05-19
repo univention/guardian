@@ -7,11 +7,10 @@ include:
     file:
       - kaniko.yml
   - project: "univention/dev/nubus-for-k8s/common-ci"
-    ref: "v1.52.1"
+    ref: "v1.62.0"
     file:
       - "jobs/generate-filesystem-sbom.yaml"
       - "jobs/lint-pre-commit.yaml"
-      - "templates/pip-package-and-publish.yaml"
       - "templates/sonarqube.yaml"
   - project: 'univention/dev/docs/sphinx-docker'
     file: 'pipeline/sphinx.yml'
@@ -65,6 +64,10 @@ include:
           optional: true
       appcenter_file_dir: "appcenter-management-ui/"
       release_tag_prefix: "management-ui_"
+
+  - component: $CI_SERVER_FQDN/univention/dev/nubus-for-k8s/common-ci/pip-package-and-publish-with-uv@v1.62.0
+    inputs:
+      package_root: "authorization-client"
 
 
 variables:
@@ -172,49 +175,6 @@ generate-filesystem-sbom:
   variables:
     FOLDER: "management-ui"
 
-build_guardian_lib:
-  stage: build_python
-  rules:
-    - changes:
-        - guardian-lib/**/*
-  artifacts:
-    paths:
-      - guardian-lib/dist/
-    expire_in: 1 week
-  image: docker-registry.knut.univention.de/python:3.11-slim
-  script:
-    - cd guardian-lib
-    - pip install poetry=="$POETRY_VERSION"
-    - |-
-      if [ "$CI_COMMIT_BRANCH" != "$CI_DEFAULT_BRANCH" ]; then
-        poetry version "0.0.0.dev0+${CI_COMMIT_REF_SLUG//-/.}.$CI_COMMIT_SHORT_SHA"
-      else
-        true
-      fi
-    - poetry config --local virtualenvs.create false
-    - poetry build
-
-build_authorization_client:
-  stage: build_python
-  rules:
-    - changes:
-        - authorization-client/**/*
-  artifacts:
-    paths:
-      - authorization-client/dist/
-    expire_in: 1 week
-  image: docker-registry.knut.univention.de/python:3.11-slim
-  script:
-    - cd authorization-client
-    - pip install poetry=="$POETRY_VERSION"
-    - |-
-      if [ "$CI_COMMIT_BRANCH" != "$CI_DEFAULT_BRANCH" ]; then
-        poetry version "0.0.0.dev0+${CI_COMMIT_REF_SLUG//-/.}.$CI_COMMIT_SHORT_SHA"
-      else
-        true
-      fi
-    - poetry config --local virtualenvs.create false
-    - poetry build
 
 build_docker_image_opa:
   stage: build_docker
@@ -279,53 +239,6 @@ build_docker_image_management:
     CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-management-api
     KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --skip-unused-stages --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
 
-publish_guardian-lib:
-  stage: publish
-  when: manual
-  rules:
-    - changes:
-        - guardian-lib/**/*
-  dependencies:
-    - build_guardian_lib
-  needs:
-    - build_guardian_lib
-  image: docker-registry.knut.univention.de/python:3.11-slim
-  script:
-    - cd guardian-lib
-    - pip install poetry=="$POETRY_VERSION"
-    - |-
-      if [ "$CI_COMMIT_BRANCH" != "$CI_DEFAULT_BRANCH" ]; then
-        poetry version "0.0.0.dev0+${CI_COMMIT_REF_SLUG//-/.}.$CI_COMMIT_SHORT_SHA"
-      else
-        true
-      fi
-    - poetry config --local virtualenvs.create false
-    - poetry config --local repositories.project_local ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi
-    - poetry publish -r project_local --username gitlab-ci-token --password ${CI_JOB_TOKEN}
-
-publish_authorization_client:
-  stage: publish
-  when: manual
-  rules:
-    - changes:
-        - authorization-client/**/*
-  dependencies:
-    - build_authorization_client
-  needs:
-    - build_authorization_client
-  image: docker-registry.knut.univention.de/python:3.11-slim
-  script:
-    - cd authorization-client
-    - pip install poetry=="$POETRY_VERSION"
-    - |-
-      if [ "$CI_COMMIT_BRANCH" != "$CI_DEFAULT_BRANCH" ]; then
-        poetry version "0.0.0.dev0+${CI_COMMIT_REF_SLUG//-/.}.$CI_COMMIT_SHORT_SHA"
-      else
-        true
-      fi
-    - poetry config --local virtualenvs.create false
-    - poetry config --local repositories.project_local ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi
-    - poetry publish -r project_local --username gitlab-ci-token --password ${CI_JOB_TOKEN}
 
 .generate_keycloak_script:
   stage: build_docker
