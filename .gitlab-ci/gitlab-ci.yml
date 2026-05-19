@@ -175,7 +175,8 @@ build_docker_image_authz:
   extends: .kaniko
   variables:
     IMAGE_TAG_ENV_NAME: "IMAGE_TAG_AUTHZ"
-    KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR/authorization-api"
+    DOCKERFILE_PATH: "$CI_PROJECT_DIR/authorization-api/Dockerfile"
+    KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR"
     CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-authorization-api
     KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --skip-unused-stages --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
 
@@ -190,7 +191,8 @@ build_docker_image_management:
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
   extends: .kaniko
   variables:
-    KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR/management-api"
+    DOCKERFILE_PATH: "$CI_PROJECT_DIR/management-api/Dockerfile"
+    KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR"
     CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-management-api
     KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --skip-unused-stages --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
 
@@ -285,3 +287,7 @@ docs-create-production-merge-request:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
       - docs/guardian-manual/**/*
+
+pip-package-and-publish-with-uv:
+  variables:
+    RELEASE_VERSION: "0.1.0-dev"
