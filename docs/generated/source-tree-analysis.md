@@ -326,8 +326,7 @@ keycloak/
     └── guardian_client_ui_config.json        # Management UI client config
 
 .gitlab-ci/
-├── gitlab-ci.yml                           # Main CI config (431 lines, 7 stages)
-└── pre_commit_hook_parser.py               # Selective hook execution utility
+└── gitlab-ci.yml                           # Main CI config (431 lines, 7 stages)
 
 docs/
 ├── guardian-manual/                        # Sphinx manual (RST, 13 pages)

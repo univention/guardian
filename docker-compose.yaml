@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-# SPDX-FileCopyrightText: 2024-2026 Univention GmbH
+# SPDX-FileCopyrightText: 2026 Univention GmbH
 
 services:
   # Environment of the pre-commit linter.
   pre-commit:
     profiles:
       - "pre-commit"
-    image: "gitregistry.knut.univention.de/univention/dev/tooling/pre-commit/upx-pre-commit:${IMAGE_TAG:-latest}"
+    image: "gitregistry.knut.univention.de/univention/dev/tooling/pre-commit/univention-pre-commit:${IMAGE_TAG:-latest}"
     volumes:
       - type: "bind"
         source: "."
