@@ -83,6 +83,7 @@ variables:
 #TODO: Stages should be merged and reduced by smart needs
 #and handling of the python packages in docker builds
 stages:
+  - prepare
   - test
   - build_python
   - build_docker
@@ -100,73 +101,71 @@ lint-pre-commit:
   needs: []
   variables:
     RUNNER_REGISTRY_IMAGE: "gitregistry.knut.univention.de/univention/dev/tooling/pre-commit/univention-pre-commit"
-    RUNNER_IMAGE_TAG: "0.6.1"
+    RUNNER_IMAGE_TAG: "0.6.2"
   before_script:
     - npm install -g yarn
     - yarn --cwd management-ui install
 
-opa-policy-check:
-  stage: test
-  needs: []
-  image:
-    name: docker-registry.knut.univention.de/knut/pre-commit-opa
-    entrypoint: [""]
-  script:
-    - opa fmt --fail management-api/rego_policy_bundle_template management-api/alembic/1.0.0_builtin_conditions
-    - opa check management-api/rego_policy_bundle_template
-    - opa check management-api/alembic/1.0.0_builtin_conditions --ignore="*.json"
-    - opa test management-api/rego_policy_bundle_template
-    - opa test management-api/alembic/1.0.0_builtin_conditions --ignore="*.json"
-    - regal lint management-api/rego_policy_bundle_template management-api/alembic/1.0.0_builtin_conditions
-
-.test:
-  stage: test
-  image: docker-registry.knut.univention.de/python:3.11-slim
+build_testrunner:
+  stage: prepare
+  extends: .kaniko
   variables:
-    GUARDIAN__MANAGEMENT__BASE_URL: "http://localhost:8001"
-    GUARDIAN_COMPONENT: ""
-    GUARDIAN_TEST_ARGS: ""
-    GUARDIAN_COVERAGE_COMPONENT: ""
-    GUARDIAN_COVERAGE_LIMIT: ""
+    IMAGE_TAG_ENV_NAME: "IMAGE_TAG_TESTRUNNER"
+    DOCKERFILE_PATH: "$CI_PROJECT_DIR/docker/testrunner/Dockerfile"
+    KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR"
+    CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-testrunner
+    KANIKO_ARGS: --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
+
+# No jobs for OPA code were created, since the form and structure of the OPA code is not final yet. TODO
+unittest:
+  stage: test
+  needs:
+    - job: build_testrunner
+      artifacts: true
+  image: $IMAGE_TAG_TESTRUNNER
+  variables:
+    UV_PROJECT_ENVIRONMENT: "/opt/venv"
   script:
-    - cd "$GUARDIAN_COMPONENT"
-    - pip install poetry=="$POETRY_VERSION"
-    - poetry config --local virtualenvs.create false
-    - poetry install
-    - pytest -lvv "$GUARDIAN_TEST_ARGS" --cov="$GUARDIAN_COVERAGE_COMPONENT" --cov-fail-under="$GUARDIAN_COVERAGE_LIMIT" --cov-report=term-missing --cov-report=xml:coverage.xml --junit-xml=pytest-junit.xml .
+    - exit_code=0
+    - >-
+      uv run pytest guardian-lib/tests/ -lvv
+      --cov=guardian_lib
+      --cov-fail-under=100
+      --cov-report=term-missing
+      --cov-report=xml:guardian-lib/coverage.xml
+      --junit-xml=guardian-lib/pytest-junit.xml
+      || exit_code=1
+    - >-
+      uv run pytest authorization-api/tests/ -lvv
+      --cov=guardian_authorization_api
+      --cov-fail-under=73
+      --cov-report=term-missing
+      --cov-report=xml:authorization-api/coverage.xml
+      --junit-xml=authorization-api/pytest-junit.xml
+      || exit_code=1
+    - >-
+      uv run pytest management-api/tests/ -lvv
+      --cov=guardian_management_api
+      --cov-fail-under=99
+      --cov-report=term-missing
+      --cov-report=xml:management-api/coverage.xml
+      --junit-xml=management-api/pytest-junit.xml
+      || exit_code=1
+    - exit $exit_code
   coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
   artifacts:
     paths:
-      - $GUARDIAN_COMPONENT/coverage.xml
+      - "*/coverage.xml"
     reports:
       coverage_report:
         coverage_format: cobertura
-        path: $GUARDIAN_COMPONENT/coverage.xml
-      junit: $GUARDIAN_COMPONENT/pytest-junit.xml
+        path: "*/coverage.xml"
+      junit:
+        - "guardian-lib/pytest-junit.xml"
+        - "authorization-api/pytest-junit.xml"
+        - "management-api/pytest-junit.xml"
     expire_in: "1 day"
     when: "always"
-
-test_management:
-  extends: .test
-  variables:
-    GUARDIAN_COMPONENT: "management-api"
-    GUARDIAN_TEST_ARGS: "-k not e2e_udm"
-    GUARDIAN_COVERAGE_COMPONENT: "guardian_management_api"
-    GUARDIAN_COVERAGE_LIMIT: $MANAGEMENT_COVERAGE_LIMIT
-
-test_authz:
-  extends: .test
-  variables:
-    GUARDIAN_COMPONENT: "authorization-api"
-    GUARDIAN_COVERAGE_COMPONENT: "guardian_authorization_api"
-    GUARDIAN_COVERAGE_LIMIT: $AUTHZ_COVERAGE_LIMIT
-
-test_guardian_lib:
-  extends: .test
-  variables:
-    GUARDIAN_COMPONENT: "guardian-lib"
-    GUARDIAN_COVERAGE_COMPONENT: "guardian_lib"
-    GUARDIAN_COVERAGE_LIMIT: $GUARDIAN_LIB_COVERAGE_LIMIT
 
 generate-filesystem-sbom:
   stage: "build_docker"
@@ -419,7 +418,11 @@ docs-create-production-merge-request:
       changes:
       - docs/guardian-manual/**/*
 
+pip-package-and-publish-with-uv:
+  variables:
+    RELEASE_VERSION: "0.1.0-dev"
+
 sonarqube:
   extends: .sonarqube
   stage: test
-  needs: [test_authz, test_guardian_lib, test_management]
+  needs: [unittest]
