@@ -87,13 +87,13 @@ To run the tests locally on your machine follow these steps:
 Prerequisites:
 
 - Python 3.11 installed
-- [Poetry 1.5.1](https://python-poetry.org/) installed
+- [uv](https://docs.astral.sh/uv/) installed
 
 ```shell
-# pwd == $REPO_DIR/management-engine/guardian/management-api
-poetry shell  # Or any other way to activate your virtual env for this project
-poetry install
-pytest -vv --cov=guardian_management_api .
+# From workspace root
+uv sync
+source .venv/bin/activate  # Activate venv (language servers, interactive use)
+pytest -vv --cov=guardian_management_api management-api/
 ```
 
 ### Using the cli
@@ -106,7 +106,7 @@ First get into the container:
 docker exec -ti management-guardian-dev /bin/bash
 cd management-api/
 # Optional: install ipython or just use python
-poetry add ipython
+uv add ipython
 ipython
 # Alternative
 python -m asyncio

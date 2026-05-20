@@ -8,10 +8,10 @@ A Python client library for the Guardian authorization and management APIs.
 pip install guardian-authorization-client
 ```
 
-Or with Poetry:
+Or with uv:
 
 ```bash
-poetry add guardian-authorization-client
+uv add guardian-authorization-client
 ```
 
 ## Usage
