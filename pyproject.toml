@@ -31,3 +31,8 @@ markers = [
 ]
 filterwarnings = ["ignore::DeprecationWarning:gunicorn.util:25"]
 env = ["GUARDIAN__MANAGEMENT__BASE_URL=http://localhost:8001"]
+
+[tool.coverage.run]
+omit = [
+    "*/guardian_management_api/ports/*",
+]
