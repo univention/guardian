@@ -7,7 +7,7 @@
 Guardian is an **Attribute-Based Access Control (ABAC) authorization engine** for
 Univention Corporate Server (UCS) -- a monorepo with 4 Python packages
 (`management-api`, `authorization-api`, `guardian-lib`, `authorization-client`)
-and 1 Vue 3 frontend (`management-ui`). Python 3.11+ / Poetry (backend),
+and 1 Vue 3 frontend (`management-ui`). Python 3.11+ / uv (backend),
 TypeScript / Yarn 1.22.x (frontend). AGPL-3.0-only, REUSE-compliant (SPDX
 header required on every source file).
 
@@ -21,11 +21,12 @@ SQLAlchemy DB models) -- never shared across layers.
 
 ## Quick-Reference Commands
 
-Prerequisites: Python 3.11+, Poetry 2.2.1, Node.js 24+, Yarn 1.22.22,
+Prerequisites: Python 3.11+, uv, Node.js 24+, Yarn 1.22.22,
 Docker + Docker Compose, pre-commit.
 
 ```bash
-poetry install                                      # Install Python deps (from subproject dir)
+uv sync                                             # Install all Python deps (from workspace root)
+source .venv/bin/activate                           # Activate venv (language servers, interactive use)
 cd management-ui && yarn install                    # Install frontend deps
 pre-commit run --all-files                          # All linters (MANDATORY after any change)
 ```
@@ -41,19 +42,19 @@ docker compose -f dev-compose.yaml up --build
 # PostgreSQL mode instead of SQLite:
 docker compose -f dev-compose.yaml -f dev-compose-postgres.yaml up --build
 
-# Local backend (without Docker, from management-api/ or authorization-api/)
-poetry run uvicorn guardian_management_api.main:app --reload --host 0.0.0.0 --port 8000
+# Local backend (without Docker, from workspace root)
+uv run uvicorn guardian_management_api.main:app --reload --host 0.0.0.0 --port 8000
 
 # Local frontend (from management-ui/)
 yarn dev
 ```
 
 ```bash
-# Backend tests (from management-api/, authorization-api/, or guardian-lib/)
-poetry run pytest tests/                            # All tests
-poetry run pytest tests/test_business_logic.py      # Single file
-poetry run pytest -k "test_post_app"                # By name pattern
-poetry run pytest -m "not e2e"                      # Skip e2e
+# Backend tests (from workspace root)
+uv run pytest management-api/tests/                 # All management-api tests
+uv run pytest management-api/tests/test_business_logic.py  # Single file
+uv run pytest -k "test_post_app"                    # By name pattern
+uv run pytest -m "not e2e"                          # Skip e2e
 
 # Inside Docker dev containers
 docker exec management-guardian-dev pytest -v /app/management-api/tests/
