@@ -2,6 +2,47 @@
 # SPDX-FileCopyrightText: 2026 Univention GmbH
 
 services:
+  test:
+    profiles:
+      - "test"
+    build:
+      context: "."
+      dockerfile: "docker/testrunner/Dockerfile"
+    working_dir: "/app"
+    volumes:
+      - type: "bind"
+        source: "."
+        target: "/app"
+    environment:
+      UV_PROJECT_ENVIRONMENT: "/opt/venv"
+    command:
+      - "sh"
+      - "-c"
+      - |
+        exit_code=0
+        uv run pytest guardian-lib/tests/ -lvv \
+          --cov=guardian_lib \
+          --cov-fail-under=100 \
+          --cov-report=term-missing \
+          --cov-report=xml:guardian-lib/coverage.xml \
+          --junit-xml=guardian-lib/pytest-junit.xml \
+          || exit_code=1
+        uv run pytest authorization-api/tests/ -lvv \
+          --cov=guardian_authorization_api \
+          --cov-fail-under=73 \
+          --cov-report=term-missing \
+          --cov-report=xml:authorization-api/coverage.xml \
+          --junit-xml=authorization-api/pytest-junit.xml \
+          || exit_code=1
+        uv run pytest management-api/tests/ -lvv \
+          --cov=guardian_management_api \
+          --cov-fail-under=99 \
+          --cov-report=term-missing \
+          --cov-report=xml:management-api/coverage.xml \
+          --junit-xml=management-api/pytest-junit.xml \
+          || exit_code=1
+        exit $$exit_code
+
   # Environment of the pre-commit linter.
   pre-commit:
     profiles:

@@ -120,7 +120,7 @@ build_testrunner:
     KANIKO_ARGS: --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
 
 # No jobs for OPA code were created, since the form and structure of the OPA code is not final yet. TODO
-unittest:
+test:
   stage: test
   needs:
     - job: build_testrunner
