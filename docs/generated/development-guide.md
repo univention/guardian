@@ -9,7 +9,7 @@
 | Requirement | Version | Purpose |
 |-------------|---------|---------|
 | Python | ^3.11 | Backend services and libraries |
-| Poetry | 2.2.1 | Python dependency management |
+| uv | 0.11.14 | Python dependency management (workspace) |
 | Node.js | v24+ | Management UI build (Vite, Vitest, Playwright) |
 | Yarn | 1.22.22 | Frontend dependency management |
 | Docker + Docker Compose | latest | Local development environment |
@@ -58,16 +58,24 @@ docker compose -f dev-compose.yaml -f dev-compose-postgres.yaml up --build
 ### Backend (management-api or authorization-api)
 
 ```bash
-cd management-api  # or authorization-api
-poetry install
-poetry run uvicorn guardian_management_api.main:app --reload --host 0.0.0.0 --port 8000
+# From workspace root — installs all packages at once
+uv sync
+
+# Activate the venv (useful for language servers and interactive use)
+source .venv/bin/activate
+
+# Run the management API with hot-reload
+uvicorn guardian_management_api.main:app --reload --host 0.0.0.0 --port 8000
+
+# Or without activating the venv:
+uv run uvicorn guardian_management_api.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ### Shared Library (guardian-lib)
 
 ```bash
-cd guardian-lib
-poetry install
+# Included in the workspace — uv sync at the root installs it too
+uv sync
 ```
 
 ### Frontend (management-ui)
@@ -85,20 +93,20 @@ yarn dev          # Vite dev server with hot-reload
 ### Management API
 
 ```bash
-# All tests
-poetry run pytest tests/
+# All tests (from workspace root)
+uv run pytest management-api/tests/
 
 # Single file
-poetry run pytest tests/test_business_logic.py
+uv run pytest management-api/tests/test_business_logic.py
 
 # Single test
-poetry run pytest tests/routes/test_app.py::TestAppEndpoints::test_post_app_minimal
+uv run pytest management-api/tests/routes/test_app.py::TestAppEndpoints::test_post_app_minimal
 
 # By name pattern
-poetry run pytest -k "test_post_app"
+uv run pytest -k "test_post_app"
 
 # Skip e2e tests
-poetry run pytest -m "not e2e"
+uv run pytest -m "not e2e"
 
 # Inside Docker dev container
 docker exec management-guardian-dev pytest -v /app/management-api/tests/
@@ -107,7 +115,7 @@ docker exec management-guardian-dev pytest -v /app/management-api/tests/
 ### Authorization API
 
 ```bash
-poetry run pytest tests/
+uv run pytest authorization-api/tests/
 
 # Integration tests require OPA with test data loaded
 docker exec authz-guardian-dev pytest -v /app/authorization-api/tests/
@@ -116,8 +124,7 @@ docker exec authz-guardian-dev pytest -v /app/authorization-api/tests/
 ### Guardian Lib
 
 ```bash
-cd guardian-lib
-poetry run pytest tests/
+uv run pytest guardian-lib/tests/
 ```
 
 ### Management UI
@@ -220,7 +227,7 @@ pre-commit install
 |-------------|------|-------------|
 | Pre-commit | 3 parallel | general, backend, frontend hook groups |
 | Tests | 3 parallel | management-api, authorization-api, guardian-lib (pytest) |
-| Python builds | 2 | guardian-lib, authorization-client (poetry build) |
+| Python builds | 2 | guardian-lib, authorization-client (uv build) |
 | Docker builds | 4 | OPA, management-api, authorization-api, management-ui (Kaniko) |
 | Publish | 2 (manual) | guardian-lib, authorization-client (GitLab PyPI) |
 | Docs | 5 | Sphinx linkcheck, spelling, HTML, PDF, merge |

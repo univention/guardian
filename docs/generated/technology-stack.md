@@ -35,7 +35,7 @@ Guardian is a monorepo containing 5 distinct parts, spanning Python backend serv
 | Async Shell Utils | aioshutil | ^1.6 | Async file copy/move (bundle generation) |
 | Version Utils | packaging | ^24.1 | Version string parsing |
 | Adapter Registry | guardian-lib | 1.8.1 | Internal shared library (port-loader, auth adapters, settings) |
-| Package Manager | Poetry | -- | Dependency management and packaging |
+| Package Manager | uv | 0.11.14 | Workspace dependency management and packaging |
 | Containerization | Docker | -- | Multi-stage Dockerfile (builder, dev, production targets) |
 
 ### Dev/Test Dependencies
@@ -74,7 +74,7 @@ Guardian is a monorepo containing 5 distinct parts, spanning Python backend serv
 | Logging | Loguru | ^0.7.3 | Structured logging with per-request correlation IDs via `X-Request-ID` header |
 | Version Utils | packaging | ^24.1 | Version parsing |
 | Adapter Registry | guardian-lib | 1.8.1 | Shared library (port-loader, auth adapters, settings) |
-| Package Manager | Poetry | -- | Dependency management |
+| Package Manager | uv | 0.11.14 | Workspace dependency management |
 | Containerization | Docker | -- | Multi-stage Dockerfile |
 
 ### Ports and Adapters
@@ -160,7 +160,7 @@ Guardian is a monorepo containing 5 distinct parts, spanning Python backend serv
 | JWT | PyJWT | ^2.10.1 | JWT token decoding and RS256 signature validation |
 | HTTP Client | requests | ^2.32.5 | Fetches OAuth well-known configuration endpoints |
 | Logging | Loguru | ^0.7.3 | Structured logging configuration shared across services |
-| Package Manager | Poetry | -- | Dependency management |
+| Package Manager | uv | 0.11.14 | Workspace dependency management |
 
 ### Dev/Test Dependencies
 
@@ -187,7 +187,7 @@ Guardian is a monorepo containing 5 distinct parts, spanning Python backend serv
 | HTTP Client | requests | ^2.28.0 | Sync HTTP client for Guardian API communication |
 | YAML Parser | PyYAML | ^6.0 | Parses authorization configuration YAML files |
 | LDAP | python-ldap | ^3.4 | DN parsing and comparison for LDAP scope checks (subtree, base, one) |
-| Package Manager | Poetry | -- | Dependency management |
+| Package Manager | uv | 0.11.14 | Dependency management (separate uv project, not part of workspace) |
 
 ### Dev/Test Dependencies
 
