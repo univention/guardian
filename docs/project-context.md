@@ -112,9 +112,9 @@ _This file contains critical rules and patterns that AI agents must follow when 
 **FastAPI / Hexagonal Architecture:**
 - **Hexagonal Architecture (Ports & Adapters)** is the core pattern. Every service has: `ports/` (abstract interfaces), `adapters/` (concrete implementations), `models/` (data), `routers/` (thin HTTP layer).
 - **All business logic lives in `business_logic.py`** -- routers and adapters NEVER contain business logic. Routers are thin wrappers that delegate to business logic functions.
-- **Port-loader adapter registration** via Poetry entry points in `pyproject.toml`:
+- **Port-loader adapter registration** via entry points in `pyproject.toml`:
   ```toml
-  [tool.poetry.plugins."<package_name>.<PortClassName>"]
+  [project.entry-points."<package_name>.<PortClassName>"]
   "<adapter_key>" = "<module_path>:<AdapterClass>"
   ```
 - **Adapter selection via environment variables**: `GUARDIAN__<SERVICE>__ADAPTER__<PORT_NAME>` (double underscores). E.g., `GUARDIAN__MANAGEMENT__ADAPTER__SETTINGS_PORT=env`.
@@ -236,10 +236,10 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - **MANDATORY: Run `pre-commit run --all-files` after ANY code change.** This is required before commits, not optional.
 - Hooks are **prefixed by category** for selective CI execution: `general-*`, `backend-*`, `frontend-*`.
 - **General**: check-added-large-files, check-json/xml/yaml/toml, trailing-whitespace, pretty-format-json (autofix), **pymarkdown** (markdown formatting).
-- **Backend**: black, bandit, mypy, ruff (with --fix), poetry-check (x4 packages), poetry-lock --check (x4), opa-fmt, opa-check, opa-test, regal-lint.
+- **Backend**: black, bandit, mypy, ruff (with --fix), uv-lock-check (workspace + authorization-client), opa-fmt, opa-check, opa-test, regal-lint.
 - **Frontend**: vue-tsc (type-check), yarn lint (`--max-warnings 0`), yarn format. All run from the `management-ui` directory.
 - All hooks must pass before commits are accepted. Pre-commit is the primary local quality gate.
-- **`poetry-lock --check` runs for all 4 packages.** If you modify one `pyproject.toml`, update its `poetry.lock` -- pre-commit will catch stale lock files. Ensure local Poetry version matches 1.8.4 (pre-commit hook version) to avoid lock file format changes.
+- **`uv lock --check` runs for workspace packages and separately for authorization-client.** If you modify any `pyproject.toml`, update `uv.lock` by running `uv lock` -- pre-commit will catch stale lock files.
 
 **CI/CD (GitLab CI -- NOT GitHub Actions):**
 - **Stages**: test -> build_python -> build_docker -> package -> publish -> build -> merge -> release -> production -> cleanup.
@@ -249,8 +249,8 @@ _This file contains critical rules and patterns that AI agents must follow when 
 
 **Multi-Package Repository:**
 - This is a **monorepo** with 4 Python packages (`management-api`, `authorization-api`, `guardian-lib`, `authorization-client`) and 1 frontend app (`management-ui`).
-- Each Python package has its own `pyproject.toml`, `poetry.lock`, and test suite.
-- **Poetry** manages each package independently -- changes to one package may require updating others.
+- Each Python package has its own `pyproject.toml` and test suite. A single `uv.lock` at the workspace root covers all packages.
+- **uv** manages the workspace -- changes to one `pyproject.toml` may require running `uv lock` to update the shared lock file.
 - **UCS App Center packaging** directories (`appcenter-authz/`, `appcenter-common/`, `appcenter-management/`, `appcenter-management-ui/`) contain Jinja-templated compose files and install scripts for deployment.
 
 ### Critical Don't-Miss Rules

@@ -4,9 +4,25 @@ A thorough project documentation including developer guidance can be found at [d
 
 A "cheat sheet" for roles, privilege/capabilities, and permissions is in [Guardian 3.0 Cheat Sheet](docs/guardian_cheat_sheet.pdf).
 
+## Running Tests and Linters Without Local Setup
+
+If you only need to run tests or linting, Docker is the only prerequisite.
+This mirrors what CI runs and is useful for debugging CI failures locally.
+
+```bash
+# Run linters (pre-commit hooks)
+docker compose run pre-commit
+
+# Run tests
+docker compose run --rm test
+```
+
+The pre-commit container uses a named volume to cache hook environments, so
+repeat runs are significantly faster after the first one.
+
 ## Running Guardian
 
-- `./dev-run`: Run Guardian in development mode with hot-reloading.
+- `./dev-run`: Run Guardian in development mode.
 - `./.env.example`: Example environment variables for development.
 
 ## Setup
@@ -60,55 +76,48 @@ A "cheat sheet" for roles, privilege/capabilities, and permissions is in [Guardi
 
 ## Running Tests
 
-First you need to follow the setup steps above.
+### Test categories
+
+| Mark | Package | Requires | Default run |
+|------|---------|---------|------------|
+| _(none)_ | all | nothing | ✓ included |
+| `e2e` | management-api | SQLite in-process, no external services | ✓ included |
+| `e2e_udm` | management-api | Authorization API + Keycloak | excluded |
+| `in_container_test` | authorization-api | OPA (skipped gracefully if absent) | ✓ included |
+| `integration` | authorization-api | UDM | excluded |
 
 ### Management API Tests
 
-The management-api tests can be run directly without special setup:
+Run standalone (e2e_udm excluded by default via pyproject.toml):
 
 ```bash
-docker exec management-guardian-dev pytest -v /app/management-api/tests/
+uv run pytest management-api/tests/
+```
+
+`e2e_udm` tests require the full dev stack (see Setup above). With the stack running,
+pass `-m e2e_udm` to override the default exclusion:
+
+```bash
+docker exec management-guardian-dev pytest -v -m e2e_udm /app/management-api/tests/
 ```
 
 For more details, see the [management-api README](management-api/README.md).
 
 ### Authorization API Tests
 
-The authorization-api has integration tests that require OPA to be loaded with test data.
-By default, the dev environment loads production data from Alembic migrations, which will
-cause the OPA integration tests to fail.
+Run standalone (`integration` excluded by default; `in_container_test` runs but self-skips if OPA is absent):
 
-To run the integration tests:
+```bash
+uv run pytest authorization-api/tests/
+```
 
-1. Ensure the dev environment is running:
+`integration` tests require UDM credentials. Override `addopts` by passing `-m` explicitly:
 
-   ```bash
-   ./dev-run
-   ```
+```bash
+uv run pytest -m integration authorization-api/tests/
+```
 
-1. Load the test mapping data into OPA:
-
-   ```bash
-   # Copy test mapping to the bundle build directory
-   docker cp management-api/rego_policy_bundle_template/univention/test_mapping/data.json \
-      management-guardian-dev:/guardian_service_dir/bundle_server/build/GuardianDataBundle/guardian/mapping/data.json
-
-   # Rebuild the OPA data bundle
-   docker exec management-guardian-dev opa build --v0-compatible -b /guardian_service_dir/bundle_server/build/GuardianDataBundle \
-      -o /guardian_service_dir/bundle_server/bundles/GuardianDataBundle.tar.gz
-
-   ```
-
-1. Wait for OPA to pick up the new bundle.
-
-1. Run the tests inside the container:
-
-   ```bash
-   docker exec authz-guardian-dev pytest -v /app/authorization-api/tests/
-   ```
-
-**Note:** After restarting the dev environment or if the management-api regenerates bundles,
-the test data will be overwritten with production data. You'll need to repeat step 2.
+For `in_container_test` (OPA) tests, use `docker compose run --rm test` as described at the top.
 
 For more details, see the [authorization-api README](authorization-api/README.md).
 

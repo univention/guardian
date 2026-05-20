@@ -330,4 +330,4 @@ pip-package-and-publish-with-uv:
 sonarqube:
   extends: .sonarqube
   stage: test
-  needs: [unittest]
+  needs: [test]

@@ -116,13 +116,13 @@ To run the tests locally on your machine follow these steps:
 Prerequisites:
 
 - Python 3.11 installed
-- [Poetry 1.5.1](https://python-poetry.org/) installed
+- [uv](https://docs.astral.sh/uv/) installed
 
 ```shell
-# pwd == $REPO_DIR/authorization-engine/guardian/authorization-api
-poetry shell  # Or any other way to activate your virtual env for this project
-poetry install
-pytest -vv --cov=guardian_authorization_api .
+# From workspace root
+uv sync
+source .venv/bin/activate  # Activate venv (language servers, interactive use)
+pytest -vv --cov=guardian_authorization_api authorization-api/
 ```
 
 There are also integration tests, that run automatically, if their prerequisites are met.
@@ -139,11 +139,10 @@ You can enable or disable
 the integration tests on purpose by using the `integration` mark:
 
 ```shell
-#pwd == $REPO_DIR/authorization-engine/guardian/authorization-api
-poetry shell  # Or any other way to activate your virtual env for this project
-poetry install
-pytest -vv -m integration .  # Runs integration tests only
-pytest -vv --cov=guardian_authorization_api -m "not integration" .  # Never runs integration tests
+# From workspace root
+uv sync
+pytest -vv -m integration authorization-api/          # Runs integration tests only
+pytest -vv --cov=guardian_authorization_api -m "not integration" authorization-api/  # Never runs integration tests
 ```
 
 #### UDMPersistenceAdapter integration tests
