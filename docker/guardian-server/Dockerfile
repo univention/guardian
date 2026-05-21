@@ -83,6 +83,7 @@ COPY --from=build --chown=${USER}:${USER} /app/.venv /app/.venv
 COPY --chown=${USER}:${USER} ./management-api/alembic /app/management-api/alembic
 COPY --chown=${USER}:${USER} ./management-api/alembic.ini /app/management-api/alembic.ini
 COPY --chown=${USER}:${USER} ./management-api/rego_policy_bundle_template /app/management-api/rego_policy_bundle_template
+COPY ./opa/opa_config.yaml /etc/opa/opa_config.yaml
 
 USER ${USER}
 WORKDIR /app/management-api

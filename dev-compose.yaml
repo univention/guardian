@@ -21,8 +21,11 @@ services:
 
   opa:
     container_name: opa-guardian-dev
-    image: guardian-opa:dev
-    build: opa/
+    image: guardian-management-api:dev
+    build:
+      context: ./
+      dockerfile: docker/guardian-server/Dockerfile
+    command: ["opa", "run", "--disable-telemetry", "--server", "--v0-compatible", "-c", "/etc/opa/opa_config.yaml", "--addr", "0.0.0.0:8181"]
     depends_on:
       management-api:
         condition: service_started
@@ -101,7 +104,7 @@ services:
     working_dir: /app/management-api
     build:
       context: ./
-      dockerfile: management-api/Dockerfile
+      dockerfile: docker/guardian-server/Dockerfile
       extra_hosts:
         - git.knut.univention.de:${GITLAB_IP}
     depends_on:
@@ -146,7 +149,7 @@ services:
     user: ${USER_ID:-1000}
     build:
       context: ./
-      dockerfile: management-api/Dockerfile
+      dockerfile: docker/guardian-server/Dockerfile
     extra_hosts:
       - ucs-sso-ng.school.test:${UCS_HOST_IP}
     depends_on:
