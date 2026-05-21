@@ -26,6 +26,9 @@ additionally need the UDM user ``guardian`` to exist with the right role. It can
       --set guardianRoles=guardian:builtin:app-admin \
       --position cn=users,$(ucr get ldap/base)
 
+The tests also require the ``guardian-scripts`` Keycloak client to exist in the ``GuardianDev`` realm.
+This client is created automatically by the ``keycloak-provisioning`` container when running the local dev stack via ``dev-compose.yaml``.
+
 Finally, run the tests for the desired component in your environment:
 
 .. code-block:: bash

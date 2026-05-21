@@ -89,28 +89,33 @@ class KeycloakConfigurator:
             open("/keycloak/provisioning/guardian_client_ui_config.json", "r")
         )
         self.keycloak_admin.create_client(payload=client_config, skip_exists=True)
+        client_config = json.load(
+            open("/keycloak/provisioning/guardian_client_scripts_config.json", "r")
+        )
+        self.keycloak_admin.create_client(payload=client_config, skip_exists=True)
 
-        # create user
-        self.logger.info(f"Creating User: {self.user_name}")
-        try:
-            self.keycloak_admin.create_user(
-                {
-                    "username": self.user_name,
-                    "enabled": True,
-                    "email": "example@example.com",
-                    "firstName": "example",
-                    "lastName": "example",
-                    "credentials": [
-                        {
-                            "value": "univention",
-                            "type": "password",
-                        }
-                    ],
-                }
-            )
-        except Exception as exc:
-            self.logger.info(f"User {self.user_name} already exists!")
-            self.logger.debug(exc)
+        # create users
+        for username in [self.user_name, "guardian"]:
+            self.logger.info(f"Creating User: {username}")
+            try:
+                self.keycloak_admin.create_user(
+                    {
+                        "username": username,
+                        "enabled": True,
+                        "email": f"{username}@example.com",
+                        "firstName": username,
+                        "lastName": username,
+                        "credentials": [
+                            {
+                                "value": "univention",
+                                "type": "password",
+                            }
+                        ],
+                    }
+                )
+            except Exception as exc:
+                self.logger.info(f"User {username} already exists!")
+                self.logger.debug(exc)
 
 
 if __name__ == "__main__":

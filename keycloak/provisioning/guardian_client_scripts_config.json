@@ -1,0 +1,42 @@
+{
+  "clientId": "guardian-scripts",
+  "defaultClientScopes": [
+    "web-origins",
+    "acr",
+    "basic",
+    "profile",
+    "roles",
+    "email"
+  ],
+  "directAccessGrantsEnabled": true,
+  "enabled": true,
+  "fullScopeAllowed": true,
+  "optionalClientScopes": [
+    "address",
+    "phone",
+    "offline_access",
+    "microprofile-jwt"
+  ],
+  "protocol": "openid-connect",
+  "protocolMappers": [
+    {
+      "config": {
+        "access.token.claim": "true",
+        "access.tokenResponse.claim": "false",
+        "claim.name": "dn",
+        "claim.value": "dn=fake",
+        "id.token.claim": "false",
+        "introspection.token.claim": "true",
+        "jsonType.label": "String",
+        "userinfo.token.claim": "true"
+      },
+      "consentRequired": false,
+      "name": "dn",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-hardcoded-claim-mapper"
+    }
+  ],
+  "publicClient": true,
+  "serviceAccountsEnabled": false,
+  "standardFlowEnabled": false
+}
