@@ -35,4 +35,14 @@ env = ["GUARDIAN__MANAGEMENT__BASE_URL=http://localhost:8001"]
 [tool.coverage.run]
 omit = [
     "*/guardian_management_api/ports/*",
+    "*/guardian_authorization_api/udm_client.py",
+    # Those omits should be removed, once integration tests are added.
+    # See univention/components/authorization-engine/guardian#32
+    "*/guardian_management_api/routers/condition.py",
+    "*/guardian_management_api/routers/custom_endpoint.py",
+    "*/guardian_management_api/routers/permission.py",
 ]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true

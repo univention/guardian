@@ -125,34 +125,35 @@ test:
       --cov=guardian_lib
       --cov-fail-under=100
       --cov-report=term-missing
-      --cov-report=xml:guardian-lib/coverage.xml
       --junit-xml=guardian-lib/pytest-junit.xml
       || exit_code=1
     - >-
       uv run pytest authorization-api/tests/ -lvv
       --cov=guardian_authorization_api
-      --cov-fail-under=73
+      --cov-fail-under=100
+      --cov-append
       --cov-report=term-missing
-      --cov-report=xml:authorization-api/coverage.xml
       --junit-xml=authorization-api/pytest-junit.xml
       || exit_code=1
     - >-
       uv run pytest management-api/tests/ -lvv
       --cov=guardian_management_api
-      --cov-fail-under=99
+      --cov-fail-under=100
+      --cov-append
       --cov-report=term-missing
-      --cov-report=xml:management-api/coverage.xml
       --junit-xml=management-api/pytest-junit.xml
       || exit_code=1
+    - uv run coverage xml -o coverage.xml
+    - uv run coverage report
     - exit $exit_code
   coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
   artifacts:
     paths:
-      - "*/coverage.xml"
+      - "coverage.xml"
     reports:
       coverage_report:
         coverage_format: cobertura
-        path: "*/coverage.xml"
+        path: "coverage.xml"
       junit:
         - "guardian-lib/pytest-junit.xml"
         - "authorization-api/pytest-junit.xml"
