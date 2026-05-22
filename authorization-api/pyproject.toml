@@ -55,7 +55,6 @@ opa-client = { index = "opa-client" }
 "fast_api_oauth2" = "guardian_lib.adapters.authentication:FastAPIOAuth2"
 
 [tool.pytest.ini_options]
-addopts = "-m 'not integration'"
 markers = [
     "integration: marks test as requiring services outside of the guardian",
     "in_container_test: marked test is relying on services outside the authzorization-api (e.g.: opa)",
