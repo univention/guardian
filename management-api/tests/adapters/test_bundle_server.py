@@ -134,7 +134,7 @@ class TestBundleServerAdapter:
         process_mock = mocker.AsyncMock()
         subprocess_mock = mocker.AsyncMock(return_value=process_mock)
         process_mock.returncode = 0
-        mocker.patch("asyncio.create_subprocess_shell", subprocess_mock)
+        mocker.patch("asyncio.create_subprocess_exec", subprocess_mock)
         prepare_build_dir_mock = mocker.AsyncMock()
         adapter._prepare_build_directory = prepare_build_dir_mock
         adapter._generate_mapping = mocker.AsyncMock()
@@ -145,11 +145,16 @@ class TestBundleServerAdapter:
             else adapter._policy_bundle_name
         )
         await adapter._build_bundle(bundle_type, mocker.AsyncMock(), mocker.AsyncMock())
-        build_cmd = (
-            f"opa build --v0-compatible -b {Path(bundle_server_base_dir) / 'build' / subpath} -o "
-            f"{Path(bundle_server_base_dir) / 'bundles' / subpath}.tar.gz"
-        )
-        assert subprocess_mock.call_args_list == [call(build_cmd)]
+        build_args = [
+            "opa",
+            "build",
+            "--v0-compatible",
+            "-b",
+            str(Path(bundle_server_base_dir) / "build" / subpath),
+            "-o",
+            f"{Path(bundle_server_base_dir) / 'bundles' / subpath}.tar.gz",
+        ]
+        assert subprocess_mock.call_args_list == [call(*build_args)]
         process_mock.communicate.assert_called_once()
 
     @pytest.mark.asyncio
@@ -174,7 +179,7 @@ class TestBundleServerAdapter:
         process_mock = mocker.AsyncMock()
         subprocess_mock = mocker.AsyncMock(return_value=process_mock)
         process_mock.returncode = 1
-        mocker.patch("asyncio.create_subprocess_shell", subprocess_mock)
+        mocker.patch("asyncio.create_subprocess_exec", subprocess_mock)
         with pytest.raises(BundleBuildError):
             await adapter._build_bundle(
                 BundleType.data, mocker.AsyncMock(), mocker.AsyncMock()

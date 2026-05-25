@@ -274,13 +274,18 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
             await self._dump_conditions(
                 cond_persistence_port, base_dir / "build" / bundle_name
             )
-        build_cmd = (
-            f"opa build --v0-compatible -b {base_dir / 'build' / bundle_name} -o "
-            f"{base_dir / 'bundles' / bundle_name}.tar.gz"
-        )
-        local_logger = local_logger.bind(build_cmd=build_cmd)
+        build_args = [
+            "opa",
+            "build",
+            "--v0-compatible",
+            "-b",
+            str(base_dir / "build" / bundle_name),
+            "-o",
+            f"{base_dir / 'bundles' / bundle_name}.tar.gz",
+        ]
+        local_logger = local_logger.bind(build_cmd=" ".join(build_args))
         local_logger.debug("Building opa bundle.")
-        build_proc = await asyncio.create_subprocess_shell(build_cmd)
+        build_proc = await asyncio.create_subprocess_exec(*build_args)
         await build_proc.communicate()
         if build_proc.returncode != 0:
             raise BundleBuildError("Error during build of OPA bundles.")
