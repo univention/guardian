@@ -29,7 +29,6 @@ markers = [
     "e2e: marks test that test the routes with full integration",
     "e2e_udm: marks test that need an UDM instance",
 ]
-filterwarnings = ["ignore::DeprecationWarning:gunicorn.util:25"]
 env = ["GUARDIAN__MANAGEMENT__BASE_URL=http://localhost:8001"]
 
 [tool.coverage.run]

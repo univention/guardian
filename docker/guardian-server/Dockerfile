@@ -94,10 +94,10 @@ USER ${GUARDIAN_UID}
 WORKDIR /app/management-api
 
 # Reset the distroless base ENTRYPOINT (which is python3.11) so CMD overrides
-# from compose/Helm (gunicorn, opa, ...) execute directly instead of being
+# from compose/Helm (granian, opa, ...) execute directly instead of being
 # passed to Python as script names.
 ENTRYPOINT []
-CMD ["gunicorn", "--log-level", "info", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "guardian_management_api.main:app"]
+CMD ["granian", "--interface", "asgi", "--host", "0.0.0.0", "--port", "8000", "--log-level", "info", "guardian_management_api.main:app"]
 
 # Smoke test: sets the required env var in-process (no shell available) and imports both apps.
 RUN ["python3.11", "-c", "import os; os.environ['GUARDIAN__MANAGEMENT__BASE_URL']='foobar'; import guardian_management_api.main; import guardian_authorization_api.main"]

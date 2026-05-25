@@ -71,7 +71,13 @@ async def configure_logger(
     settings_port: Optional[SettingsPort] = None,
     setting_names: Optional[dict[str, str]] = None,
 ):
-    for logger_name in ("uvicorn", "uvicorn.error", "uvicorn.access", "fastapi"):
+    for logger_name in (
+        "_granian",
+        "_granian.access",
+        "granian",
+        "granian.access",
+        "fastapi",
+    ):
         _logger = logging.getLogger(logger_name)
         _logger.handlers = [InterceptHandler()]
     logger.enable(port_loader.__name__)

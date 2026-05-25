@@ -56,7 +56,7 @@ services:
         - git.knut.univention.de:${GITLAB_IP}
         - ucs-sso-ng.school.test:${UCS_HOST_IP}
     working_dir: /app/authorization-api
-    command: ["gunicorn", "--log-level", "info", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "guardian_authorization_api.main:app"]
+    command: ["granian", "--interface", "asgi", "--host", "0.0.0.0", "--port", "8000", "--log-level", "info", "guardian_authorization_api.main:app"]
     extra_hosts:
       - ucs-sso-ng.school.test:${UCS_HOST_IP}
     depends_on:

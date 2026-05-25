@@ -43,7 +43,7 @@ docker compose -f dev-compose.yaml up --build
 docker compose -f dev-compose.yaml -f dev-compose-postgres.yaml up --build
 
 # Local backend (without Docker, from workspace root)
-uv run uvicorn guardian_management_api.main:app --reload --host 0.0.0.0 --port 8000
+uv run granian --interface asgi --reload --host 0.0.0.0 --port 8000 guardian_management_api.main:app
 
 # Local frontend (from management-ui/)
 yarn dev
