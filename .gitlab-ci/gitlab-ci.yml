@@ -130,14 +130,10 @@ pip-package-and-publish-with-uv:
 .build-matrix: &build-matrix
   - IMAGE_NAME: "testrunner"
     DOCKERFILE_PATH: "docker/testrunner/Dockerfile"
-  - IMAGE_NAME: "guardian-opa"
-    KANIKO_BUILD_CONTEXT: "${CI_PROJECT_DIR}/opa"
   - IMAGE_NAME: "guardian-management-ui"
     DOCKERFILE_PATH: "management-ui/docker/Dockerfile"
-  - IMAGE_NAME: "guardian-authorization-api"
-    DOCKERFILE_PATH: "authorization-api/Dockerfile"
-  - IMAGE_NAME: "guardian-management-api"
-    DOCKERFILE_PATH: "management-api/Dockerfile"
+  - IMAGE_NAME: "guardian-server"
+    DOCKERFILE_PATH: "docker/guardian-server/Dockerfile"
 
 .publish-matrix: &publish-matrix
   - IMAGE_NAME:
