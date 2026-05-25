@@ -4,10 +4,17 @@
 ARG UCS_BASE_IMAGE=gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base-python
 ARG UCS_BASE_IMAGE_TAG=5.2.3-build.20251030@sha256:36f081b5f57553bb1b5d714cca5f4853d985ba09ed03a5f3ef7e0042acc47963
 
+ARG DISTROLESS_IMAGE=gcr.io/distroless/python3-debian12
+ARG DISTROLESS_IMAGE_TAG=nonroot@sha256:7d1042ce588ab97019fe95c24ffca7bc5a82ccdac572511d5e09bda4435c89c5
+
+# UID/GID of the prebuilt `nonroot` user in the distroless final stage.
+ARG GUARDIAN_UID=65532
+
 ###############################################
 # Stage 1: build dependencies and software
 FROM ${UCS_BASE_IMAGE}:${UCS_BASE_IMAGE_TAG} AS build
 SHELL ["/bin/bash", "-uxo", "pipefail", "-c"]
+ARG GUARDIAN_UID
 
 ARG opa_version=1.11.0
 ARG opa_checksum=sha256:53451e1d1362dbb11d6703c159b05de5cd18278fa4aee0b75a0b9590d573fd0a
@@ -49,16 +56,20 @@ RUN uv sync \
   --no-editable \
   --package management-api
 
+# Stage the runtime config dir with ownership matching the distroless `nonroot` user.
+RUN mkdir -p /staging/app/conf \
+  && touch /staging/app/conf/m2m.secret \
+  && chown -R ${GUARDIAN_UID}:${GUARDIAN_UID} /staging/app/conf
+
 ###############################################
-# Stage 2: final image
-FROM ${UCS_BASE_IMAGE}:${UCS_BASE_IMAGE_TAG} AS final
-SHELL ["/bin/bash", "-uxo", "pipefail", "-c"]
+# Stage 2: final image (distroless)
+FROM ${DISTROLESS_IMAGE}:${DISTROLESS_IMAGE_TAG} AS final
+ARG GUARDIAN_UID
 
 EXPOSE 8000
 
 ARG commit
 ARG date
-ARG USER=guardian
 
 LABEL "description"="Guardian Management API." \
     "release date"="$date" \
@@ -66,32 +77,26 @@ LABEL "description"="Guardian Management API." \
 
 ENV PYTHONUNBUFFERED=1 \
   PATH=/app/.venv/bin:$PATH \
-  SERVICE_USER=${USER}
-
-RUN apt-get --assume-yes --verbose-versions --no-install-recommends install \
-  ca-certificates \
-  && rm -fv /usr/lib/python*/EXTERNALLY-MANAGED \
-  && rm -fr /var/lib/apt/lists/* /var/cache/apt/archives/* \
-  && groupadd -r ${USER} -g 1000 \
-  && useradd -r -d /app -g ${USER} -N ${USER} -u 1000 \
-  && mkdir -p /guardian_service_dir/conf \
-  && touch /guardian_service_dir/conf/m2m.secret
+  SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
+  HOME=/app/conf
 
 COPY --from=build --chmod=555 /usr/local/bin/opa /usr/local/bin/opa
-COPY --from=build --chown=${USER}:${USER} /app/.venv /app/.venv
+COPY --from=build --chown=${GUARDIAN_UID}:${GUARDIAN_UID} /app/.venv /app/.venv
+COPY --from=build --chown=${GUARDIAN_UID}:${GUARDIAN_UID} /staging/app/conf /app/conf
 
-COPY --chown=${USER}:${USER} ./management-api/alembic /app/management-api/alembic
-COPY --chown=${USER}:${USER} ./management-api/alembic.ini /app/management-api/alembic.ini
-COPY --chown=${USER}:${USER} ./management-api/rego_policy_bundle_template /app/management-api/rego_policy_bundle_template
+COPY --chown=${GUARDIAN_UID}:${GUARDIAN_UID} ./management-api/alembic /app/management-api/alembic
+COPY --chown=${GUARDIAN_UID}:${GUARDIAN_UID} ./management-api/alembic.ini /app/management-api/alembic.ini
+COPY --chown=${GUARDIAN_UID}:${GUARDIAN_UID} ./management-api/rego_policy_bundle_template /app/management-api/rego_policy_bundle_template
 COPY ./opa/opa_config.yaml /etc/opa/opa_config.yaml
 
-USER ${USER}
+USER ${GUARDIAN_UID}
 WORKDIR /app/management-api
 
+# Reset the distroless base ENTRYPOINT (which is python3.11) so CMD overrides
+# from compose/Helm (gunicorn, opa, ...) execute directly instead of being
+# passed to Python as script names.
+ENTRYPOINT []
 CMD ["gunicorn", "--log-level", "info", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "guardian_management_api.main:app"]
 
-RUN \
-  python3.11 -V && \
-  python3.11 -m site && \
-  GUARDIAN__MANAGEMENT__BASE_URL="foobar" \
-  python3.11 -c 'import guardian_management_api.main'
+# Smoke test: sets the required env var in-process (no shell available) and imports the app.
+RUN ["python3.11", "-c", "import os; os.environ['GUARDIAN__MANAGEMENT__BASE_URL']='foobar'; import guardian_management_api.main"]
