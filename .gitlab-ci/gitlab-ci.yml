@@ -3,82 +3,82 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 include:
-  - component: $CI_SERVER_FQDN/univention/dev/internal/ucsschool-ci-utils/app-release@2
-    inputs:
-      app_id: "guardian-authorization-api"
-      job_prefix: "authz-"
-      mail_sender: "nubus-core@univention.de"
-      author_alias: "Nubus Core Team"
-      changelog_link: "https://docs.software-univention.de/guardian-manual/latest/changelogs.html#authorization-api"
-      mail_recipient: "app-announcement@univention.de"
-      chat_destination: "#ucsschool"
-      ucs_base_version: "5.0"
-      additional_update_appcenter_needs:
-        - job: "container-build"
-          parallel:
-            matrix:
-              - IMAGE_NAME: "guardian-authorization-api"
-                KANIKO_BUILD_CONTEXT: "${CI_PROJECT_DIR}/authorization-api"
-          optional: true
-        - job: "container-build"
-          parallel:
-            matrix:
-              - IMAGE_NAME: "guardian-opa"
-                KANIKO_BUILD_CONTEXT: "${CI_PROJECT_DIR}/opa"
-          optional: true
-        - authz_keycloak_script
-      appcenter_file_dir: "appcenter-authz/"
-      release_tag_prefix: "authorization-api_"
-      build_stage: "package"
-      release_stage: "publish"
-      cleanup_stage: ".post"
-  - component: $CI_SERVER_FQDN/univention/dev/internal/ucsschool-ci-utils/app-release@2
-    inputs:
-      app_id: "guardian-management-api"
-      job_prefix: "management-"
-      mail_sender: "nubus-core@univention.de"
-      author_alias: "Nubus Core Team"
-      changelog_link: "https://docs.software-univention.de/guardian-manual/latest/changelogs.html#management-api"
-      mail_recipient: "app-announcement@univention.de"
-      chat_destination: "#ucsschool"
-      ucs_base_version: "5.0"
-      additional_update_appcenter_needs:
-        - management_keycloak_script
-        - job: "container-build"
-          parallel:
-            matrix:
-              - IMAGE_NAME: "guardian-management-api"
-                KANIKO_BUILD_CONTEXT: "${CI_PROJECT_DIR}/management-api"
-          optional: true
-      appcenter_file_dir: "appcenter-management/"
-      release_tag_prefix: "management-api_"
-      build_stage: "package"
-      release_stage: "publish"
-      cleanup_stage: ".post"
-  - component: $CI_SERVER_FQDN/univention/dev/internal/ucsschool-ci-utils/app-release@2
-    inputs:
-      app_id: "guardian-management-ui"
-      job_prefix: "management-ui-"
-      mail_sender: "nubus-core@univention.de"
-      author_alias: "Nubus Core Team"
-      changelog_link: "https://docs.software-univention.de/guardian-manual/latest/changelogs.html#management-ui"
-      mail_recipient: "app-announcement@univention.de"
-      chat_destination: "#ucsschool"
-      ucs_base_version: "5.0"
-      additional_update_appcenter_needs:
-        - management-ui_keycloak_script
-        - job: "container-build"
-          parallel:
-            matrix:
-              - IMAGE_NAME: "guardian-management-ui"
-                KANIKO_BUILD_CONTEXT: "${CI_PROJECT_DIR}"
-                DOCKERFILE_PATH: "management-ui/docker/Dockerfile"
-          optional: true
-      appcenter_file_dir: "appcenter-management-ui/"
-      release_tag_prefix: "management-ui_"
-      build_stage: "package"
-      release_stage: "publish"
-      cleanup_stage: ".post"
+  # - component: $CI_SERVER_FQDN/univention/dev/internal/ucsschool-ci-utils/app-release@2
+  #   inputs:
+  #     app_id: "guardian-authorization-api"
+  #     job_prefix: "authz-"
+  #     mail_sender: "nubus-core@univention.de"
+  #     author_alias: "Nubus Core Team"
+  #     changelog_link: "https://docs.software-univention.de/guardian-manual/latest/changelogs.html#authorization-api"
+  #     mail_recipient: "app-announcement@univention.de"
+  #     chat_destination: "#ucsschool"
+  #     ucs_base_version: "5.0"
+  #     additional_update_appcenter_needs:
+  #       - job: "container-build"
+  #         parallel:
+  #           matrix:
+  #             - IMAGE_NAME: "guardian-authorization-api"
+  #               KANIKO_BUILD_CONTEXT: "${CI_PROJECT_DIR}/authorization-api"
+  #         optional: true
+  #       - job: "container-build"
+  #         parallel:
+  #           matrix:
+  #             - IMAGE_NAME: "guardian-opa"
+  #               KANIKO_BUILD_CONTEXT: "${CI_PROJECT_DIR}/opa"
+  #         optional: true
+  #       - authz_keycloak_script
+  #     appcenter_file_dir: "appcenter-authz/"
+  #     release_tag_prefix: "authorization-api_"
+  #     build_stage: "package"
+  #     release_stage: "publish"
+  #     cleanup_stage: ".post"
+  # - component: $CI_SERVER_FQDN/univention/dev/internal/ucsschool-ci-utils/app-release@2
+  #   inputs:
+  #     app_id: "guardian-management-api"
+  #     job_prefix: "management-"
+  #     mail_sender: "nubus-core@univention.de"
+  #     author_alias: "Nubus Core Team"
+  #     changelog_link: "https://docs.software-univention.de/guardian-manual/latest/changelogs.html#management-api"
+  #     mail_recipient: "app-announcement@univention.de"
+  #     chat_destination: "#ucsschool"
+  #     ucs_base_version: "5.0"
+  #     additional_update_appcenter_needs:
+  #       - management_keycloak_script
+  #       - job: "container-build"
+  #         parallel:
+  #           matrix:
+  #             - IMAGE_NAME: "guardian-management-api"
+  #               KANIKO_BUILD_CONTEXT: "${CI_PROJECT_DIR}/management-api"
+  #         optional: true
+  #     appcenter_file_dir: "appcenter-management/"
+  #     release_tag_prefix: "management-api_"
+  #     build_stage: "package"
+  #     release_stage: "publish"
+  #     cleanup_stage: ".post"
+  # - component: $CI_SERVER_FQDN/univention/dev/internal/ucsschool-ci-utils/app-release@2
+  #   inputs:
+  #     app_id: "guardian-management-ui"
+  #     job_prefix: "management-ui-"
+  #     mail_sender: "nubus-core@univention.de"
+  #     author_alias: "Nubus Core Team"
+  #     changelog_link: "https://docs.software-univention.de/guardian-manual/latest/changelogs.html#management-ui"
+  #     mail_recipient: "app-announcement@univention.de"
+  #     chat_destination: "#ucsschool"
+  #     ucs_base_version: "5.0"
+  #     additional_update_appcenter_needs:
+  #       - management-ui_keycloak_script
+  #       - job: "container-build"
+  #         parallel:
+  #           matrix:
+  #             - IMAGE_NAME: "guardian-management-ui"
+  #               KANIKO_BUILD_CONTEXT: "${CI_PROJECT_DIR}"
+  #               DOCKERFILE_PATH: "management-ui/docker/Dockerfile"
+  #         optional: true
+  #     appcenter_file_dir: "appcenter-management-ui/"
+  #     release_tag_prefix: "management-ui_"
+  #     build_stage: "package"
+  #     release_stage: "publish"
+  #     cleanup_stage: ".post"
 
   - component: $CI_SERVER_FQDN/univention/dev/nubus-for-k8s/common-ci/pip-package-and-publish-with-uv@jlohmer-uv-publish
     inputs:
