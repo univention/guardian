@@ -48,13 +48,15 @@ services:
 
   authorization-api:
     container_name: authz-guardian-dev
-    image: guardian-authorization-api:dev
+    image: guardian-management-api:dev
     build:
       context: ./
-      dockerfile: authorization-api/Dockerfile
+      dockerfile: docker/guardian-server/Dockerfile
       extra_hosts:
         - git.knut.univention.de:${GITLAB_IP}
         - ucs-sso-ng.school.test:${UCS_HOST_IP}
+    working_dir: /app/authorization-api
+    command: ["gunicorn", "--log-level", "info", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "guardian_authorization_api.main:app"]
     extra_hosts:
       - ucs-sso-ng.school.test:${UCS_HOST_IP}
     depends_on:

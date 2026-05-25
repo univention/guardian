@@ -41,12 +41,13 @@ RUN --mount=type=cache,target=/root/.cache \
   uv sync \
   --locked \
   --no-dev \
-  --no-install-workspace \
-  --package management-api && \
+  --no-install-workspace && \
   uv export --no-dev -o ./requirements.txt
 
 COPY ./management-api/README.md /app/management-api/
 COPY ./management-api/guardian_management_api /app/management-api/guardian_management_api
+COPY ./authorization-api/README.md /app/authorization-api/
+COPY ./authorization-api/guardian_authorization_api /app/authorization-api/guardian_authorization_api
 COPY ./guardian-lib/README.md /app/guardian-lib/
 COPY ./guardian-lib/guardian_lib /app/guardian-lib/guardian_lib
 
@@ -54,7 +55,7 @@ RUN uv sync \
   --locked \
   --no-dev \
   --no-editable \
-  --package management-api
+  --all-packages
 
 # Stage the runtime config dir with ownership matching the distroless `nonroot` user.
 RUN mkdir -p /staging/app/conf \
@@ -71,7 +72,7 @@ EXPOSE 8000
 ARG commit
 ARG date
 
-LABEL "description"="Guardian Management API." \
+LABEL "description"="Guardian server (management-api, authorization-api, opa)." \
     "release date"="$date" \
     "commit"="$commit"
 
@@ -98,5 +99,5 @@ WORKDIR /app/management-api
 ENTRYPOINT []
 CMD ["gunicorn", "--log-level", "info", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "guardian_management_api.main:app"]
 
-# Smoke test: sets the required env var in-process (no shell available) and imports the app.
-RUN ["python3.11", "-c", "import os; os.environ['GUARDIAN__MANAGEMENT__BASE_URL']='foobar'; import guardian_management_api.main"]
+# Smoke test: sets the required env var in-process (no shell available) and imports both apps.
+RUN ["python3.11", "-c", "import os; os.environ['GUARDIAN__MANAGEMENT__BASE_URL']='foobar'; import guardian_management_api.main; import guardian_authorization_api.main"]
