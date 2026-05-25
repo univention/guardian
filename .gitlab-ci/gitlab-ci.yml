@@ -137,13 +137,9 @@ pip-package-and-publish-with-uv:
 
 .publish-matrix: &publish-matrix
   - IMAGE_NAME:
-    - "guardian-opa"
-  - IMAGE_NAME:
     - "guardian-management-ui"
   - IMAGE_NAME:
-    - "guardian-authorization-api"
-  - IMAGE_NAME:
-    - "guardian-management-api"
+    - "guardian-server"
 
 container-build:
   parallel:
