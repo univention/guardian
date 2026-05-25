@@ -29,6 +29,9 @@ include:
         - authz_keycloak_script
       appcenter_file_dir: "appcenter-authz/"
       release_tag_prefix: "authorization-api_"
+      build_stage: "package"
+      release_stage: "publish"
+      cleanup_stage: ".post"
   - component: $CI_SERVER_FQDN/univention/dev/internal/ucsschool-ci-utils/app-release@2
     inputs:
       app_id: "guardian-management-api"
@@ -49,6 +52,9 @@ include:
           optional: true
       appcenter_file_dir: "appcenter-management/"
       release_tag_prefix: "management-api_"
+      build_stage: "package"
+      release_stage: "publish"
+      cleanup_stage: ".post"
   - component: $CI_SERVER_FQDN/univention/dev/internal/ucsschool-ci-utils/app-release@2
     inputs:
       app_id: "guardian-management-ui"
@@ -70,6 +76,9 @@ include:
           optional: true
       appcenter_file_dir: "appcenter-management-ui/"
       release_tag_prefix: "management-ui_"
+      build_stage: "package"
+      release_stage: "publish"
+      cleanup_stage: ".post"
 
   - component: $CI_SERVER_FQDN/univention/dev/nubus-for-k8s/common-ci/pip-package-and-publish-with-uv@jlohmer-uv-publish
     inputs:
@@ -87,7 +96,7 @@ include:
       - "jobs/lint-commit-messages.yaml"
       - "jobs/semantic-release-env.yaml"
       - "jobs/container-build-external.yaml"
-      - "jobs/package-and-publish-helm-charts-external.yaml"
+      # - "jobs/package-and-publish-helm-charts-external.yaml"
       - "jobs/check-debian-updates.yaml"
       - "templates/pip-package-and-publish.yaml"
       - "templates/sonarqube.yaml"
@@ -139,6 +148,8 @@ pip-package-and-publish-with-uv:
 container-build:
   parallel:
     matrix: *build-matrix
+  variables:
+    KANIKO_BUILD_CONTEXT: "${CI_PROJECT_DIR}"
 
 container-malware-scan:
   parallel:
@@ -158,10 +169,7 @@ container-release-attestation:
 
 test:
   stage: test
-  needs:
-    - job: build_testrunner
-      artifacts: true
-  image: $IMAGE_TAG_TESTRUNNER
+  image: "${CI_REGISTRY_IMAGE}/testrunner:${RELEASE_VERSION}"
   variables:
     UV_PROJECT_ENVIRONMENT: "/opt/venv"
   script:
@@ -267,6 +275,7 @@ docs-pdf:
 
 docs-merge-to-one-artifact:
   extends: .sphinx-merge-template
+  stage: deploy
   needs:
     - job: docs-html
     - job: docs-pdf
@@ -285,6 +294,7 @@ docs-merge-to-one-artifact:
 
 docs-review:
   extends: .sphinx-review-template
+  stage: deploy
   needs:
     - job: docs-merge-to-one-artifact
   rules:
@@ -295,6 +305,7 @@ docs-review:
 # variables to downstream, and therefore $DOCS_DIR is not available here.
 docs-create-production-merge-request:
   extends: .sphinx-docs-merge-request-template
+  stage: deploy
   needs:
     - job: docs-merge-to-one-artifact
   rules:
