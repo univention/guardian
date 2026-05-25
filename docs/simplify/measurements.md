@@ -56,11 +56,16 @@ against the locally-built tag before exporting.
 
 | Image | Components | SBOM KB | VEX entries | VEX KB |
 |---|---|---|---|---|
-| `management-api` | | | | |
-| `authorization-api` | | | | |
+| `management-api` | 259 | 352 | | |
+| `authorization-api` | 156 | 264 | | |
 | `opa` | 190 | 308 | | |
 | `management-ui` | | | | |
-| **Total** | | | | |
+| **Total** (excl. `management-ui`) | 605 | 924 | | |
+
+Note: `management-api` already bundles the OPA binary in its production Dockerfile, so the
+standalone `opa` image is a duplicate of that bundling on top of `ucs-base-flex`. Approach 1
+is therefore "stop publishing the redundant image" — `guardian-server` after approach 1
+equals `management-api` today.
 
 ---
 
@@ -70,18 +75,37 @@ against the locally-built tag before exporting.
 
 | Image | Components | SBOM KB | VEX entries | VEX KB | Component delta |
 |---|---|---|---|---|---|
-| `guardian-server` | 259 | 352 | | | |
-| `authorization-api` | | | | | |
+| `guardian-server` | 259 | 352 | | | 0 vs `management-api` |
+| `authorization-api` | 156 | 264 | | | 0 |
 | `management-ui` | | | | | |
-| **Total** | | | | | |
+| **Total** (excl. `management-ui`) | 415 | 616 | | | −190 vs baseline |
 
 ### After 2 — Distroless Python base
 
 | Image | Components | SBOM KB | VEX entries | VEX KB | Component delta |
 |---|---|---|---|---|---|
 | `guardian-server` | 179 | 192 | | | −80 vs After 1 |
-| `authorization-api` | | | | | |
+| `authorization-api` | 156 | 264 | | | 0 |
 | `management-ui` | | | | | |
+| **Total** (excl. `management-ui`) | 335 | 456 | | | −80 vs After 1 |
+
+### After 3 — authorization-api unified into management-api image
+
+| Image | Components | SBOM KB | VEX entries | VEX KB | Component delta |
+|---|---|---|---|---|---|
+| `guardian-server` | 190 | 204 | | | +11 vs After 2 |
+| `management-ui` | | | | | |
+| **Total** (excl. `management-ui`) | 190 | 204 | | | −145 vs After 2 |
+
+Adding authorization-api to the distroless `guardian-server` cost only 11 components / 12 KB,
+because ~145 of authorization-api's 156 standalone components were already shared with
+management-api (FastAPI, pydantic, uvicorn, the Python runtime, etc.).
+
+### After 4 — management-ui absorbed into guardian-server
+
+| Image | Components | SBOM KB | VEX entries | VEX KB | Component delta |
+|---|---|---|---|---|---|
+| `guardian-server` | | | | | |
 | **Total** | | | | | |
 
 ---
@@ -98,18 +122,3 @@ Anchor images used to decompose the totals above.
 `ucs-base-flex` ≈ UCS Debian base with no Python. Subtracting it from the OPA image gives
 the OPA static binary's Go-module contribution: **~99 components**, which is a floor for any
 image that bundles the OPA binary.
-
-### After 3 — authorization-api unified into management-api image
-
-| Image | Components | SBOM KB | VEX entries | VEX KB | Component delta |
-|---|---|---|---|---|---|
-| `guardian-server` | | | | | |
-| `management-ui` | | | | | |
-| **Total** | | | | | |
-
-### After 4 — management-ui absorbed into guardian-server
-
-| Image | Components | SBOM KB | VEX entries | VEX KB | Component delta |
-|---|---|---|---|---|---|
-| `guardian-server` | | | | | |
-| **Total** | | | | | |
