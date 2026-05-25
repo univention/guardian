@@ -14,9 +14,12 @@ process is the only one that gets merged (into the Python server via approach 4)
 
 See [current-state.md](current-state.md) for the baseline.
 
+Approaches 1–3 implemented and measured: backend images go from 3 → 1, components from
+605 → 190 (−69%). See the [impact summary](#impact-summary) below.
+
 ---
 
-## Simplification approaches
+## Implemented simplifications
 
 ### 1. Unify OPA into the management-api image
 
@@ -35,6 +38,8 @@ Both are Python/FastAPI services with heavily overlapping dependencies. Build th
 single image with separate entrypoints. The `authorization-api` process stays separate;
 one image is eliminated and the duplicated dependency footprint halved.
 
+## Future simplifications
+
 ### 4. Absorb management-ui → merge image and process into `guardian-server`
 
 Switch from Gunicorn/Uvicorn to [Granian](https://github.com/emmett-framework/granian)
@@ -50,3 +55,17 @@ Mount both APIs into a single FastAPI application with separate router prefixes.
 eliminates the second Python server process entirely — one Granian worker serves both APIs.
 Requires that the two apps have no conflicting middleware, startup logic, or configuration,
 which needs to be verified first.
+
+---
+
+## Impact summary
+
+| Approach | Images | Components | Notes |
+|---|---|---|---|
+| Baseline | 3 | 605 | mgmt-api + opa + authz |
+| After 1 | 2 (−1) | 415 (−190) | opa image gone |
+| After 2 | 2 | 335 (−80) | distroless mgmt-api |
+| After 3 | 1 (−1) | 190 (−145) | authz folded in |
+
+Counts exclude `management-ui` (not yet measured). See [measurements.md](measurements.md)
+for per-image breakdowns and SBOM file sizes.

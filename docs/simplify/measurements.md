@@ -1,57 +1,5 @@
 # Measurements
 
-## SBOM — Trivy (local, per image)
-
-Generate a CycloneDX SBOM for each production image using Trivy and count components.
-Component count is more stable and comparable than file size.
-
-```bash
-# Generate SBOM for one image
-trivy image --format cyclonedx --output <image>-sbom.json <image>:<tag>
-
-# Count packages
-jq '.components | length' <image>-sbom.json
-
-# File size in KB
-du -k <image>-sbom.json
-```
-
-## VEX — vul-man (requires Dependency-Track)
-
-VEX reflects the triage state in Dependency-Track and can only be measured after the image
-has been imported and findings have been triaged. The two-step flow:
-
-```bash
-# Step 1: import the image into Dependency-Track (generates and uploads SBOM)
-docker compose run --rm vul-man \
-  --dep-track-api-uri "$DEP_TRACK_API_URI" \
-  --dep-track-api-key "$DEP_TRACK_API_KEY" \
-  import-helm guardian \
-  --helm-chart-version <version> \
-  --helm-repository-url oci://artifacts.software-univention.de/nubus-dev/charts
-
-# Step 2: export VEX + SBOM from Dependency-Track
-docker compose run --rm vul-man \
-  --dep-track-api-uri "$DEP_TRACK_API_URI" \
-  --dep-track-api-key "$DEP_TRACK_API_KEY" \
-  export-vex-sbom guardian \
-  --helm-chart-version <version> \
-  --oci-registry-username <user> \
-  --oci-registry-token <token> \
-  --cosign-key /path/to/key
-
-# Count VEX entries (vulnerability assessments)
-jq '.vulnerabilities | length' <image>-vex.json
-
-# File size in KB
-du -k <image>-vex.json
-```
-
-For local branch measurements, build and push the image first, then run `import-helm`
-against the locally-built tag before exporting.
-
----
-
 ## Baseline (before any changes)
 
 | Image | Components | SBOM KB | VEX entries | VEX KB |
@@ -122,3 +70,58 @@ Anchor images used to decompose the totals above.
 `ucs-base-flex` ≈ UCS Debian base with no Python. Subtracting it from the OPA image gives
 the OPA static binary's Go-module contribution: **~99 components**, which is a floor for any
 image that bundles the OPA binary.
+
+---
+
+## SBOM — Trivy (local, per image)
+
+Generate a CycloneDX SBOM for each production image using Trivy and count components.
+Component count is more stable and comparable than file size.
+
+```bash
+# Generate SBOM for one image
+trivy image --format cyclonedx --output <image>-sbom.json <image>:<tag>
+
+# Count packages
+jq '.components | length' <image>-sbom.json
+
+# File size in KB
+du -k <image>-sbom.json
+```
+
+## VEX — vul-man (requires Dependency-Track)
+
+VEX reflects the triage state in Dependency-Track and can only be measured after the image
+has been imported and findings have been triaged. The two-step flow:
+
+```bash
+# Step 1: import the image into Dependency-Track (generates and uploads SBOM)
+docker compose run --rm vul-man \
+  --dep-track-api-uri "$DEP_TRACK_API_URI" \
+  --dep-track-api-key "$DEP_TRACK_API_KEY" \
+  import-helm guardian \
+  --helm-chart-version <version> \
+  --helm-repository-url oci://artifacts.software-univention.de/nubus-dev/charts
+
+# Step 2: export VEX + SBOM from Dependency-Track
+docker compose run --rm vul-man \
+  --dep-track-api-uri "$DEP_TRACK_API_URI" \
+  --dep-track-api-key "$DEP_TRACK_API_KEY" \
+  export-vex-sbom guardian \
+  --helm-chart-version <version> \
+  --oci-registry-username <user> \
+  --oci-registry-token <token> \
+  --cosign-key /path/to/key
+
+# Count VEX entries (vulnerability assessments)
+jq '.vulnerabilities | length' <image>-vex.json
+
+# File size in KB
+du -k <image>-vex.json
+```
+
+For local branch measurements, build and push the image first, then run `import-helm`
+against the locally-built tag before exporting.
+
+---
+
