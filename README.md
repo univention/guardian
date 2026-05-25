@@ -47,3 +47,14 @@ to the developer reference as soon as possible.
 ## Development environment and local testing
 
 See [README.dev.md](README.dev.md).
+
+## Running the unit tests
+
+The unit tests are registered as pre-commit hooks but excluded from the default run
+because they are slow. To run them explicitly:
+
+```bash
+prek run --hook-stage manual --all-files
+```
+
+To run a single suite, pass its hook id (e.g. `unittests-management-api`).
