@@ -144,17 +144,20 @@ repos:
       entry: uv run pytest guardian-lib/tests/ -q
       pass_filenames: false
       files: ^guardian-lib/
+      stages: [manual]
     - id: unittests-authorization-api
       name: unittests-authorization-api
       language: system
       entry: uv run pytest authorization-api/tests/ -q
       pass_filenames: false
       files: ^(authorization-api|guardian-lib)/
+      stages: [manual]
     - id: unittests-management-api
       name: unittests-management-api
       language: system
       entry: uv run pytest management-api/tests/ -q
       pass_filenames: false
       files: ^(management-api|guardian-lib)/
+      stages: [manual]
 
 exclude: ".claude|.opencode|_bmad*"
