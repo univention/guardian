@@ -3,17 +3,6 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 include:
-  - project: univention/infrastructure/docker-services
-    file:
-      - kaniko.yml
-  - project: "univention/dev/nubus-for-k8s/common-ci"
-    ref: "v1.62.0"
-    file:
-      - "jobs/generate-filesystem-sbom.yaml"
-      - "jobs/lint-pre-commit.yaml"
-      - "templates/sonarqube.yaml"
-  - project: 'univention/dev/docs/sphinx-docker'
-    file: 'pipeline/sphinx.yml'
   - component: $CI_SERVER_FQDN/univention/dev/internal/ucsschool-ci-utils/app-release@2
     inputs:
       app_id: "guardian-authorization-api"
@@ -25,13 +14,24 @@ include:
       chat_destination: "#ucsschool"
       ucs_base_version: "5.0"
       additional_update_appcenter_needs:
-        - job: build_docker_image_authz
+        - job: "container-build"
+          parallel:
+            matrix:
+              - IMAGE_NAME: "guardian-authorization-api"
+                KANIKO_BUILD_CONTEXT: "${CI_PROJECT_DIR}/authorization-api"
           optional: true
-        - job: build_docker_image_opa
+        - job: "container-build"
+          parallel:
+            matrix:
+              - IMAGE_NAME: "guardian-opa"
+                KANIKO_BUILD_CONTEXT: "${CI_PROJECT_DIR}/opa"
           optional: true
         - authz_keycloak_script
       appcenter_file_dir: "appcenter-authz/"
       release_tag_prefix: "authorization-api_"
+      build_stage: "package"
+      release_stage: "publish"
+      cleanup_stage: ".post"
   - component: $CI_SERVER_FQDN/univention/dev/internal/ucsschool-ci-utils/app-release@2
     inputs:
       app_id: "guardian-management-api"
@@ -44,10 +44,17 @@ include:
       ucs_base_version: "5.0"
       additional_update_appcenter_needs:
         - management_keycloak_script
-        - job: build_docker_image_management
+        - job: "container-build"
+          parallel:
+            matrix:
+              - IMAGE_NAME: "guardian-management-api"
+                KANIKO_BUILD_CONTEXT: "${CI_PROJECT_DIR}/management-api"
           optional: true
       appcenter_file_dir: "appcenter-management/"
       release_tag_prefix: "management-api_"
+      build_stage: "package"
+      release_stage: "publish"
+      cleanup_stage: ".post"
   - component: $CI_SERVER_FQDN/univention/dev/internal/ucsschool-ci-utils/app-release@2
     inputs:
       app_id: "guardian-management-ui"
@@ -60,15 +67,43 @@ include:
       ucs_base_version: "5.0"
       additional_update_appcenter_needs:
         - management-ui_keycloak_script
-        - job: build_docker_image_management_ui
+        - job: "container-build"
+          parallel:
+            matrix:
+              - IMAGE_NAME: "guardian-management-ui"
+                KANIKO_BUILD_CONTEXT: "${CI_PROJECT_DIR}"
+                DOCKERFILE_PATH: "management-ui/docker/Dockerfile"
           optional: true
       appcenter_file_dir: "appcenter-management-ui/"
       release_tag_prefix: "management-ui_"
+      build_stage: "package"
+      release_stage: "publish"
+      cleanup_stage: ".post"
 
   - component: $CI_SERVER_FQDN/univention/dev/nubus-for-k8s/common-ci/pip-package-and-publish-with-uv@v1.62.0
     inputs:
       package_root: "authorization-client"
 
+  - project: 'univention/dev/docs/sphinx-docker'
+    file: 'pipeline/sphinx.yml'
+  - project: "univention/dev/nubus-for-k8s/common-ci"
+    ref: "v1.62.0"
+    file:
+      - "defaults/stages.yaml"
+      - "defaults/nubus-workflow.yaml"
+      - "jobs/generate-filesystem-sbom.yaml"
+      - "jobs/lint-pre-commit.yaml"
+      - "jobs/lint-commit-messages.yaml"
+      - "jobs/semantic-release-env.yaml"
+      - "jobs/container-build-external.yaml"
+      # - "jobs/package-and-publish-helm-charts-external.yaml"
+      - "jobs/check-debian-updates.yaml"
+      - "templates/pip-package-and-publish.yaml"
+      - "templates/sonarqube.yaml"
+  - project: "univention/infrastructure/docker-services"
+    ref: "master"
+    file:
+      - "dind.yml"
 
 variables:
   APPCENTER_CONTROL_IMAGE: "docker-registry.knut.univention.de/knut/univention-appcenter-control"
@@ -83,49 +118,63 @@ variables:
   DOC_TARGET_NAME: "guardian-manual"
   DOC_TARGET_PATH: "$DOC_TARGET_NAME/$DOC_TARGET_VERSION"
 
-#TODO: Stages should be merged and reduced by smart needs
-#and handling of the python packages in docker builds
-stages:
-  - prepare
-  - test
-  - build_python
-  - build_docker
-  - package
-  - publish
-  - build
-  - merge
-  - release
-  - production
-  - cleanup
+pip-package-and-publish-with-uv:
+  variables:
+    RELEASE_VERSION: "0.1.0-dev"
 
 lint-pre-commit:
   extends: .lint-pre-commit
-  stage: test
-  needs: []
   variables:
     RUNNER_REGISTRY_IMAGE: "gitregistry.knut.univention.de/univention/dev/tooling/pre-commit/univention-pre-commit"
     RUNNER_IMAGE_TAG: "0.6.2"
-  before_script:
-    - npm install -g yarn
-    - yarn --cwd management-ui install
 
-build_testrunner:
-  stage: prepare
-  extends: .kaniko
+.build-matrix: &build-matrix
+  - IMAGE_NAME: "testrunner"
+    DOCKERFILE_PATH: "docker/testrunner/Dockerfile"
+  - IMAGE_NAME: "guardian-opa"
+    KANIKO_BUILD_CONTEXT: "${CI_PROJECT_DIR}/opa"
+  - IMAGE_NAME: "guardian-management-ui"
+    DOCKERFILE_PATH: "management-ui/docker/Dockerfile"
+  - IMAGE_NAME: "guardian-authorization-api"
+    DOCKERFILE_PATH: "authorization-api/Dockerfile"
+  - IMAGE_NAME: "guardian-management-api"
+    DOCKERFILE_PATH: "management-api/Dockerfile"
+
+.publish-matrix: &publish-matrix
+  - IMAGE_NAME:
+    - "guardian-opa"
+  - IMAGE_NAME:
+    - "guardian-management-ui"
+  - IMAGE_NAME:
+    - "guardian-authorization-api"
+  - IMAGE_NAME:
+    - "guardian-management-api"
+
+container-build:
+  parallel:
+    matrix: *build-matrix
   variables:
-    IMAGE_TAG_ENV_NAME: "IMAGE_TAG_TESTRUNNER"
-    DOCKERFILE_PATH: "$CI_PROJECT_DIR/docker/testrunner/Dockerfile"
-    KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR"
-    CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-testrunner
-    KANIKO_ARGS: --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
+    KANIKO_BUILD_CONTEXT: "${CI_PROJECT_DIR}"
 
-# No jobs for OPA code were created, since the form and structure of the OPA code is not final yet. TODO
+container-malware-scan:
+  parallel:
+    matrix: *publish-matrix
+
+push-image-external:
+  parallel:
+    matrix: *publish-matrix
+
+container-sign-external:
+  parallel:
+    matrix: *publish-matrix
+
+container-release-attestation:
+  parallel:
+    matrix: *publish-matrix
+
 test:
   stage: test
-  needs:
-    - job: build_testrunner
-      artifacts: true
-  image: $IMAGE_TAG_TESTRUNNER
+  image: "${CI_REGISTRY_IMAGE}/testrunner:${RELEASE_VERSION}"
   variables:
     UV_PROJECT_ENVIRONMENT: "/opt/venv"
   script:
@@ -172,79 +221,11 @@ test:
     when: "always"
 
 generate-filesystem-sbom:
-  stage: "build_docker"
   variables:
     FOLDER: "management-ui"
 
-
-build_docker_image_opa:
-  stage: build_docker
-  rules:
-    - if: "$CI_COMMIT_TAG"
-      variables:
-        REGISTRY: "artifacts.software-univention.de"
-        REGISTRY_IMAGE: "$REGISTRY/ucsschool/guardian-opa"
-    - if: $CI_MERGE_REQUEST_ID
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-  extends: .kaniko
-  variables:
-    IMAGE_TAG_ENV_NAME: "IMAGE_TAG_OPA"
-    KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR/opa"
-    CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-opa
-    KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
-
-build_docker_image_management_ui:
-  needs: ["generate-filesystem-sbom"]
-  stage: build_docker
-  rules:
-    - if: "$CI_COMMIT_TAG"
-      variables:
-        REGISTRY: "artifacts.software-univention.de"
-        REGISTRY_IMAGE: "$REGISTRY/ucsschool/guardian-management-ui"
-    - if: $CI_MERGE_REQUEST_ID
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-  extends: .kaniko
-  variables:
-    DOCKERFILE_PATH: "$CI_PROJECT_DIR/management-ui/docker/Dockerfile"
-    CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-management-ui
-    KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
-
-build_docker_image_authz:
-  stage: build_docker
-  rules:
-    - if: "$CI_COMMIT_TAG"
-      variables:
-        REGISTRY: "artifacts.software-univention.de"
-        REGISTRY_IMAGE: "$REGISTRY/ucsschool/guardian-authorization-api"
-    - if: $CI_MERGE_REQUEST_ID
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-  extends: .kaniko
-  variables:
-    IMAGE_TAG_ENV_NAME: "IMAGE_TAG_AUTHZ"
-    DOCKERFILE_PATH: "$CI_PROJECT_DIR/authorization-api/Dockerfile"
-    KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR"
-    CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-authorization-api
-    KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --skip-unused-stages --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
-
-build_docker_image_management:
-  stage: build_docker
-  rules:
-    - if: "$CI_COMMIT_TAG"
-      variables:
-        REGISTRY: "artifacts.software-univention.de"
-        REGISTRY_IMAGE: "$REGISTRY/ucsschool/guardian-management-api"
-    - if: $CI_MERGE_REQUEST_ID
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-  extends: .kaniko
-  variables:
-    DOCKERFILE_PATH: "$CI_PROJECT_DIR/management-api/Dockerfile"
-    KANIKO_BUILD_CONTEXT: "$CI_PROJECT_DIR"
-    CI_REGISTRY_IMAGE: $CI_REGISTRY_IMAGE/guardian-management-api
-    KANIKO_ARGS: --build-arg commit="$CI_COMMIT_SHA" --build-arg date="$CI_JOB_STARTED_AT" --skip-unused-stages --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
-
-
 .generate_keycloak_script:
-  stage: build_docker
+  stage: "build"
   image: gitregistry.knut.univention.de/univention/dev/internal/ucsschool-ci-utils/app-release:latest
   variables:
     APP_NAME: "guardian-authorization-api"
@@ -299,6 +280,7 @@ docs-pdf:
 
 docs-merge-to-one-artifact:
   extends: .sphinx-merge-template
+  stage: deploy
   needs:
     - job: docs-html
     - job: docs-pdf
@@ -317,6 +299,7 @@ docs-merge-to-one-artifact:
 
 docs-review:
   extends: .sphinx-review-template
+  stage: deploy
   needs:
     - job: docs-merge-to-one-artifact
   rules:
@@ -327,6 +310,7 @@ docs-review:
 # variables to downstream, and therefore $DOCS_DIR is not available here.
 docs-create-production-merge-request:
   extends: .sphinx-docs-merge-request-template
+  stage: deploy
   needs:
     - job: docs-merge-to-one-artifact
   rules:
@@ -334,11 +318,6 @@ docs-create-production-merge-request:
       changes:
       - docs/guardian-manual/**/*
 
-pip-package-and-publish-with-uv:
-  variables:
-    RELEASE_VERSION: "0.1.0-dev"
-
 sonarqube:
   extends: .sonarqube
-  stage: test
   needs: [test]
