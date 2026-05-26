@@ -12,4 +12,4 @@ condition("guardian:builtin:target_does_not_have_role_in_same_context", paramete
 		target_role_and_context := extract_role_and_context(target_crole)
 		any([actor_context != target_role_and_context.context, parameters.role != target_role_and_context.role])
 	}
-} else = false
+} else := false

@@ -1,0 +1,43 @@
+# Copyright (C) 2026 Univention GmbH
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
+# Regal configuration for the Guardian rego policy files.
+# Many rules are disabled because the Guardian codebase predates Rego v1
+# and uses conventions (alembic-style migration directories, short package
+# names shared across files, explicit rule imports) that conflict with
+# Regal's idiomatic defaults.
+
+rules:
+  bugs:
+    redundant-existence-check:
+      level: ignore
+  idiomatic:
+    directory-package-mismatch:
+      level: ignore
+    no-defined-entrypoint:
+      level: ignore
+    use-if:
+      level: ignore
+  imports:
+    prefer-package-imports:
+      level: ignore
+    unresolved-import:
+      level: ignore
+    unresolved-reference:
+      level: ignore
+    use-rego-v1:
+      level: ignore
+  performance:
+    non-loop-expression:
+      level: ignore
+  style:
+    opa-fmt:
+      level: ignore
+    prefer-snake-case:
+      level: ignore
+    rule-length:
+      level: ignore
+  testing:
+    print-or-trace-call:
+      level: ignore

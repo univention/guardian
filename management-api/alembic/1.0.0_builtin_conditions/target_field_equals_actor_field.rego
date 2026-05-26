@@ -7,4 +7,4 @@ condition("guardian:builtin:target_field_equals_actor_field", parameters, condit
 	target_field_value := condition_data.target.old.attributes[parameters.target_field]
 	actor_field_value := condition_data.actor.attributes[parameters.actor_field]
 	target_field_value == actor_field_value
-} else = false
+} else := false

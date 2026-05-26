@@ -18,7 +18,7 @@ import data.univention.utils.extract_target_id
 # result: Boolean indicating whether the namespace is contained in the set of namespaces
 has_namespace(namespaces, app_name, namespace) if {
 	namespace in namespaces[app_name]
-} else = false
+} else := false
 
 # actor: The acting object
 # roleCapabilityMapping: Dictionary of role names to set of capabilities

@@ -128,4 +128,29 @@ repos:
       additional_dependencies:
         - "yarn"
 
+- repo: https://github.com/anderseknert/pre-commit-opa
+  rev: v1.5.1
+  hooks:
+    - id: opa-fmt
+      name: backend-opa-fmt
+      args: ["--v0-compatible"]
+    - id: opa-check
+      name: backend-opa-check-bundle-template
+      args: ["management-api/rego_policy_bundle_template", "--v0-compatible"]
+    - id: opa-check
+      name: backend-opa-check-builtin-conditions
+      args: ["management-api/alembic/1.0.0_builtin_conditions", "--ignore=\"*.json\""]
+    - id: opa-test
+      name: backend-opa-test-bundle-template
+      args: ["management-api/rego_policy_bundle_template", "--v0-compatible"]
+    - id: opa-test
+      name: backend-opa-test-builtin-conditions
+      args: ["management-api/alembic/1.0.0_builtin_conditions", "--ignore=\"*.json\"", "--v0-compatible"]
+
+- repo: https://github.com/StyraInc/regal
+  rev: v0.29.2
+  hooks:
+    - id: regal-lint-use-path
+      name: backend-opa-policy-file-linting
+
 exclude: ".claude|.opencode|_bmad*"
