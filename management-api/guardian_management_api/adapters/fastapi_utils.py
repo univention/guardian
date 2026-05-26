@@ -6,6 +6,7 @@ from pydantic import ValidationError
 from starlette import status
 
 from guardian_management_api.errors import (
+    DependencyExistsError,
     ObjectExistsError,
     ObjectNotFoundError,
     ParentNotFoundError,
@@ -41,6 +42,11 @@ class TransformExceptionMixin(ABC):
         if isinstance(exc, ParentNotFoundError):
             return HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
+                detail={"message": str(exc)},
+            )
+        if isinstance(exc, DependencyExistsError):
+            return HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
                 detail={"message": str(exc)},
             )
         return HTTPException(

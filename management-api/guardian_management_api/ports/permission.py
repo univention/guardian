@@ -10,6 +10,7 @@ from typing import Any, Generic, Optional, TypeVar
 
 from guardian_lib.ports import BasePort
 
+from ..models.capability import Capability
 from ..models.permission import (
     Permission,
     PermissionCreateQuery,
@@ -94,4 +95,20 @@ class PermissionAPIPort(
 
 class PermissionPersistencePort(
     BasePersistencePort[Permission, PermissionGetQuery, PermissionsGetQuery], ABC
-): ...
+):
+    async def delete(self, query: PermissionGetQuery) -> None:
+        """
+        Deletes the specified object from the persistent storage.
+
+        :raises ObjectNotFoundError: If the object could not be found.
+        :raises PersistenceError: For any other error during interaction with the persistence.
+        """
+        raise NotImplementedError  # pragma: no cover
+
+    async def read_dependencies(self, query: PermissionGetQuery) -> list[Capability]:
+        """
+        Returns the list of capabilities that reference the specified permission.
+
+        :raises PersistenceError: For any error during interaction with the persistence.
+        """
+        raise NotImplementedError  # pragma: no cover

@@ -53,3 +53,11 @@ class UnauthorizedError(Exception):
 
     This should be handled by the transform_exception method of the incoming ports.
     """
+
+
+class DependencyExistsError(RuntimeError):
+    """If the object to be deleted is still referenced by other objects."""
+
+    def __init__(self, *args, dependencies: Optional[list] = None):
+        self.dependencies = dependencies or []
+        super().__init__(*args)
