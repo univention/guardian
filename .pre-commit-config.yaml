@@ -147,10 +147,11 @@ repos:
       name: backend-opa-test-builtin-conditions
       args: ["management-api/alembic/1.0.0_builtin_conditions", "--ignore=\"*.json\"", "--v0-compatible"]
 
-- repo: https://github.com/StyraInc/regal
-  rev: v0.29.2
+- repo: https://github.com/open-policy-agent/regal
+  rev: v0.40.0
   hooks:
     - id: regal-lint-use-path
       name: backend-opa-policy-file-linting
+
 
 exclude: ".claude|.opencode|_bmad*"
