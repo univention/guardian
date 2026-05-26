@@ -15,6 +15,7 @@ from guardian_management_api.models.base import (
     PaginationRequest,
     PersistenceGetManyResult,
 )
+from guardian_management_api.models.capability import Capability
 from guardian_management_api.models.permission import (
     Permission,
     PermissionGetQuery,
@@ -25,6 +26,7 @@ from guardian_management_api.models.sql_persistence import (
 )
 from guardian_management_api.ports.permission import PermissionPersistencePort
 from sqlalchemy import select
+from sqlalchemy.sql.functions import count
 
 
 class TestSQLPermissionPersistenceAdapter:
@@ -293,3 +295,95 @@ class TestSQLPermissionPersistenceAdapter:
                     display_name="NEW DISPLAY NAME",
                 )
             )
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_delete(
+        self,
+        permission_sql_adapter: SQLPermissionPersistenceAdapter,
+        create_permissions,
+    ):
+        async with permission_sql_adapter.session() as session:
+            db_permission = (await create_permissions(session, 1))[0]
+            app_name = db_permission.namespace.app.name
+            namespace_name = db_permission.namespace.name
+            name = db_permission.name
+        assert (
+            await permission_sql_adapter.delete(
+                PermissionGetQuery(
+                    app_name=app_name, namespace_name=namespace_name, name=name
+                )
+            )
+            is None
+        )
+        async with permission_sql_adapter.session() as session:
+            remaining = await session.scalar(select(count(DBPermission.id)))
+        assert remaining == 0
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_delete_not_found_error(
+        self, permission_sql_adapter: SQLPermissionPersistenceAdapter
+    ):
+        with pytest.raises(ObjectNotFoundError) as exc_info:
+            await permission_sql_adapter.delete(
+                PermissionGetQuery(
+                    app_name="app", namespace_name="namespace", name="permission"
+                )
+            )
+        assert exc_info.value.object_type == Permission
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_read_dependencies_empty(
+        self,
+        permission_sql_adapter: SQLPermissionPersistenceAdapter,
+        create_permissions,
+    ):
+        async with permission_sql_adapter.session() as session:
+            db_permission = (await create_permissions(session, 1))[0]
+            app_name = db_permission.namespace.app.name
+            namespace_name = db_permission.namespace.name
+            name = db_permission.name
+        result = await permission_sql_adapter.read_dependencies(
+            PermissionGetQuery(
+                app_name=app_name, namespace_name=namespace_name, name=name
+            )
+        )
+        assert result == []
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_read_dependencies_with_capabilities(
+        self,
+        permission_sql_adapter: SQLPermissionPersistenceAdapter,
+        create_capabilities,
+    ):
+        async with permission_sql_adapter.session() as session:
+            db_cap = (await create_capabilities(session, 1))[0]
+            db_permission = next(iter(db_cap.permissions))
+            app_name = db_permission.namespace.app.name
+            namespace_name = db_permission.namespace.name
+            name = db_permission.name
+            expected_cap_name = db_cap.name
+        result = await permission_sql_adapter.read_dependencies(
+            PermissionGetQuery(
+                app_name=app_name, namespace_name=namespace_name, name=name
+            )
+        )
+        assert len(result) == 1
+        assert isinstance(result[0], Capability)
+        assert result[0].name == expected_cap_name
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_read_dependencies_not_found(
+        self, permission_sql_adapter: SQLPermissionPersistenceAdapter
+    ):
+        with pytest.raises(ObjectNotFoundError) as exc_info:
+            await permission_sql_adapter.read_dependencies(
+                PermissionGetQuery(
+                    app_name="app", namespace_name="namespace", name="permission"
+                )
+            )
+        assert exc_info.value.object_type == Permission

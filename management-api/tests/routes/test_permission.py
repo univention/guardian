@@ -1,3 +1,6 @@
+# Copyright (C) 2026 Univention GmbH
+#
+# SPDX-License-Identifier: AGPL-3.0-only
 from dataclasses import asdict
 from urllib.parse import urljoin
 
@@ -8,6 +11,7 @@ from guardian_management_api.main import app
 from guardian_management_api.models.permission import Permission
 from guardian_management_api.models.sql_persistence import DBPermission
 from sqlalchemy import select
+from sqlalchemy.sql.functions import count
 
 
 @pytest.mark.e2e
@@ -255,6 +259,65 @@ class TestPermissionEndpoints:
             json=new_values,
         )
         assert result.status_code == 500, result.json()
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_delete_permission(
+        self, client, create_permissions, sqlalchemy_mixin
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            db_permissions = await create_permissions(session, 2)
+            target = db_permissions[0]
+            app_name = target.namespace.app.name
+            namespace_name = target.namespace.name
+            name = target.name
+        result = client.delete(
+            client.app.url_path_for(
+                "delete_permission",
+                app_name=app_name,
+                namespace_name=namespace_name,
+                name=name,
+            )
+        )
+        assert result.status_code == 204, result.text
+        async with sqlalchemy_mixin.session() as session:
+            assert (await session.scalar(select(count(DBPermission.id)))) == 1
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_delete_permission_404(self, client):
+        result = client.delete(
+            client.app.url_path_for(
+                "delete_permission",
+                app_name="app",
+                namespace_name="namespace",
+                name="permission",
+            )
+        )
+        assert result.status_code == 404, result.json()
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_delete_permission_with_dependency(
+        self, client, create_capabilities, sqlalchemy_mixin
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            db_cap = (await create_capabilities(session, 1))[0]
+            db_permission = next(iter(db_cap.permissions))
+            app_name = db_permission.namespace.app.name
+            namespace_name = db_permission.namespace.name
+            name = db_permission.name
+        result = client.delete(
+            client.app.url_path_for(
+                "delete_permission",
+                app_name=app_name,
+                namespace_name=namespace_name,
+                name=name,
+            )
+        )
+        assert result.status_code == 409, result.json()
+        async with sqlalchemy_mixin.session() as session:
+            assert (await session.scalar(select(count(DBPermission.id)))) == 1
 
 
 @pytest.mark.e2e
@@ -677,3 +740,47 @@ class TestPermissionEndpointsAuthorization:
             ),
         )
         assert response.json()["permissions"] == []
+
+    @pytest.mark.asyncio
+    async def test_delete_other_permission_not_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_permission,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="other", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="other",
+            )
+            await create_permission(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="other",
+                namespace_name="namespace",
+            )
+        response = client.delete(
+            app.url_path_for(
+                "delete_permission",
+                name="test",
+                namespace_name="namespace",
+                app_name="other",
+            ),
+        )
+        assert response.status_code == 403, response.json()
+
+        async with sqlalchemy_mixin.session() as session:
+            db_permission = (
+                (await session.execute(select(DBPermission).filter_by(name="test")))
+                .unique()
+                .scalar_one_or_none()
+            )
+            assert db_permission is not None
