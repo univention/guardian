@@ -9,7 +9,7 @@ from guardian_lib.ports import AuthenticationPort
 from loguru import logger
 
 from .adapters.namespace import FastAPINamespaceAPIAdapter
-from .errors import UnauthorizedError
+from .errors import DependencyExistsError, UnauthorizedError
 from .models.authz import Actor, OperationType, Resource, ResourceType
 from .models.capability import (
     Capability,
@@ -1021,6 +1021,69 @@ async def edit_permission(
         return await api_port.to_api_get_single_response(update_permission)
     except Exception as exc:
         logger.error("Error while editing permission.")
+        raise (await api_port.transform_exception(exc)) from exc
+
+
+async def delete_permission(
+    api_request: APIEditRequestObject,
+    api_port: PermissionAPIPort,
+    bundle_server_port: BundleServerPort,
+    persistence_port: PermissionPersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
+):
+    try:
+        query = await api_port.to_obj_get_single(api_request)
+        permission = await persistence_port.read_one(query)
+        dependencies = await persistence_port.read_dependencies(query)
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        resource: Resource = Resource(
+            resource_type=ResourceType.PERMISSION,
+            name=permission.name,
+            app_name=permission.app_name,
+            namespace_name=permission.namespace_name,
+        )
+        logger.debug(
+            "Received request to delete permission.",
+            actor_id=actor_id,
+            permission_id=resource.id,
+        )
+
+        allowed = (
+            await authz_port.authorize_operation(
+                Actor(id=actor_id),
+                OperationType.DELETE_RESOURCE,
+                [resource],
+            )
+        ).get(resource.id, False)
+        if not allowed:
+            logger.warning(
+                "Permission denied to delete permission.",
+                actor_id=actor_id,
+                permission_id=resource.id,
+            )
+            raise UnauthorizedError(
+                "The logged in user is not authorized to delete this permission."
+            )
+        if dependencies:
+            logger.warning(
+                "Permission cannot be deleted due to existing dependencies.",
+                actor_id=actor_id,
+                permission_id=resource.id,
+                dependencies=dependencies,
+            )
+            raise DependencyExistsError(
+                "This permission cannot be deleted because there are still "
+                "capabilities depending on it. Please remove the dependencies first.",
+                dependencies=dependencies,
+            )
+        await persistence_port.delete(query)
+        logger.info("Permission deleted.", actor_id=actor_id, permission_id=resource.id)
+        await bundle_server_port.schedule_bundle_build(BundleType.data)
+        return None
+    except Exception as exc:
+        logger.error("Error while deleting permission.")
         raise (await api_port.transform_exception(exc)) from exc
 
 

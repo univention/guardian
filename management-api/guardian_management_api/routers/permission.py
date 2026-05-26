@@ -7,6 +7,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, Request
 from guardian_lib.adapter_registry import port_dep
 from guardian_lib.ports import AuthenticationPort
+from starlette import status
 
 from .. import business_logic
 from ..adapters.permission import FastAPIPermissionAPIAdapter
@@ -14,6 +15,7 @@ from ..models.routers.base import (
     GetAllRequest,
     GetByAppRequest,
     GetByNamespaceRequest,
+    GetFullIdentifierRequest,
 )
 from ..models.routers.permission import (
     PermissionCreateRequest,
@@ -23,6 +25,7 @@ from ..models.routers.permission import (
     PermissionSingleResponse,
 )
 from ..ports.authz import ResourceAuthorizationPort
+from ..ports.bundle_server import BundleServerPort
 from ..ports.permission import PermissionAPIPort, PermissionPersistencePort
 
 router = APIRouter(tags=["permission"])
@@ -209,3 +212,36 @@ async def edit_permission(
         request=request,
     )
     return response.model_dump()
+
+
+@router.delete(
+    "/permissions/{app_name}/{namespace_name}/{name}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_permission(
+    request: Request,
+    request_data: GetFullIdentifierRequest = Depends(),
+    api_port: FastAPIPermissionAPIAdapter = Depends(
+        port_dep(PermissionAPIPort, FastAPIPermissionAPIAdapter)
+    ),
+    persistence_port: PermissionPersistencePort = Depends(
+        port_dep(PermissionPersistencePort)
+    ),
+    bundle_server_port: BundleServerPort = Depends(port_dep(BundleServerPort)),
+    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
+    authz_port: ResourceAuthorizationPort = Depends(
+        port_dep(ResourceAuthorizationPort)
+    ),
+) -> None:
+    """
+    Delete a permission.
+    """
+    return await business_logic.delete_permission(
+        request_data,
+        api_port,
+        bundle_server_port,
+        persistence_port,
+        authc_port,
+        authz_port,
+        request,
+    )

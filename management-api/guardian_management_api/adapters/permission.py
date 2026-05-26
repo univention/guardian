@@ -6,10 +6,12 @@ from dataclasses import asdict
 from typing import Any, List, Optional, Type
 
 from port_loader import AsyncConfiguredAdapterMixin
+from sqlalchemy import select
 
 from ..constants import COMPLETE_URL
 from ..errors import ObjectNotFoundError, ParentNotFoundError
 from ..models.base import PaginationRequest, PersistenceGetManyResult
+from ..models.capability import Capability
 from ..models.permission import (
     Permission,
     PermissionCreateQuery,
@@ -33,14 +35,17 @@ from ..models.routers.permission import (
 )
 from ..models.sql_persistence import (
     DBApp,
+    DBCapability,
     DBNamespace,
     DBPermission,
     SQLPersistenceAdapterSettings,
+    capability_permission_table,
 )
 from ..ports.permission import (
     PermissionAPIPort,
     PermissionPersistencePort,
 )
+from .capability import SQLCapabilityPersistenceAdapter
 from .fastapi_utils import TransformExceptionMixin
 from .sql_persistence import SQLAlchemyMixin
 
@@ -251,3 +256,46 @@ class SQLPermissionPersistenceAdapter(
             db_permission, display_name=permission.display_name
         )
         return SQLPermissionPersistenceAdapter._db_permission_to_permission(modified)
+
+    async def delete(self, query: PermissionGetQuery) -> None:
+        db_permission = await self._get_single_object(
+            DBPermission,
+            name=query.name,
+            app_name=query.app_name,
+            namespace_name=query.namespace_name,
+        )
+        if db_permission is None:
+            raise ObjectNotFoundError(
+                f"No permission with the identifier '{query.app_name}:"
+                f"{query.namespace_name}:{query.name}' could be found.",
+                object_type=Permission,
+            )
+        await self._delete_obj(db_permission)
+
+    async def read_dependencies(self, query: PermissionGetQuery) -> list[Capability]:
+        db_permission = await self._get_single_object(
+            DBPermission,
+            name=query.name,
+            app_name=query.app_name,
+            namespace_name=query.namespace_name,
+        )
+        if db_permission is None:
+            raise ObjectNotFoundError(
+                f"No permission with the identifier '{query.app_name}:"
+                f"{query.namespace_name}:{query.name}' could be found.",
+                object_type=Permission,
+            )
+        stmt = (
+            select(DBCapability)
+            .join(
+                capability_permission_table,
+                capability_permission_table.c.capability_id == DBCapability.id,
+            )
+            .where(capability_permission_table.c.permission_id == db_permission.id)
+        )
+        async with self.session() as session:
+            db_capabilities = (await session.scalars(stmt)).unique().all()
+        return [
+            SQLCapabilityPersistenceAdapter._db_cap_to_cap(db_cap)
+            for db_cap in db_capabilities
+        ]
