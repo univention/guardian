@@ -98,6 +98,15 @@ repos:
 - repo: local
   hooks:
     # Frontend
+    - id: frontend-install
+      name: frontend-install
+      files: \.([jt]sx?|vue)$  # *.js, *.jsx, *.ts and *.tsx, as well as .vue
+      types: [ file ]
+      language: node
+      entry: "yarn --cwd management-ui install --frozen-lockfile"
+      pass_filenames: false
+      additional_dependencies:
+        - "yarn@1.22.22"
     - id: frontend-type-check
       name: frontend-type-check
       files: \.([jt]sx?|vue)$  # *.js, *.jsx, *.ts and *.tsx, as well as .vue
@@ -106,7 +115,7 @@ repos:
       entry: "yarn --cwd management-ui type-check"
       pass_filenames: false
       additional_dependencies:
-        - "yarn"
+        - "yarn@1.22.22"
     - id: frontend-lint
       name: frontend-lint
       files: \.([jt]sx?|vue)$  # *.js, *.jsx, *.ts and *.tsx, as well as .vue
@@ -115,7 +124,7 @@ repos:
       entry: "yarn --cwd management-ui lint"
       pass_filenames: false
       additional_dependencies:
-        - "yarn"
+        - "yarn@1.22.22"
     - id: frontend-format
       name: frontend-format
       files: \.([jt]sx?|vue)$  # *.js, *.jsx, *.ts and *.tsx, as well as .vue
@@ -124,7 +133,8 @@ repos:
       entry: "yarn --cwd management-ui format"
       pass_filenames: false
       additional_dependencies:
-        - "yarn"
+        - "yarn@1.22.22"
+
     # Backend
     - id: uv-lock-check
       name: backend-uv-lock-check
