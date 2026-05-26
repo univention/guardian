@@ -61,6 +61,8 @@ services:
         condition: service_started
       keycloak-provisioning:
         condition: service_completed_successfully
+      udm-rest-api:
+        condition: service_healthy
     networks:
       - proxy-net
     volumes:
@@ -278,6 +280,64 @@ services:
       traefik.http.routers.management-ui.service: management-ui
       traefik.http.services.management-ui.loadbalancer.server.port: 8080
 
+
+  ldap-server:
+    container_name: ldap-server-guardian-dev
+    platform: linux/amd64
+    image: gitregistry.knut.univention.de/univention/dev/nubus-for-k8s/ldap/ldap-server:latest
+    ulimits:
+      nofile:
+        soft: "2048"
+        hard: "10240"
+    environment:
+      LDAP_CN_ADMIN_PW: univention
+      LDAP_BASEDN: dc=school,dc=test
+      PYTHON_LOG_LEVEL: "DEBUG"
+      UPDATE_INDEX_ON_STARTUP: "true"
+    networks:
+      - proxy-net
+    volumes:
+      - ldap-shared-data:/var/lib/univention-ldap/:rw
+      - ldap-shared-run:/var/run/slapd/:rw
+      - ./docker/ucs-config/base-defaults.conf:/etc/univention/base-defaults.conf:ro
+    healthcheck:
+      test: ["CMD", "ldapwhoami", "-x", "-H", "ldap://localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  udm-rest-api:
+    container_name: udm-rest-api-guardian-dev
+    platform: linux/amd64
+    image: gitregistry.knut.univention.de/univention/dev/nubus-for-k8s/udm-rest-api/udm-rest-api:latest
+    depends_on:
+      ldap-server:
+        condition: service_healthy
+    networks:
+      - proxy-net
+    environment:
+      DOMAINNAME: school.test
+      HOSTNAME: udm-rest-api:9979
+      LDAP_HOST: ldap-server
+      LDAP_PORT: 389
+      LDAP_BASE_DN: dc=school,dc=test
+      LDAP_HOST_DN: cn=admin,dc=school,dc=test
+      TLS_MODE: "off"
+      MACHINE_SECRET: univention
+      LDAP_CN_ADMIN_PW: univention
+    volumes:
+      - ./docker/ucs-config/base.conf:/etc/univention/base.conf:ro
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 9979), 2)"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 60s
+
+volumes:
+  ldap-shared-data:
+  ldap-shared-run:
 
 networks:
   proxy-net:

@@ -13,6 +13,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 import pytest_asyncio
+import requests
 from guardian_lib.adapter_registry import ADAPTER_REGISTRY
 from guardian_lib.adapters.authentication import FastAPIAlwaysAuthorizedAdapter
 from guardian_lib.adapters.settings import EnvSettingsAdapter
@@ -888,8 +889,57 @@ def ldap_base():
     return os.environ.get("LDAP_BASE", "dc=school,dc=test")
 
 
+@pytest.fixture
+def udm_session():
+    """
+    HTTP session configured for the in-compose UDM REST API.
+
+    Reads its target and credentials from the same env vars used by
+    the authorization-api so it follows whatever dev-compose ships.
+    """
+    base_url = os.environ.get("UDM_DATA_ADAPTER__URL", "http://udm-rest-api:9979/udm")
+    username = os.environ.get("UDM_DATA_ADAPTER__USERNAME", "cn=admin")
+    password = os.environ.get("UDM_DATA_ADAPTER__PASSWORD", "univention")
+    session = requests.Session()
+    session.auth = (username, password)
+    session.headers["Accept"] = "application/json"
+    session.headers["Content-Type"] = "application/json"
+    session.base_url = base_url
+    yield session
+    session.close()
+
+
+@pytest.fixture
+def udm_guardian_user(udm_session, ldap_base):
+    """
+    Creates the ``uid=guardian,cn=users,<base>`` UDM user that
+    ``set_up_auth`` references as the actor. Best-effort cleanup
+    removes the user (and any leftover from a previous failed run).
+    """
+    base_url = udm_session.base_url
+    dn = f"uid=guardian,cn=users,{ldap_base}"
+    # Best-effort: drop any leftover from a previous run.
+    udm_session.delete(f"{base_url}/users/user/{dn}", timeout=10)
+    response = udm_session.post(
+        f"{base_url}/users/user/",
+        json={
+            "properties": {
+                "username": "guardian",
+                "lastname": "Guardian",
+                "password": "univention",
+                "guardianRoles": ["guardian:builtin:app-admin"],
+            },
+            "position": f"cn=users,{ldap_base}",
+        },
+        timeout=15,
+    )
+    response.raise_for_status()
+    yield dn
+    udm_session.delete(f"{base_url}/users/user/{dn}", timeout=10)
+
+
 @pytest_asyncio.fixture(scope="function")
-async def set_up_auth(ldap_base):
+async def set_up_auth(ldap_base, udm_guardian_user):
     _original_resource_authorization_adapter = AlwaysAuthorizedAdapter
     ADAPTER_REGISTRY.set_adapter(
         ResourceAuthorizationPort, GuardianAuthorizationAdapter

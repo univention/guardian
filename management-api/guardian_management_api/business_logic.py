@@ -866,7 +866,7 @@ async def delete_condition(
             )
             raise DependencyExistsError(
                 "This condition cannot be deleted because it is one of the default conditions.",
-            ) # TODO: define new error type for this?
+            )
         if dependencies:
             logger.warning(
                 "This Condition cannot be deleted because it is still used in a capability.",
