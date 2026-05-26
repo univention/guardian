@@ -97,6 +97,7 @@ stages:
 lint-pre-commit:
   extends: .lint-pre-commit
   stage: test
+  needs: []
   variables:
     RUNNER_REGISTRY_IMAGE: "gitregistry.knut.univention.de/univention/dev/tooling/pre-commit/univention-pre-commit"
     RUNNER_IMAGE_TAG: "0.6.1"
