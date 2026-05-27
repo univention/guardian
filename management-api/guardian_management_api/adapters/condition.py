@@ -44,6 +44,7 @@ from ..models.routers.condition import (
 )
 from ..models.sql_persistence import (
     DBApp,
+    DBCapability,
     DBCapabilityCondition,
     DBCondition,
     DBConditionParameter,
@@ -336,8 +337,13 @@ class SQLConditionPersistenceAdapter(
                 f"{query.namespace_name}:{query.name}' could be found.",
                 object_type=Condition,
             )
-        stmt = select(DBCapabilityCondition).where(
-            DBCapabilityCondition.condition_id == db_condition.id
+        stmt = (
+            select(DBCapability)
+            .join(
+                DBCapabilityCondition,
+                DBCapabilityCondition.capability_id == DBCapability.id,
+            )
+            .where(DBCapabilityCondition.condition_id == db_condition.id)
         )
         async with self.session() as session:
             db_capabilities = (await session.scalars(stmt)).unique().all()
