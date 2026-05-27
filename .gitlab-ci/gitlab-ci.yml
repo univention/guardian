@@ -222,19 +222,9 @@ test:
 test-e2e:
   stage: test
   needs:
-    - job: build_testrunner
-      artifacts: true
     - job: test
       artifacts: true
-    - job: build_docker_image_management
-      optional: true
-    - job: build_docker_image_authz
-      optional: true
-    - job: build_docker_image_opa
-      optional: true
-    - job: build_docker_image_management_ui
-      optional: true
-  image: $IMAGE_TAG_TESTRUNNER
+  image: "${CI_REGISTRY_IMAGE}/testrunner:${RELEASE_VERSION}"
   services:
     - name: docker:27-dind
       alias: docker
