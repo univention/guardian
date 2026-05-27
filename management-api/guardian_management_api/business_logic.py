@@ -827,7 +827,7 @@ async def delete_condition(
     try:
         query = await api_port.to_obj_get_single(api_request)
         condition = await persistence_port.read_one(query)
-        is_default_condition = False # TODO  impl logic
+        is_default_condition = False  # TODO  impl logic
         dependencies = await persistence_port.read_dependencies(query)
         actor_id: str = await authc_port.get_actor_identifier(request)
         resource: Resource = Resource(
@@ -866,7 +866,7 @@ async def delete_condition(
             )
             raise DependencyExistsError(
                 "This condition cannot be deleted because it is one of the default conditions.",
-            ) # TODO: define new error type for this?
+            )
         if dependencies:
             logger.warning(
                 "This Condition cannot be deleted because it is still used in a capability.",
