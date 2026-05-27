@@ -877,10 +877,11 @@ async def delete_condition(
             raise DependencyExistsError(
                 "This Condition cannot be deleted because it is still used in a capability. "
                 "Please remove the condition from all capabilities it is used in first.",
+                dependencies=dependencies,
             )
         await persistence_port.delete(query)
         logger.info("Condition deleted.", actor_id=actor_id, condition_id=resource.id)
-        await bundle_server_port.schedule_bundle_build(BundleType.data)
+        await bundle_server_port.schedule_bundle_build(BundleType.policies)
         return None
     except Exception as exc:
         logger.error("Error while deleting condition.")
