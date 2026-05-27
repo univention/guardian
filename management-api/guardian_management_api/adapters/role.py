@@ -13,8 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..constants import COMPLETE_URL
 from ..errors import ObjectNotFoundError, ParentNotFoundError
 from ..models.base import PaginationRequest, PersistenceGetManyResult
-from ..models.capability import Capability
-from ..models.flags import Flag
+from ..models.capability import CapabilityReference
 from ..models.role import (
     Role,
     RoleCreateQuery,
@@ -47,7 +46,6 @@ from ..ports.role import (
     RoleAPIPort,
     RolePersistencePort,
 )
-from .capability import SQLCapabilityPersistenceAdapter
 from .fastapi_utils import TransformExceptionMixin
 from .sql_persistence import SQLAlchemyMixin
 
@@ -89,7 +87,7 @@ class FastAPIRoleAPIAdapter(
                     name=api_request.data.name,
                     display_name=api_request.data.display_name,
                     capabilities=[
-                        Capability(
+                        CapabilityReference(
                             app_name=cap.app_name,
                             namespace_name=cap.namespace_name,
                             name=cap.name,
@@ -185,7 +183,7 @@ class FastAPIRoleAPIAdapter(
             capabilities = list(old_role.capabilities)
         else:
             capabilities = [
-                Capability(
+                CapabilityReference(
                     app_name=cap.app_name,
                     namespace_name=cap.namespace_name,
                     name=cap.name,
@@ -213,7 +211,11 @@ class SQLRolePersistenceAdapter(
             display_name=db_role.display_name,
             flags=Flag(db_role.flags),
             capabilities=[
-                SQLCapabilityPersistenceAdapter._db_cap_to_cap(db_cap)
+                CapabilityReference(
+                    app_name=db_cap.namespace.app.name,
+                    namespace_name=db_cap.namespace.name,
+                    name=db_cap.name,
+                )
                 for db_cap in db_role.capability
             ],
         )
@@ -233,7 +235,10 @@ class SQLRolePersistenceAdapter(
 
     @SQLAlchemyMixin.session_wrapper
     async def _resolve_capability_refs(
-        self, capabilities: list[Capability], *, session: AsyncSession
+        self,
+        capabilities: list[CapabilityReference],
+        *,
+        session: AsyncSession,
     ) -> list[DBCapability]:
         if not capabilities:
             return []
@@ -252,7 +257,7 @@ class SQLRolePersistenceAdapter(
         if len(result) != len(set(identifiers)):
             raise ObjectNotFoundError(
                 "Not all capabilities specified for the role could be found.",
-                object_type=Capability,
+                object_type=CapabilityReference,
             )
         return result
 
@@ -331,18 +336,15 @@ class SQLRolePersistenceAdapter(
                 f"No role with the identifier '{role.app_name}:"
                 f"{role.namespace_name}:{role.name}' could be found."
             )
-        async with self.session() as resolve_session:
-            db_capabilities = await self._resolve_capability_refs(
-                role.capabilities, session=resolve_session
-            )
         async with self.session() as session:
             try:
                 async with session.begin():
+                    db_capabilities = await self._resolve_capability_refs(
+                        role.capabilities, session=session
+                    )
                     merged_role = await session.merge(db_role)
                     merged_role.display_name = role.display_name
-                    merged_role.capability = {
-                        await session.merge(cap) for cap in db_capabilities
-                    }
+                    merged_role.capability = set(db_capabilities)
                     session.add(merged_role)
             except IntegrityError as exc:
                 self._translate_integrity_error(exc)

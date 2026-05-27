@@ -15,6 +15,7 @@ from .models.capability import (
     Capability,
     CapabilityConditionParameter,
     CapabilityConditionRelation,
+    CapabilityReference,
     ParametrizedCondition,
 )
 from .models.flags import Flag
@@ -551,7 +552,14 @@ async def register_app(
                 namespace_name=default_namespace.name,
                 name="app-admin",
                 display_name=f"App Administrator for {app_display}",
-                capabilities=[admin_cap, admin_read_cap],
+                capabilities=[
+                    CapabilityReference(
+                        app_name=cap.app_name,
+                        namespace_name=cap.namespace_name,
+                        name=cap.name,
+                    )
+                    for cap in (admin_cap, admin_read_cap)
+                ],
             )
         )
         logger.info("App registered.", actor_id=actor_id, app_name=resource.id)

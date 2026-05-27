@@ -18,9 +18,11 @@ from guardian_management_api.errors import BundleBuildError, BundleGenerationIOE
 from guardian_management_api.models.base import (
     PaginationRequest,
 )
+from guardian_management_api.models.capability import CapabilitiesGetQuery
 from guardian_management_api.models.condition import ConditionsGetQuery
 from guardian_management_api.models.role import RolesGetQuery
 from guardian_management_api.ports.bundle_server import BundleServerPort, BundleType
+from guardian_management_api.ports.capability import CapabilityPersistencePort
 from guardian_management_api.ports.condition import ConditionPersistencePort
 from guardian_management_api.ports.role import RolePersistencePort
 
@@ -202,7 +204,10 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
             ) from exc
 
     async def _generate_mapping(
-        self, persistence: RolePersistencePort, bundle_build_dir: Path
+        self,
+        role_persistence: RolePersistencePort,
+        cap_persistence: CapabilityPersistencePort,
+        bundle_build_dir: Path,
     ):
         """
         Writes the role capability mapping to the build directory.
@@ -212,14 +217,26 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
         """
         try:
             mapping = {"roleCapabilityMapping": defaultdict(list)}  # type: ignore[var-annotated]
-            get_many_result = await persistence.read_many(
+            roles_result = await role_persistence.read_many(
                 RolesGetQuery(
                     pagination=PaginationRequest(query_offset=0, query_limit=None)
                 )
             )
-            for role in get_many_result.objects:
+            caps_result = await cap_persistence.read_many(
+                CapabilitiesGetQuery(
+                    pagination=PaginationRequest(query_offset=0, query_limit=None)
+                )
+            )
+            cap_by_identifier = {
+                (cap.app_name, cap.namespace_name, cap.name): cap
+                for cap in caps_result.objects
+            }
+            for role in roles_result.objects:
                 role_key = f"{role.app_name}:{role.namespace_name}:{role.name}"
-                for capability in role.capabilities:
+                for cap_ref in role.capabilities:
+                    capability = cap_by_identifier[
+                        (cap_ref.app_name, cap_ref.namespace_name, cap_ref.name)
+                    ]
                     cap = asdict(capability)
                     del cap["name"]
                     del cap["display_name"]
@@ -251,6 +268,7 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
         bundle_type: BundleType,
         cond_persistence_port: ConditionPersistencePort,
         role_persistence_port: RolePersistencePort,
+        cap_persistence_port: CapabilityPersistencePort,
     ):
         if bundle_type == BundleType.data:
             bundle_name = self._data_bundle_name
@@ -268,7 +286,9 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
         await self._prepare_build_directory(base_dir, bundle_name, local_logger)
         if bundle_type == BundleType.data:
             await self._generate_mapping(
-                role_persistence_port, base_dir / "build" / bundle_name
+                role_persistence_port,
+                cap_persistence_port,
+                base_dir / "build" / bundle_name,
             )
         elif bundle_type == BundleType.policies:
             await self._dump_conditions(
@@ -289,12 +309,16 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
         self,
         cond_persistence_port: ConditionPersistencePort,
         role_persistence_port: RolePersistencePort,
+        cap_persistence_port: CapabilityPersistencePort,
     ):
         async with self._build_lock:
             try:
                 self._data_bundle_queue.get_nowait()
                 await self._build_bundle(
-                    BundleType.data, cond_persistence_port, role_persistence_port
+                    BundleType.data,
+                    cond_persistence_port,
+                    role_persistence_port,
+                    cap_persistence_port,
                 )
                 self._data_bundle_queue.task_done()
             except QueueEmpty:
@@ -302,7 +326,10 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
             try:
                 self._policies_bundle_queue.get_nowait()
                 await self._build_bundle(
-                    BundleType.policies, cond_persistence_port, role_persistence_port
+                    BundleType.policies,
+                    cond_persistence_port,
+                    role_persistence_port,
+                    cap_persistence_port,
                 )
                 self._policies_bundle_queue.task_done()
             except QueueEmpty:

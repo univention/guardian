@@ -7,7 +7,7 @@ from typing import List, Optional
 
 from .base import PaginatedAPIResponse, PaginationRequest, ResponseObject
 from .flags import Flag
-from .capability import Capability
+from .capability import CapabilityReference
 
 
 @dataclass
@@ -17,7 +17,7 @@ class Role:
     name: str
     display_name: Optional[str] = None
     flags: Flag = Flag.NONE
-    capabilities: list[Capability] = field(default_factory=list)
+    capabilities: list[CapabilityReference] = field(default_factory=list)
 
 
 @dataclass(frozen=True)

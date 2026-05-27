@@ -15,6 +15,7 @@ from guardian_management_api.models.capability import (
     Capability,
     CapabilityConditionParameter,
     CapabilityConditionRelation,
+    CapabilityReference,
     ParametrizedCondition,
 )
 from guardian_management_api.models.permission import Permission
@@ -144,7 +145,12 @@ class TestBundleServerAdapter:
             if bundle_type == BundleType.data
             else adapter._policy_bundle_name
         )
-        await adapter._build_bundle(bundle_type, mocker.AsyncMock(), mocker.AsyncMock())
+        await adapter._build_bundle(
+            bundle_type,
+            mocker.AsyncMock(),
+            mocker.AsyncMock(),
+            mocker.AsyncMock(),
+        )
         build_cmd = (
             f"opa build --v0-compatible -b {Path(bundle_server_base_dir) / 'build' / subpath} -o "
             f"{Path(bundle_server_base_dir) / 'bundles' / subpath}.tar.gz"
@@ -177,7 +183,10 @@ class TestBundleServerAdapter:
         mocker.patch("asyncio.create_subprocess_shell", subprocess_mock)
         with pytest.raises(BundleBuildError):
             await adapter._build_bundle(
-                BundleType.data, mocker.AsyncMock(), mocker.AsyncMock()
+                BundleType.data,
+                mocker.AsyncMock(),
+                mocker.AsyncMock(),
+                mocker.AsyncMock(),
             )
 
     @pytest.mark.asyncio
@@ -204,13 +213,26 @@ class TestBundleServerAdapter:
         build_bundle_mock = mocker.AsyncMock()
         adapter._build_bundle = build_bundle_mock
         cond_persistence_mock = mocker.AsyncMock()
+        role_persistence_mock = mocker.AsyncMock()
         cap_persistence_mock = mocker.AsyncMock()
         await adapter.schedule_bundle_build(BundleType.data)
         await adapter.schedule_bundle_build(BundleType.policies)
-        await adapter.generate_bundles(cond_persistence_mock, cap_persistence_mock)
+        await adapter.generate_bundles(
+            cond_persistence_mock, role_persistence_mock, cap_persistence_mock
+        )
         assert build_bundle_mock.call_args_list == [
-            call(BundleType.data, cond_persistence_mock, cap_persistence_mock),
-            call(BundleType.policies, cond_persistence_mock, cap_persistence_mock),
+            call(
+                BundleType.data,
+                cond_persistence_mock,
+                role_persistence_mock,
+                cap_persistence_mock,
+            ),
+            call(
+                BundleType.policies,
+                cond_persistence_mock,
+                role_persistence_mock,
+                cap_persistence_mock,
+            ),
         ]
 
     @pytest.mark.asyncio
@@ -219,7 +241,9 @@ class TestBundleServerAdapter:
     ):
         build_bundle_mock = mocker.AsyncMock()
         adapter._build_bundle = build_bundle_mock
-        await adapter.generate_bundles(mocker.AsyncMock(), mocker.AsyncMock())
+        await adapter.generate_bundles(
+            mocker.AsyncMock(), mocker.AsyncMock(), mocker.AsyncMock()
+        )
         assert build_bundle_mock.call_args_list == []
 
     @pytest.mark.asyncio
@@ -320,7 +344,14 @@ class TestBundleServerAdapter:
             conditions=[],
         )
 
-        async def _read_many(*args, **kwargs):
+        def _ref(cap: Capability) -> CapabilityReference:
+            return CapabilityReference(
+                app_name=cap.app_name,
+                namespace_name=cap.namespace_name,
+                name=cap.name,
+            )
+
+        async def _read_roles(*args, **kwargs):
             return PersistenceGetManyResult(
                 total_count=2,
                 objects=[
@@ -329,23 +360,30 @@ class TestBundleServerAdapter:
                         namespace_name="namespace",
                         name="role",
                         display_name="role",
-                        capabilities=[cap1, cap2],
+                        capabilities=[_ref(cap1), _ref(cap2)],
                     ),
                     Role(
                         app_name="app",
                         namespace_name="namespace",
                         name="role2",
                         display_name="role2",
-                        capabilities=[cap3],
+                        capabilities=[_ref(cap3)],
                     ),
                 ],
             )
 
+        async def _read_caps(*args, **kwargs):
+            return PersistenceGetManyResult(total_count=3, objects=[cap1, cap2, cap3])
+
         role_persistence_mock = mocker.MagicMock()
-        role_persistence_mock.read_many = _read_many
+        role_persistence_mock.read_many = _read_roles
+        cap_persistence_mock = mocker.MagicMock()
+        cap_persistence_mock.read_many = _read_caps
         target_dir = Path(tmpdir) / "mapping"
         (target_dir / "guardian/mapping").mkdir(parents=True)
-        await adapter._generate_mapping(role_persistence_mock, target_dir)
+        await adapter._generate_mapping(
+            role_persistence_mock, cap_persistence_mock, target_dir
+        )
         with open(target_dir / "guardian/mapping/data.json", "rb") as file:
             result = orjson.loads(file.read())
         assert result == {
@@ -391,12 +429,15 @@ class TestBundleServerAdapter:
     async def test__generate_mapping_error(
         self, adapter: BundleServerAdapter, mocker, tmpdir
     ):
+        role_persistence_mock = mocker.AsyncMock()
+        role_persistence_mock.read_many = mocker.AsyncMock(side_effect=RuntimeError)
         cap_persistence_mock = mocker.AsyncMock()
-        cap_persistence_mock.read_many = mocker.AsyncMock(side_effect=RuntimeError)
         with pytest.raises(
             BundleGenerationIOError,
             match="An error occurred while writing the role capability mapping to files.",
         ):
             await adapter._generate_mapping(
-                cap_persistence_mock, Path(tmpdir) / "mapping"
+                role_persistence_mock,
+                cap_persistence_mock,
+                Path(tmpdir) / "mapping",
             )
