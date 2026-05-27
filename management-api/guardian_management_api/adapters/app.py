@@ -1,10 +1,11 @@
-# Copyright (C) 2023 Univention GmbH
+# Copyright (C) 2023-2026 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 from dataclasses import asdict
 from typing import Any, List, Optional, Tuple, Type
 
 from port_loader import AsyncConfiguredAdapterMixin
+from sqlalchemy import select
 
 from ..constants import COMPLETE_URL
 from ..errors import ObjectNotFoundError
@@ -32,7 +33,7 @@ from ..models.routers.app import (
     AppSingleResponse,
 )
 from ..models.routers.base import ManagementObjectName, PaginationInfo
-from ..models.sql_persistence import DBApp, SQLPersistenceAdapterSettings
+from ..models.sql_persistence import DBApp, DBNamespace, SQLPersistenceAdapterSettings
 from ..ports.app import (
     AppAPIPort,
     AppPersistencePort,
@@ -219,3 +220,25 @@ class SQLAppPersistenceAdapter(
             )
         modified = await self._update_object(db_app, display_name=app.display_name)
         return SQLAppPersistenceAdapter._db_app_to_app(modified)
+
+    async def delete(self, query: AppGetQuery) -> None:
+        db_app = await self._get_single_object(DBApp, name=query.name)
+        if db_app is None:
+            raise ObjectNotFoundError(
+                f"No app with the identifier '{query.name}' could be found."
+            )
+        await self._delete_obj(db_app)
+
+    async def read_dependencies(self, query: AppGetQuery) -> list[Namespace]:
+        db_app = await self._get_single_object(DBApp, name=query.name)
+        if db_app is None:
+            raise ObjectNotFoundError(
+                f"No app with the identifier '{query.name}' could be found."
+            )
+        stmt = select(DBNamespace).where(DBNamespace.app_id == db_app.id)
+        async with self.session() as session:
+            db_namespaces = (await session.scalars(stmt)).all()
+        return [
+            Namespace(name=ns.name, display_name=ns.display_name, app_name=db_app.name)
+            for ns in db_namespaces
+        ]

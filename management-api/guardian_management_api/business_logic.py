@@ -1874,3 +1874,63 @@ async def delete_capability(
     except Exception as exc:
         logger.error("Error while deleting capability.")
         raise (await api_port.transform_exception(exc)) from exc
+
+
+async def delete_app(
+    api_request: AppGetRequest,
+    app_api_port: AppAPIPort,
+    bundle_server_port: BundleServerPort,
+    persistence_port: AppPersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
+):
+    try:
+        query = await app_api_port.to_app_get(api_request)
+        app = await persistence_port.read_one(query)
+        dependencies = await persistence_port.read_dependencies(query)
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        resource = Resource(resource_type=ResourceType.APP, name=app.name)
+        logger.debug(
+            "Received request to delete app.",
+            actor_id=actor_id,
+            app_name=resource.id,
+        )
+        allowed = (
+            await authz_port.authorize_operation(
+                Actor(id=actor_id),
+                OperationType.DELETE_RESOURCE,
+                [resource],
+            )
+        ).get(resource.id, False)
+        if not allowed:
+            logger.warning(
+                "Permission denied to delete app.",
+                actor_id=actor_id,
+                app_name=resource.id,
+            )
+            raise UnauthorizedError(
+                "The logged in user is not authorized to delete this app."
+            )
+        if dependencies:
+            logger.warning(
+                "App cannot be deleted due to existing dependencies.",
+                actor_id=actor_id,
+                app_name=resource.id,
+                dependencies=dependencies,
+            )
+            raise DependencyExistsError(
+                "This app cannot be deleted because it still has namespaces. "
+                "Please remove all namespaces first.",
+                dependencies=dependencies,
+            )
+        await persistence_port.delete(query)
+        logger.info("App deleted.", actor_id=actor_id, app_name=resource.id)
+        await bundle_server_port.schedule_bundle_build(BundleType.data)
+        return None
+    except Exception as exc:
+        logger.error("Error while deleting app.")
+        raise (await app_api_port.transform_exception(exc)) from exc
+
+
+
