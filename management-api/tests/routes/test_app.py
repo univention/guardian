@@ -15,6 +15,7 @@ from guardian_management_api.models.routers.app import (
 )
 from guardian_management_api.models.routers.base import ManagementObjectName
 from guardian_management_api.models.sql_persistence import (
+    DBApp,
     DBCapability,
 )
 from sqlalchemy import select
@@ -328,3 +329,19 @@ class TestAppEndpointsAuthorization:
             json={"name": "other", "display_name": "expected displayname"},
         )
         assert response.status_code == 403
+
+    @pytest.mark.asyncio
+    async def test_delete_other_app_not_allowed(
+        self, client, create_tables, create_app, sqlalchemy_mixin, set_up_auth
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session, name="other", display_name=None)
+        response = client.delete(app.url_path_for("delete_app", name="other"))
+        assert response.status_code == 403, response.json()
+        async with sqlalchemy_mixin.session() as session:
+            remaining = (
+                (await session.execute(select(DBApp).filter_by(name="other")))
+                .unique()
+                .scalar_one_or_none()
+            )
+            assert remaining is not None

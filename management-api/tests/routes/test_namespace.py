@@ -627,3 +627,37 @@ class TestNamespaceEndpointsAuthorization:
         assert not any(
             namespace["name"] == "test" for namespace in response.json()["namespaces"]
         )
+
+    @pytest.mark.asyncio
+    async def test_delete_other_namespace_not_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="other")
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="other",
+            )
+        response = client.delete(
+            app.url_path_for(
+                "delete_namespace",
+                name="namespace",
+                app_name="other",
+            ),
+        )
+        assert response.status_code == 403, response.json()
+        async with sqlalchemy_mixin.session() as session:
+            remaining = (
+                (await session.execute(select(DBNamespace).filter_by(name="namespace")))
+                .unique()
+                .scalar_one_or_none()
+            )
+            assert remaining is not None
