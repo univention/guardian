@@ -270,3 +270,18 @@ class SQLContextPersistenceAdapter(
             db_context, display_name=context.display_name
         )
         return SQLContextPersistenceAdapter._db_context_to_context(modified)
+
+    async def delete(self, query: ContextGetQuery) -> None:
+        db_context = await self._get_single_object(
+            DBContext,
+            name=query.name,
+            app_name=query.app_name,
+            namespace_name=query.namespace_name,
+        )
+        if db_context is None:
+            raise ObjectNotFoundError(
+                f"No context with the identifier '{query.app_name}:"
+                f"{query.namespace_name}:{query.name}' could be found.",
+                object_type=Context,
+            )
+        await self._delete_obj(db_context)

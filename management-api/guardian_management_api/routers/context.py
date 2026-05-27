@@ -6,12 +6,14 @@ from typing import Any, Dict
 from fastapi import APIRouter, Depends, Request
 from guardian_lib.adapter_registry import port_dep
 from guardian_lib.ports import AuthenticationPort
+from starlette import status
 
 from .. import business_logic
 from ..adapters.context import FastAPIContextAPIAdapter
 from ..models.routers.base import (
     GetByAppRequest,
     GetByNamespaceRequest,
+    GetFullIdentifierRequest,
 )
 from ..models.routers.context import (
     ContextCreateRequest,
@@ -22,6 +24,7 @@ from ..models.routers.context import (
     ContextSingleResponse,
 )
 from ..ports.authz import ResourceAuthorizationPort
+from ..ports.bundle_server import BundleServerPort
 from ..ports.context import ContextAPIPort, ContextPersistencePort
 
 router = APIRouter(tags=["context"])
@@ -210,3 +213,36 @@ async def edit_context(
         request=request,
     )
     return response.model_dump()
+
+
+@router.delete(
+    "/contexts/{app_name}/{namespace_name}/{name}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_context(
+    request: Request,
+    request_data: GetFullIdentifierRequest = Depends(),
+    api_port: FastAPIContextAPIAdapter = Depends(
+        port_dep(ContextAPIPort, FastAPIContextAPIAdapter)
+    ),
+    persistence_port: ContextPersistencePort = Depends(
+        port_dep(ContextPersistencePort)
+    ),
+    bundle_server_port: BundleServerPort = Depends(port_dep(BundleServerPort)),
+    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
+    authz_port: ResourceAuthorizationPort = Depends(
+        port_dep(ResourceAuthorizationPort)
+    ),
+) -> None:
+    """
+    Delete a context.
+    """
+    return await business_logic.delete_context(
+        request_data,
+        api_port,
+        bundle_server_port,
+        persistence_port,
+        authc_port,
+        authz_port,
+        request,
+    )

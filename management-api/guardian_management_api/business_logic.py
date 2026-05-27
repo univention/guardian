@@ -1549,6 +1549,56 @@ async def edit_context(
         raise (await api_port.transform_exception(exc)) from exc
 
 
+async def delete_context(
+    api_request: APIEditRequestObject,
+    api_port: ContextAPIPort,
+    bundle_server_port: BundleServerPort,
+    persistence_port: ContextPersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
+):
+    try:
+        query = await api_port.to_obj_get_single(api_request)
+        context = await persistence_port.read_one(query)
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        resource: Resource = Resource(
+            resource_type=ResourceType.CONTEXT,
+            name=context.name,
+            app_name=context.app_name,
+            namespace_name=context.namespace_name,
+        )
+        logger.debug(
+            "Received request to delete context.",
+            actor_id=actor_id,
+            context_id=resource.id,
+        )
+
+        allowed = (
+            await authz_port.authorize_operation(
+                Actor(id=actor_id),
+                OperationType.DELETE_RESOURCE,
+                [resource],
+            )
+        ).get(resource.id, False)
+        if not allowed:
+            logger.warning(
+                "Permission denied to delete context.",
+                actor_id=actor_id,
+                context_id=resource.id,
+            )
+            raise UnauthorizedError(
+                "The logged in user is not authorized to delete this context."
+            )
+        await persistence_port.delete(query)
+        logger.info("Context deleted.", actor_id=actor_id, context_id=resource.id)
+        await bundle_server_port.schedule_bundle_build(BundleType.data)
+        return None
+    except Exception as exc:
+        logger.error("Error while deleting context.")
+        raise (await api_port.transform_exception(exc)) from exc
+
+
 async def get_namespaces_by_app(
     api_request: GetByAppRequest,
     namespace_api_port: FastAPINamespaceAPIAdapter,

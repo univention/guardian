@@ -114,4 +114,12 @@ class ContextAPIPort(
 
 class ContextPersistencePort(
     BasePersistencePort[Context, ContextGetQuery, ContextsGetQuery], ABC
-): ...
+):
+
+    async def delete(self, query: ContextGetQuery) -> None:
+        """
+        Deletes the context specified by the query.
+
+        :raises PersistenceError: For any error during interaction with the persistence.
+        """
+        raise NotImplementedError  # pragma: no cover
