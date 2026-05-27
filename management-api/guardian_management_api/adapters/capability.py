@@ -35,7 +35,6 @@ from guardian_management_api.models.capability import (
 from guardian_management_api.models.condition import Condition
 from guardian_management_api.models.flags import Flag
 from guardian_management_api.models.permission import Permission
-from guardian_management_api.models.role import Role
 from guardian_management_api.models.routers.base import (
     GetAllRequest,
     GetByNamespaceRequest,
@@ -50,7 +49,6 @@ from guardian_management_api.models.routers.capability import (
     CapabilityEditRequest,
     CapabilityMultipleResponse,
     CapabilityPermission,
-    CapabilityRole,
     CapabilitySingleResponse,
     RelationChoices,
 )
@@ -70,6 +68,7 @@ from guardian_management_api.models.sql_persistence import (
     DBPermission,
     DBRole,
     SQLPersistenceAdapterSettings,
+    role_capability_table,
 )
 from guardian_management_api.ports.capability import (
     CapabilityAPIPort,
@@ -93,7 +92,6 @@ class SQLCapabilityPersistenceAdapter(
     def _cap_to_db_cap(
         cap: Capability,
         namespace_id: int,
-        role_id: int,
         db_permissions: list[DBPermission],
         db_conditions: list[DBCondition],
     ) -> DBCapability:
@@ -124,7 +122,6 @@ class SQLCapabilityPersistenceAdapter(
             namespace_id=namespace_id,
             name=cap.name,
             display_name=cap.display_name,
-            role_id=role_id,
             relation=cap.relation,
             permissions=set(db_permissions),
             conditions=cap_conditions,
@@ -158,12 +155,6 @@ class SQLCapabilityPersistenceAdapter(
             namespace_name=db_cap.namespace.name,
             name=db_cap.name,
             display_name=db_cap.display_name,
-            role=Role(
-                app_name=db_cap.role.namespace.app.name,
-                namespace_name=db_cap.role.namespace.name,
-                name=db_cap.role.name,
-                flags=Flag(db_cap.role.flags),
-            ),
             permissions=[
                 Permission(
                     app_name=perm.namespace.app.name,
@@ -226,16 +217,6 @@ class SQLCapabilityPersistenceAdapter(
             raise ParentNotFoundError(
                 "The namespace of the capability to create does not exist."
             )
-        db_role = await self._get_single_object(
-            DBRole,
-            app_name=obj.role.app_name,
-            namespace_name=obj.role.namespace_name,
-            name=obj.role.name,
-        )
-        if db_role is None:
-            raise ObjectNotFoundError(
-                "The capabilities role could not be found.", object_type=Role
-            )
         async with self.session() as session:
             permissions: list[DBPermission] = (
                 await self._get_db_child_objs_for_capability(
@@ -248,7 +229,7 @@ class SQLCapabilityPersistenceAdapter(
                 )
             )
         db_cap = SQLCapabilityPersistenceAdapter._cap_to_db_cap(
-            obj, db_namespace.id, db_role.id, permissions, conditions
+            obj, db_namespace.id, permissions, conditions
         )
         result = await self._create_object(db_cap)
         return SQLCapabilityPersistenceAdapter._db_cap_to_cap(result)
@@ -308,7 +289,11 @@ class SQLCapabilityPersistenceAdapter(
         stmt, app_name: str, namespace_name: str, name: str
     ):
         return (
-            stmt.join(DBRole, DBCapability.role_id == DBRole.id)
+            stmt.join(
+                role_capability_table,
+                DBCapability.id == role_capability_table.c.capability_id,
+            )
+            .join(DBRole, role_capability_table.c.role_id == DBRole.id)
             .join(DBNamespace, DBRole.namespace_id == DBNamespace.id)
             .join(DBApp, DBNamespace.app_id == DBApp.id)
             .where(
@@ -411,11 +396,6 @@ class FastAPICapabilityAPIAdapter(
                 if obj.relation == CapabilityConditionRelation.AND
                 else RelationChoices.OR
             ),
-            role=CapabilityRole(
-                app_name=ManagementObjectName(obj.role.app_name),
-                namespace_name=ManagementObjectName(obj.role.namespace_name),
-                name=ManagementObjectName(obj.role.name),
-            ),
             resource_url=f"{COMPLETE_URL}/capabilities/{obj.app_name}/{obj.namespace_name}/{obj.name}",
             permissions=permissions,
             conditions=conditions,
@@ -501,11 +481,6 @@ class FastAPICapabilityAPIAdapter(
                 if api_request.data.relation == RelationChoices.AND
                 else CapabilityConditionRelation.OR
             ),
-            role=Role(
-                app_name=api_request.data.role.app_name,
-                namespace_name=api_request.data.role.namespace_name,
-                name=api_request.data.role.name,
-            ),
             permissions=[
                 Permission(
                     app_name=perm.app_name,
@@ -538,11 +513,6 @@ class FastAPICapabilityAPIAdapter(
                 CapabilityConditionRelation.AND
                 if api_request.data.relation == RelationChoices.AND
                 else CapabilityConditionRelation.OR
-            ),
-            role=Role(
-                app_name=api_request.data.role.app_name,
-                namespace_name=api_request.data.role.namespace_name,
-                name=api_request.data.role.name,
             ),
             permissions=[
                 Permission(

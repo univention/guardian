@@ -4,8 +4,8 @@ from pathlib import Path
 
 from guardian_lib.ports import BasePort
 
-from guardian_management_api.ports.capability import CapabilityPersistencePort
 from guardian_management_api.ports.condition import ConditionPersistencePort
+from guardian_management_api.ports.role import RolePersistencePort
 
 
 class BundleType(StrEnum):
@@ -42,7 +42,7 @@ class BundleServerPort(BasePort):
     async def generate_bundles(
         self,
         cond_persistence_port: ConditionPersistencePort,
-        cap_persistence_port: CapabilityPersistencePort,
+        role_persistence_port: RolePersistencePort,
     ):
         """
         Builds the bundles if any were scheduled for creation.

@@ -12,7 +12,6 @@ from guardian_management_api.models.routers.base import (
 from guardian_management_api.models.routers.capability import (
     CapabilityCreateData,
     CapabilityCreateRequest,
-    CapabilityRole,
     RelationChoices,
 )
 from guardian_management_api.models.routers.condition import (
@@ -163,11 +162,6 @@ class TestNameRegex:
                 namespace_name="namespace",
                 data=CapabilityCreateData(
                     name=value,
-                    role=CapabilityRole(
-                        app_name="app",
-                        namespace_name="namespace",
-                        name="role",
-                    ),
                     relation=RelationChoices.AND,
                     conditions=[],
                     permissions=[],

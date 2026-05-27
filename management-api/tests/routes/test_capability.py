@@ -6,11 +6,11 @@ from urllib.parse import urljoin
 
 import pytest
 from guardian_management_api.adapters.capability import SQLCapabilityPersistenceAdapter
-from guardian_management_api.adapters.role import SQLRolePersistenceAdapter
 from guardian_management_api.constants import BASE_URL, COMPLETE_URL
 from guardian_management_api.main import app
 from guardian_management_api.models.sql_persistence import (
     DBCapability,
+    DBRole,
 )
 from sqlalchemy import select
 from sqlalchemy.sql.functions import count
@@ -46,7 +46,6 @@ class TestCapabilityEndpoints:
                 "name": capability.name,
                 "display_name": capability.display_name,
                 "relation": "AND",
-                "role": role,
                 "permissions": permissions,
                 "conditions": [asdict(cond) for cond in capability.conditions],
                 "resource_url": f"{COMPLETE_URL}/capabilities/{capability.app_name}/"
@@ -109,7 +108,6 @@ class TestCapabilityEndpoints:
                 "display_name": orig_capability.display_name,
                 "resource_url": urljoin(BASE_URL, resource),
                 "relation": "AND",
-                "role": role,
                 "permissions": permissions,
                 "conditions": [asdict(cond) for cond in orig_capability.conditions],
             }
@@ -139,13 +137,20 @@ class TestCapabilityEndpoints:
     ):
         async with sqlalchemy_mixin.session() as session:
             db_caps = await create_capabilities(session, 10, 2)
-        db_role1 = db_caps[0].role
+            db_role1 = (
+                await session.execute(
+                    select(DBRole).where(DBRole.name == "role_000000000")
+                )
+            ).scalar_one()
+            role_app_name = db_role1.namespace.app.name
+            role_namespace_name = db_role1.namespace.name
+            role_name = db_role1.name
         response = client.get(
             client.app.url_path_for(
                 "get_capabilities_by_role",
-                app_name=db_role1.namespace.app.name,
-                namespace_name=db_role1.namespace.name,
-                name=db_role1.name,
+                app_name=role_app_name,
+                namespace_name=role_namespace_name,
+                name=role_name,
             )
         )
         assert response.status_code == 200
@@ -176,7 +181,6 @@ class TestCapabilityEndpoints:
                 "display_name": orig_capability.display_name,
                 "resource_url": urljoin(BASE_URL, resource),
                 "relation": "AND",
-                "role": role,
                 "permissions": permissions,
                 "conditions": [asdict(cond) for cond in orig_capability.conditions],
             }
@@ -273,11 +277,6 @@ class TestCapabilityEndpoints:
                 }
                 for perm in cap_to_create.permissions
             ],
-            "role": {
-                "app_name": cap_to_create.role.app_name,
-                "namespace_name": cap_to_create.role.namespace_name,
-                "name": cap_to_create.role.name,
-            },
         }
         result = client.post(
             client.app.url_path_for(
@@ -302,7 +301,6 @@ class TestCapabilityEndpoints:
                 "name": cap_to_create.name,
                 "display_name": cap_to_create.display_name,
                 "relation": "AND",
-                "role": role,
                 "permissions": permissions,
                 "conditions": [asdict(cond) for cond in cap_to_create.conditions],
                 "resource_url": f"{COMPLETE_URL}/capabilities/{cap_to_create.app_name}/"
@@ -325,11 +323,6 @@ class TestCapabilityEndpoints:
         cap_data = {
             "name": "test",
             "display_name": "This is a test",
-            "role": {
-                "app_name": "guardian",
-                "namespace_name": "default",
-                "name": "test",
-            },
             "conditions": [],
             "relation": "AND",
             "permissions": [
@@ -370,58 +363,6 @@ class TestCapabilityEndpoints:
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")
-    async def test_create_capability_role_not_found(
-        self, client, create_capabilities, sqlalchemy_mixin
-    ):
-        async with sqlalchemy_mixin.session() as session:
-            db_cap = (await create_capabilities(session, 1))[0]
-        cap_to_create = SQLCapabilityPersistenceAdapter._db_cap_to_cap(db_cap)
-        cap_to_create.name = "my-cap"
-        create_data = {
-            "name": cap_to_create.name,
-            "display_name": cap_to_create.display_name,
-            "relation": cap_to_create.relation,
-            "conditions": [
-                {
-                    "app_name": cond.app_name,
-                    "namespace_name": cond.namespace_name,
-                    "name": cond.name,
-                    "parameters": [
-                        {"name": param.name, "value": param.value}
-                        for param in cond.parameters
-                    ],
-                }
-                for cond in cap_to_create.conditions
-            ],
-            "permissions": [
-                {
-                    "app_name": perm.app_name,
-                    "namespace_name": perm.namespace_name,
-                    "name": perm.name,
-                }
-                for perm in cap_to_create.permissions
-            ],
-            "role": {
-                "app_name": cap_to_create.role.app_name,
-                "namespace_name": "foo",
-                "name": cap_to_create.role.name,
-            },
-        }
-        result = client.post(
-            client.app.url_path_for(
-                "create_capability",
-                app_name=cap_to_create.app_name,
-                namespace_name=cap_to_create.namespace_name,
-            ),
-            json=create_data,
-        )
-        assert result.status_code == 404, result.json()
-        assert result.json() == {
-            "detail": {"message": "The capabilities role could not be found."}
-        }
-
-    @pytest.mark.asyncio
-    @pytest.mark.usefixtures("create_tables")
     async def test_create_capability_condition_not_found(
         self, client, create_capabilities, sqlalchemy_mixin
     ):
@@ -453,11 +394,6 @@ class TestCapabilityEndpoints:
                 }
                 for perm in cap_to_create.permissions
             ],
-            "role": {
-                "app_name": cap_to_create.role.app_name,
-                "namespace_name": cap_to_create.role.namespace_name,
-                "name": cap_to_create.role.name,
-            },
         }
         result = client.post(
             client.app.url_path_for(
@@ -507,11 +443,6 @@ class TestCapabilityEndpoints:
                 }
                 for perm in cap_to_create.permissions
             ],
-            "role": {
-                "app_name": cap_to_create.role.app_name,
-                "namespace_name": cap_to_create.role.namespace_name,
-                "name": cap_to_create.role.name,
-            },
         }
         result = client.post(
             client.app.url_path_for(
@@ -560,11 +491,6 @@ class TestCapabilityEndpoints:
                 }
                 for perm in cap_to_create.permissions
             ],
-            "role": {
-                "app_name": cap_to_create.role.app_name,
-                "namespace_name": cap_to_create.role.namespace_name,
-                "name": cap_to_create.role.name,
-            },
         }
         result = client.post(
             client.app.url_path_for(
@@ -610,11 +536,6 @@ class TestCapabilityEndpoints:
                 {"app_name": perm.app_name, "namespace_name": "foo", "name": perm.name}
                 for perm in cap_to_create.permissions
             ],
-            "role": {
-                "app_name": cap_to_create.role.app_name,
-                "namespace_name": cap_to_create.role.namespace_name,
-                "name": cap_to_create.role.name,
-            },
         }
         result = client.post(
             client.app.url_path_for(
@@ -645,11 +566,6 @@ class TestCapabilityEndpoints:
             "relation": cap_to_edit.relation,
             "conditions": [],
             "permissions": [],
-            "role": {
-                "app_name": cap_to_edit.role.app_name,
-                "namespace_name": cap_to_edit.role.namespace_name,
-                "name": cap_to_edit.role.name,
-            },
         }
         result = client.put(
             client.app.url_path_for(
@@ -671,7 +587,6 @@ class TestCapabilityEndpoints:
                 "name": cap_to_edit.name,
                 "display_name": "FOO",
                 "relation": "AND",
-                "role": role,
                 "permissions": [],
                 "conditions": [],
                 "resource_url": f"{COMPLETE_URL}/capabilities/{cap_to_edit.app_name}/"
@@ -694,11 +609,6 @@ class TestCapabilityEndpoints:
             "relation": cap_to_edit.relation,
             "conditions": [],
             "permissions": [],
-            "role": {
-                "app_name": cap_to_edit.role.app_name,
-                "namespace_name": cap_to_edit.role.namespace_name,
-                "name": cap_to_edit.role.name,
-            },
         }
         result = client.put(
             client.app.url_path_for(
@@ -855,11 +765,6 @@ class TestCapabilityEndpointsAuthorization:
                 "permissions": [],
                 "conditions": [],
                 "relation": "AND",
-                "role": {
-                    "app_name": "guardian",
-                    "namespace_name": "namespace",
-                    "name": "role",
-                },
             },
         )
         assert response.status_code == 200
@@ -890,11 +795,6 @@ class TestCapabilityEndpointsAuthorization:
                 "permissions": [],
                 "conditions": [],
                 "relation": "AND",
-                "role": {
-                    "app_name": "other",
-                    "namespace_name": "namespace",
-                    "name": "role",
-                },
             },
         )
         assert response.status_code == 403
@@ -931,11 +831,6 @@ class TestCapabilityEndpointsAuthorization:
                 "permissions": [],
                 "conditions": [],
                 "relation": "AND",
-                "role": {
-                    "app_name": "other",
-                    "namespace_name": "namespace",
-                    "name": "role",
-                },
             },
         )
         assert response.status_code == 403

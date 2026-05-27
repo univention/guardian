@@ -264,105 +264,88 @@ class TestBundleServerAdapter:
     async def test__generate_mapping(
         self, adapter: BundleServerAdapter, mocker, tmpdir
     ):
+        cap1 = Capability(
+            app_name="app",
+            namespace_name="namespace",
+            name="cap1",
+            display_name="cap1",
+            permissions=[
+                Permission(app_name="app", namespace_name="namespace", name="perm1"),
+                Permission(app_name="app", namespace_name="namespace", name="perm2"),
+            ],
+            relation=CapabilityConditionRelation.AND,
+            conditions=[
+                ParametrizedCondition(
+                    app_name="app",
+                    namespace_name="namespace",
+                    name="cond1",
+                    parameters=[
+                        CapabilityConditionParameter(name="a", value=1),
+                        CapabilityConditionParameter(name="b", value=True),
+                    ],
+                ),
+                ParametrizedCondition(
+                    app_name="app",
+                    namespace_name="namespace",
+                    name="cond2",
+                    parameters=[
+                        CapabilityConditionParameter(name="c", value="three"),
+                        CapabilityConditionParameter(name="d", value=4.0),
+                    ],
+                ),
+            ],
+        )
+        cap2 = Capability(
+            app_name="app",
+            namespace_name="namespace",
+            name="cap2",
+            display_name="cap2",
+            permissions=[
+                Permission(app_name="app", namespace_name="namespace", name="perm3"),
+                Permission(app_name="app", namespace_name="namespace", name="perm4"),
+            ],
+            relation=CapabilityConditionRelation.AND,
+            conditions=[],
+        )
+        cap3 = Capability(
+            app_name="app",
+            namespace_name="namespace",
+            name="cap3",
+            display_name="cap3",
+            permissions=[
+                Permission(app_name="app", namespace_name="namespace", name="perm1"),
+                Permission(app_name="app", namespace_name="namespace", name="perm2"),
+            ],
+            relation=CapabilityConditionRelation.OR,
+            conditions=[],
+        )
+
         async def _read_many(*args, **kwargs):
             return PersistenceGetManyResult(
-                total_count=3,
+                total_count=2,
                 objects=[
-                    Capability(
+                    Role(
                         app_name="app",
                         namespace_name="namespace",
-                        name="cap1",
-                        display_name="cap1",
-                        role=Role(
-                            app_name="app",
-                            namespace_name="namespace",
-                            name="role",
-                            display_name="role",
-                        ),
-                        permissions=[
-                            Permission(
-                                app_name="app", namespace_name="namespace", name="perm1"
-                            ),
-                            Permission(
-                                app_name="app", namespace_name="namespace", name="perm2"
-                            ),
-                        ],
-                        relation=CapabilityConditionRelation.AND,
-                        conditions=[
-                            ParametrizedCondition(
-                                app_name="app",
-                                namespace_name="namespace",
-                                name="cond1",
-                                parameters=[
-                                    CapabilityConditionParameter(name="a", value=1),
-                                    CapabilityConditionParameter(name="b", value=True),
-                                ],
-                            ),
-                            ParametrizedCondition(
-                                app_name="app",
-                                namespace_name="namespace",
-                                name="cond2",
-                                parameters=[
-                                    CapabilityConditionParameter(
-                                        name="c", value="three"
-                                    ),
-                                    CapabilityConditionParameter(name="d", value=4.0),
-                                ],
-                            ),
-                        ],
+                        name="role",
+                        display_name="role",
+                        capabilities=[cap1, cap2],
                     ),
-                    Capability(
+                    Role(
                         app_name="app",
                         namespace_name="namespace",
-                        name="cap2",
-                        display_name="cap2",
-                        role=Role(
-                            app_name="app",
-                            namespace_name="namespace",
-                            name="role",
-                            display_name="role",
-                        ),
-                        permissions=[
-                            Permission(
-                                app_name="app", namespace_name="namespace", name="perm3"
-                            ),
-                            Permission(
-                                app_name="app", namespace_name="namespace", name="perm4"
-                            ),
-                        ],
-                        relation=CapabilityConditionRelation.AND,
-                        conditions=[],
-                    ),
-                    Capability(
-                        app_name="app",
-                        namespace_name="namespace",
-                        name="cap3",
-                        display_name="cap3",
-                        role=Role(
-                            app_name="app",
-                            namespace_name="namespace",
-                            name="role2",
-                            display_name="role2",
-                        ),
-                        permissions=[
-                            Permission(
-                                app_name="app", namespace_name="namespace", name="perm1"
-                            ),
-                            Permission(
-                                app_name="app", namespace_name="namespace", name="perm2"
-                            ),
-                        ],
-                        relation=CapabilityConditionRelation.OR,
-                        conditions=[],
+                        name="role2",
+                        display_name="role2",
+                        capabilities=[cap3],
                     ),
                 ],
             )
 
-        cap_persistence_mock = mocker.MagicMock()
-        cap_persistence_mock.read_many = _read_many
+        role_persistence_mock = mocker.MagicMock()
+        role_persistence_mock.read_many = _read_many
         target_dir = Path(tmpdir) / "mapping"
         (target_dir / "guardian/mapping").mkdir(parents=True)
-        await adapter._generate_mapping(cap_persistence_mock, target_dir)
+        await adapter._generate_mapping(role_persistence_mock, target_dir)
         with open(target_dir / "guardian/mapping/data.json", "rb") as file:
             result = orjson.loads(file.read())
         assert result == {

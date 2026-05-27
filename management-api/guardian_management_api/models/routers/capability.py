@@ -48,9 +48,6 @@ def check_permissions_in_namespace(cls, values: dict[str, Any]):
 #####
 
 
-class CapabilityRole(GuardianBaseModel, NamespacedObjectMixin): ...
-
-
 class CapabilityPermission(GuardianBaseModel, NamespacedObjectMixin): ...
 
 
@@ -87,9 +84,6 @@ class CapabilityCreateData(GuardianBaseModel, DisplayNameObjectMixin):
         None,
         description="The name of the new capability. If no name is provided, one is generated",
     )
-    role: CapabilityRole = Field(
-        ..., description="The role this capability attaches to."
-    )
     conditions: list[CapabilityEditCondition] = Field(
         ..., description="The list of conditions that apply to this capability."
     )
@@ -97,14 +91,11 @@ class CapabilityCreateData(GuardianBaseModel, DisplayNameObjectMixin):
         ..., description="The relation that is applied to the conditions."
     )
     permissions: list[CapabilityPermission] = Field(
-        ..., description="The list of permissions this capability grants to the role."
+        ..., description="The list of permissions this capability grants."
     )
 
 
 class CapabilityEditData(GuardianBaseModel, DisplayNameObjectMixin):
-    role: CapabilityRole = Field(
-        ..., description="The role this capability attaches to."
-    )
     conditions: list[CapabilityEditCondition] = Field(
         ..., description="The list of conditions that apply to this capability."
     )
@@ -112,7 +103,7 @@ class CapabilityEditData(GuardianBaseModel, DisplayNameObjectMixin):
         ..., description="The relation that is applied to the conditions."
     )
     permissions: list[CapabilityPermission] = Field(
-        ..., description="The list of permissions this capability grants to the role."
+        ..., description="The list of permissions this capability grants."
     )
 
 
@@ -154,9 +145,6 @@ class Capability(
     DisplayNameObjectMixin,
     NamespacedObjectMixin,
 ):
-    role: CapabilityRole = Field(
-        ..., description="The role this capability attaches to."
-    )
     conditions: list[CapabilityCondition] = Field(
         ..., description="The list of conditions that apply to this capability."
     )
@@ -164,7 +152,7 @@ class Capability(
         ..., description="The relation that is applied to the conditions."
     )
     permissions: list[CapabilityPermission] = Field(
-        ..., description="The list of permissions this capability grants to the role."
+        ..., description="The list of permissions this capability grants."
     )
 
 

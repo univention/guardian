@@ -2,11 +2,12 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Optional
 
 from .base import PaginatedAPIResponse, PaginationRequest, ResponseObject
 from .flags import Flag
+from .capability import Capability
 
 
 @dataclass
@@ -16,6 +17,7 @@ class Role:
     name: str
     display_name: Optional[str] = None
     flags: Flag = Flag.NONE
+    capabilities: list[Capability] = field(default_factory=list)
 
 
 @dataclass(frozen=True)

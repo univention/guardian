@@ -199,38 +199,41 @@ class SQLAlchemyMixin:
                 (await session.scalars(select_stmt)).unique().all()
             ), await session.scalar(count_stmt)
 
+    @staticmethod
+    def _translate_integrity_error(exc: IntegrityError) -> None:
+        # This needs separate handling for each underlying dialect.
+        # See univention/components/authorization-engine/guardian#98
+        if (
+            isinstance(exc.orig, sqlite3.IntegrityError)
+            and exc.orig.sqlite_errorname == "SQLITE_CONSTRAINT_UNIQUE"
+        ) or (
+            isinstance(exc.orig, AsyncAdapt_asyncpg_dbapi.IntegrityError)
+            and exc.orig.pgcode == POSTGRES_ER_UNIQUE_VIOLATION  # type: ignore
+        ):
+            raise ObjectExistsError(
+                "An object with the given identifiers already exists."
+            )
+        elif (
+            isinstance(exc.orig, sqlite3.IntegrityError)
+            and exc.orig.sqlite_errorname == "SQLITE_CONSTRAINT_FOREIGNKEY"
+        ) or (
+            isinstance(exc.orig, AsyncAdapt_asyncpg_dbapi.IntegrityError)
+            and exc.orig.pgcode == POSTGRES_ER_FOREIGN_KEY_VIOLATION  # type: ignore
+        ):
+            raise ParentNotFoundError(
+                "The app/namespace of the object to be created does not exist."
+            )
+        else:
+            raise exc  # pragma: no cover
+
     @error_guard
     @session_wrapper
     async def _create_object(self, obj: ORMObj, session: AsyncSession) -> ORMObj:
         try:
             async with session.begin():
                 session.add(obj)
-        except (
-            IntegrityError
-        ) as exc:  # This needs separate handling for each underlying dialect.
-            # See univention/components/authorization-engine/guardian#98
-            if (
-                isinstance(exc.orig, sqlite3.IntegrityError)
-                and exc.orig.sqlite_errorname == "SQLITE_CONSTRAINT_UNIQUE"
-            ) or (
-                isinstance(exc.orig, AsyncAdapt_asyncpg_dbapi.IntegrityError)
-                and exc.orig.pgcode == POSTGRES_ER_UNIQUE_VIOLATION  # type: ignore
-            ):
-                raise ObjectExistsError(
-                    "An object with the given identifiers already exists."
-                )
-            elif (
-                isinstance(exc.orig, sqlite3.IntegrityError)
-                and exc.orig.sqlite_errorname == "SQLITE_CONSTRAINT_FOREIGNKEY"
-            ) or (
-                isinstance(exc.orig, AsyncAdapt_asyncpg_dbapi.IntegrityError)
-                and exc.orig.pgcode == POSTGRES_ER_FOREIGN_KEY_VIOLATION  # type: ignore
-            ):
-                raise ParentNotFoundError(
-                    "The app/namespace of the object to be created does not exist."
-                )
-            else:
-                raise exc  # pragma: no cover
+        except IntegrityError as exc:
+            self._translate_integrity_error(exc)
         await session.refresh(obj)
         return obj
 

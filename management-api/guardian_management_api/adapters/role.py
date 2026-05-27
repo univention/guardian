@@ -6,7 +6,9 @@ from dataclasses import asdict
 from typing import Optional, Type, Union
 
 from port_loader import AsyncConfiguredAdapterMixin
-from sqlalchemy import select
+from sqlalchemy import select, tuple_
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..constants import COMPLETE_URL
 from ..errors import ObjectNotFoundError, ParentNotFoundError
@@ -19,12 +21,14 @@ from ..models.role import (
     RoleGetQuery,
     RolesGetQuery,
 )
-from ..models.routers.base import PaginationInfo
+from ..models.routers.base import ManagementObjectName, PaginationInfo
 from ..models.routers.role import (
     Role as ResponseRole,
 )
 from ..models.routers.role import (
+    RoleCapability,
     RoleCreateRequest,
+    RoleEditRequest,
     RoleGetAllRequest,
     RoleGetByAppRequest,
     RoleGetByNamespaceRequest,
@@ -65,6 +69,17 @@ class FastAPIRoleAPIAdapter(
     class Config:
         alias = "fastapi"
 
+    @staticmethod
+    def _capability_refs(role: Role) -> list[RoleCapability]:
+        return [
+            RoleCapability(
+                app_name=ManagementObjectName(cap.app_name),
+                namespace_name=ManagementObjectName(cap.namespace_name),
+                name=ManagementObjectName(cap.name),
+            )
+            for cap in role.capabilities
+        ]
+
     async def to_role_create(self, api_request: RoleCreateRequest) -> RoleCreateQuery:
         return RoleCreateQuery(
             roles=[
@@ -73,6 +88,14 @@ class FastAPIRoleAPIAdapter(
                     namespace_name=api_request.namespace_name,
                     name=api_request.data.name,
                     display_name=api_request.data.display_name,
+                    capabilities=[
+                        Capability(
+                            app_name=cap.app_name,
+                            namespace_name=cap.namespace_name,
+                            name=cap.name,
+                        )
+                        for cap in api_request.data.capabilities
+                    ],
                 )
             ]
         )
@@ -87,6 +110,7 @@ class FastAPIRoleAPIAdapter(
                     role_result.display_name if role_result.display_name else ""
                 ),
                 resource_url=f"{COMPLETE_URL}/roles/{role_result.app_name}/{role_result.namespace_name}/{role_result.name}",
+                capabilities=self._capability_refs(role_result),
             )
         )
 
@@ -107,6 +131,7 @@ class FastAPIRoleAPIAdapter(
                 name=role_result.name,
                 display_name=role_result.display_name,
                 resource_url=f"{COMPLETE_URL}/roles/{role_result.app_name}/{role_result.namespace_name}/{role_result.name}",
+                capabilities=self._capability_refs(role_result),
             )
         )
 
@@ -144,31 +169,41 @@ class FastAPIRoleAPIAdapter(
                     name=role.name,
                     display_name=role.display_name,
                     resource_url=f"{COMPLETE_URL}/roles/{role.app_name}/{role.namespace_name}/{role.name}",
+                    capabilities=self._capability_refs(role),
                 )
                 for role in roles
             ],
         )
 
-    async def to_role_edit(self, old_role: Role, display_name: Optional[str]) -> Role:
+    async def to_role_edit(self, old_role: Role, api_request: RoleEditRequest) -> Role:
+        display_name = (
+            api_request.data.display_name
+            if api_request.data.display_name is not None
+            else old_role.display_name
+        )
+        if api_request.data.capabilities is None:
+            capabilities = list(old_role.capabilities)
+        else:
+            capabilities = [
+                Capability(
+                    app_name=cap.app_name,
+                    namespace_name=cap.namespace_name,
+                    name=cap.name,
+                )
+                for cap in api_request.data.capabilities
+            ]
         return Role(
             app_name=old_role.app_name,
             namespace_name=old_role.namespace_name,
             name=old_role.name,
             display_name=display_name,
+            capabilities=capabilities,
         )
 
 
 class SQLRolePersistenceAdapter(
     AsyncConfiguredAdapterMixin, RolePersistencePort, SQLAlchemyMixin
 ):
-    @staticmethod
-    def _role_to_db_role(role: Role, namespace_id: int) -> DBRole:
-        return DBRole(
-            namespace_id=namespace_id,
-            name=role.name,
-            display_name=role.display_name,
-        )
-
     @staticmethod
     def _db_role_to_role(db_role: DBRole) -> Role:
         return Role(
@@ -177,6 +212,10 @@ class SQLRolePersistenceAdapter(
             name=db_role.name,
             display_name=db_role.display_name,
             flags=Flag(db_role.flags),
+            capabilities=[
+                SQLCapabilityPersistenceAdapter._db_cap_to_cap(db_cap)
+                for db_cap in db_role.capability
+            ],
         )
 
     class Config:
@@ -191,6 +230,31 @@ class SQLRolePersistenceAdapter(
 
     async def configure(self, settings: SQLPersistenceAdapterSettings):
         self._db_string = SQLAlchemyMixin.create_db_string(**asdict(settings))
+
+    @SQLAlchemyMixin.session_wrapper
+    async def _resolve_capability_refs(
+        self, capabilities: list[Capability], *, session: AsyncSession
+    ) -> list[DBCapability]:
+        if not capabilities:
+            return []
+        identifiers = [
+            (cap.app_name, cap.namespace_name, cap.name) for cap in capabilities
+        ]
+        stmt = (
+            select(DBCapability)
+            .join(DBNamespace, DBCapability.namespace_id == DBNamespace.id)
+            .join(DBApp, DBNamespace.app_id == DBApp.id)
+            .where(
+                tuple_(DBApp.name, DBNamespace.name, DBCapability.name).in_(identifiers)
+            )
+        )
+        result = list((await session.scalars(stmt)).unique().all())
+        if len(result) != len(set(identifiers)):
+            raise ObjectNotFoundError(
+                "Not all capabilities specified for the role could be found.",
+                object_type=Capability,
+            )
+        return result
 
     async def create(self, role: Role) -> Role:
         db_app = await self._get_single_object(DBApp, name=role.app_name)
@@ -208,9 +272,22 @@ class SQLRolePersistenceAdapter(
                 "The namespace of the object to be created does not exist."
             )
         async with self.session() as session:
-            db_role = SQLRolePersistenceAdapter._role_to_db_role(role, db_namespace.id)
-            result = await self._create_object(db_role, session=session)
-        return SQLRolePersistenceAdapter._db_role_to_role(result)
+            try:
+                async with session.begin():
+                    db_capabilities = await self._resolve_capability_refs(
+                        role.capabilities, session=session
+                    )
+                    db_role = DBRole(
+                        namespace_id=db_namespace.id,
+                        name=role.name,
+                        display_name=role.display_name,
+                        capability=set(db_capabilities),
+                    )
+                    session.add(db_role)
+            except IntegrityError as exc:
+                self._translate_integrity_error(exc)
+            await session.refresh(db_role)
+        return SQLRolePersistenceAdapter._db_role_to_role(db_role)
 
     async def read_one(self, query: RoleGetQuery) -> Role:
         result = await self._get_single_object(
@@ -254,41 +331,20 @@ class SQLRolePersistenceAdapter(
                 f"No role with the identifier '{role.app_name}:"
                 f"{role.namespace_name}:{role.name}' could be found."
             )
-        modified = await self._update_object(db_role, display_name=role.display_name)
-        return SQLRolePersistenceAdapter._db_role_to_role(modified)
-
-    async def delete(self, query: RoleGetQuery) -> None:
-        db_role = await self._get_single_object(
-            DBRole,
-            name=query.name,
-            app_name=query.app_name,
-            namespace_name=query.namespace_name,
-        )
-        if db_role is None:
-            raise ObjectNotFoundError(
-                f"No role with the identifier '{query.app_name}:"
-                f"{query.namespace_name}:{query.name}' could be found.",
-                object_type=Role,
+        async with self.session() as resolve_session:
+            db_capabilities = await self._resolve_capability_refs(
+                role.capabilities, session=resolve_session
             )
-        await self._delete_obj(db_role)
-
-    async def read_dependencies(self, query: RoleGetQuery) -> list[Capability]:
-        db_role = await self._get_single_object(
-            DBRole,
-            name=query.name,
-            app_name=query.app_name,
-            namespace_name=query.namespace_name,
-        )
-        if db_role is None:
-            raise ObjectNotFoundError(
-                f"No role with the identifier '{query.app_name}:"
-                f"{query.namespace_name}:{query.name}' could be found.",
-                object_type=Role,
-            )
-        stmt = select(DBCapability).where(DBCapability.role_id == db_role.id)
         async with self.session() as session:
-            db_capabilities = (await session.scalars(stmt)).unique().all()
-        return [
-            SQLCapabilityPersistenceAdapter._db_cap_to_cap(db_cap)
-            for db_cap in db_capabilities
-        ]
+            try:
+                async with session.begin():
+                    merged_role = await session.merge(db_role)
+                    merged_role.display_name = role.display_name
+                    merged_role.capability = {
+                        await session.merge(cap) for cap in db_capabilities
+                    }
+                    session.add(merged_role)
+            except IntegrityError as exc:
+                self._translate_integrity_error(exc)
+            await session.refresh(merged_role)
+        return SQLRolePersistenceAdapter._db_role_to_role(merged_role)

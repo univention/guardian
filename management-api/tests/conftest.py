@@ -66,6 +66,7 @@ from guardian_management_api.models.sql_persistence import (
     DBNamespace,
     DBPermission,
     DBRole,
+    role_capability_table,
 )
 from guardian_management_api.ports.app import (
     AppAPIPort,
@@ -582,7 +583,7 @@ def create_role():
             )
             session.add(role)
         async with session.begin():
-            await session.refresh(role, attribute_names=["namespace"])
+            await session.refresh(role, attribute_names=["namespace", "capability"])
         return role
 
     return _create_role
@@ -610,7 +611,7 @@ def create_roles(create_namespaces):
             session.add_all(roles)
         async with session.begin():
             [
-                await session.refresh(role, attribute_names=["namespace"])
+                await session.refresh(role, attribute_names=["namespace", "capability"])
                 for role in roles
             ]
         return roles
@@ -805,30 +806,37 @@ def create_capabilities(
                 namespace_name=db_namespace.name,
                 name=f"cap_condition_{db_role.name}",
             )
-            caps.extend(
-                [
-                    DBCapability(
-                        namespace_id=db_namespace.id,
-                        role_id=db_role.id,
-                        name=f"capability_{i:09d}_{db_role.name}",
-                        relation=CapabilityConditionRelation.AND,
-                        permissions={db_permission},
-                        conditions={
-                            DBCapabilityCondition(
-                                condition_id=db_condition.id,
-                                kwargs=[
-                                    {"name": "a", "value": True},
-                                    {"name": "b", "value": 1},
-                                ],
-                            )
-                        },
+            role_caps = [
+                DBCapability(
+                    namespace_id=db_namespace.id,
+                    name=f"capability_{i:09d}_{db_role.name}",
+                    relation=CapabilityConditionRelation.AND,
+                    permissions={db_permission},
+                    conditions={
+                        DBCapabilityCondition(
+                            condition_id=db_condition.id,
+                            kwargs=[
+                                {"name": "a", "value": True},
+                                {"name": "b", "value": 1},
+                            ],
+                        )
+                    },
+                )
+                for i in range(capabilities_per_role)
+            ]
+            async with session.begin():
+                for cap in role_caps:
+                    session.add(cap)
+            async with session.begin():
+                for cap in role_caps:
+                    await session.execute(
+                        role_capability_table.insert().values(
+                            role_id=db_role.id, capability_id=cap.id
+                        )
                     )
-                    for i in range(capabilities_per_role)
-                ]
-            )
-        async with session.begin():
-            [session.add(cap) for cap in caps]
-        [await session.refresh(cap) for cap in caps]
+            caps.extend(role_caps)
+        for cap in caps:
+            await session.refresh(cap)
         return caps
 
     return _create_capabilities
@@ -861,7 +869,6 @@ def create_capability(
         async with session.begin():
             capability = DBCapability(
                 namespace_id=namespace.id,
-                role_id=role.id,
                 name=name,
                 display_name=display_name,
                 relation=CapabilityConditionRelation.AND,
@@ -877,6 +884,12 @@ def create_capability(
                 },
             )
             session.add(capability)
+        async with session.begin():
+            await session.execute(
+                role_capability_table.insert().values(
+                    role_id=role.id, capability_id=capability.id
+                )
+            )
         async with session.begin():
             await session.refresh(capability, attribute_names=["namespace"])
         return capability

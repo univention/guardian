@@ -47,6 +47,7 @@ class TestRoleEndpoints:
                 "namespace_name": namespace_name,
                 "display_name": "test_role_display_name",
                 "resource_url": f"{COMPLETE_URL}/roles/{app_name}/{namespace_name}/test_role",
+                "capabilities": [],
             }
         }
         db_role = await sqlalchemy_mixin._get_single_object(
@@ -149,6 +150,7 @@ class TestRoleEndpoints:
             "namespace_name": namespace_name,
             "app_name": app_name,
             "resource_url": f"{COMPLETE_URL}/roles/{app_name}/{namespace_name}/{name}",
+            "capabilities": [],
         }
 
         db_role = await sqlalchemy_mixin._get_single_object(
@@ -235,6 +237,7 @@ class TestRoleEndpoints:
                 "namespace_name": namespace_name,
                 "display_name": "test_role_display_name",
                 "resource_url": f"{COMPLETE_URL}/roles/{app_name}/{namespace_name}/test_role",
+                "capabilities": [],
             }
         }
 
@@ -312,6 +315,7 @@ class TestRoleEndpoints:
             "namespace_name": namespace_names[0],
             "display_name": role_names[0] + "_display_name",
             "resource_url": f"{COMPLETE_URL}/roles/{app_names[0]}/{namespace_names[0]}/{role_names[0]}",
+            "capabilities": [],
         }
 
         unscoped_role = {
@@ -320,6 +324,7 @@ class TestRoleEndpoints:
             "namespace_name": namespace_names[1],
             "display_name": role_names[1] + "_display_name",
             "resource_url": f"{COMPLETE_URL}/roles/{app_names[1]}/{namespace_names[1]}/{role_names[1]}",
+            "capabilities": [],
         }
 
         assert json_response["pagination"] == {
@@ -376,6 +381,7 @@ class TestRoleEndpoints:
             "namespace_name": namespace_names[0],
             "display_name": role_names[0] + "_display_name",
             "resource_url": f"{COMPLETE_URL}/roles/{app_names[0]}/{namespace_names[0]}/{role_names[0]}",
+            "capabilities": [],
         }
 
         unscoped_role = {
@@ -384,6 +390,7 @@ class TestRoleEndpoints:
             "namespace_name": namespace_names[1],
             "display_name": role_names[1] + "_display_name",
             "resource_url": f"{COMPLETE_URL}/roles/{app_names[1]}/{namespace_names[1]}/{role_names[1]}",
+            "capabilities": [],
         }
 
         assert json_response["pagination"] == {
@@ -441,6 +448,7 @@ class TestRoleEndpoints:
                 "resource_url": (
                     f"{COMPLETE_URL}/roles/{app_names[0]}/{namespace_names[0]}/{role_names[0]}"
                 ),
+                "capabilities": [],
             },
             {
                 "name": role_names[1],
@@ -450,6 +458,7 @@ class TestRoleEndpoints:
                 "resource_url": (
                     f"{COMPLETE_URL}/roles/{app_names[1]}/{namespace_names[1]}/{role_names[1]}"
                 ),
+                "capabilities": [],
             },
         ]
 
@@ -507,6 +516,7 @@ class TestRoleEndpoints:
                 "name": orig_role.name,
                 "display_name": orig_role.display_name,
                 "resource_url": urljoin(BASE_URL, resource),
+                "capabilities": [],
             }
 
     @pytest.mark.asyncio

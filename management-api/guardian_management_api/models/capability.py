@@ -1,7 +1,7 @@
 # Copyright (C) 2023 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, Optional
 
@@ -34,14 +34,19 @@ class CapabilityConditionRelation(StrEnum):
 
 @dataclass
 class Capability:
+    """
+    Full capability. When passed as a reference (e.g. in ``Role.capabilities`` during
+    create/update), only ``app_name``, ``namespace_name`` and ``name`` are required;
+    the remaining fields are ignored by the persistence layer.
+    """
+
     app_name: str
     namespace_name: str
     name: str
-    display_name: Optional[str]
-    role: Role
-    permissions: list[Permission]
-    relation: CapabilityConditionRelation
-    conditions: list[ParametrizedCondition]
+    display_name: Optional[str] = None
+    permissions: list[Permission] = field(default_factory=list)
+    relation: CapabilityConditionRelation = CapabilityConditionRelation.AND
+    conditions: list[ParametrizedCondition] = field(default_factory=list)
     flags: Flag = Flag.NONE
 
 

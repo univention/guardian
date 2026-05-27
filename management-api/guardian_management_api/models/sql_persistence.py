@@ -86,21 +86,6 @@ class DBPermission(Base):
     )
 
 
-class DBRole(Base):
-    __tablename__ = "role"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    namespace_id: Mapped[int] = mapped_column(ForeignKey(DBNamespace.id))
-    namespace: Mapped[DBNamespace] = relationship(lazy="joined")
-    name: Mapped[str] = mapped_column(String(STRING_MAX_LENGTH))
-    display_name: Mapped[Optional[str]] = mapped_column(String(STRING_MAX_LENGTH))
-    flags: Mapped[int] = mapped_column(Integer(), default=0, server_default="0")
-
-    __table_args__ = (  # type: ignore[var-annotated]
-        UniqueConstraint("namespace_id", "name"),
-    )
-
-
 class DBContext(Base):
     __tablename__ = "context"
 
@@ -189,8 +174,6 @@ class DBCapability(Base):
     namespace: Mapped[DBNamespace] = relationship(lazy="joined")
     name: Mapped[str] = mapped_column(String(STRING_MAX_LENGTH))
     display_name: Mapped[Optional[str]] = mapped_column(String(STRING_MAX_LENGTH))
-    role_id: Mapped[int] = mapped_column(ForeignKey(DBRole.id))
-    role: Mapped[DBRole] = relationship(lazy="joined")
     permissions: Mapped[set[DBPermission]] = relationship(
         secondary=capability_permission_table,
         lazy="joined",
@@ -202,6 +185,42 @@ class DBCapability(Base):
     conditions: Mapped[set[DBCapabilityCondition]] = relationship(
         lazy="joined", back_populates="capability", cascade="all, delete"
     )
+    flags: Mapped[int] = mapped_column(Integer(), default=0, server_default="0")
+
+    __table_args__ = (  # type: ignore[var-annotated]
+        UniqueConstraint("namespace_id", "name"),
+    )
+
+
+role_capability_table = Table(
+    "role_capability",
+    Base.metadata,
+    Column(
+        "role_id",
+        ForeignKey("role.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    Column(
+        "capability_id",
+        ForeignKey("capability.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+)
+
+
+class DBRole(Base):
+    __tablename__ = "role"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    namespace_id: Mapped[int] = mapped_column(ForeignKey(DBNamespace.id))
+    namespace: Mapped[DBNamespace] = relationship(lazy="joined")
+    name: Mapped[str] = mapped_column(String(STRING_MAX_LENGTH))
+    capability: Mapped[set[DBCapability]] = relationship(
+        secondary=role_capability_table,
+        lazy="selectin",
+        passive_deletes=True,
+    )
+    display_name: Mapped[Optional[str]] = mapped_column(String(STRING_MAX_LENGTH))
     flags: Mapped[int] = mapped_column(Integer(), default=0, server_default="0")
 
     __table_args__ = (  # type: ignore[var-annotated]

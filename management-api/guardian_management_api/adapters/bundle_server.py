@@ -18,11 +18,11 @@ from guardian_management_api.errors import BundleBuildError, BundleGenerationIOE
 from guardian_management_api.models.base import (
     PaginationRequest,
 )
-from guardian_management_api.models.capability import CapabilitiesGetQuery
 from guardian_management_api.models.condition import ConditionsGetQuery
+from guardian_management_api.models.role import RolesGetQuery
 from guardian_management_api.ports.bundle_server import BundleServerPort, BundleType
-from guardian_management_api.ports.capability import CapabilityPersistencePort
 from guardian_management_api.ports.condition import ConditionPersistencePort
+from guardian_management_api.ports.role import RolePersistencePort
 
 BUNDLE_SERVER_ADAPTER_BASE_DIR = "bundle_server_adapter.base_dir"
 
@@ -202,7 +202,7 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
             ) from exc
 
     async def _generate_mapping(
-        self, persistence: CapabilityPersistencePort, bundle_build_dir: Path
+        self, persistence: RolePersistencePort, bundle_build_dir: Path
     ):
         """
         Writes the role capability mapping to the build directory.
@@ -213,31 +213,30 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
         try:
             mapping = {"roleCapabilityMapping": defaultdict(list)}  # type: ignore[var-annotated]
             get_many_result = await persistence.read_many(
-                CapabilitiesGetQuery(
+                RolesGetQuery(
                     pagination=PaginationRequest(query_offset=0, query_limit=None)
                 )
             )
-            for capability in get_many_result.objects:
-                cap = asdict(capability)
-                del cap["name"]
-                del cap["display_name"]
-                del cap["role"]
-                del cap["flags"]
-                cap["appName"] = cap.pop("app_name")
-                cap["namespace"] = cap.pop("namespace_name")
-                cap["permissions"] = [perm.name for perm in capability.permissions]
-                cap["conditions"] = [
-                    {
-                        "name": f"{cond.app_name}:{cond.namespace_name}:{cond.name}",
-                        "parameters": {
-                            param.name: param.value for param in cond.parameters
-                        },
-                    }
-                    for cond in capability.conditions
-                ]
-                mapping["roleCapabilityMapping"][
-                    f"{capability.role.app_name}:{capability.role.namespace_name}:{capability.role.name}"
-                ].append(cap)
+            for role in get_many_result.objects:
+                role_key = f"{role.app_name}:{role.namespace_name}:{role.name}"
+                for capability in role.capabilities:
+                    cap = asdict(capability)
+                    del cap["name"]
+                    del cap["display_name"]
+                    del cap["flags"]
+                    cap["appName"] = cap.pop("app_name")
+                    cap["namespace"] = cap.pop("namespace_name")
+                    cap["permissions"] = [perm.name for perm in capability.permissions]
+                    cap["conditions"] = [
+                        {
+                            "name": f"{cond.app_name}:{cond.namespace_name}:{cond.name}",
+                            "parameters": {
+                                param.name: param.value for param in cond.parameters
+                            },
+                        }
+                        for cond in capability.conditions
+                    ]
+                    mapping["roleCapabilityMapping"][role_key].append(cap)
             async with aiofiles.open(
                 str(bundle_build_dir / "guardian" / "mapping" / "data.json"), "wb"
             ) as file:
@@ -251,7 +250,7 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
         self,
         bundle_type: BundleType,
         cond_persistence_port: ConditionPersistencePort,
-        cap_persistence_port: CapabilityPersistencePort,
+        role_persistence_port: RolePersistencePort,
     ):
         if bundle_type == BundleType.data:
             bundle_name = self._data_bundle_name
@@ -269,7 +268,7 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
         await self._prepare_build_directory(base_dir, bundle_name, local_logger)
         if bundle_type == BundleType.data:
             await self._generate_mapping(
-                cap_persistence_port, base_dir / "build" / bundle_name
+                role_persistence_port, base_dir / "build" / bundle_name
             )
         elif bundle_type == BundleType.policies:
             await self._dump_conditions(
@@ -289,13 +288,13 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
     async def generate_bundles(
         self,
         cond_persistence_port: ConditionPersistencePort,
-        cap_persistence_port: CapabilityPersistencePort,
+        role_persistence_port: RolePersistencePort,
     ):
         async with self._build_lock:
             try:
                 self._data_bundle_queue.get_nowait()
                 await self._build_bundle(
-                    BundleType.data, cond_persistence_port, cap_persistence_port
+                    BundleType.data, cond_persistence_port, role_persistence_port
                 )
                 self._data_bundle_queue.task_done()
             except QueueEmpty:
@@ -303,7 +302,7 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
             try:
                 self._policies_bundle_queue.get_nowait()
                 await self._build_bundle(
-                    BundleType.policies, cond_persistence_port, cap_persistence_port
+                    BundleType.policies, cond_persistence_port, role_persistence_port
                 )
                 self._policies_bundle_queue.task_done()
             except QueueEmpty:

@@ -480,21 +480,12 @@ async def register_app(
                 display_name=f"Default Namespace for {app_display}",
             )
         )
-        admin_role = await role_persistence_port.create(
-            Role(
-                app_name=app.name,
-                namespace_name=default_namespace.name,
-                name="app-admin",
-                display_name=f"App Administrator for {app_display}",
-            )
-        )
-        await cap_persistence_port.create(
+        admin_cap = await cap_persistence_port.create(
             Capability(
                 app_name="guardian",
                 namespace_name="management-api",
                 name=f"{app.name}-admin-cap",
                 display_name="App admin capability",
-                role=admin_role,
                 permissions=[
                     Permission(
                         app_name="guardian", namespace_name="management-api", name=name
@@ -523,13 +514,12 @@ async def register_app(
                 ],
             )
         )
-        await cap_persistence_port.create(
+        admin_read_cap = await cap_persistence_port.create(
             Capability(
                 app_name="guardian",
                 namespace_name="management-api",
                 name=f"{app.name}-admin-cap-read-role-cond",
                 display_name="App admin capability for read access to all roles and conditions",
-                role=admin_role,
                 permissions=[
                     Permission(
                         app_name="guardian",
@@ -553,6 +543,15 @@ async def register_app(
                     )
                     for resource_type in ("condition", "role")
                 ],
+            )
+        )
+        admin_role = await role_persistence_port.create(
+            Role(
+                app_name=app.name,
+                namespace_name=default_namespace.name,
+                name="app-admin",
+                display_name=f"App Administrator for {app_display}",
+                capabilities=[admin_cap, admin_read_cap],
             )
         )
         logger.info("App registered.", actor_id=actor_id, app_name=resource.id)
@@ -1362,9 +1361,7 @@ async def edit_role(
                 "The logged in user is not authorized to edit this role."
             )
         role = await persistence_port.read_one(query)
-        role = await role_api_port.to_role_edit(
-            old_role=role, display_name=api_request.data.display_name
-        )
+        role = await role_api_port.to_role_edit(old_role=role, api_request=api_request)
         modified_role = await persistence_port.update(role)
         logger.info("Role updated.", actor_id=actor_id, role_id=resource.id)
         return await role_api_port.to_role_get_response(modified_role)

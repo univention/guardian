@@ -90,7 +90,7 @@ class RoleAPIPort(
         raise NotImplementedError  # pragma: no cover
 
     @abstractmethod
-    async def to_role_edit(self, old_role: Role, display_name: Optional[str]) -> Role:
+    async def to_role_edit(self, old_role: Role, api_request) -> Role:
         raise NotImplementedError  # pragma: no cover
 
 

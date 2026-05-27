@@ -26,8 +26,8 @@ from .constants import (
 from .correlation_id import correlation_id_ctx_var
 from .logging import configure_logger
 from .ports.bundle_server import BundleServerPort, BundleType
-from .ports.capability import CapabilityPersistencePort
 from .ports.condition import ConditionPersistencePort
+from .ports.role import RolePersistencePort
 from .routers.app import router as app_router
 from .routers.capability import router as capability_router
 from .routers.condition import router as condition_router
@@ -75,12 +75,12 @@ def mount_bundle_server(fastapi_app: FastAPI, bundle_dir: Path):  # pragma: no c
 async def rebuild_bundle(
     bundle_server_port: BundleServerPort,
     condition_persistence_port: ConditionPersistencePort,
-    cap_persistence_port: CapabilityPersistencePort,
+    role_persistence_port: RolePersistencePort,
 ):  # pragma: no cover
     while True:
         try:
             await bundle_server_port.generate_bundles(
-                condition_persistence_port, cap_persistence_port
+                condition_persistence_port, role_persistence_port
             )
         except Exception:
             logging.exception("Exception during bundle rebuild")
@@ -108,9 +108,7 @@ async def lifespan(fastapi_app: FastAPI):
         cond_persistence_port = await ADAPTER_REGISTRY.request_port(
             ConditionPersistencePort
         )
-        cap_persistence_port = await ADAPTER_REGISTRY.request_port(
-            CapabilityPersistencePort
-        )
+        role_persistence_port = await ADAPTER_REGISTRY.request_port(RolePersistencePort)
         bundle_dir = await bundle_server_port.prepare_directories()
         mount_bundle_server(fastapi_app, bundle_dir)
         await bundle_server_port.generate_templates()
@@ -118,7 +116,7 @@ async def lifespan(fastapi_app: FastAPI):
         await bundle_server_port.schedule_bundle_build(BundleType.policies)
         rebuild_bundle_task = asyncio.create_task(
             rebuild_bundle(
-                bundle_server_port, cond_persistence_port, cap_persistence_port
+                bundle_server_port, cond_persistence_port, role_persistence_port
             )
         )
     yield

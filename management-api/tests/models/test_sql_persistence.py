@@ -9,7 +9,6 @@ from guardian_management_api.models.sql_persistence import (
     DBConditionParameter,
     DBNamespace,
     DBPermission,
-    DBRole,
     capability_permission_table,
 )
 from sqlalchemy import select
@@ -27,16 +26,14 @@ async def test_cap_permission_cascading(sqlalchemy_mixin):
             db_app = DBApp(name="app1")
             db_ns = DBNamespace(app=db_app, name="ns1")
             db_perm = DBPermission(namespace=db_ns, name="p1")
-            db_role = DBRole(namespace=db_ns, name="role1")
             db_cap = DBCapability(
                 namespace=db_ns,
                 name="test",
                 permissions={db_perm},
-                role=db_role,
                 conditions=set(),
                 relation=CapabilityConditionRelation.AND,
             )
-            session.add_all([db_app, db_ns, db_perm, db_role, db_cap])
+            session.add_all([db_app, db_ns, db_perm, db_cap])
         async with session.begin():
             await session.delete(db_cap)
         result = (await session.execute(select(DBPermission.name))).scalars()
@@ -57,16 +54,14 @@ async def test_permission_cap_cascading(sqlalchemy_mixin):
             db_app = DBApp(name="app1")
             db_ns = DBNamespace(app=db_app, name="ns1")
             db_perm = DBPermission(namespace=db_ns, name="p1")
-            db_role = DBRole(namespace=db_ns, name="role1")
             db_cap = DBCapability(
                 namespace=db_ns,
                 name="test",
                 permissions={db_perm},
-                role=db_role,
                 conditions=set(),
                 relation=CapabilityConditionRelation.AND,
             )
-            session.add_all([db_app, db_ns, db_perm, db_role, db_cap])
+            session.add_all([db_app, db_ns, db_perm, db_cap])
         async with session.begin():
             await session.delete(db_perm)
         result = (await session.execute(select(DBPermission.name))).scalars()
@@ -88,7 +83,6 @@ async def test_cap_condition_cascading(sqlalchemy_mixin):
         async with session.begin():
             db_app = DBApp(name="app1")
             db_ns = DBNamespace(app=db_app, name="ns1")
-            db_role = DBRole(namespace=db_ns, name="role1")
             db_cond = DBCondition(
                 namespace=db_ns, name="cond1", parameters=[], code=b""
             )
@@ -96,11 +90,10 @@ async def test_cap_condition_cascading(sqlalchemy_mixin):
                 namespace=db_ns,
                 name="test",
                 permissions=set(),
-                role=db_role,
                 conditions={DBCapabilityCondition(condition=db_cond, kwargs={})},
                 relation=CapabilityConditionRelation.AND,
             )
-            session.add_all([db_app, db_ns, db_role, db_cond, db_cap])
+            session.add_all([db_app, db_ns, db_cond, db_cap])
         async with session.begin():
             await session.delete(db_cap)
         result = (await session.execute(select(DBCondition.name))).scalars()
@@ -120,7 +113,6 @@ async def test_condition_cap_cascading(sqlalchemy_mixin):
         async with session.begin():
             db_app = DBApp(name="app1")
             db_ns = DBNamespace(app=db_app, name="ns1")
-            db_role = DBRole(namespace=db_ns, name="role1")
             db_cond = DBCondition(
                 namespace=db_ns, name="cond1", parameters=[], code=b""
             )
@@ -128,11 +120,10 @@ async def test_condition_cap_cascading(sqlalchemy_mixin):
                 namespace=db_ns,
                 name="test",
                 permissions=set(),
-                role=db_role,
                 conditions={DBCapabilityCondition(condition=db_cond, kwargs={})},
                 relation=CapabilityConditionRelation.AND,
             )
-            session.add_all([db_app, db_ns, db_role, db_cond, db_cap])
+            session.add_all([db_app, db_ns, db_cond, db_cap])
         async with session.begin():
             await session.delete(db_cond)
         result = (await session.execute(select(DBCondition.name))).scalars()

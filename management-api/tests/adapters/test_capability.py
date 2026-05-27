@@ -23,17 +23,16 @@ from guardian_management_api.models.capability import (
 )
 from guardian_management_api.models.condition import ConditionParameterType
 from guardian_management_api.models.permission import Permission
-from guardian_management_api.models.role import Role
 from guardian_management_api.models.routers.capability import (
     CapabilityCreateData,
     CapabilityCreateRequest,
-    CapabilityRole,
     RelationChoices,
 )
 from guardian_management_api.models.sql_persistence import (
     DBCapability,
     DBCapabilityCondition,
     DBPermission,
+    DBRole,
     capability_permission_table,
 )
 from guardian_management_api.ports.capability import CapabilityPersistencePort
@@ -67,11 +66,6 @@ class TestSQLCapabilityPersistenceAdapter:
                 namespace_name=db_permissions[0].namespace.name,
                 name="cap",
                 display_name=None,
-                role=Role(
-                    app_name=db_role.namespace.app.name,
-                    namespace_name=db_role.namespace.name,
-                    name=db_role.name,
-                ),
                 permissions=[
                     Permission(
                         app_name=perm.namespace.app.name,
@@ -217,19 +211,6 @@ class TestSQLCapabilityPersistenceAdapter:
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")
-    async def test_create_role_not_found(
-        self, adapter: SQLCapabilityPersistenceAdapter, capability_for_testing
-    ):
-        cap, db_permissions, db_cond, db_role = capability_for_testing
-        cap.role.name = "foo"
-        with pytest.raises(
-            ObjectNotFoundError, match="The capabilities role could not be found."
-        ) as exc_info:
-            await adapter.create(cap)
-        assert exc_info.value.object_type == Role
-
-    @pytest.mark.asyncio
-    @pytest.mark.usefixtures("create_tables")
     async def test_read_one(
         self, adapter: SQLCapabilityPersistenceAdapter, capability_for_testing
     ):
@@ -329,12 +310,10 @@ class TestSQLCapabilityPersistenceAdapter:
         result = await adapter.update(cap2)
         assert result.display_name == "FOO"
         assert result.name == cap.name
-        assert result.role == cap.role
         assert result.permissions == []
         async with adapter.session() as session:
             db_cap = (await session.execute(select(DBCapability))).unique().scalar_one()
         assert db_cap.display_name == "FOO"
-        assert db_cap.role.name == cap.role.name
         assert db_cap.permissions == set()
 
     @pytest.mark.asyncio
@@ -412,9 +391,14 @@ class TestSQLCapabilityPersistenceAdapter:
     ):
         async with adapter.session() as session:
             db_capabilities = await create_capabilities(session, 10, 5)
-            app_name = db_capabilities[0].role.namespace.app.name
-            namespace_name = db_capabilities[0].role.namespace.name
-            role_name = db_capabilities[0].role.name
+            db_role = (
+                await session.execute(
+                    select(DBRole).where(DBRole.name == "role_000000000")
+                )
+            ).scalar_one()
+            app_name = db_role.namespace.app.name
+            namespace_name = db_role.namespace.name
+            role_name = db_role.name
         result = await adapter.read_many(
             CapabilitiesByRoleQuery(
                 pagination=PaginationRequest(query_limit=5, query_offset=0),
@@ -426,8 +410,8 @@ class TestSQLCapabilityPersistenceAdapter:
         assert len(list(result.objects)) == 5
         assert result.total_count == 10
         assert [obj.name for obj in result.objects] == [
-            obj.name for obj in db_capabilities
-        ][:5]
+            obj.name for obj in db_capabilities[:5]
+        ]
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")
@@ -465,9 +449,6 @@ class TestFastAPICapabilityAPIAdapter:
                     conditions=[],
                     permissions=[],
                     relation=RelationChoices.AND,
-                    role=CapabilityRole(
-                        app_name="app", namespace_name="namespace", name="role"
-                    ),
                 ),
             )
         )

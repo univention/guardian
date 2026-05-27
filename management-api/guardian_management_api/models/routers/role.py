@@ -2,6 +2,9 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
+from typing import Optional
+
+from pydantic import Field
 
 from guardian_management_api.models.routers.base import (
     CreateBaseRequest,
@@ -18,6 +21,13 @@ from guardian_management_api.models.routers.base import (
     ResourceURLObjectMixin,
 )
 
+
+class RoleCapability(GuardianBaseModel, NamespacedObjectMixin):
+    """Reference to a capability from a role (identifier only)."""
+
+    ...
+
+
 #####
 # Requests
 #####
@@ -27,7 +37,11 @@ from guardian_management_api.models.routers.base import (
 class RoleGetFullIdentifierRequest(GetFullIdentifierRequest): ...
 
 
-class RoleCreateData(GuardianBaseModel, DisplayNameObjectMixin, NameObjectMixin): ...
+class RoleCreateData(GuardianBaseModel, DisplayNameObjectMixin, NameObjectMixin):
+    capabilities: list[RoleCapability] = Field(
+        default_factory=list,
+        description="The list of capabilities assigned to this role.",
+    )
 
 
 # request for route: POST .../roles/{app_name}/{namespace_name}
@@ -35,7 +49,15 @@ class RoleCreateRequest(CreateBaseRequest):
     data: RoleCreateData
 
 
-class RoleEditData(GuardianBaseModel, DisplayNameObjectMixin): ...
+class RoleEditData(GuardianBaseModel, DisplayNameObjectMixin):
+    capabilities: Optional[list[RoleCapability]] = Field(
+        default=None,
+        description=(
+            "The list of capabilities assigned to this role. "
+            "Omit or set to null to leave the assignment unchanged; "
+            "set to an empty list to remove all capabilities."
+        ),
+    )
 
 
 # request for route: PATCH .../roles/{app_name}/{namepace_name}/{name}
@@ -65,7 +87,11 @@ class Role(
     ResourceURLObjectMixin,
     DisplayNameObjectMixin,
     NamespacedObjectMixin,
-): ...
+):
+    capabilities: list[RoleCapability] = Field(
+        default_factory=list,
+        description="The list of capabilities assigned to this role.",
+    )
 
 
 class RoleSingleResponse(GuardianBaseModel):
