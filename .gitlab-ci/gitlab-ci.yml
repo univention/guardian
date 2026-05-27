@@ -177,6 +177,7 @@ test:
   image: "${CI_REGISTRY_IMAGE}/testrunner:${RELEASE_VERSION}"
   variables:
     UV_PROJECT_ENVIRONMENT: "/opt/venv"
+    COVERAGE_FILE: ".coverage.unit"
   script:
     - exit_code=0
     - >-
@@ -203,7 +204,7 @@ test:
     - exit $exit_code
   artifacts:
     paths:
-      - ".coverage"
+      - ".coverage.unit"
       - "guardian-lib/pytest-junit.xml"
       - "authorization-api/pytest-junit.xml"
       - "management-api/pytest-junit.xml"
@@ -217,58 +218,86 @@ test:
 
 # Runs the e2e_udm-marked tests against a real Guardian stack
 # (ldap-server, udm-rest-api, keycloak, opa, authz-api, management-api).
-# Appends its coverage onto the test job's .coverage so the final
-# cobertura report reflects both unit and integration runs.
+# Runs in parallel with `test`; coverage data files from both jobs are
+# combined by the `coverage-merge` job below.
 test-e2e:
   stage: test
+  extends: .dind
   needs:
-    - job: test
-      artifacts: true
-  image: "${CI_REGISTRY_IMAGE}/testrunner:${RELEASE_VERSION}"
-  services:
-    - name: docker:27-dind
-      alias: docker
+    - job: pre-semantic-release
+    - job: container-build
+      parallel:
+        matrix:
+          - IMAGE_NAME: "guardian-opa"
+            KANIKO_BUILD_CONTEXT: "${CI_PROJECT_DIR}/opa"
+          - IMAGE_NAME: "guardian-authorization-api"
+            DOCKERFILE_PATH: "authorization-api/Dockerfile"
+          - IMAGE_NAME: "guardian-management-api"
+            DOCKERFILE_PATH: "management-api/Dockerfile"
+  image: "${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:24.0.7"
   variables:
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
-    UV_PROJECT_ENVIRONMENT: "/opt/venv"
     UCS_HOST_IP: "127.0.0.1"
     GITLAB_IP: "127.0.0.1"
+    GUARDIAN_OPA_IMAGE: "${CI_REGISTRY_IMAGE}/guardian-opa:${RELEASE_VERSION}"
+    GUARDIAN_AUTHORIZATION_API_IMAGE: "${CI_REGISTRY_IMAGE}/guardian-authorization-api:${RELEASE_VERSION}"
+    GUARDIAN_MANAGEMENT_API_IMAGE: "${CI_REGISTRY_IMAGE}/guardian-management-api:${RELEASE_VERSION}"
   before_script:
-    - docker compose -f dev-compose.yaml up -d --wait management-api authorization-api opa proxy keycloak-provisioning ldap-server udm-rest-api
-    - docker cp .coverage "$(docker compose -f dev-compose.yaml ps -q management-api)":/app/.coverage
+    - unset DOCKER_API_VERSION
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    - docker compose -f dev-compose.yaml pull --policy missing management-api authorization-api opa ldap-server udm-rest-api
+    - docker compose -f dev-compose.yaml up -d --wait --build management-api authorization-api opa proxy keycloak-provisioning ldap-server udm-rest-api
   script:
     - exit_code=0
     - >-
-      docker compose -f dev-compose.yaml exec -T -w /app management-api
+      docker compose -f dev-compose.yaml exec -T -w /app -e COVERAGE_FILE=/app/.coverage.e2e management-api
       pytest management-api/tests/ -lvv
       -m e2e_udm
       --cov=guardian_management_api
-      --cov-append
       --cov-report=term-missing
       --junit-xml=management-api/pytest-junit-e2e.xml
       || exit_code=1
     - mid=$(docker compose -f dev-compose.yaml ps -q management-api)
-    - docker cp "$mid":/app/.coverage .coverage
+    - docker cp "$mid":/app/.coverage.e2e .coverage.e2e
     - docker cp "$mid":/app/management-api/pytest-junit-e2e.xml management-api/pytest-junit-e2e.xml
-    - uv run coverage xml -o coverage.xml
-    - uv run coverage report --fail-under=100
     - exit $exit_code
   after_script:
     - docker compose -f dev-compose.yaml logs --no-color > docker-compose.log || true
     - docker compose -f dev-compose.yaml down -v --remove-orphans || true
+  artifacts:
+    paths:
+      - ".coverage.e2e"
+      - "docker-compose.log"
+      - "management-api/pytest-junit-e2e.xml"
+    reports:
+      junit:
+        - "management-api/pytest-junit-e2e.xml"
+    expire_in: "1 day"
+    when: "always"
+
+# Merges the unit and e2e coverage data files into a single cobertura
+# report and enforces the 100% threshold over the combined run.
+coverage-merge:
+  stage: test
+  needs:
+    - job: test
+      artifacts: true
+    - job: test-e2e
+      artifacts: true
+  image: "${CI_REGISTRY_IMAGE}/testrunner:${RELEASE_VERSION}"
+  variables:
+    UV_PROJECT_ENVIRONMENT: "/opt/venv"
+  script:
+    - uv run coverage combine .coverage.unit .coverage.e2e
+    - uv run coverage xml -o coverage.xml
+    - uv run coverage report --fail-under=100
   coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
   artifacts:
     paths:
       - "coverage.xml"
-      - "docker-compose.log"
-      - "management-api/pytest-junit-e2e.xml"
     reports:
       coverage_report:
         coverage_format: cobertura
         path: "coverage.xml"
-      junit:
-        - "management-api/pytest-junit-e2e.xml"
     expire_in: "1 day"
     when: "always"
 
@@ -373,7 +402,5 @@ docs-create-production-merge-request:
 sonarqube:
   extends: .sonarqube
   needs:
-    - job: test
-      artifacts: true
-    - job: test-e2e
+    - job: coverage-merge
       artifacts: true

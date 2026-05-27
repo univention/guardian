@@ -21,7 +21,7 @@ services:
 
   opa:
     container_name: opa-guardian-dev
-    image: guardian-opa:dev
+    image: ${GUARDIAN_OPA_IMAGE:-guardian-opa:dev}
     build: opa/
     depends_on:
       management-api:
@@ -45,7 +45,7 @@ services:
 
   authorization-api:
     container_name: authz-guardian-dev
-    image: guardian-authorization-api:dev
+    image: ${GUARDIAN_AUTHORIZATION_API_IMAGE:-guardian-authorization-api:dev}
     build:
       context: ./
       dockerfile: authorization-api/Dockerfile
@@ -96,7 +96,7 @@ services:
 
   db_provisioning:
     container_name: db_provisioning
-    image: guardian-management-api:dev
+    image: ${GUARDIAN_MANAGEMENT_API_IMAGE:-guardian-management-api:dev}
     entrypoint: alembic
     command: upgrade head
     user: ${USER_ID:-1000}
@@ -144,7 +144,7 @@ services:
 
   management-api:
     container_name: management-guardian-dev
-    image: guardian-management-api:dev
+    image: ${GUARDIAN_MANAGEMENT_API_IMAGE:-guardian-management-api:dev}
     user: ${USER_ID:-1000}
     build:
       context: ./
@@ -253,7 +253,7 @@ services:
       test: ["CMD", "sleep", "0.1"]
   management-ui:
     container_name: management-ui
-    image: management-ui:dev
+    image: ${GUARDIAN_MANAGEMENT_UI_IMAGE:-management-ui:dev}
     build:
       context: ./
       dockerfile: management-ui/docker/Dockerfile
