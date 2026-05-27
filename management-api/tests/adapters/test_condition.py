@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Univention GmbH
+# Copyright (C) 2023-2026 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 from typing import cast
@@ -20,6 +20,7 @@ from guardian_management_api.models.base import (
     PaginationRequest,
     PersistenceGetManyResult,
 )
+from guardian_management_api.models.capability import Capability
 from guardian_management_api.models.condition import (
     Condition,
     ConditionGetQuery,
@@ -32,6 +33,7 @@ from guardian_management_api.models.sql_persistence import (
 )
 from guardian_management_api.ports.condition import ConditionPersistencePort
 from sqlalchemy import select
+from sqlalchemy.sql.functions import count
 
 
 class TestSQLConditionPersistenceAdapter:
@@ -343,6 +345,99 @@ class TestSQLConditionPersistenceAdapter:
                     code=b"CODE",
                 )
             )
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_delete(
+        self,
+        condition_sql_adapter: SQLConditionPersistenceAdapter,
+        create_conditions,
+    ):
+        async with condition_sql_adapter.session() as session:
+            db_condition = (await create_conditions(session, 1))[0]
+            app_name = db_condition.namespace.app.name
+            namespace_name = db_condition.namespace.name
+            name = db_condition.name
+        assert (
+            await condition_sql_adapter.delete(
+                ConditionGetQuery(
+                    app_name=app_name, namespace_name=namespace_name, name=name
+                )
+            )
+            is None
+        )
+        async with condition_sql_adapter.session() as session:
+            remaining = await session.scalar(select(count(DBCondition.id)))
+        assert remaining == 0
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_delete_not_found_error(
+        self, condition_sql_adapter: SQLConditionPersistenceAdapter
+    ):
+        with pytest.raises(ObjectNotFoundError) as exc_info:
+            await condition_sql_adapter.delete(
+                ConditionGetQuery(
+                    app_name="app", namespace_name="namespace", name="condition"
+                )
+            )
+        assert exc_info.value.object_type == Condition
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_read_dependencies_empty(
+        self,
+        condition_sql_adapter: SQLConditionPersistenceAdapter,
+        create_conditions,
+    ):
+        async with condition_sql_adapter.session() as session:
+            db_condition = (await create_conditions(session, 1))[0]
+            app_name = db_condition.namespace.app.name
+            namespace_name = db_condition.namespace.name
+            name = db_condition.name
+        result = await condition_sql_adapter.read_dependencies(
+            ConditionGetQuery(
+                app_name=app_name, namespace_name=namespace_name, name=name
+            )
+        )
+        assert result == []
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_read_dependencies_with_capabilities(
+        self,
+        condition_sql_adapter: SQLConditionPersistenceAdapter,
+        create_capabilities,
+    ):
+        async with condition_sql_adapter.session() as session:
+            db_cap = (await create_capabilities(session, 1))[0]
+            db_cap_condition = next(iter(db_cap.conditions))
+            db_condition = db_cap_condition.condition
+            app_name = db_condition.namespace.app.name
+            namespace_name = db_condition.namespace.name
+            name = db_condition.name
+            expected_cap_name = db_cap.name
+        result = await condition_sql_adapter.read_dependencies(
+            ConditionGetQuery(
+                app_name=app_name, namespace_name=namespace_name, name=name
+            )
+        )
+        assert len(result) == 1
+        assert isinstance(result[0], Capability)
+        assert result[0].name == expected_cap_name
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_read_dependencies_not_found(
+        self, condition_sql_adapter: SQLConditionPersistenceAdapter
+    ):
+        with pytest.raises(ObjectNotFoundError) as exc_info:
+            await condition_sql_adapter.read_dependencies(
+                ConditionGetQuery(
+                    app_name="app", namespace_name="namespace", name="condition"
+                )
+            )
+        assert exc_info.value.object_type == Condition
 
     def test__condition_to_db_condition(self, condition_sql_adapter):
         condition = Condition(

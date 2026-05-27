@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Univention GmbH
+# Copyright (C) 2023-2026 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
@@ -16,6 +16,7 @@ from guardian_management_api.models.routers.condition import (
 )
 from guardian_management_api.models.sql_persistence import DBCondition
 from sqlalchemy import select
+from sqlalchemy.sql.functions import count
 
 
 @pytest.mark.e2e
@@ -327,6 +328,68 @@ class TestConditionEndpoints:
             json=new_values,
         )
         assert result.status_code == 500, result.json()
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_delete_condition(self, client, create_conditions, sqlalchemy_mixin):
+        async with sqlalchemy_mixin.session() as session:
+            db_conditions = await create_conditions(session, 2)
+            target = db_conditions[0]
+            app_name = target.namespace.app.name
+            namespace_name = target.namespace.name
+            name = target.name
+        result = client.delete(
+            client.app.url_path_for(
+                "delete_condition",
+                app_name=app_name,
+                namespace_name=namespace_name,
+                name=name,
+            )
+        )
+        assert result.status_code == 204, result.text
+        async with sqlalchemy_mixin.session() as session:
+            assert (await session.scalar(select(count(DBCondition.id)))) == 1
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_delete_condition_404(self, client):
+        result = client.delete(
+            client.app.url_path_for(
+                "delete_condition",
+                app_name="app",
+                namespace_name="namespace",
+                name="condition",
+            )
+        )
+        assert result.status_code == 404, result.json()
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_delete_condition_with_dependency(
+        self, client, create_capabilities, sqlalchemy_mixin
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            db_cap = (await create_capabilities(session, 1))[0]
+            db_cap_condition = next(iter(db_cap.conditions))
+            db_condition = db_cap_condition.condition
+            app_name = db_condition.namespace.app.name
+            namespace_name = db_condition.namespace.name
+            name = db_condition.name
+        result = client.delete(
+            client.app.url_path_for(
+                "delete_condition",
+                app_name=app_name,
+                namespace_name=namespace_name,
+                name=name,
+            )
+        )
+        assert result.status_code == 409, result.json()
+        async with sqlalchemy_mixin.session() as session:
+            assert (
+                await session.scalar(
+                    select(count(DBCondition.id)).where(DBCondition.name == name)
+                )
+            ) == 1
 
 
 @pytest.mark.e2e
@@ -755,3 +818,47 @@ class TestConditionEndpointsAuthorization:
         assert any(
             condition["name"] == "test" for condition in response.json()["conditions"]
         )
+
+    @pytest.mark.asyncio
+    async def test_delete_other_condition_not_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_condition,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="other", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="other",
+            )
+            await create_condition(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="other",
+                namespace_name="namespace",
+            )
+        response = client.delete(
+            app.url_path_for(
+                "delete_condition",
+                name="test",
+                namespace_name="namespace",
+                app_name="other",
+            ),
+        )
+        assert response.status_code == 403, response.json()
+
+        async with sqlalchemy_mixin.session() as session:
+            db_condition = (
+                (await session.execute(select(DBCondition).filter_by(name="test")))
+                .unique()
+                .scalar_one_or_none()
+            )
+            assert db_condition is not None
