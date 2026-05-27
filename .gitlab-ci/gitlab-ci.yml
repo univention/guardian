@@ -182,14 +182,12 @@ test:
     - >-
       uv run pytest guardian-lib/tests/ -lvv
       --cov=guardian_lib
-      --cov-fail-under=100
       --cov-report=term-missing
       --junit-xml=guardian-lib/pytest-junit.xml
       || exit_code=1
     - >-
       uv run pytest authorization-api/tests/ -lvv
       --cov=guardian_authorization_api
-      --cov-fail-under=100
       --cov-append
       --cov-report=term-missing
       --junit-xml=authorization-api/pytest-junit.xml
@@ -197,26 +195,90 @@ test:
     - >-
       uv run pytest management-api/tests/ -lvv
       --cov=guardian_management_api
-      --cov-fail-under=100
       --cov-append
       --cov-report=term-missing
       --junit-xml=management-api/pytest-junit.xml
       || exit_code=1
-    - uv run coverage xml -o coverage.xml
     - uv run coverage report
     - exit $exit_code
+  artifacts:
+    paths:
+      - ".coverage"
+      - "guardian-lib/pytest-junit.xml"
+      - "authorization-api/pytest-junit.xml"
+      - "management-api/pytest-junit.xml"
+    reports:
+      junit:
+        - "guardian-lib/pytest-junit.xml"
+        - "authorization-api/pytest-junit.xml"
+        - "management-api/pytest-junit.xml"
+    expire_in: "1 day"
+    when: "always"
+
+# Runs the e2e_udm-marked tests against a real Guardian stack
+# (ldap-server, udm-rest-api, keycloak, opa, authz-api, management-api).
+# Appends its coverage onto the test job's .coverage so the final
+# cobertura report reflects both unit and integration runs.
+test-e2e:
+  stage: test
+  needs:
+    - job: build_testrunner
+      artifacts: true
+    - job: test
+      artifacts: true
+    - job: build_docker_image_management
+      optional: true
+    - job: build_docker_image_authz
+      optional: true
+    - job: build_docker_image_opa
+      optional: true
+    - job: build_docker_image_management_ui
+      optional: true
+  image: $IMAGE_TAG_TESTRUNNER
+  services:
+    - name: docker:27-dind
+      alias: docker
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+    UV_PROJECT_ENVIRONMENT: "/opt/venv"
+    UCS_HOST_IP: "127.0.0.1"
+    GITLAB_IP: "127.0.0.1"
+  before_script:
+    - docker compose -f dev-compose.yaml up -d --wait management-api authorization-api opa proxy keycloak-provisioning ldap-server udm-rest-api
+    - docker cp .coverage "$(docker compose -f dev-compose.yaml ps -q management-api)":/app/.coverage
+  script:
+    - exit_code=0
+    - >-
+      docker compose -f dev-compose.yaml exec -T -w /app management-api
+      pytest management-api/tests/ -lvv
+      -m e2e_udm
+      --cov=guardian_management_api
+      --cov-append
+      --cov-report=term-missing
+      --junit-xml=management-api/pytest-junit-e2e.xml
+      || exit_code=1
+    - mid=$(docker compose -f dev-compose.yaml ps -q management-api)
+    - docker cp "$mid":/app/.coverage .coverage
+    - docker cp "$mid":/app/management-api/pytest-junit-e2e.xml management-api/pytest-junit-e2e.xml
+    - uv run coverage xml -o coverage.xml
+    - uv run coverage report --fail-under=100
+    - exit $exit_code
+  after_script:
+    - docker compose -f dev-compose.yaml logs --no-color > docker-compose.log || true
+    - docker compose -f dev-compose.yaml down -v --remove-orphans || true
   coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
   artifacts:
     paths:
       - "coverage.xml"
+      - "docker-compose.log"
+      - "management-api/pytest-junit-e2e.xml"
     reports:
       coverage_report:
         coverage_format: cobertura
         path: "coverage.xml"
       junit:
-        - "guardian-lib/pytest-junit.xml"
-        - "authorization-api/pytest-junit.xml"
-        - "management-api/pytest-junit.xml"
+        - "management-api/pytest-junit-e2e.xml"
     expire_in: "1 day"
     when: "always"
 
@@ -320,4 +382,8 @@ docs-create-production-merge-request:
 
 sonarqube:
   extends: .sonarqube
-  needs: [test]
+  needs:
+    - job: test
+      artifacts: true
+    - job: test-e2e
+      artifacts: true
