@@ -421,3 +421,4 @@ sonarqube:
   needs:
     - job: coverage-merge
       artifacts: true
+
