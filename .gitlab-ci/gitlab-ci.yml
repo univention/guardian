@@ -237,32 +237,43 @@ test-e2e:
   image: "${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:24.0.7"
   variables:
     UCS_HOST_IP: "127.0.0.1"
-    GITLAB_IP: "127.0.0.1"
     GUARDIAN_OPA_IMAGE: "${CI_REGISTRY_IMAGE}/guardian-opa:${RELEASE_VERSION}"
     GUARDIAN_AUTHORIZATION_API_IMAGE: "${CI_REGISTRY_IMAGE}/guardian-authorization-api:${RELEASE_VERSION}"
     GUARDIAN_MANAGEMENT_API_IMAGE: "${CI_REGISTRY_IMAGE}/guardian-management-api:${RELEASE_VERSION}"
   before_script:
     - unset DOCKER_API_VERSION
+    # Same prep as dev-run: ensure the bind-mounted service dir exists
+    # and pick up a USER_ID that matches the runner.
+    - mkdir -p management_service_dir
+    - export USER_ID=$(id -u)
+    # Resolve git.knut.univention.de via the runner's DNS so the local
+    # docker compose build for services not in the container-build matrix
+    # (keycloak, keycloak-provisioning) can reach the internal pypi.
+    - apk add --no-cache bind-tools
+    - export GITLAB_IP=$(dig +short git.knut.univention.de | head -n 1)
+    - test -n "$GITLAB_IP" || { echo "Failed to resolve git.knut.univention.de"; exit 1; }
+    # Persist the dynamic vars so after_script (a separate shell) sees them.
+    - printf 'GITLAB_IP=%s\nUSER_ID=%s\n' "$GITLAB_IP" "$USER_ID" > .compose-env
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
-    - docker compose -f dev-compose.yaml pull --policy missing management-api authorization-api opa ldap-server udm-rest-api
-    - docker compose -f dev-compose.yaml up -d --wait --build management-api authorization-api opa proxy keycloak-provisioning ldap-server udm-rest-api
+    - docker compose --env-file .compose-env -f dev-compose.yaml pull --policy missing management-api authorization-api opa ldap-server udm-rest-api
+    - docker compose --env-file .compose-env -f dev-compose.yaml up -d --wait --build management-api authorization-api opa proxy keycloak-provisioning ldap-server udm-rest-api
   script:
     - exit_code=0
     - >-
-      docker compose -f dev-compose.yaml exec -T -w /app -e COVERAGE_FILE=/app/.coverage.e2e management-api
+      docker compose --env-file .compose-env -f dev-compose.yaml exec -T -w /app -e COVERAGE_FILE=/app/.coverage.e2e management-api
       pytest management-api/tests/ -lvv
       -m e2e_udm
       --cov=guardian_management_api
       --cov-report=term-missing
       --junit-xml=management-api/pytest-junit-e2e.xml
       || exit_code=1
-    - mid=$(docker compose -f dev-compose.yaml ps -q management-api)
+    - mid=$(docker compose --env-file .compose-env -f dev-compose.yaml ps -q management-api)
     - docker cp "$mid":/app/.coverage.e2e .coverage.e2e
     - docker cp "$mid":/app/management-api/pytest-junit-e2e.xml management-api/pytest-junit-e2e.xml
     - exit $exit_code
   after_script:
-    - docker compose -f dev-compose.yaml logs --no-color > docker-compose.log || true
-    - docker compose -f dev-compose.yaml down -v --remove-orphans || true
+    - docker compose --env-file .compose-env -f dev-compose.yaml logs --no-color > docker-compose.log || true
+    - docker compose --env-file .compose-env -f dev-compose.yaml down -v --remove-orphans || true
   artifacts:
     paths:
       - ".coverage.e2e"
