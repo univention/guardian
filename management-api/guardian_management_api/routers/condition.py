@@ -5,6 +5,7 @@
 from fastapi import APIRouter, Depends, Request
 from guardian_lib.adapter_registry import port_dep
 from guardian_lib.ports import AuthenticationPort
+from starlette import status
 
 from .. import business_logic
 from ..adapters.condition import FastAPIConditionAPIAdapter
@@ -208,4 +209,37 @@ async def edit_condition(
         authc_port=authc_port,
         authz_port=authz_port,
         request=request,
+    )
+
+
+@router.delete(
+    "/conditions/{app_name}/{namespace_name}/{name}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_condition(
+    request: Request,
+    request_data: GetFullIdentifierRequest = Depends(),
+    api_port: FastAPIConditionAPIAdapter = Depends(
+        port_dep(ConditionAPIPort, FastAPIConditionAPIAdapter)
+    ),
+    persistence_port: ConditionPersistencePort = Depends(
+        port_dep(ConditionPersistencePort)
+    ),
+    bundle_server_port: BundleServerPort = Depends(port_dep(BundleServerPort)),
+    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
+    authz_port: ResourceAuthorizationPort = Depends(
+        port_dep(ResourceAuthorizationPort)
+    ),
+) -> None:
+    """
+    Delete a condition.
+    """
+    return await business_logic.delete_condition(
+        request_data,
+        api_port,
+        bundle_server_port,
+        persistence_port,
+        authc_port,
+        authz_port,
+        request,
     )

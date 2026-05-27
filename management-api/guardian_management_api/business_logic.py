@@ -815,6 +815,78 @@ async def update_condition(
         raise (await api_port.transform_exception(exc)) from exc
 
 
+async def delete_condition(
+    api_request: APIEditRequestObject,
+    api_port: ConditionAPIPort,
+    bundle_server_port: BundleServerPort,
+    persistence_port: ConditionPersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
+):
+    try:
+        query = await api_port.to_obj_get_single(api_request)
+        condition = await persistence_port.read_one(query)
+        is_builtin_condition = False  # TODO  impl logic
+        dependencies = await persistence_port.read_dependencies(query)
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        resource: Resource = Resource(
+            resource_type=ResourceType.CONDITION,
+            name=condition.name,
+            app_name=condition.app_name,
+            namespace_name=condition.namespace_name,
+        )
+        logger.debug(
+            "Received request to delete condition.",
+            actor_id=actor_id,
+            condition_id=resource.id,
+        )
+
+        allowed = (
+            await authz_port.authorize_operation(
+                Actor(id=actor_id),
+                OperationType.DELETE_RESOURCE,
+                [resource],
+            )
+        ).get(resource.id, False)
+        if not allowed:
+            logger.warning(
+                "Permission denied to delete condition.",
+                actor_id=actor_id,
+                condition_id=resource.id,
+            )
+            raise UnauthorizedError(
+                "The logged in user is not authorized to delete this condition."
+            )
+        if is_builtin_condition:
+            logger.warning(
+                "Condition cannot be deleted because it is one of the default conditions.",
+                actor_id=actor_id,
+                condition_id=resource.id,
+            )
+            raise DependencyExistsError(
+                "This condition cannot be deleted because it is one of the default conditions.",
+            ) # TODO: define new error type for this?
+        if dependencies:
+            logger.warning(
+                "This Condition cannot be deleted because it is still used in a capability.",
+                actor_id=actor_id,
+                condition_id=resource.id,
+                dependencies=dependencies,
+            )
+            raise DependencyExistsError(
+                "This Condition cannot be deleted because it is still used in a capability. "
+                "Please remove the condition from all capabilities it is used in first.",
+            )
+        await persistence_port.delete(query)
+        logger.info("Condition deleted.", actor_id=actor_id, condition_id=resource.id)
+        await bundle_server_port.schedule_bundle_build(BundleType.data)
+        return None
+    except Exception as exc:
+        logger.error("Error while deleting condition.")
+        raise (await api_port.transform_exception(exc)) from exc
+
+
 async def create_permission(
     api_request: PermissionAPICreateRequestObject,
     api_port: PermissionAPIPort,
@@ -1085,11 +1157,6 @@ async def delete_permission(
     except Exception as exc:
         logger.error("Error while deleting permission.")
         raise (await api_port.transform_exception(exc)) from exc
-
-
-##############
-# Role Logic #
-##############
 
 
 async def get_role(

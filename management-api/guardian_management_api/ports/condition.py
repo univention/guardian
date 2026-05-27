@@ -15,13 +15,30 @@ from ..models.base import (
     APIGetSingleRequestObject,
     APIGetSingleResponseObject,
 )
+from ..models.capability import Capability
 from ..models.condition import Condition, ConditionGetQuery, ConditionsGetQuery
 from .base import BasePersistencePort
 
 
 class ConditionPersistencePort(
     BasePersistencePort[Condition, ConditionGetQuery, ConditionsGetQuery], ABC
-): ...
+):
+
+    async def delete(self, query: ConditionGetQuery) -> None:
+        """
+        Deletes the condition specified by the query.
+
+        :raises PersistenceError: For any error during interaction with the persistence.
+        """
+        raise NotImplementedError  # pragma: no cover
+
+    async def read_dependencies(self, query: ConditionGetQuery) -> list[Capability]:
+        """
+        Returns the list of capabilities that reference the specified condition.
+
+        :raises PersistenceError: For any error during interaction with the persistence.
+        """
+        raise NotImplementedError  # pragma: no cover
 
 
 class ConditionAPIPort(
