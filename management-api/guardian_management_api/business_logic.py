@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Univention GmbH
+# Copyright (C) 2023-2026 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
@@ -1933,4 +1933,62 @@ async def delete_app(
         raise (await app_api_port.transform_exception(exc)) from exc
 
 
-
+async def delete_namespace(
+    api_request: NamespaceGetRequest,
+    namespace_api_port: FastAPINamespaceAPIAdapter,
+    bundle_server_port: BundleServerPort,
+    namespace_persistence_port: NamespacePersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
+):
+    try:
+        query = await namespace_api_port.to_namespace_get(api_request)
+        namespace = await namespace_persistence_port.read_one(query)
+        dependencies = await namespace_persistence_port.read_dependencies(query)
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        resource = Resource(
+            resource_type=ResourceType.NAMESPACE,
+            name=namespace.name,
+            app_name=namespace.app_name,
+        )
+        logger.debug(
+            "Received request to delete namespace.",
+            actor_id=actor_id,
+            namespace_id=resource.id,
+        )
+        allowed = (
+            await authz_port.authorize_operation(
+                Actor(id=actor_id),
+                OperationType.DELETE_RESOURCE,
+                [resource],
+            )
+        ).get(resource.id, False)
+        if not allowed:
+            logger.warning(
+                "Permission denied to delete namespace.",
+                actor_id=actor_id,
+                namespace_id=resource.id,
+            )
+            raise UnauthorizedError(
+                "The logged in user is not authorized to delete this namespace."
+            )
+        if dependencies:
+            logger.warning(
+                "Namespace cannot be deleted due to existing dependencies.",
+                actor_id=actor_id,
+                namespace_id=resource.id,
+                dependencies=dependencies,
+            )
+            raise DependencyExistsError(
+                "This namespace cannot be deleted because it still has child objects. "
+                "Please remove all roles, permissions, contexts, conditions, and capabilities first.",
+                dependencies=dependencies,
+            )
+        await namespace_persistence_port.delete(query)
+        logger.info("Namespace deleted.", actor_id=actor_id, namespace_id=resource.id)
+        await bundle_server_port.schedule_bundle_build(BundleType.data)
+        return None
+    except Exception as exc:
+        logger.error("Error while deleting namespace.")
+        raise (await namespace_api_port.transform_exception(exc)) from exc

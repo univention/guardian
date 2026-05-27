@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Univention GmbH
+# Copyright (C) 2023-2026 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
@@ -133,4 +133,21 @@ class NamespaceAPIPort(
 
 class NamespacePersistencePort(
     BasePersistencePort[Namespace, NamespaceGetQuery, NamespacesGetQuery], ABC
-): ...
+):
+    async def delete(self, query: NamespaceGetQuery) -> None:
+        """
+        Deletes the specified namespace from the persistent storage.
+
+        :raises ObjectNotFoundError: If the namespace could not be found.
+        :raises PersistenceError: For any other error during interaction with the persistence.
+        """
+        raise NotImplementedError  # pragma: no cover
+
+    async def read_dependencies(self, query: NamespaceGetQuery) -> list:
+        """
+        Returns a list of objects (roles, permissions, contexts, conditions, capabilities)
+        that belong to the specified namespace.
+
+        :raises PersistenceError: For any error during interaction with the persistence.
+        """
+        raise NotImplementedError  # pragma: no cover

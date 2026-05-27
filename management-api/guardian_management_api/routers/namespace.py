@@ -1,10 +1,11 @@
-# Copyright (C) 2023 Univention GmbH
+# Copyright (C) 2023-2026 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
 from fastapi import APIRouter, Depends, Request
 from guardian_lib.adapter_registry import port_dep
 from guardian_lib.ports import AuthenticationPort
+from starlette import status
 
 from .. import business_logic
 from ..adapters.namespace import FastAPINamespaceAPIAdapter
@@ -18,6 +19,7 @@ from ..models.routers.namespace import (
     NamespaceSingleResponse,
 )
 from ..ports.authz import ResourceAuthorizationPort
+from ..ports.bundle_server import BundleServerPort
 from ..ports.namespace import NamespaceAPIPort, NamespacePersistencePort
 
 router = APIRouter(tags=["namespace"])
@@ -172,3 +174,36 @@ async def edit_namespace(
         request=request,
     )
     return response.model_dump()
+
+
+@router.delete(
+    "/namespaces/{app_name}/{name}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_namespace(
+    request: Request,
+    namespace_get_request: NamespaceGetRequest = Depends(),
+    namespace_api: FastAPINamespaceAPIAdapter = Depends(
+        port_dep(NamespaceAPIPort, FastAPINamespaceAPIAdapter)
+    ),
+    namespace_persistence: NamespacePersistencePort = Depends(
+        port_dep(NamespacePersistencePort)
+    ),
+    bundle_server_port: BundleServerPort = Depends(port_dep(BundleServerPort)),
+    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
+    authz_port: ResourceAuthorizationPort = Depends(
+        port_dep(ResourceAuthorizationPort)
+    ),
+) -> None:
+    """
+    Delete a namespace. Fails if the namespace still has child objects.
+    """
+    return await business_logic.delete_namespace(
+        api_request=namespace_get_request,
+        namespace_api_port=namespace_api,
+        bundle_server_port=bundle_server_port,
+        namespace_persistence_port=namespace_persistence,
+        authc_port=authc_port,
+        authz_port=authz_port,
+        request=request,
+    )

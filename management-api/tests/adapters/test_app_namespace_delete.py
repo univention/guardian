@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Univention GmbH
+# Copyright (C) 2023-2026 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
@@ -25,15 +25,17 @@ class TestSQLAppPersistenceAdapterDelete:
     async def test_delete(self, app_sql_adapter: SQLAppPersistenceAdapter, create_apps):
         async with app_sql_adapter.session() as session:
             db_app = (await create_apps(session, 1))[0]
-        assert (
-            await app_sql_adapter.delete(AppGetQuery(name=db_app.name))
-        ) is None
+        assert (await app_sql_adapter.delete(AppGetQuery(name=db_app.name))) is None
         async with app_sql_adapter.session() as session:
-            assert (await session.scalar(select(DBApp).where(DBApp.name == db_app.name))) is None
+            assert (
+                await session.scalar(select(DBApp).where(DBApp.name == db_app.name))
+            ) is None
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")
-    async def test_delete_not_found_error(self, app_sql_adapter: SQLAppPersistenceAdapter):
+    async def test_delete_not_found_error(
+        self, app_sql_adapter: SQLAppPersistenceAdapter
+    ):
         with pytest.raises(ObjectNotFoundError):
             await app_sql_adapter.delete(AppGetQuery(name="nonexistent"))
 
@@ -85,7 +87,9 @@ class TestSQLNamespacePersistenceAdapterDelete:
             db_namespace = (await create_namespaces(session, 1))[0]
         assert (
             await namespace_sql_adapter.delete(
-                NamespaceGetQuery(name=db_namespace.name, app_name=db_namespace.app.name)
+                NamespaceGetQuery(
+                    name=db_namespace.name, app_name=db_namespace.app.name
+                )
             )
         ) is None
         async with namespace_sql_adapter.session() as session:
