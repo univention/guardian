@@ -261,8 +261,11 @@ test-e2e:
     - export GITLAB_IP=$(dig +short git.knut.univention.de | head -n 1)
     - test -n "$GITLAB_IP" || { echo "Failed to resolve git.knut.univention.de"; exit 1; }
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
-    - docker compose -f dev-compose.yaml pull --policy missing management-api authorization-api opa ldap-server udm-rest-api
-    - docker compose -f dev-compose.yaml up -d --wait --build management-api authorization-api opa proxy keycloak-provisioning ldap-server udm-rest-api
+    # All guardian-* images are produced by the container-build matrix
+    # earlier in the pipeline; pull them (and the external ones) so the
+    # subsequent `up` doesn't have to fall back to a local build.
+    - docker compose -f dev-compose.yaml pull --policy missing management-api authorization-api opa proxy keycloak keycloak-provisioning ldap-server udm-rest-api
+    - docker compose -f dev-compose.yaml up -d --wait management-api authorization-api opa proxy keycloak-provisioning ldap-server udm-rest-api
   script:
     - . ./.env.example
     - export USER_ID=$(id -u)
