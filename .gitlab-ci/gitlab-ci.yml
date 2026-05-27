@@ -305,6 +305,7 @@ test-e2e:
 coverage-merge:
   stage: test
   needs:
+    - job: pre-semantic-release
     - job: test
       artifacts: true
     - job: test-e2e
