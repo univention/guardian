@@ -19,6 +19,11 @@ class TransformExceptionMixin(ABC):
 
     async def transform_exception(self, exc: Exception) -> Exception:
         self.logger.exception(exc)
+        if isinstance(exc, DependencyExistsError):
+            return HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={"message": str(exc)},
+            )
         if isinstance(exc, ObjectNotFoundError):
             return HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,

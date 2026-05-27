@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Univention GmbH
+# Copyright (C) 2023-2026 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, Request
 from guardian_lib.adapter_registry import port_dep
 from guardian_lib.ports import AuthenticationPort
 from loguru import logger
+from starlette import status
 
 from .. import business_logic
 from ..adapters.app import FastAPIAppAPIAdapter
@@ -175,3 +176,29 @@ async def edit_app(
             request=request,
         )
     ).model_dump()
+
+
+@router.delete("/apps/{name}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_app(
+    request: Request,
+    app_get_request: AppGetRequest = Depends(),
+    app_api: FastAPIAppAPIAdapter = Depends(port_dep(AppAPIPort, FastAPIAppAPIAdapter)),
+    persistence: AppPersistencePort = Depends(port_dep(AppPersistencePort)),
+    bundle_server_port: BundleServerPort = Depends(port_dep(BundleServerPort)),
+    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
+    authz_port: ResourceAuthorizationPort = Depends(
+        port_dep(ResourceAuthorizationPort)
+    ),
+) -> None:
+    """
+    Delete an app. Fails if the app still has namespaces.
+    """
+    return await business_logic.delete_app(
+        api_request=app_get_request,
+        app_api_port=app_api,
+        bundle_server_port=bundle_server_port,
+        persistence_port=persistence,
+        authc_port=authc_port,
+        authz_port=authz_port,
+        request=request,
+    )

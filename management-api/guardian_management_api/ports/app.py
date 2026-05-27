@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Univention GmbH
+# Copyright (C) 2023-2026 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
@@ -117,4 +117,20 @@ class AppAPIPort(
 ###############################################################################
 
 
-class AppPersistencePort(BasePersistencePort[App, AppGetQuery, AppsGetQuery], ABC): ...
+class AppPersistencePort(BasePersistencePort[App, AppGetQuery, AppsGetQuery], ABC):
+    async def delete(self, query: AppGetQuery) -> None:
+        """
+        Deletes the specified object from the persistent storage.
+
+        :raises ObjectNotFoundError: If the object could not be found.
+        :raises PersistenceError: For any other error during interaction with the persistence.
+        """
+        raise NotImplementedError  # pragma: no cover
+
+    async def read_dependencies(self, query: AppGetQuery) -> list[Namespace]:
+        """
+        Returns a list of namespaces that reference the specified app.
+
+        :raises PersistenceError: For any error during interaction with the persistence.
+        """
+        raise NotImplementedError  # pragma: no cover
