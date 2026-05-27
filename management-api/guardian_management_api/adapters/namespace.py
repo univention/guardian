@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Univention GmbH
+# Copyright (C) 2023-2026 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
@@ -6,6 +6,7 @@ from dataclasses import asdict
 from typing import List, Optional, Type
 
 from port_loader import AsyncConfiguredAdapterMixin
+from sqlalchemy import select
 
 from ..constants import COMPLETE_URL
 from ..errors import ObjectNotFoundError, ParentNotFoundError
@@ -29,7 +30,16 @@ from ..models.routers.namespace import (
     NamespacesGetRequest,
     NamespaceSingleResponse,
 )
-from ..models.sql_persistence import DBApp, DBNamespace, SQLPersistenceAdapterSettings
+from ..models.sql_persistence import (
+    DBApp,
+    DBCapability,
+    DBCondition,
+    DBContext,
+    DBNamespace,
+    DBPermission,
+    DBRole,
+    SQLPersistenceAdapterSettings,
+)
 from ..ports.namespace import (
     NamespaceAPIEditRequestObject,
     NamespaceAPIPort,
@@ -251,3 +261,33 @@ class SQLNamespacePersistenceAdapter(
             db_app, display_name=namespace.display_name
         )
         return SQLNamespacePersistenceAdapter._db_namespace_to_namespace(modified)
+
+    async def delete(self, query: NamespaceGetQuery) -> None:
+        db_namespace = await self._get_single_object(
+            DBNamespace, name=query.name, app_name=query.app_name
+        )
+        if db_namespace is None:
+            raise ObjectNotFoundError(
+                f"No namespace with the identifier '{query.app_name}:{query.name}' could be found."
+            )
+        await self._delete_obj(db_namespace)
+
+    async def read_dependencies(self, query: NamespaceGetQuery) -> list:
+        db_namespace = await self._get_single_object(
+            DBNamespace, name=query.name, app_name=query.app_name
+        )
+        if db_namespace is None:
+            raise ObjectNotFoundError(
+                f"No namespace with the identifier '{query.app_name}:{query.name}' could be found."
+            )
+        ns_id = db_namespace.id
+        dependencies = []
+        async with self.session() as session:
+            for orm_cls in (DBRole, DBPermission, DBContext, DBCondition, DBCapability):
+                results = (
+                    await session.scalars(
+                        select(orm_cls).where(orm_cls.namespace_id == ns_id)
+                    )
+                ).all()
+                dependencies.extend(results)
+        return dependencies
