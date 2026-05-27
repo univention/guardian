@@ -7,6 +7,7 @@ from typing import Any, Generic, Optional, Tuple
 
 from guardian_lib.ports import BasePort
 
+from ..models.capability import Capability
 from ..models.base import (
     APICreateRequestObject,
     APIEditRequestObject,
