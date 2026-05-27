@@ -143,10 +143,11 @@ class NamespacePersistencePort(
         """
         raise NotImplementedError  # pragma: no cover
 
-    async def read_dependencies(self, query: NamespaceGetQuery) -> list:
+    async def read_dependencies(self, query: NamespaceGetQuery) -> list[str]:
         """
-        Returns a list of objects (roles, permissions, contexts, conditions, capabilities)
-        that belong to the specified namespace.
+        Returns formatted identifiers (``<type>:<app>:<namespace>:<name>``)
+        of objects (roles, permissions, contexts, conditions, capabilities)
+        that still belong to the specified namespace.
 
         :raises PersistenceError: For any error during interaction with the persistence.
         """

@@ -272,7 +272,7 @@ class SQLNamespacePersistenceAdapter(
             )
         await self._delete_obj(db_namespace)
 
-    async def read_dependencies(self, query: NamespaceGetQuery) -> list:
+    async def read_dependencies(self, query: NamespaceGetQuery) -> list[str]:
         db_namespace = await self._get_single_object(
             DBNamespace, name=query.name, app_name=query.app_name
         )
@@ -280,14 +280,23 @@ class SQLNamespacePersistenceAdapter(
             raise ObjectNotFoundError(
                 f"No namespace with the identifier '{query.app_name}:{query.name}' could be found."
             )
-        ns_id = db_namespace.id
-        dependencies = []
+        prefix = f"{query.app_name}:{query.name}"
+        child_types = [
+            ("role", DBRole),
+            ("permission", DBPermission),
+            ("context", DBContext),
+            ("condition", DBCondition),
+            ("capability", DBCapability),
+        ]
+        dependencies: list[str] = []
         async with self.session() as session:
-            for orm_cls in (DBRole, DBPermission, DBContext, DBCondition, DBCapability):
-                results = (
+            for label, orm_cls in child_types:
+                names = (
                     await session.scalars(
-                        select(orm_cls).where(orm_cls.namespace_id == ns_id)
+                        select(getattr(orm_cls, "name")).where(
+                            getattr(orm_cls, "namespace_id") == db_namespace.id
+                        )
                     )
                 ).all()
-                dependencies.extend(results)
+                dependencies.extend(f"{label}:{prefix}:{name}" for name in names)
         return dependencies

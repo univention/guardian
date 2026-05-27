@@ -9,7 +9,7 @@ from guardian_management_api.adapters.namespace import SQLNamespacePersistenceAd
 from guardian_management_api.errors import ObjectNotFoundError
 from guardian_management_api.models.app import AppGetQuery
 from guardian_management_api.models.namespace import NamespaceGetQuery
-from guardian_management_api.models.sql_persistence import DBApp, DBNamespace, DBRole
+from guardian_management_api.models.sql_persistence import DBApp, DBNamespace
 from guardian_management_api.ports.app import AppPersistencePort
 from guardian_management_api.ports.namespace import NamespacePersistencePort
 from sqlalchemy import select
@@ -135,7 +135,8 @@ class TestSQLNamespacePersistenceAdapterDelete:
             NamespaceGetQuery(name=db_namespace.name, app_name=db_namespace.app.name)
         )
         assert len(result) == 2
-        assert all(isinstance(r, DBRole) for r in result)
+        prefix = f"role:{db_namespace.app.name}:{db_namespace.name}:"
+        assert all(isinstance(r, str) and r.startswith(prefix) for r in result)
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")
