@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Univention GmbH
+# Copyright (C) 2023-2026 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
@@ -47,6 +47,7 @@ from guardian_management_api.models.sql_persistence import (
 )
 from guardian_management_api.ports.context import ContextPersistencePort
 from sqlalchemy import select
+from sqlalchemy.sql.functions import count
 
 
 class TestFastAPIContextAdapter:
@@ -485,3 +486,40 @@ class TestSQLContextPersistenceAdapter:
                     display_name="NEW DISPLAY NAME",
                 )
             )
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_delete(
+        self,
+        context_sql_adapter: SQLContextPersistenceAdapter,
+        create_contexts,
+    ):
+        async with context_sql_adapter.session() as session:
+            db_context = (await create_contexts(session, 1))[0]
+            app_name = db_context.namespace.app.name
+            namespace_name = db_context.namespace.name
+            name = db_context.name
+        assert (
+            await context_sql_adapter.delete(
+                ContextGetQuery(
+                    app_name=app_name, namespace_name=namespace_name, name=name
+                )
+            )
+            is None
+        )
+        async with context_sql_adapter.session() as session:
+            remaining = await session.scalar(select(count(DBContext.id)))
+        assert remaining == 0
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_delete_not_found_error(
+        self, context_sql_adapter: SQLContextPersistenceAdapter
+    ):
+        with pytest.raises(ObjectNotFoundError) as exc_info:
+            await context_sql_adapter.delete(
+                ContextGetQuery(
+                    app_name="app", namespace_name="namespace", name="context"
+                )
+            )
+        assert exc_info.value.object_type == Context

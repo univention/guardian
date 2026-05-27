@@ -1559,7 +1559,7 @@ async def delete_context(
     request: Request,
 ):
     try:
-        query = await api_port.to_obj_get_single(api_request)
+        query = await api_port.to_context_get(api_request)
         context = await persistence_port.read_one(query)
         actor_id: str = await authc_port.get_actor_identifier(request)
         resource: Resource = Resource(

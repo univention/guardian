@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Univention GmbH
+# Copyright (C) 2023-2026 Univention GmbH
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
@@ -8,6 +8,7 @@ from guardian_management_api.constants import COMPLETE_URL
 from guardian_management_api.main import app
 from guardian_management_api.models.sql_persistence import DBContext
 from sqlalchemy import select
+from sqlalchemy.sql.functions import count
 
 DEFAULT_TEST_APP = "app"
 DEFAULT_TEST_NAMESPACE = "namespace"
@@ -407,6 +408,38 @@ class TestContextEndpoints:
             json={"display_name": changed_display_name},
         )
         assert response.status_code == 404, response.json()
+
+    @pytest.mark.asyncio
+    async def test_delete_context(self, client, create_contexts, sqlalchemy_mixin):
+        async with sqlalchemy_mixin.session() as session:
+            db_contexts = await create_contexts(session, 2)
+            target = db_contexts[0]
+            app_name = target.namespace.app.name
+            namespace_name = target.namespace.name
+            name = target.name
+        result = client.delete(
+            client.app.url_path_for(
+                "delete_context",
+                app_name=app_name,
+                namespace_name=namespace_name,
+                name=name,
+            )
+        )
+        assert result.status_code == 204, result.text
+        async with sqlalchemy_mixin.session() as session:
+            assert (await session.scalar(select(count(DBContext.id)))) == 1
+
+    @pytest.mark.asyncio
+    async def test_delete_context_404(self, client):
+        result = client.delete(
+            client.app.url_path_for(
+                "delete_context",
+                app_name=DEFAULT_TEST_APP,
+                namespace_name=DEFAULT_TEST_NAMESPACE,
+                name=DEFAULT_TEST_CONTEXT,
+            )
+        )
+        assert result.status_code == 404, result.json()
 
 
 @pytest.mark.e2e
@@ -822,3 +855,47 @@ class TestContextEndpointsAuthorization:
             ),
         )
         assert response.json()["contexts"] == []
+
+    @pytest.mark.asyncio
+    async def test_delete_other_context_not_allowed(
+        self,
+        client,
+        create_tables,
+        create_app,
+        create_namespace,
+        create_context,
+        sqlalchemy_mixin,
+        set_up_auth,
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session=session, name="other", display_name=None)
+            await create_namespace(
+                session=session,
+                name="namespace",
+                display_name=None,
+                app_name="other",
+            )
+            await create_context(
+                session=session,
+                name="test",
+                display_name=None,
+                app_name="other",
+                namespace_name="namespace",
+            )
+        response = client.delete(
+            app.url_path_for(
+                "delete_context",
+                name="test",
+                namespace_name="namespace",
+                app_name="other",
+            ),
+        )
+        assert response.status_code == 403, response.json()
+
+        async with sqlalchemy_mixin.session() as session:
+            db_context = (
+                (await session.execute(select(DBContext).filter_by(name="test")))
+                .unique()
+                .scalar_one_or_none()
+            )
+            assert db_context is not None
