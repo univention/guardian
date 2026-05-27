@@ -827,7 +827,7 @@ async def delete_condition(
     try:
         query = await api_port.to_obj_get_single(api_request)
         condition = await persistence_port.read_one(query)
-        is_default_condition = False  # TODO  impl logic
+        is_builtin_condition = False  # TODO  impl logic
         dependencies = await persistence_port.read_dependencies(query)
         actor_id: str = await authc_port.get_actor_identifier(request)
         resource: Resource = Resource(
@@ -858,7 +858,7 @@ async def delete_condition(
             raise UnauthorizedError(
                 "The logged in user is not authorized to delete this condition."
             )
-        if is_default_condition:
+        if is_builtin_condition:
             logger.warning(
                 "Condition cannot be deleted because it is one of the default conditions.",
                 actor_id=actor_id,

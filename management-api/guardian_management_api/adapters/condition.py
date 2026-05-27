@@ -44,12 +44,11 @@ from ..models.routers.condition import (
 )
 from ..models.sql_persistence import (
     DBApp,
-    DBCapability,
+    DBCapabilityCondition,
     DBCondition,
     DBConditionParameter,
     DBNamespace,
     SQLPersistenceAdapterSettings,
-    capability_condition_table,
 )
 from ..ports.condition import (
     ConditionAPIPort,
@@ -335,15 +334,10 @@ class SQLConditionPersistenceAdapter(
             raise ObjectNotFoundError(
                 f"No condition with the identifier '{query.app_name}:"
                 f"{query.namespace_name}:{query.name}' could be found.",
-                object_type=Permission,
+                object_type=Condition,
             )
-        stmt = (
-            select(DBCapability)
-            .join(
-                capability_condition_table,
-                capability_condition_table.c.capability_id == DBCapability.id,
-            )
-            .where(capability_condition_table.c.condition_id == db_condition.id)
+        stmt = select(DBCapabilityCondition).where(
+            DBCapabilityCondition.condition_id == db_condition.id
         )
         async with self.session() as session:
             db_capabilities = (await session.scalars(stmt)).unique().all()
