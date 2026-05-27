@@ -21,7 +21,14 @@ from .base import BasePersistencePort
 
 class ConditionPersistencePort(
     BasePersistencePort[Condition, ConditionGetQuery, ConditionsGetQuery], ABC
-): ...
+):
+    async def read_dependencies(self, query: ConditionGetQuery) -> list[Capability]:
+        """
+        Returns the list of capabilities that reference the specified condition.
+
+        :raises PersistenceError: For any error during interaction with the persistence.
+        """
+        raise NotImplementedError  # pragma: no cover
 
 
 class ConditionAPIPort(

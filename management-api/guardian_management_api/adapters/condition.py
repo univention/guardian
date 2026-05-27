@@ -6,6 +6,7 @@ from dataclasses import asdict
 from typing import Any, Optional, Tuple, Type, Union
 
 from port_loader import AsyncConfiguredAdapterMixin
+from sqlalchemy import select
 
 from ..constants import COMPLETE_URL
 from ..errors import (
@@ -13,6 +14,7 @@ from ..errors import (
     ParentNotFoundError,
 )
 from ..models.base import PaginationRequest, PersistenceGetManyResult
+from ..models.capability import Capability
 from ..models.condition import (
     Condition,
     ConditionGetQuery,
@@ -42,15 +44,18 @@ from ..models.routers.condition import (
 )
 from ..models.sql_persistence import (
     DBApp,
+    DBCapability,
     DBCondition,
     DBConditionParameter,
     DBNamespace,
     SQLPersistenceAdapterSettings,
+    capability_condition_table,
 )
 from ..ports.condition import (
     ConditionAPIPort,
     ConditionPersistencePort,
 )
+from .capability import SQLCapabilityPersistenceAdapter
 from .fastapi_utils import TransformExceptionMixin
 from .sql_persistence import SQLAlchemyMixin
 
@@ -303,3 +308,46 @@ class SQLConditionPersistenceAdapter(
             code=condition.code,
         )
         return SQLConditionPersistenceAdapter._db_condition_to_condition(modified)
+
+    async def delete(self, query: ConditionGetQuery) -> None:
+        db_condition = await self._get_single_object(
+            DBCondition,
+            name=query.name,
+            app_name=query.app_name,
+            namespace_name=query.namespace_name,
+        )
+        if db_condition is None:
+            raise ObjectNotFoundError(
+                f"No condition with the identifier '{query.app_name}:"
+                f"{query.namespace_name}:{query.name}' could be found.",
+                object_type=Condition,
+            )
+        await self._delete_obj(db_condition)
+
+    async def read_dependencies(self, query: ConditionGetQuery) -> list[Capability]:
+        db_condition = await self._get_single_object(
+            DBCondition,
+            name=query.name,
+            app_name=query.app_name,
+            namespace_name=query.namespace_name,
+        )
+        if db_condition is None:
+            raise ObjectNotFoundError(
+                f"No condition with the identifier '{query.app_name}:"
+                f"{query.namespace_name}:{query.name}' could be found.",
+                object_type=Permission,
+            )
+        stmt = (
+            select(DBCapability)
+            .join(
+                capability_condition_table,
+                capability_condition_table.c.capability_id == DBCapability.id,
+            )
+            .where(capability_condition_table.c.condition_id == db_condition.id)
+        )
+        async with self.session() as session:
+            db_capabilities = (await session.scalars(stmt)).unique().all()
+        return [
+            SQLCapabilityPersistenceAdapter._db_cap_to_cap(db_cap)
+            for db_cap in db_capabilities
+        ]
