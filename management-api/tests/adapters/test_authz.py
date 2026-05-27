@@ -411,7 +411,7 @@ class TestGuardianAuthorizationAdapter:
 class TestGuardianAuthorizationAdapterIntegration:
     @pytest.mark.asyncio
     async def test_authorize_operation_actor_not_allowed_condition(
-        self, ldap_base, registry_test_adapters
+        self, ldap_base, registry_test_adapters, udm_guardian_user
     ):
         registry_test_adapters.register_adapter(
             ResourceAuthorizationPort, adapter_cls=GuardianAuthorizationAdapter
@@ -434,7 +434,7 @@ class TestGuardianAuthorizationAdapterIntegration:
 
     @pytest.mark.asyncio
     async def test_authorize_operation_actor_allowed_permission(
-        self, ldap_base, registry_test_adapters
+        self, ldap_base, registry_test_adapters, udm_guardian_user
     ):
         registry_test_adapters.register_adapter(
             ResourceAuthorizationPort, adapter_cls=GuardianAuthorizationAdapter
@@ -460,6 +460,7 @@ class TestGuardianAuthorizationAdapterIntegration:
         self,
         registry_test_adapters,
         ldap_base,
+        udm_guardian_user,
     ):
         registry_test_adapters.register_adapter(
             ResourceAuthorizationPort, adapter_cls=GuardianAuthorizationAdapter
@@ -480,7 +481,7 @@ class TestGuardianAuthorizationAdapterIntegration:
 
     @pytest.mark.asyncio
     async def test_authorize_operation_actor_allowed_app(
-        self, ldap_base, registry_test_adapters
+        self, ldap_base, registry_test_adapters, udm_guardian_user
     ):
         registry_test_adapters.register_adapter(
             ResourceAuthorizationPort, adapter_cls=GuardianAuthorizationAdapter

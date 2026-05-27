@@ -897,7 +897,12 @@ def udm_session():
     Reads its target and credentials from the same env vars used by
     the authorization-api so it follows whatever dev-compose ships.
     """
-    base_url = os.environ.get("UDM_DATA_ADAPTER__URL", "http://udm-rest-api:9979/udm")
+    # UDM_DATA_ADAPTER__URL may end with a trailing slash (the UDM REST
+    # client needs that for its entry-point lookup); strip it here so the
+    # fixture's path concatenation below doesn't produce a double slash.
+    base_url = os.environ.get(
+        "UDM_DATA_ADAPTER__URL", "http://udm-rest-api:9979/udm"
+    ).rstrip("/")
     username = os.environ.get("UDM_DATA_ADAPTER__USERNAME", "cn=admin")
     password = os.environ.get("UDM_DATA_ADAPTER__PASSWORD", "univention")
     session = requests.Session()
