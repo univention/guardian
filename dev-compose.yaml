@@ -200,12 +200,37 @@ services:
 
   keycloak:
     container_name: keycloak-guardian-dev
-    image: keycloak-guardian:dev
-    build:
-      context: ./
-      dockerfile: keycloak/Dockerfile
+    image: docker.software-univention.de/keycloak-keycloak:25.0.6-ucs2
     hostname: keycloak
-    command: start --optimized
+    environment:
+      # Build-time options (the base image is pre-built so these stay
+      # consistent with what kc.sh start --optimized expects).
+      KC_DB: dev-file
+      KC_HTTP_RELATIVE_PATH: /guardian/keycloak
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+      # Admin credentials.
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      # Runtime networking; we terminate TLS at traefik.
+      KC_HOSTNAME: traefik
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY: edge
+      KC_HOSTNAME_STRICT_HTTPS: "false"
+    # Wraps the default kc.sh entrypoint with a one-shot keytool step
+    # so we don't need a custom Dockerfile just to bake a self-signed
+    # server keystore into the image. Idempotent on container restarts.
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        if [ ! -f /opt/keycloak/conf/server.keystore ]; then
+          keytool -genkeypair -storepass password -storetype PKCS12 \
+            -keyalg RSA -keysize 2048 -dname "CN=server" -alias server \
+            -ext "SAN:c=DNS:localhost,IP:127.0.0.1" \
+            -keystore /opt/keycloak/conf/server.keystore
+        fi
+        exec /opt/keycloak/bin/kc.sh start --optimized
     healthcheck:
       test: "/opt/keycloak/bin/kcadm.sh get users -q username=admin --server http://localhost:8080/guardian/keycloak --realm master --user admin --password admin"
       interval: 30s
