@@ -177,19 +177,18 @@ test:
   image: "${CI_REGISTRY_IMAGE}/testrunner:${RELEASE_VERSION}"
   variables:
     UV_PROJECT_ENVIRONMENT: "/opt/venv"
+    COVERAGE_FILE: ".coverage.unit"
   script:
     - exit_code=0
     - >-
       uv run pytest guardian-lib/tests/ -lvv
       --cov=guardian_lib
-      --cov-fail-under=100
       --cov-report=term-missing
       --junit-xml=guardian-lib/pytest-junit.xml
       || exit_code=1
     - >-
       uv run pytest authorization-api/tests/ -lvv
       --cov=guardian_authorization_api
-      --cov-fail-under=100
       --cov-append
       --cov-report=term-missing
       --junit-xml=authorization-api/pytest-junit.xml
@@ -197,14 +196,126 @@ test:
     - >-
       uv run pytest management-api/tests/ -lvv
       --cov=guardian_management_api
-      --cov-fail-under=100
       --cov-append
       --cov-report=term-missing
       --junit-xml=management-api/pytest-junit.xml
       || exit_code=1
-    - uv run coverage xml -o coverage.xml
     - uv run coverage report
     - exit $exit_code
+  artifacts:
+    paths:
+      - ".coverage.unit"
+      - "guardian-lib/pytest-junit.xml"
+      - "authorization-api/pytest-junit.xml"
+      - "management-api/pytest-junit.xml"
+    reports:
+      junit:
+        - "guardian-lib/pytest-junit.xml"
+        - "authorization-api/pytest-junit.xml"
+        - "management-api/pytest-junit.xml"
+    expire_in: "1 day"
+    when: "always"
+
+# Runs the e2e_udm-marked tests against a real Guardian stack
+# (ldap-server, udm-rest-api, keycloak, opa, authz-api, management-api).
+# Runs in parallel with `test`; coverage data files from both jobs are
+# combined by the `coverage-merge` job below.
+test-e2e:
+  stage: test
+  extends: .dind
+  needs:
+    - job: pre-semantic-release
+    - job: container-build
+      parallel:
+        matrix:
+          - IMAGE_NAME: "testrunner"
+            DOCKERFILE_PATH: "docker/testrunner/Dockerfile"
+          - IMAGE_NAME: "guardian-opa"
+            KANIKO_BUILD_CONTEXT: "${CI_PROJECT_DIR}/opa"
+          - IMAGE_NAME: "guardian-authorization-api"
+            DOCKERFILE_PATH: "authorization-api/Dockerfile"
+          - IMAGE_NAME: "guardian-management-api"
+            DOCKERFILE_PATH: "management-api/Dockerfile"
+  image: "${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:24.0.7"
+  variables:
+    UCS_HOST_IP: "127.0.0.1"
+    GUARDIAN_OPA_IMAGE: "${CI_REGISTRY_IMAGE}/guardian-opa:${RELEASE_VERSION}"
+    GUARDIAN_AUTHORIZATION_API_IMAGE: "${CI_REGISTRY_IMAGE}/guardian-authorization-api:${RELEASE_VERSION}"
+    GUARDIAN_MANAGEMENT_API_IMAGE: "${CI_REGISTRY_IMAGE}/guardian-management-api:${RELEASE_VERSION}"
+    GUARDIAN_TESTRUNNER_IMAGE: "${CI_REGISTRY_IMAGE}/testrunner:${RELEASE_VERSION}"
+  before_script:
+    - unset DOCKER_API_VERSION
+    # Same prep as dev-run: ensure the bind-mounted service dir exists,
+    # pick up the runtime env (.env.example matches the in-compose URLs
+    # we ship), and use a USER_ID that matches the runner.
+    - mkdir -p management_service_dir
+    - . ./.env.example
+    - export USER_ID=$(id -u)
+    # Materialize a docker-compose-compatible .env (KEY=VAL, no `export`)
+    # so the test-runner service can pull it in via `env_file`.
+    - sed 's/^[[:space:]]*export //' .env.example > .env
+    # Resolve git.knut.univention.de via the runner's DNS so the local
+    # docker compose build for services not in the container-build matrix
+    # (keycloak, keycloak-provisioning) can reach the internal pypi.
+    - apk add --no-cache bind-tools
+    - export GITLAB_IP=$(dig +short git.knut.univention.de | head -n 1)
+    - test -n "$GITLAB_IP" || { echo "Failed to resolve git.knut.univention.de"; exit 1; }
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    - docker compose -f dev-compose.yaml pull --policy missing management-api authorization-api opa ldap-server udm-rest-api
+    - docker compose -f dev-compose.yaml up -d --wait --build management-api authorization-api opa proxy keycloak-provisioning ldap-server udm-rest-api
+  script:
+    - . ./.env.example
+    - export USER_ID=$(id -u)
+    - export GITLAB_IP=$(dig +short git.knut.univention.de | head -n 1)
+    - exit_code=0
+    # Coverage data and JUnit XML are written into /app/management-api,
+    # which is bind-mounted into the test-runner from ./management-api on
+    # the host, so they survive the --rm cleanup.
+    - >-
+      docker compose -f dev-compose.yaml run --rm
+      -e COVERAGE_FILE=/app/management-api/.coverage.e2e
+      test-runner
+      uv run pytest management-api/tests/ -lvv
+      -m e2e_udm
+      --cov=guardian_management_api
+      --cov-report=term-missing
+      --junit-xml=/app/management-api/pytest-junit-e2e.xml
+      || exit_code=1
+    - mv management-api/.coverage.e2e .coverage.e2e
+    - exit $exit_code
+  after_script:
+    - . ./.env.example
+    - export USER_ID=$(id -u)
+    - export GITLAB_IP=$(dig +short git.knut.univention.de 2>/dev/null | head -n 1)
+    - docker compose -f dev-compose.yaml logs --no-color > docker-compose.log || true
+    - docker compose -f dev-compose.yaml down -v --remove-orphans || true
+  artifacts:
+    paths:
+      - ".coverage.e2e"
+      - "docker-compose.log"
+      - "management-api/pytest-junit-e2e.xml"
+    reports:
+      junit:
+        - "management-api/pytest-junit-e2e.xml"
+    expire_in: "1 day"
+    when: "always"
+
+# Merges the unit and e2e coverage data files into a single cobertura
+# report and enforces the 100% threshold over the combined run.
+coverage-merge:
+  stage: test
+  needs:
+    - job: test
+      artifacts: true
+    - job: test-e2e
+      artifacts: true
+  image: "${CI_REGISTRY_IMAGE}/testrunner:${RELEASE_VERSION}"
+  variables:
+    UV_PROJECT_ENVIRONMENT: "/opt/venv"
+  script:
+    - uv run coverage combine .coverage.unit .coverage.e2e
+    - uv run coverage xml -o coverage.xml
+    - uv run coverage report --fail-under=100
   coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
   artifacts:
     paths:
@@ -213,10 +324,6 @@ test:
       coverage_report:
         coverage_format: cobertura
         path: "coverage.xml"
-      junit:
-        - "guardian-lib/pytest-junit.xml"
-        - "authorization-api/pytest-junit.xml"
-        - "management-api/pytest-junit.xml"
     expire_in: "1 day"
     when: "always"
 
@@ -320,4 +427,6 @@ docs-create-production-merge-request:
 
 sonarqube:
   extends: .sonarqube
-  needs: [test]
+  needs:
+    - job: coverage-merge
+      artifacts: true
