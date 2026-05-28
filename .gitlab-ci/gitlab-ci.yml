@@ -123,11 +123,13 @@ variables:
   COVERAGE_FAIL_UNDER: "90"
 
 pip-package-and-publish-with-uv:
+  pull_policy: "if-not-present"
   variables:
     RELEASE_VERSION: "0.1.0-dev"
 
 lint-pre-commit:
   extends: .lint-pre-commit
+  pull_policy: "if-not-present"
   variables:
     RUNNER_REGISTRY_IMAGE: "gitregistry.knut.univention.de/univention/dev/tooling/pre-commit/univention-pre-commit"
     RUNNER_IMAGE_TAG: "0.6.2"
@@ -155,30 +157,36 @@ lint-pre-commit:
     - "guardian-management-api"
 
 container-build:
+  pull_policy: "if-not-present"
   parallel:
     matrix: *build-matrix
   variables:
     KANIKO_BUILD_CONTEXT: "${CI_PROJECT_DIR}"
 
 container-malware-scan:
+  pull_policy: "if-not-present"
   parallel:
     matrix: *publish-matrix
 
 push-image-external:
+  pull_policy: "if-not-present"
   parallel:
     matrix: *publish-matrix
 
 container-sign-external:
+  pull_policy: "if-not-present"
   parallel:
     matrix: *publish-matrix
 
 container-release-attestation:
+  pull_policy: "if-not-present"
   parallel:
     matrix: *publish-matrix
 
 test:
   stage: test
   image: "${CI_REGISTRY_IMAGE}/testrunner:${RELEASE_VERSION}"
+  pull_policy: "if-not-present"
   variables:
     UV_PROJECT_ENVIRONMENT: "/opt/venv"
     COVERAGE_FILE: ".coverage.unit"
@@ -227,6 +235,7 @@ test:
 test-e2e:
   stage: test
   extends: .dind
+  pull_policy: "if-not-present"
   needs:
     - job: pre-semantic-release
     - job: container-build
@@ -319,6 +328,7 @@ coverage-merge:
     - job: test-e2e
       artifacts: true
   image: "${CI_REGISTRY_IMAGE}/testrunner:${RELEASE_VERSION}"
+  pull_policy: "if-not-present"
   variables:
     UV_PROJECT_ENVIRONMENT: "/opt/venv"
   script:
@@ -337,6 +347,7 @@ coverage-merge:
     when: "always"
 
 generate-filesystem-sbom:
+  pull_policy: "if-not-present"
   variables:
     FOLDER: "management-ui"
 
@@ -354,9 +365,11 @@ generate-filesystem-sbom:
       - ${KEYCLOAK_TEMP_FILE}
 
 authz_keycloak_script:
+  pull_policy: "if-not-present"
   extends: .generate_keycloak_script
 
 management_keycloak_script:
+  pull_policy: "if-not-present"
   extends: .generate_keycloak_script
   variables:
     APP_NAME: "guardian-management-api"
@@ -364,6 +377,7 @@ management_keycloak_script:
     KEYCLOAK_TEMP_FILE: "appcenter-management/includes/keycloak_script.include"
 
 management-ui_keycloak_script:
+  pull_policy: "if-not-present"
   extends: .generate_keycloak_script
   variables:
     APP_NAME: "guardian-management-ui"
@@ -371,30 +385,35 @@ management-ui_keycloak_script:
     KEYCLOAK_TEMP_FILE: "appcenter-management-ui/includes/keycloak_script.include"
 
 docs-linkcheck:
+  pull_policy: "if-not-present"
   extends: .sphinx-linkcheck-template
   rules:
     - changes:
       - $DOCS_DIR/**/*
 
 docs-spelling:
+  pull_policy: "if-not-present"
   extends: .sphinx-spelling-template
   rules:
     - changes:
       - $DOCS_DIR/**/*
 
 docs-html:
+  pull_policy: "if-not-present"
   extends: .sphinx-html-template
   rules:
     - changes:
       - $DOCS_DIR/**/*
 
 docs-pdf:
+  pull_policy: "if-not-present"
   extends: .sphinx-pdf-template
   rules:
     - changes:
       - $DOCS_DIR/**/*
 
 docs-merge-to-one-artifact:
+  pull_policy: "if-not-present"
   extends: .sphinx-merge-template
   stage: deploy
   needs:
@@ -414,6 +433,7 @@ docs-merge-to-one-artifact:
       when: manual
 
 docs-review:
+  pull_policy: "if-not-present"
   extends: .sphinx-review-template
   stage: deploy
   needs:
@@ -425,6 +445,7 @@ docs-review:
 # The template has inherit:variables:false to prevent the passing of pipeline
 # variables to downstream, and therefore $DOCS_DIR is not available here.
 docs-create-production-merge-request:
+  pull_policy: "if-not-present"
   extends: .sphinx-docs-merge-request-template
   stage: deploy
   needs:
@@ -435,6 +456,7 @@ docs-create-production-merge-request:
       - docs/guardian-manual/**/*
 
 sonarqube:
+  pull_policy: "if-not-present"
   extends: .sonarqube
   needs:
     - job: coverage-merge
