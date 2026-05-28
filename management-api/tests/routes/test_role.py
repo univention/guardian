@@ -13,6 +13,7 @@ from guardian_management_api.models.sql_persistence import (
     DBCapability,
     DBNamespace,
     DBRole,
+    role_capability_table,
 )
 from sqlalchemy import select
 from sqlalchemy.sql.functions import count
@@ -657,7 +658,7 @@ class TestRoleEndpoints:
     @pytest.mark.usefixtures("create_tables")
     async def test_delete_role(self, client, create_roles, sqlalchemy_mixin):
         async with sqlalchemy_mixin.session() as session:
-            db_roles = await create_roles(session, 2)
+            db_roles = await create_roles(session, 2, with_capabilities=False)
             target = db_roles[0]
             app_name = target.namespace.app.name
             namespace_name = target.namespace.name
@@ -694,7 +695,16 @@ class TestRoleEndpoints:
     ):
         async with sqlalchemy_mixin.session() as session:
             db_cap = (await create_capabilities(session, 1))[0]
-            db_role = db_cap.role
+            db_role = (
+                await session.scalars(
+                    select(DBRole)
+                    .join(
+                        role_capability_table,
+                        DBRole.id == role_capability_table.c.role_id,
+                    )
+                    .where(role_capability_table.c.capability_id == db_cap.id)
+                )
+            ).one()
             app_name = db_role.namespace.app.name
             namespace_name = db_role.namespace.name
             name = db_role.name

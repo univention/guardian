@@ -34,9 +34,6 @@ class TestCapabilityEndpoints:
         response = client.get(resource)
         assert response.status_code == 200, response.json()
         permissions = [asdict(perm) for perm in capability.permissions]
-        role = asdict(capability.role)
-        del role["display_name"]
-        del role["flags"]
         for perm in permissions:
             del perm["display_name"]
             del perm["flags"]
@@ -90,9 +87,6 @@ class TestCapabilityEndpoints:
                 db_caps[index]
             )
             permissions = [asdict(perm) for perm in orig_capability.permissions]
-            role = asdict(orig_capability.role)
-            del role["display_name"]
-            del role["flags"]
             for perm in permissions:
                 del perm["display_name"]
                 del perm["flags"]
@@ -158,9 +152,6 @@ class TestCapabilityEndpoints:
         capabilities = response.json()["capabilities"]
         pagination = response.json()["pagination"]
         assert pagination == {"offset": 0, "limit": 10, "total_count": 10}
-        role = asdict(SQLRolePersistenceAdapter._db_role_to_role(db_role1))
-        del role["display_name"]
-        del role["flags"]
         for index, condition in enumerate(capabilities):
             orig_capability = SQLCapabilityPersistenceAdapter._db_cap_to_cap(
                 db_caps[index]
@@ -289,9 +280,6 @@ class TestCapabilityEndpoints:
         )
         assert result.status_code == 201, result.json()
         permissions = [asdict(perm) for perm in cap_to_create.permissions]
-        role = asdict(cap_to_create.role)
-        del role["display_name"]
-        del role["flags"]
         for perm in permissions:
             del perm["display_name"]
             del perm["flags"]
@@ -578,9 +566,6 @@ class TestCapabilityEndpoints:
             json=edit_data,
         )
         assert result.status_code == 200, result.json()
-        role = asdict(cap_to_edit.role)
-        del role["display_name"]
-        del role["flags"]
         expected = {
             "capability": {
                 "app_name": cap_to_edit.app_name,

@@ -371,6 +371,9 @@ services:
   # is built with --no-dev and doesn't ship pytest.
   test-runner:
     image: ${GUARDIAN_TESTRUNNER_IMAGE:-guardian-testrunner:dev}
+    build:
+      context: ./
+      dockerfile: docker/testrunner/Dockerfile
     profiles:
       - test
     depends_on:

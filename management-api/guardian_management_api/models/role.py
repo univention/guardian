@@ -6,8 +6,8 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 
 from .base import PaginatedAPIResponse, PaginationRequest, ResponseObject
-from .flags import Flag
 from .capability import CapabilityReference
+from .flags import Flag
 
 
 @dataclass

@@ -9,7 +9,6 @@ from .base import PaginationRequest
 from .condition import ConditionParameterType
 from .flags import Flag
 from .permission import Permission
-from .role import Role
 
 
 @dataclass

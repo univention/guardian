@@ -14,6 +14,7 @@ from ..constants import COMPLETE_URL
 from ..errors import ObjectNotFoundError, ParentNotFoundError
 from ..models.base import PaginationRequest, PersistenceGetManyResult
 from ..models.capability import CapabilityReference
+from ..models.flags import Flag
 from ..models.role import (
     Role,
     RoleCreateQuery,
@@ -339,3 +340,40 @@ class SQLRolePersistenceAdapter(
                 self._translate_integrity_error(exc)
             await session.refresh(merged_role)
         return SQLRolePersistenceAdapter._db_role_to_role(merged_role)
+
+    async def delete(self, query: RoleGetQuery) -> None:
+        db_role = await self._get_single_object(
+            DBRole,
+            name=query.name,
+            app_name=query.app_name,
+            namespace_name=query.namespace_name,
+        )
+        if db_role is None:
+            raise ObjectNotFoundError(
+                f"No role with the identifier '{query.app_name}:"
+                f"{query.namespace_name}:{query.name}' could be found.",
+                object_type=Role,
+            )
+        await self._delete_obj(db_role)
+
+    async def read_dependencies(self, query: RoleGetQuery) -> list[CapabilityReference]:
+        db_role = await self._get_single_object(
+            DBRole,
+            name=query.name,
+            app_name=query.app_name,
+            namespace_name=query.namespace_name,
+        )
+        if db_role is None:
+            raise ObjectNotFoundError(
+                f"No role with the identifier '{query.app_name}:"
+                f"{query.namespace_name}:{query.name}' could be found.",
+                object_type=Role,
+            )
+        return [
+            CapabilityReference(
+                app_name=db_cap.namespace.app.name,
+                namespace_name=db_cap.namespace.name,
+                name=db_cap.name,
+            )
+            for db_cap in db_role.capability
+        ]

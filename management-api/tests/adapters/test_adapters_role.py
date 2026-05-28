@@ -23,6 +23,7 @@ from guardian_management_api.models.role import (
 )
 from guardian_management_api.models.sql_persistence import (
     DBRole,
+    role_capability_table,
 )
 from guardian_management_api.ports.role import RolePersistencePort
 from sqlalchemy import select
@@ -358,7 +359,7 @@ class TestSQLRolePersistenceAdapter:
         create_roles,
     ):
         async with role_sql_adapter.session() as session:
-            db_role = (await create_roles(session, 1))[0]
+            db_role = (await create_roles(session, 1, with_capabilities=False))[0]
             app_name = db_role.namespace.app.name
             namespace_name = db_role.namespace.name
             name = db_role.name
@@ -376,7 +377,16 @@ class TestSQLRolePersistenceAdapter:
     ):
         async with role_sql_adapter.session() as session:
             db_cap = (await create_capabilities(session, 1))[0]
-            db_role = db_cap.role
+            db_role = (
+                await session.scalars(
+                    select(DBRole)
+                    .join(
+                        role_capability_table,
+                        DBRole.id == role_capability_table.c.role_id,
+                    )
+                    .where(role_capability_table.c.capability_id == db_cap.id)
+                )
+            ).one()
             app_name = db_role.namespace.app.name
             namespace_name = db_role.namespace.name
             name = db_role.name
@@ -385,7 +395,7 @@ class TestSQLRolePersistenceAdapter:
             RoleGetQuery(app_name=app_name, namespace_name=namespace_name, name=name)
         )
         assert len(result) == 1
-        assert isinstance(result[0], Capability)
+        assert isinstance(result[0], CapabilityReference)
         assert result[0].name == expected_cap_name
 
     @pytest.mark.asyncio

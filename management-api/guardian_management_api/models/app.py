@@ -10,8 +10,8 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 from .base import PaginatedAPIResponse, PaginationRequest, ResponseObject
-from .role import ResponseRole
 from .flags import Flag
+from .role import ResponseRole
 
 
 @dataclass

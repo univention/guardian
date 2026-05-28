@@ -289,11 +289,6 @@ class TestBuiltinFlagPreservedThroughEdits:
             "relation": cap.relation,
             "conditions": [],
             "permissions": [],
-            "role": {
-                "app_name": cap.role.app_name,
-                "namespace_name": cap.role.namespace_name,
-                "name": cap.role.name,
-            },
         }
         result = client.put(
             client.app.url_path_for(

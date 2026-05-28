@@ -1997,6 +1997,7 @@ async def delete_capability(
         query = await api_port.to_obj_get_single(api_request)
         capability = await persistence_port.read_one(query)
         is_builtin = Flag.IS_BUILTIN in capability.flags
+        dependencies = await persistence_port.read_dependencies(query)
         actor_id: str = await authc_port.get_actor_identifier(request)
         resource: Resource = Resource(
             resource_type=ResourceType.CAPABILITY,
@@ -2035,6 +2036,19 @@ async def delete_capability(
             )
             raise DependencyExistsError(
                 "This capability cannot be deleted because it is a built-in capability.",
+            )
+
+        if dependencies:
+            logger.warning(
+                "Capability cannot be deleted because it is still used by roles.",
+                actor_id=actor_id,
+                capability_id=resource.id,
+                dependencies=dependencies,
+            )
+            raise DependencyExistsError(
+                "This capability cannot be deleted because it is still used "
+                "by one or more roles. Please remove it from those roles first.",
+                dependencies=dependencies,
             )
 
         await persistence_port.delete(query)

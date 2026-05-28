@@ -116,9 +116,9 @@ class RolePersistencePort(BasePersistencePort[Role, RoleGetQuery, RolesGetQuery]
         """
         raise NotImplementedError  # pragma: no cover
 
-    async def read_dependencies(self, query: RoleGetQuery) -> list[Capability]:
+    async def read_dependencies(self, query: RoleGetQuery) -> list[CapabilityReference]:
         """
-        Returns the list of capabilities that reference the specified role.
+        Returns the list of capability references that reference the specified role.
 
         :raises PersistenceError: For any error during interaction with the persistence.
         """
