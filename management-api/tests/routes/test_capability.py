@@ -11,6 +11,7 @@ from guardian_management_api.main import app
 from guardian_management_api.models.sql_persistence import (
     DBCapability,
     DBRole,
+    role_capability_table,
 )
 from sqlalchemy import select
 from sqlalchemy.sql.functions import count
@@ -628,6 +629,18 @@ class TestCapabilityEndpoints:
     ):
         async with sqlalchemy_mixin.session() as session:
             db_cap = (await create_capabilities(session, 2))[0]
+            cap_id = db_cap.id
+        # The create_capabilities fixture links each capability to a role
+        # via role_capability_table. Detach this one in a fresh session so
+        # the dependency check in delete_capability lets it through and we
+        # test the happy path.
+        async with sqlalchemy_mixin.session() as session:
+            async with session.begin():
+                await session.execute(
+                    role_capability_table.delete().where(
+                        role_capability_table.c.capability_id == cap_id
+                    )
+                )
         cap_to_delete = SQLCapabilityPersistenceAdapter._db_cap_to_cap(db_cap)
         result = client.delete(
             client.app.url_path_for(
@@ -638,6 +651,26 @@ class TestCapabilityEndpoints:
             )
         )
         assert result.status_code == 204, result.json()
+        async with sqlalchemy_mixin.session() as session:
+            assert (await session.scalar(select(count(DBCapability.id)))) == 1
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_delete_capability_with_dependency(
+        self, client, create_capabilities, sqlalchemy_mixin
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            db_cap = (await create_capabilities(session, 1))[0]
+        cap = SQLCapabilityPersistenceAdapter._db_cap_to_cap(db_cap)
+        result = client.delete(
+            client.app.url_path_for(
+                "delete_capability",
+                app_name=cap.app_name,
+                namespace_name=cap.namespace_name,
+                name=cap.name,
+            )
+        )
+        assert result.status_code == 409, result.json()
         async with sqlalchemy_mixin.session() as session:
             assert (await session.scalar(select(count(DBCapability.id)))) == 1
 
@@ -849,13 +882,24 @@ class TestCapabilityEndpointsAuthorization:
         self, client, create_tables, create_capability, sqlalchemy_mixin, set_up_auth
     ):
         async with sqlalchemy_mixin.session() as session:
-            await create_capability(
+            db_cap = await create_capability(
                 session=session,
                 name="test",
                 display_name=None,
                 app_name="guardian",
                 namespace_name="namespace",
             )
+            cap_id = db_cap.id
+        # create_capability links the capability to a role via
+        # role_capability_table. Detach it so the dependency check in
+        # delete_capability lets it through and we test the happy path.
+        async with sqlalchemy_mixin.session() as session:
+            async with session.begin():
+                await session.execute(
+                    role_capability_table.delete().where(
+                        role_capability_table.c.capability_id == cap_id
+                    )
+                )
         response = client.delete(
             app.url_path_for(
                 "delete_capability",

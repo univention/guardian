@@ -23,6 +23,7 @@ from guardian_management_api.models.capability import (
 )
 from guardian_management_api.models.condition import ConditionParameterType
 from guardian_management_api.models.permission import Permission
+from guardian_management_api.models.role import Role
 from guardian_management_api.models.routers.capability import (
     CapabilityCreateData,
     CapabilityCreateRequest,
@@ -296,6 +297,57 @@ class TestSQLCapabilityPersistenceAdapter:
         cap.name = "foo"
         with pytest.raises(ObjectNotFoundError) as exc_info:
             await adapter.delete(cap)
+        assert exc_info.value.object_type == Capability
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_read_dependencies_empty(
+        self, adapter: SQLCapabilityPersistenceAdapter, capability_for_testing
+    ):
+        # adapter.create does not wire role_capability_table, so the
+        # capability has no role dependencies.
+        cap, _, _, _ = capability_for_testing
+        await adapter.create(cap)
+        result = await adapter.read_dependencies(
+            CapabilityGetQuery(
+                app_name=cap.app_name,
+                namespace_name=cap.namespace_name,
+                name=cap.name,
+            )
+        )
+        assert result == []
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_read_dependencies_with_roles(
+        self, adapter: SQLCapabilityPersistenceAdapter, create_capabilities
+    ):
+        # The create_capabilities fixture wires each capability to a role
+        # through role_capability_table.
+        async with adapter.session() as session:
+            db_cap = (await create_capabilities(session, 1))[0]
+        cap = SQLCapabilityPersistenceAdapter._db_cap_to_cap(db_cap)
+        result = await adapter.read_dependencies(
+            CapabilityGetQuery(
+                app_name=cap.app_name,
+                namespace_name=cap.namespace_name,
+                name=cap.name,
+            )
+        )
+        assert len(result) == 1
+        assert isinstance(result[0], Role)
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_read_dependencies_not_found(
+        self, adapter: SQLCapabilityPersistenceAdapter
+    ):
+        with pytest.raises(ObjectNotFoundError) as exc_info:
+            await adapter.read_dependencies(
+                CapabilityGetQuery(
+                    app_name="app", namespace_name="namespace", name="capability"
+                )
+            )
         assert exc_info.value.object_type == Capability
 
     @pytest.mark.asyncio
