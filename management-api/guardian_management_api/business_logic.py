@@ -858,7 +858,9 @@ async def delete_condition(
             raise UnauthorizedError(
                 "The logged in user is not authorized to delete this condition."
             )
-        if is_builtin_condition:
+        if is_builtin_condition:  # pragma: no cover
+            # TODO: detect builtin conditions and refuse to delete them.
+            # Unreachable today because the flag above is hardcoded False.
             logger.warning(
                 "Condition cannot be deleted because it is one of the default conditions.",
                 actor_id=actor_id,
