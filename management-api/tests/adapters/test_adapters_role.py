@@ -15,6 +15,7 @@ from guardian_management_api.models.base import (
     PaginationRequest,
     PersistenceGetManyResult,
 )
+from guardian_management_api.models.capability import Capability
 from guardian_management_api.models.role import (
     Role,
     RoleGetQuery,
@@ -25,6 +26,7 @@ from guardian_management_api.models.sql_persistence import (
 )
 from guardian_management_api.ports.role import RolePersistencePort
 from sqlalchemy import select
+from sqlalchemy.sql.functions import count
 
 
 class TestSQLRolePersistenceAdapter:
@@ -285,3 +287,86 @@ class TestSQLRolePersistenceAdapter:
                     display_name="NEW DISPLAY NAME",
                 )
             )
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_delete(
+        self,
+        role_sql_adapter: SQLRolePersistenceAdapter,
+        create_roles,
+    ):
+        async with role_sql_adapter.session() as session:
+            db_role = (await create_roles(session, 1))[0]
+            app_name = db_role.namespace.app.name
+            namespace_name = db_role.namespace.name
+            name = db_role.name
+        assert (
+            await role_sql_adapter.delete(
+                RoleGetQuery(
+                    app_name=app_name, namespace_name=namespace_name, name=name
+                )
+            )
+            is None
+        )
+        async with role_sql_adapter.session() as session:
+            assert (await session.scalar(select(count(DBRole.id)))) == 0
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_delete_not_found_error(
+        self, role_sql_adapter: SQLRolePersistenceAdapter
+    ):
+        with pytest.raises(ObjectNotFoundError) as exc_info:
+            await role_sql_adapter.delete(
+                RoleGetQuery(app_name="app", namespace_name="namespace", name="role")
+            )
+        assert exc_info.value.object_type == Role
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_read_dependencies_empty(
+        self,
+        role_sql_adapter: SQLRolePersistenceAdapter,
+        create_roles,
+    ):
+        async with role_sql_adapter.session() as session:
+            db_role = (await create_roles(session, 1))[0]
+            app_name = db_role.namespace.app.name
+            namespace_name = db_role.namespace.name
+            name = db_role.name
+        result = await role_sql_adapter.read_dependencies(
+            RoleGetQuery(app_name=app_name, namespace_name=namespace_name, name=name)
+        )
+        assert result == []
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_read_dependencies_with_capabilities(
+        self,
+        role_sql_adapter: SQLRolePersistenceAdapter,
+        create_capabilities,
+    ):
+        async with role_sql_adapter.session() as session:
+            db_cap = (await create_capabilities(session, 1))[0]
+            db_role = db_cap.role
+            app_name = db_role.namespace.app.name
+            namespace_name = db_role.namespace.name
+            name = db_role.name
+            expected_cap_name = db_cap.name
+        result = await role_sql_adapter.read_dependencies(
+            RoleGetQuery(app_name=app_name, namespace_name=namespace_name, name=name)
+        )
+        assert len(result) == 1
+        assert isinstance(result[0], Capability)
+        assert result[0].name == expected_cap_name
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_read_dependencies_not_found(
+        self, role_sql_adapter: SQLRolePersistenceAdapter
+    ):
+        with pytest.raises(ObjectNotFoundError) as exc_info:
+            await role_sql_adapter.read_dependencies(
+                RoleGetQuery(app_name="app", namespace_name="namespace", name="role")
+            )
+        assert exc_info.value.object_type == Role

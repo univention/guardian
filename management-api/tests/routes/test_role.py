@@ -10,6 +10,7 @@ from guardian_management_api.constants import BASE_URL, COMPLETE_URL
 from guardian_management_api.main import app
 from guardian_management_api.models.sql_persistence import DBRole
 from sqlalchemy import select
+from sqlalchemy.sql.functions import count
 
 
 @pytest.mark.e2e
@@ -507,6 +508,63 @@ class TestRoleEndpoints:
                 "display_name": orig_role.display_name,
                 "resource_url": urljoin(BASE_URL, resource),
             }
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_delete_role(self, client, create_roles, sqlalchemy_mixin):
+        async with sqlalchemy_mixin.session() as session:
+            db_roles = await create_roles(session, 2)
+            target = db_roles[0]
+            app_name = target.namespace.app.name
+            namespace_name = target.namespace.name
+            name = target.name
+        result = client.delete(
+            client.app.url_path_for(
+                "delete_role",
+                app_name=app_name,
+                namespace_name=namespace_name,
+                name=name,
+            )
+        )
+        assert result.status_code == 204, result.text
+        async with sqlalchemy_mixin.session() as session:
+            assert (await session.scalar(select(count(DBRole.id)))) == 1
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_delete_role_404(self, client):
+        result = client.delete(
+            client.app.url_path_for(
+                "delete_role",
+                app_name="app",
+                namespace_name="namespace",
+                name="role",
+            )
+        )
+        assert result.status_code == 404, result.json()
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_delete_role_with_dependency(
+        self, client, create_capabilities, sqlalchemy_mixin
+    ):
+        async with sqlalchemy_mixin.session() as session:
+            db_cap = (await create_capabilities(session, 1))[0]
+            db_role = db_cap.role
+            app_name = db_role.namespace.app.name
+            namespace_name = db_role.namespace.name
+            name = db_role.name
+        result = client.delete(
+            client.app.url_path_for(
+                "delete_role",
+                app_name=app_name,
+                namespace_name=namespace_name,
+                name=name,
+            )
+        )
+        assert result.status_code == 409, result.json()
+        async with sqlalchemy_mixin.session() as session:
+            assert (await session.scalar(select(count(DBRole.id)))) == 1
 
 
 @pytest.mark.e2e
