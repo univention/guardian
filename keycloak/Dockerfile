@@ -1,4 +1,4 @@
-FROM docker.software-univention.de/keycloak-keycloak:25.0.6-ucs2
+FROM docker.software-univention.de/keycloak-keycloak:26.5.6-ucs2@sha256:7b6817ec948ac2b356d3476947bf87a88d42d3642729f1d178c00b8e4f4169a7
 
 # Configure a database vendor
 ENV KC_DB=dev-file
