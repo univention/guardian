@@ -35,6 +35,7 @@ from guardian_management_api.models.capability import (
 from guardian_management_api.models.condition import Condition
 from guardian_management_api.models.flags import Flag
 from guardian_management_api.models.permission import Permission
+from guardian_management_api.models.role import Role
 from guardian_management_api.models.routers.base import (
     GetAllRequest,
     GetByNamespaceRequest,
@@ -268,6 +269,39 @@ class SQLCapabilityPersistenceAdapter(
                 object_type=Capability,
             )
         await self._delete_obj(db_capability)
+
+    async def read_dependencies(self, query: CapabilityGetQuery) -> list[Role]:
+        db_capability = await self._get_single_object(
+            DBCapability,
+            name=query.name,
+            app_name=query.app_name,
+            namespace_name=query.namespace_name,
+        )
+        if db_capability is None:
+            raise ObjectNotFoundError(
+                f"No capability with the identifier '{query.app_name}:"
+                f"{query.namespace_name}:{query.name}' could be found.",
+                object_type=Capability,
+            )
+        stmt = (
+            select(DBRole)
+            .join(
+                role_capability_table,
+                DBRole.id == role_capability_table.c.role_id,
+            )
+            .where(role_capability_table.c.capability_id == db_capability.id)
+        )
+        async with self.session() as session:
+            db_roles = (await session.scalars(stmt)).unique().all()
+        return [
+            Role(
+                app_name=db_role.namespace.app.name,
+                namespace_name=db_role.namespace.name,
+                name=db_role.name,
+                display_name=db_role.display_name,
+            )
+            for db_role in db_roles
+        ]
 
     async def read_one(self, query: CapabilityGetQuery) -> Capability:
         result = await self._get_single_object(

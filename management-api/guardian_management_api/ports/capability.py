@@ -21,6 +21,7 @@ from guardian_management_api.models.capability import (
     Capability,
     CapabilityGetQuery,
 )
+from guardian_management_api.models.role import Role
 from guardian_management_api.ports.base import BasePersistencePort
 
 
@@ -38,6 +39,16 @@ class CapabilityPersistencePort(
 
         :raises ObjectNotFoundError: If the object could not be found.
         :raises PersistenceError: For any other error during interaction with the persistence.
+        """
+        raise NotImplementedError  # pragma: no cover
+
+    async def read_dependencies(self, query: CapabilityGetQuery) -> list[Role]:
+        """
+        Returns the list of roles that reference the specified capability
+        via the role_capability m:n join table.
+
+        :raises ObjectNotFoundError: If the capability could not be found.
+        :raises PersistenceError: For any error during interaction with the persistence.
         """
         raise NotImplementedError  # pragma: no cover
 
