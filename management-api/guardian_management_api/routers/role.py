@@ -7,6 +7,7 @@ from typing import Any, Dict
 from fastapi import APIRouter, Depends, Request
 from guardian_lib.adapter_registry import port_dep
 from guardian_lib.ports import AuthenticationPort
+from starlette import status
 
 from guardian_management_api import business_logic
 
@@ -22,6 +23,7 @@ from ..models.routers.role import (
     RoleSingleResponse,
 )
 from ..ports.authz import ResourceAuthorizationPort
+from ..ports.bundle_server import BundleServerPort
 from ..ports.role import RoleAPIPort, RolePersistencePort
 
 router = APIRouter(tags=["role"])
@@ -200,3 +202,34 @@ async def edit_role(
     )
 
     return response.model_dump()
+
+
+@router.delete(
+    "/roles/{app_name}/{namespace_name}/{name}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_role(
+    request: Request,
+    role_get_request: RoleGetFullIdentifierRequest = Depends(),
+    management_role_api: RoleAPIPort = Depends(
+        port_dep(RoleAPIPort, FastAPIRoleAPIAdapter)
+    ),
+    persistence: RolePersistencePort = Depends(port_dep(RolePersistencePort)),
+    bundle_server_port: BundleServerPort = Depends(port_dep(BundleServerPort)),
+    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
+    authz_port: ResourceAuthorizationPort = Depends(
+        port_dep(ResourceAuthorizationPort)
+    ),
+) -> None:
+    """
+    Delete a role. Fails if the role is still referenced by capabilities.
+    """
+    return await business_logic.delete_role(
+        api_request=role_get_request,
+        role_api_port=management_role_api,
+        bundle_server_port=bundle_server_port,
+        persistence_port=persistence,
+        authc_port=authc_port,
+        authz_port=authz_port,
+        request=request,
+    )

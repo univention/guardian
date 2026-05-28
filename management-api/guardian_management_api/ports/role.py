@@ -11,6 +11,7 @@ from typing import Generic, List, Optional, TypeVar
 
 from guardian_lib.ports import BasePort
 
+from ..models.capability import Capability
 from ..models.role import (
     Role,
     RoleCreateQuery,
@@ -100,6 +101,20 @@ class RoleAPIPort(
 ###############################################################################
 
 
-class RolePersistencePort(
-    BasePersistencePort[Role, RoleGetQuery, RolesGetQuery], ABC
-): ...
+class RolePersistencePort(BasePersistencePort[Role, RoleGetQuery, RolesGetQuery], ABC):
+    async def delete(self, query: RoleGetQuery) -> None:
+        """
+        Deletes the specified role from the persistent storage.
+
+        :raises ObjectNotFoundError: If the role could not be found.
+        :raises PersistenceError: For any other error during interaction with the persistence.
+        """
+        raise NotImplementedError  # pragma: no cover
+
+    async def read_dependencies(self, query: RoleGetQuery) -> list[Capability]:
+        """
+        Returns the list of capabilities that reference the specified role.
+
+        :raises PersistenceError: For any error during interaction with the persistence.
+        """
+        raise NotImplementedError  # pragma: no cover

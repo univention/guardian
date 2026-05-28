@@ -1360,6 +1360,68 @@ async def edit_role(
         raise (await role_api_port.transform_exception(exc)) from exc
 
 
+async def delete_role(
+    api_request: RoleGetFullIdentifierRequest,
+    role_api_port: RoleAPIPort,
+    bundle_server_port: BundleServerPort,
+    persistence_port: RolePersistencePort,
+    authc_port: AuthenticationPort,
+    authz_port: ResourceAuthorizationPort,
+    request: Request,
+):
+    try:
+        query = await role_api_port.to_role_get(api_request)
+        role = await persistence_port.read_one(query)
+        dependencies = await persistence_port.read_dependencies(query)
+        actor_id: str = await authc_port.get_actor_identifier(request)
+        resource: Resource = Resource(
+            resource_type=ResourceType.ROLE,
+            name=role.name,
+            app_name=role.app_name,
+            namespace_name=role.namespace_name,
+        )
+        logger.debug(
+            "Received request to delete role.",
+            actor_id=actor_id,
+            role_id=resource.id,
+        )
+        allowed = (
+            await authz_port.authorize_operation(
+                Actor(id=actor_id),
+                OperationType.DELETE_RESOURCE,
+                [resource],
+            )
+        ).get(resource.id, False)
+        if not allowed:
+            logger.warning(
+                "Permission denied to delete role.",
+                actor_id=actor_id,
+                role_id=resource.id,
+            )
+            raise UnauthorizedError(
+                "The logged in user is not authorized to delete this role."
+            )
+        if dependencies:
+            logger.warning(
+                "Role cannot be deleted because it is still referenced by capabilities.",
+                actor_id=actor_id,
+                role_id=resource.id,
+                dependencies=dependencies,
+            )
+            raise DependencyExistsError(
+                "This role cannot be deleted because there are still "
+                "capabilities depending on it. Please remove the dependencies first.",
+                dependencies=dependencies,
+            )
+        await persistence_port.delete(query)
+        logger.info("Role deleted.", actor_id=actor_id, role_id=resource.id)
+        await bundle_server_port.schedule_bundle_build(BundleType.data)
+        return None
+    except Exception as exc:
+        logger.error("Error while deleting role.")
+        raise (await role_api_port.transform_exception(exc)) from exc
+
+
 async def create_context(
     api_request: ContextCreateRequest,
     persistence_port: ContextPersistencePort,

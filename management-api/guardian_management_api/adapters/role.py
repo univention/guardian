@@ -6,10 +6,12 @@ from dataclasses import asdict
 from typing import Optional, Type, Union
 
 from port_loader import AsyncConfiguredAdapterMixin
+from sqlalchemy import select
 
 from ..constants import COMPLETE_URL
 from ..errors import ObjectNotFoundError, ParentNotFoundError
 from ..models.base import PaginationRequest, PersistenceGetManyResult
+from ..models.capability import Capability
 from ..models.role import (
     Role,
     RoleCreateQuery,
@@ -31,6 +33,7 @@ from ..models.routers.role import (
 )
 from ..models.sql_persistence import (
     DBApp,
+    DBCapability,
     DBNamespace,
     DBRole,
     SQLPersistenceAdapterSettings,
@@ -39,6 +42,7 @@ from ..ports.role import (
     RoleAPIPort,
     RolePersistencePort,
 )
+from .capability import SQLCapabilityPersistenceAdapter
 from .fastapi_utils import TransformExceptionMixin
 from .sql_persistence import SQLAlchemyMixin
 
@@ -250,3 +254,39 @@ class SQLRolePersistenceAdapter(
             )
         modified = await self._update_object(db_role, display_name=role.display_name)
         return SQLRolePersistenceAdapter._db_role_to_role(modified)
+
+    async def delete(self, query: RoleGetQuery) -> None:
+        db_role = await self._get_single_object(
+            DBRole,
+            name=query.name,
+            app_name=query.app_name,
+            namespace_name=query.namespace_name,
+        )
+        if db_role is None:
+            raise ObjectNotFoundError(
+                f"No role with the identifier '{query.app_name}:"
+                f"{query.namespace_name}:{query.name}' could be found.",
+                object_type=Role,
+            )
+        await self._delete_obj(db_role)
+
+    async def read_dependencies(self, query: RoleGetQuery) -> list[Capability]:
+        db_role = await self._get_single_object(
+            DBRole,
+            name=query.name,
+            app_name=query.app_name,
+            namespace_name=query.namespace_name,
+        )
+        if db_role is None:
+            raise ObjectNotFoundError(
+                f"No role with the identifier '{query.app_name}:"
+                f"{query.namespace_name}:{query.name}' could be found.",
+                object_type=Role,
+            )
+        stmt = select(DBCapability).where(DBCapability.role_id == db_role.id)
+        async with self.session() as session:
+            db_capabilities = (await session.scalars(stmt)).unique().all()
+        return [
+            SQLCapabilityPersistenceAdapter._db_cap_to_cap(db_cap)
+            for db_cap in db_capabilities
+        ]
