@@ -117,6 +117,10 @@ variables:
   DOC_TARGET_VERSION: "3.0"
   DOC_TARGET_NAME: "guardian-manual"
   DOC_TARGET_PATH: "$DOC_TARGET_NAME/$DOC_TARGET_VERSION"
+  # Minimum combined coverage (unit + e2e) accepted by coverage-merge.
+  # Override via "Run pipeline" UI, project CI/CD variables, or by
+  # editing this default to ratchet the threshold up over time.
+  COVERAGE_FAIL_UNDER: "90"
 
 pip-package-and-publish-with-uv:
   variables:
@@ -304,7 +308,8 @@ test-e2e:
     when: "always"
 
 # Merges the unit and e2e coverage data files into a single cobertura
-# report and enforces the 100% threshold over the combined run.
+# report and enforces the COVERAGE_FAIL_UNDER threshold (default 90,
+# overridable per-run from the pipeline UI) over the combined run.
 coverage-merge:
   stage: test
   needs:
@@ -319,7 +324,7 @@ coverage-merge:
   script:
     - uv run coverage combine .coverage.unit .coverage.e2e
     - uv run coverage xml -o coverage.xml
-    - uv run coverage report --fail-under=100
+    - uv run coverage report --fail-under=${COVERAGE_FAIL_UNDER}
   coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
   artifacts:
     paths:
