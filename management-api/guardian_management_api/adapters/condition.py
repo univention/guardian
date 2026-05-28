@@ -21,6 +21,7 @@ from ..models.condition import (
     ConditionParameter,
     ConditionsGetQuery,
 )
+from ..models.flags import Flag
 from ..models.routers.base import (
     GetAllRequest,
     GetByAppRequest,
@@ -215,6 +216,7 @@ class SQLConditionPersistenceAdapter(
                 for cond_param in db_condition.parameters
             ],
             code=db_condition.code,
+            flags=Flag(db_condition.flags),
         )
 
     class Config:

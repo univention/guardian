@@ -15,6 +15,7 @@ from ..models.context import (
     ContextGetQuery,
     ContextsGetQuery,
 )
+from ..models.flags import Flag
 from ..models.routers.base import (
     GetAllRequest,
     GetByAppRequest,
@@ -186,6 +187,7 @@ class SQLContextPersistenceAdapter(
             namespace_name=db_context.namespace.name,
             name=db_context.name,
             display_name=db_context.display_name,
+            flags=Flag(db_context.flags),
         )
 
     class Config:

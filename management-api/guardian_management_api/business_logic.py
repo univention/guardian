@@ -1385,6 +1385,7 @@ async def delete_role(
     try:
         query = await role_api_port.to_role_get(api_request)
         role = await persistence_port.read_one(query)
+        is_builtin = Flag.IS_BUILTIN in role.flags
         dependencies = await persistence_port.read_dependencies(query)
         actor_id: str = await authc_port.get_actor_identifier(request)
         resource: Resource = Resource(
@@ -1413,6 +1414,15 @@ async def delete_role(
             )
             raise UnauthorizedError(
                 "The logged in user is not authorized to delete this role."
+            )
+        if is_builtin:
+            logger.warning(
+                "This role cannot be deleted because it is a built-in role.",
+                actor_id=actor_id,
+                role_id=resource.id,
+            )
+            raise DependencyExistsError(
+                "This role cannot be deleted because it is a built-in role.",
             )
         if dependencies:
             logger.warning(

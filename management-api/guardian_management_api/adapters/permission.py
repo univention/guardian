@@ -12,6 +12,7 @@ from ..constants import COMPLETE_URL
 from ..errors import ObjectNotFoundError, ParentNotFoundError
 from ..models.base import PaginationRequest, PersistenceGetManyResult
 from ..models.capability import Capability
+from ..models.flags import Flag
 from ..models.permission import (
     Permission,
     PermissionCreateQuery,
@@ -170,6 +171,7 @@ class SQLPermissionPersistenceAdapter(
             namespace_name=db_permission.namespace.name,
             name=db_permission.name,
             display_name=db_permission.display_name,
+            flags=Flag(db_permission.flags),
         )
 
     class Config:

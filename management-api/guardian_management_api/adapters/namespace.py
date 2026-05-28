@@ -11,6 +11,7 @@ from sqlalchemy import select
 from ..constants import COMPLETE_URL
 from ..errors import ObjectNotFoundError, ParentNotFoundError
 from ..models.base import PaginationRequest, PersistenceGetManyResult
+from ..models.flags import Flag
 from ..models.namespace import (
     Namespace,
     NamespaceCreateQuery,
@@ -194,6 +195,7 @@ class SQLNamespacePersistenceAdapter(
             name=db_namespace.name,
             display_name=db_namespace.display_name,
             app_name=db_namespace.app.name,
+            flags=Flag(db_namespace.flags),
         )
 
     class Config:

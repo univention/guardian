@@ -33,6 +33,7 @@ from guardian_management_api.models.capability import (
     ParametrizedCondition,
 )
 from guardian_management_api.models.condition import Condition
+from guardian_management_api.models.flags import Flag
 from guardian_management_api.models.permission import Permission
 from guardian_management_api.models.role import Role
 from guardian_management_api.models.routers.base import (
@@ -127,6 +128,7 @@ class SQLCapabilityPersistenceAdapter(
             relation=cap.relation,
             permissions=set(db_permissions),
             conditions=cap_conditions,
+            flags=int(cap.flags),
         )
 
     @staticmethod
@@ -160,17 +162,20 @@ class SQLCapabilityPersistenceAdapter(
                 app_name=db_cap.role.namespace.app.name,
                 namespace_name=db_cap.role.namespace.name,
                 name=db_cap.role.name,
+                flags=Flag(db_cap.role.flags),
             ),
             permissions=[
                 Permission(
                     app_name=perm.namespace.app.name,
                     namespace_name=perm.namespace.name,
                     name=perm.name,
+                    flags=Flag(perm.flags),
                 )
                 for perm in db_cap.permissions
             ],
             relation=db_cap.relation,
             conditions=conditions,
+            flags=Flag(db_cap.flags),
         )
 
     @classmethod
@@ -251,6 +256,16 @@ class SQLCapabilityPersistenceAdapter(
     async def update(self, obj: Capability) -> Capability:
         # This can probably be implemented without deleting objects, but since there
         # is currently no disadvantage, this is the easiest way to implement this.
+        # Preserve flags from the existing row: delete+create would otherwise reset
+        # IS_BUILTIN, allowing a built-in capability to be deleted after one edit.
+        existing = await self._get_single_object(
+            DBCapability,
+            name=obj.name,
+            app_name=obj.app_name,
+            namespace_name=obj.namespace_name,
+        )
+        if existing is not None:
+            obj.flags = Flag(existing.flags)
         await self.delete(
             CapabilityGetQuery(
                 app_name=obj.app_name, namespace_name=obj.namespace_name, name=obj.name
