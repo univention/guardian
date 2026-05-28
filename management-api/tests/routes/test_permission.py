@@ -158,6 +158,7 @@ class TestPermissionEndpoints:
         )
         assert result.status_code == 201, result.json()
         expected_result = asdict(permission_to_create)
+        del expected_result["flags"]
         expected_result["resource_url"] = (
             f"{COMPLETE_URL}/permissions/{permission_to_create.app_name}/"
             f"{permission_to_create.namespace_name}/{permission_to_create.name}"

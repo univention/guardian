@@ -35,8 +35,10 @@ class TestCapabilityEndpoints:
         permissions = [asdict(perm) for perm in capability.permissions]
         role = asdict(capability.role)
         del role["display_name"]
+        del role["flags"]
         for perm in permissions:
             del perm["display_name"]
+            del perm["flags"]
         expected = {
             "capability": {
                 "app_name": capability.app_name,
@@ -90,8 +92,10 @@ class TestCapabilityEndpoints:
             permissions = [asdict(perm) for perm in orig_capability.permissions]
             role = asdict(orig_capability.role)
             del role["display_name"]
+            del role["flags"]
             for perm in permissions:
                 del perm["display_name"]
+                del perm["flags"]
             resource = client.app.url_path_for(
                 "get_capability",
                 app_name=orig_capability.app_name,
@@ -150,6 +154,7 @@ class TestCapabilityEndpoints:
         assert pagination == {"offset": 0, "limit": 10, "total_count": 10}
         role = asdict(SQLRolePersistenceAdapter._db_role_to_role(db_role1))
         del role["display_name"]
+        del role["flags"]
         for index, condition in enumerate(capabilities):
             orig_capability = SQLCapabilityPersistenceAdapter._db_cap_to_cap(
                 db_caps[index]
@@ -157,6 +162,7 @@ class TestCapabilityEndpoints:
             permissions = [asdict(perm) for perm in orig_capability.permissions]
             for perm in permissions:
                 del perm["display_name"]
+                del perm["flags"]
             resource = client.app.url_path_for(
                 "get_capability",
                 app_name=orig_capability.app_name,
@@ -285,8 +291,10 @@ class TestCapabilityEndpoints:
         permissions = [asdict(perm) for perm in cap_to_create.permissions]
         role = asdict(cap_to_create.role)
         del role["display_name"]
+        del role["flags"]
         for perm in permissions:
             del perm["display_name"]
+            del perm["flags"]
         expected = {
             "capability": {
                 "app_name": cap_to_create.app_name,
@@ -655,6 +663,7 @@ class TestCapabilityEndpoints:
         assert result.status_code == 200, result.json()
         role = asdict(cap_to_edit.role)
         del role["display_name"]
+        del role["flags"]
         expected = {
             "capability": {
                 "app_name": cap_to_edit.app_name,

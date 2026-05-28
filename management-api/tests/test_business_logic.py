@@ -22,7 +22,9 @@ from guardian_management_api.business_logic import (
     get_namespaces,
     get_namespaces_by_app,
 )
-from guardian_management_api.errors import UnauthorizedError
+from guardian_management_api.errors import DependencyExistsError, UnauthorizedError
+from guardian_management_api.models.authz import ResourceType
+from guardian_management_api.models.flags import Flag
 from guardian_management_api.models.routers.app import AppCreateRequest, AppsGetRequest
 from guardian_management_api.models.routers.base import GetAllRequest, GetByAppRequest
 from guardian_management_api.models.routers.namespace import NamespacesGetRequest
@@ -915,3 +917,224 @@ class TestBusinessLogic:
                 authz_mock,
                 request_mock,
             )
+
+
+DELETE_FN_CONFIGS = [
+    {
+        "id": "condition",
+        "fn": business_logic.delete_condition,
+        "api_port_method": "to_obj_get_single",
+        "resource_type": ResourceType.CONDITION,
+        "name": "cond",
+        "namespace_name": "ns",
+        "app_name": "app",
+        "has_dependencies_check": True,
+        "builtin_msg": "This condition cannot be deleted because it is a built-in condition.",
+        "unauthorized_msg": "The logged in user is not authorized to delete this condition.",
+        "uses_bundle_server": True,
+    },
+    {
+        "id": "permission",
+        "fn": business_logic.delete_permission,
+        "api_port_method": "to_obj_get_single",
+        "resource_type": ResourceType.PERMISSION,
+        "name": "perm",
+        "namespace_name": "ns",
+        "app_name": "app",
+        "has_dependencies_check": True,
+        "builtin_msg": "This permission cannot be deleted because it is a built-in permission.",
+        "unauthorized_msg": "The logged in user is not authorized to delete this permission.",
+        "uses_bundle_server": True,
+    },
+    {
+        "id": "capability",
+        "fn": business_logic.delete_capability,
+        "api_port_method": "to_obj_get_single",
+        "resource_type": ResourceType.CAPABILITY,
+        "name": "cap",
+        "namespace_name": "ns",
+        "app_name": "app",
+        "has_dependencies_check": False,
+        "builtin_msg": "This capability cannot be deleted because it is a built-in capability.",
+        "unauthorized_msg": "The logged in user is not authorized to delete this capability.",
+        "uses_bundle_server": True,
+    },
+    {
+        "id": "context",
+        "fn": business_logic.delete_context,
+        "api_port_method": "to_context_get",
+        "resource_type": ResourceType.CONTEXT,
+        "name": "ctx",
+        "namespace_name": "ns",
+        "app_name": "app",
+        "has_dependencies_check": False,
+        "builtin_msg": "This context cannot be deleted because it is a built-in context.",
+        "unauthorized_msg": "The logged in user is not authorized to delete this context.",
+        "uses_bundle_server": True,
+    },
+    {
+        "id": "role",
+        "fn": business_logic.delete_role,
+        "api_port_method": "to_role_get",
+        "resource_type": ResourceType.ROLE,
+        "name": "role",
+        "namespace_name": "ns",
+        "app_name": "app",
+        "has_dependencies_check": True,
+        "builtin_msg": "This role cannot be deleted because it is a built-in role.",
+        "unauthorized_msg": "The logged in user is not authorized to delete this role.",
+        "uses_bundle_server": True,
+    },
+    {
+        "id": "app",
+        "fn": business_logic.delete_app,
+        "api_port_method": "to_app_get",
+        "resource_type": ResourceType.APP,
+        "name": "guardian",
+        "namespace_name": None,
+        "app_name": None,
+        "has_dependencies_check": True,
+        "builtin_msg": "This app cannot be deleted because it is a built-in app.",
+        "unauthorized_msg": "The logged in user is not authorized to delete this app.",
+        "uses_bundle_server": True,
+    },
+    {
+        "id": "namespace",
+        "fn": business_logic.delete_namespace,
+        "api_port_method": "to_namespace_get",
+        "resource_type": ResourceType.NAMESPACE,
+        "name": "builtin",
+        "namespace_name": None,
+        "app_name": "guardian",
+        "has_dependencies_check": True,
+        "builtin_msg": "This namespace cannot be deleted because it is a built-in namespace.",
+        "unauthorized_msg": "The logged in user is not authorized to delete this namespace.",
+        "uses_bundle_server": True,
+    },
+]
+
+
+def _resource_id(cfg):
+    if cfg["resource_type"] == ResourceType.APP:
+        return cfg["name"]
+    if cfg["resource_type"] == ResourceType.NAMESPACE:
+        return f"{cfg['app_name']}:{cfg['name']}"
+    return f"{cfg['app_name']}:{cfg['namespace_name']}:{cfg['name']}"
+
+
+def _build_delete_mocks(cfg, mocker, *, flags, allowed=True, dependencies=None):
+    """Build the mock kwargs needed to invoke a delete_* business_logic function.
+
+    `flags` is the Flag value on the persistence object returned by read_one.
+    `allowed` controls the authz mock outcome.
+    `dependencies` is what persistence.read_dependencies returns (default []).
+    """
+    persisted = mocker.Mock(spec=[])
+    persisted.name = cfg["name"]
+    persisted.namespace_name = cfg["namespace_name"]
+    persisted.app_name = cfg["app_name"]
+    persisted.flags = flags
+
+    persistence_mock = mocker.AsyncMock()
+    persistence_mock.read_one.return_value = persisted
+    persistence_mock.read_dependencies.return_value = (
+        dependencies if dependencies is not None else []
+    )
+
+    api_port_mock = mocker.AsyncMock()
+    api_port_mock.transform_exception = transform_exception_identity
+    getattr(api_port_mock, cfg["api_port_method"]).return_value = mocker.Mock()
+
+    authz_mock = mocker.AsyncMock()
+    authz_mock.authorize_operation = mocker.AsyncMock(
+        return_value={_resource_id(cfg): allowed}
+    )
+    authc_mock = mocker.AsyncMock()
+    authc_mock.get_actor_identifier.return_value = "actor"
+    bundle_server_mock = mocker.AsyncMock()
+    request_mock = mocker.Mock()
+
+    return {
+        "api_request": mocker.MagicMock(),
+        "api_port": api_port_mock,
+        "bundle_server": bundle_server_mock,
+        "persistence": persistence_mock,
+        "authc": authc_mock,
+        "authz": authz_mock,
+        "request": request_mock,
+        "persisted": persisted,
+    }
+
+
+async def _invoke_delete(cfg, mocks):
+    return await cfg["fn"](
+        mocks["api_request"],
+        mocks["api_port"],
+        mocks["bundle_server"],
+        mocks["persistence"],
+        mocks["authc"],
+        mocks["authz"],
+        mocks["request"],
+    )
+
+
+@pytest.mark.parametrize("cfg", DELETE_FN_CONFIGS, ids=lambda c: c["id"])
+class TestBuiltinFlagProtection:
+    """IS_BUILTIN flag prevents deletion across every delete_* business_logic function."""
+
+    @pytest.mark.asyncio
+    async def test_delete_proceeds_when_flag_not_builtin(self, cfg, mocker):
+        mocks = _build_delete_mocks(cfg, mocker, flags=Flag.NONE)
+        result = await _invoke_delete(cfg, mocks)
+        assert result is None
+        mocks["persistence"].delete.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_delete_blocked_when_builtin_bit_set(self, cfg, mocker):
+        mocks = _build_delete_mocks(cfg, mocker, flags=Flag.IS_BUILTIN)
+        with pytest.raises(DependencyExistsError, match=cfg["builtin_msg"]):
+            await _invoke_delete(cfg, mocks)
+        mocks["persistence"].delete.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_delete_blocked_with_composite_flag_including_builtin(
+        self, cfg, mocker
+    ):
+        # 0b11: IS_BUILTIN plus a hypothetical second bit. Guards against an
+        # implementation that compared flags == 1 instead of testing the bit.
+        composite = Flag.IS_BUILTIN | Flag(1 << 1)
+        mocks = _build_delete_mocks(cfg, mocker, flags=composite)
+        with pytest.raises(DependencyExistsError, match=cfg["builtin_msg"]):
+            await _invoke_delete(cfg, mocks)
+        mocks["persistence"].delete.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_delete_proceeds_when_only_non_builtin_bit_set(self, cfg, mocker):
+        # 0b10: a hypothetical future bit set, IS_BUILTIN not set. Guards
+        # against an implementation that compared flags != 0.
+        other_bit_only = Flag(1 << 1)
+        mocks = _build_delete_mocks(cfg, mocker, flags=other_bit_only)
+        result = await _invoke_delete(cfg, mocks)
+        assert result is None
+        mocks["persistence"].delete.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_unauthorized_takes_precedence_over_builtin(self, cfg, mocker):
+        mocks = _build_delete_mocks(cfg, mocker, flags=Flag.IS_BUILTIN, allowed=False)
+        with pytest.raises(UnauthorizedError, match=cfg["unauthorized_msg"]):
+            await _invoke_delete(cfg, mocks)
+        mocks["persistence"].delete.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_builtin_takes_precedence_over_dependencies(self, cfg, mocker):
+        if not cfg["has_dependencies_check"]:
+            pytest.skip(f"{cfg['id']} delete does not check dependencies")
+        mocks = _build_delete_mocks(
+            cfg,
+            mocker,
+            flags=Flag.IS_BUILTIN,
+            dependencies=[mocker.Mock(), mocker.Mock()],
+        )
+        with pytest.raises(DependencyExistsError, match=cfg["builtin_msg"]):
+            await _invoke_delete(cfg, mocks)
+        mocks["persistence"].delete.assert_not_called()
