@@ -6,7 +6,8 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Optional
 
-from guardian_management_api.models.base import PaginationRequest
+from .base import PaginationRequest
+from .flags import Flag
 
 
 class ConditionParameterType(StrEnum):
@@ -34,6 +35,7 @@ class Condition:
     display_name: Optional[str] = None
     documentation: Optional[str] = None
     parameters: list[ConditionParameter] = field(default_factory=list)
+    flags: Flag = Flag.NONE
 
 
 @dataclass(frozen=True)

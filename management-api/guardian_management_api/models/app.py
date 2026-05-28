@@ -11,12 +11,14 @@ from typing import List, Optional
 
 from .base import PaginatedAPIResponse, PaginationRequest, ResponseObject
 from .role import ResponseRole
+from .flags import Flag
 
 
 @dataclass
 class App:
     name: str
     display_name: Optional[str] = None
+    flags: Flag = Flag.NONE
 
 
 @dataclass(frozen=True)

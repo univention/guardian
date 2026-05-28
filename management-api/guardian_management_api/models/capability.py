@@ -5,10 +5,11 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any, Optional
 
-from guardian_management_api.models.base import PaginationRequest
-from guardian_management_api.models.condition import ConditionParameterType
-from guardian_management_api.models.permission import Permission
-from guardian_management_api.models.role import Role
+from .base import PaginationRequest
+from .condition import ConditionParameterType
+from .flags import Flag
+from .permission import Permission
+from .role import Role
 
 
 @dataclass
@@ -41,6 +42,7 @@ class Capability:
     permissions: list[Permission]
     relation: CapabilityConditionRelation
     conditions: list[ParametrizedCondition]
+    flags: Flag = Flag.NONE
 
 
 @dataclass(frozen=True)

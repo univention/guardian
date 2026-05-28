@@ -11,6 +11,7 @@ from sqlalchemy import (
     Column,
     Enum,
     ForeignKey,
+    Integer,
     LargeBinary,
     String,
     Table,
@@ -52,6 +53,7 @@ class DBApp(Base):
     name: Mapped[str] = mapped_column(String(STRING_MAX_LENGTH), unique=True)
     display_name: Mapped[Optional[str]] = mapped_column(String(STRING_MAX_LENGTH))
     namespaces: Mapped[list["DBNamespace"]] = relationship(back_populates="app")
+    flags: Mapped[int] = mapped_column(Integer(), default=0, server_default="0")
 
 
 class DBNamespace(Base):
@@ -62,6 +64,7 @@ class DBNamespace(Base):
     app: Mapped[DBApp] = relationship(back_populates="namespaces", lazy="joined")
     name: Mapped[str] = mapped_column(String(STRING_MAX_LENGTH))
     display_name: Mapped[Optional[str]] = mapped_column(String(STRING_MAX_LENGTH))
+    flags: Mapped[int] = mapped_column(Integer(), default=0, server_default="0")
 
     __table_args__ = (  # type: ignore[var-annotated]
         UniqueConstraint("app_id", "name"),
@@ -76,6 +79,7 @@ class DBPermission(Base):
     namespace: Mapped[DBNamespace] = relationship(lazy="joined")
     name: Mapped[str] = mapped_column(String(STRING_MAX_LENGTH))
     display_name: Mapped[Optional[str]] = mapped_column(String(STRING_MAX_LENGTH))
+    flags: Mapped[int] = mapped_column(Integer(), default=0, server_default="0")
 
     __table_args__ = (  # type: ignore[var-annotated]
         UniqueConstraint("namespace_id", "name"),
@@ -90,6 +94,7 @@ class DBRole(Base):
     namespace: Mapped[DBNamespace] = relationship(lazy="joined")
     name: Mapped[str] = mapped_column(String(STRING_MAX_LENGTH))
     display_name: Mapped[Optional[str]] = mapped_column(String(STRING_MAX_LENGTH))
+    flags: Mapped[int] = mapped_column(Integer(), default=0, server_default="0")
 
     __table_args__ = (  # type: ignore[var-annotated]
         UniqueConstraint("namespace_id", "name"),
@@ -104,6 +109,7 @@ class DBContext(Base):
     namespace: Mapped[DBNamespace] = relationship(lazy="joined")
     name: Mapped[str] = mapped_column(String(STRING_MAX_LENGTH))
     display_name: Mapped[Optional[str]] = mapped_column(String(STRING_MAX_LENGTH))
+    flags: Mapped[int] = mapped_column(Integer(), default=0, server_default="0")
 
     __table_args__ = (  # type: ignore[var-annotated]
         UniqueConstraint("namespace_id", "name"),
@@ -137,6 +143,7 @@ class DBCondition(Base):
         order_by=DBConditionParameter.position,
     )
     code: Mapped[bytes] = mapped_column(LargeBinary())
+    flags: Mapped[int] = mapped_column(Integer(), default=0, server_default="0")
 
     __table_args__ = (  # type: ignore[var-annotated]
         UniqueConstraint("namespace_id", "name"),
@@ -195,6 +202,7 @@ class DBCapability(Base):
     conditions: Mapped[set[DBCapabilityCondition]] = relationship(
         lazy="joined", back_populates="capability", cascade="all, delete"
     )
+    flags: Mapped[int] = mapped_column(Integer(), default=0, server_default="0")
 
     __table_args__ = (  # type: ignore[var-annotated]
         UniqueConstraint("namespace_id", "name"),

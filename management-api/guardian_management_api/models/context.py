@@ -5,7 +5,8 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from guardian_management_api.models.base import PaginationRequest
+from .base import PaginationRequest
+from .flags import Flag
 
 
 @dataclass
@@ -14,6 +15,7 @@ class Context:
     namespace_name: str
     name: str
     display_name: Optional[str] = None
+    flags: Flag = Flag.NONE
 
 
 @dataclass(frozen=True)

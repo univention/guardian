@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 from .base import PaginatedAPIResponse, PaginationRequest, ResponseObject
+from .flags import Flag
 
 
 @dataclass
@@ -14,6 +15,7 @@ class Role:
     namespace_name: str
     name: str
     display_name: Optional[str] = None
+    flags: Flag = Flag.NONE
 
 
 @dataclass(frozen=True)

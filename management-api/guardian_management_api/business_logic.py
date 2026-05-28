@@ -17,6 +17,7 @@ from .models.capability import (
     CapabilityConditionRelation,
     ParametrizedCondition,
 )
+from .models.flags import Flag
 from .models.namespace import Namespace
 from .models.permission import Permission
 from .models.role import Role
@@ -827,7 +828,7 @@ async def delete_condition(
     try:
         query = await api_port.to_obj_get_single(api_request)
         condition = await persistence_port.read_one(query)
-        is_builtin_condition = False  # TODO  impl logic
+        is_builtin = Flag.IS_BUILTIN in condition.flags
         dependencies = await persistence_port.read_dependencies(query)
         actor_id: str = await authc_port.get_actor_identifier(request)
         resource: Resource = Resource(
@@ -858,17 +859,17 @@ async def delete_condition(
             raise UnauthorizedError(
                 "The logged in user is not authorized to delete this condition."
             )
-        if is_builtin_condition:  # pragma: no cover
-            # TODO: detect builtin conditions and refuse to delete them.
-            # Unreachable today because the flag above is hardcoded False.
+
+        if is_builtin:
             logger.warning(
-                "Condition cannot be deleted because it is one of the default conditions.",
+                "This condition cannot be deleted because it is a built-in condition.",
                 actor_id=actor_id,
                 condition_id=resource.id,
             )
             raise DependencyExistsError(
-                "This condition cannot be deleted because it is one of the default conditions.",
+                "This condition cannot be deleted because it is a built-in condition.",
             )
+
         if dependencies:
             logger.warning(
                 "This Condition cannot be deleted because it is still used in a capability.",
@@ -1111,6 +1112,7 @@ async def delete_permission(
     try:
         query = await api_port.to_obj_get_single(api_request)
         permission = await persistence_port.read_one(query)
+        is_builtin = Flag.IS_BUILTIN in permission.flags
         dependencies = await persistence_port.read_dependencies(query)
         actor_id: str = await authc_port.get_actor_identifier(request)
         resource: Resource = Resource(
@@ -1141,6 +1143,17 @@ async def delete_permission(
             raise UnauthorizedError(
                 "The logged in user is not authorized to delete this permission."
             )
+
+        if is_builtin:
+            logger.warning(
+                "This permission cannot be deleted because it is a built-in permission.",
+                actor_id=actor_id,
+                permission_id=resource.id,
+            )
+            raise DependencyExistsError(
+                "This permission cannot be deleted because it is a built-in permission.",
+            )
+
         if dependencies:
             logger.warning(
                 "Permission cannot be deleted due to existing dependencies.",
@@ -1625,6 +1638,7 @@ async def delete_context(
     try:
         query = await api_port.to_context_get(api_request)
         context = await persistence_port.read_one(query)
+        is_builtin = Flag.IS_BUILTIN in context.flags
         actor_id: str = await authc_port.get_actor_identifier(request)
         resource: Resource = Resource(
             resource_type=ResourceType.CONTEXT,
@@ -1654,6 +1668,17 @@ async def delete_context(
             raise UnauthorizedError(
                 "The logged in user is not authorized to delete this context."
             )
+
+        if is_builtin:
+            logger.warning(
+                "This context cannot be deleted because it is a built-in context.",
+                actor_id=actor_id,
+                context_id=resource.id,
+            )
+            raise DependencyExistsError(
+                "This context cannot be deleted because it is a built-in context.",
+            )
+
         await persistence_port.delete(query)
         logger.info("Context deleted.", actor_id=actor_id, context_id=resource.id)
         await bundle_server_port.schedule_bundle_build(BundleType.data)
@@ -1953,6 +1978,7 @@ async def delete_capability(
     try:
         query = await api_port.to_obj_get_single(api_request)
         capability = await persistence_port.read_one(query)
+        is_builtin = Flag.IS_BUILTIN in capability.flags
         actor_id: str = await authc_port.get_actor_identifier(request)
         resource: Resource = Resource(
             resource_type=ResourceType.CAPABILITY,
@@ -1982,6 +2008,17 @@ async def delete_capability(
             raise UnauthorizedError(
                 "The logged in user is not authorized to delete this capability."
             )
+
+        if is_builtin:
+            logger.warning(
+                "This capability cannot be deleted because it is a built-in capability.",
+                actor_id=actor_id,
+                capability_id=resource.id,
+            )
+            raise DependencyExistsError(
+                "This capability cannot be deleted because it is a built-in capability.",
+            )
+
         await persistence_port.delete(query)
         logger.info("Capability deleted.", actor_id=actor_id, capability_id=resource.id)
         await bundle_server_port.schedule_bundle_build(BundleType.data)
@@ -2003,6 +2040,7 @@ async def delete_app(
     try:
         query = await app_api_port.to_app_get(api_request)
         app = await persistence_port.read_one(query)
+        is_builtin = Flag.IS_BUILTIN in app.flags
         dependencies = await persistence_port.read_dependencies(query)
         actor_id: str = await authc_port.get_actor_identifier(request)
         resource = Resource(resource_type=ResourceType.APP, name=app.name)
@@ -2011,6 +2049,7 @@ async def delete_app(
             actor_id=actor_id,
             app_name=resource.id,
         )
+
         allowed = (
             await authz_port.authorize_operation(
                 Actor(id=actor_id),
@@ -2027,6 +2066,17 @@ async def delete_app(
             raise UnauthorizedError(
                 "The logged in user is not authorized to delete this app."
             )
+
+        if is_builtin:
+            logger.warning(
+                "This app cannot be deleted because it is a built-in app.",
+                actor_id=actor_id,
+                app_name=resource.id,
+            )
+            raise DependencyExistsError(
+                "This app cannot be deleted because it is a built-in app.",
+            )
+
         if dependencies:
             logger.warning(
                 "App cannot be deleted due to existing dependencies.",
@@ -2060,6 +2110,7 @@ async def delete_namespace(
     try:
         query = await namespace_api_port.to_namespace_get(api_request)
         namespace = await namespace_persistence_port.read_one(query)
+        is_builtin = Flag.IS_BUILTIN in namespace.flags
         dependencies = await namespace_persistence_port.read_dependencies(query)
         actor_id: str = await authc_port.get_actor_identifier(request)
         resource = Resource(
@@ -2072,6 +2123,7 @@ async def delete_namespace(
             actor_id=actor_id,
             namespace_id=resource.id,
         )
+
         allowed = (
             await authz_port.authorize_operation(
                 Actor(id=actor_id),
@@ -2088,6 +2140,17 @@ async def delete_namespace(
             raise UnauthorizedError(
                 "The logged in user is not authorized to delete this namespace."
             )
+
+        if is_builtin:
+            logger.warning(
+                "This namespace cannot be deleted because it is a built-in namespace.",
+                actor_id=actor_id,
+                namespace_id=resource.id,
+            )
+            raise DependencyExistsError(
+                "This namespace cannot be deleted because it is a built-in namespace.",
+            )
+
         if dependencies:
             logger.warning(
                 "Namespace cannot be deleted due to existing dependencies.",
