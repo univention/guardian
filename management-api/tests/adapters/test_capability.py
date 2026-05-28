@@ -60,6 +60,7 @@ class TestSQLCapabilityPersistenceAdapter:
                 session,
                 db_permissions[0].namespace.app.name,
                 db_permissions[0].namespace.name,
+                with_capabilities=False,
             )
             cap = Capability(
                 app_name=db_permissions[0].namespace.app.name,

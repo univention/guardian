@@ -15,7 +15,7 @@ from guardian_management_api.models.base import (
     PaginationRequest,
     PersistenceGetManyResult,
 )
-from guardian_management_api.models.capability import Capability
+from guardian_management_api.models.capability import CapabilityReference
 from guardian_management_api.models.role import (
     Role,
     RoleGetQuery,
@@ -85,6 +85,34 @@ class TestSQLRolePersistenceAdapter:
                     display_name="Role",
                 )
             )
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("create_tables")
+    async def test_create_capability_not_found(
+        self, role_sql_adapter: SQLRolePersistenceAdapter, create_namespaces
+    ):
+        async with role_sql_adapter.session() as session:
+            namespace = (await create_namespaces(session, 1))[0]
+        with pytest.raises(
+            ObjectNotFoundError,
+            match="Not all capabilities specified for the role could be found.",
+        ) as exc_info:
+            await role_sql_adapter.create(
+                Role(
+                    app_name=namespace.app.name,
+                    namespace_name=namespace.name,
+                    name="role",
+                    display_name="Role",
+                    capabilities=[
+                        CapabilityReference(
+                            app_name=namespace.app.name,
+                            namespace_name=namespace.name,
+                            name="nonexistent-cap",
+                        )
+                    ],
+                )
+            )
+        assert exc_info.value.object_type is CapabilityReference
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")

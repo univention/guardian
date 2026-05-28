@@ -15,7 +15,6 @@ from .models.capability import (
     Capability,
     CapabilityConditionParameter,
     CapabilityConditionRelation,
-    CapabilityReference,
     ParametrizedCondition,
 )
 from .models.flags import Flag
@@ -553,12 +552,8 @@ async def register_app(
                 name="app-admin",
                 display_name=f"App Administrator for {app_display}",
                 capabilities=[
-                    CapabilityReference(
-                        app_name=cap.app_name,
-                        namespace_name=cap.namespace_name,
-                        name=cap.name,
-                    )
-                    for cap in (admin_cap, admin_read_cap)
+                    admin_cap.to_reference(),
+                    admin_read_cap.to_reference(),
                 ],
             )
         )
@@ -1369,7 +1364,15 @@ async def edit_role(
                 "The logged in user is not authorized to edit this role."
             )
         role = await persistence_port.read_one(query)
-        role = await role_api_port.to_role_edit(old_role=role, api_request=api_request)
+        patch_caps = api_request.data.capabilities
+        capability_refs = (
+            None if patch_caps is None else [c.to_reference() for c in patch_caps]
+        )
+        role = await role_api_port.to_role_edit(
+            old_role=role,
+            display_name=api_request.data.display_name,
+            capabilities=capability_refs,
+        )
         modified_role = await persistence_port.update(role)
         logger.info("Role updated.", actor_id=actor_id, role_id=resource.id)
         return await role_api_port.to_role_get_response(modified_role)

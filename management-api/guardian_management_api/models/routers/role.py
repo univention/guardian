@@ -6,6 +6,7 @@ from typing import Optional
 
 from pydantic import Field
 
+from guardian_management_api.models.capability import CapabilityReference
 from guardian_management_api.models.routers.base import (
     CreateBaseRequest,
     DisplayNameObjectMixin,
@@ -25,7 +26,12 @@ from guardian_management_api.models.routers.base import (
 class RoleCapability(GuardianBaseModel, NamespacedObjectMixin):
     """Reference to a capability from a role (identifier only)."""
 
-    ...
+    def to_reference(self) -> CapabilityReference:
+        return CapabilityReference(
+            app_name=self.app_name,
+            namespace_name=self.namespace_name,
+            name=self.name,
+        )
 
 
 #####

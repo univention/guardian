@@ -565,6 +565,7 @@ def create_role():
         namespace_name: str = "namespace",
         name: str = "role",
         display_name: str = "Role",
+        with_capabilities: bool = True,
     ):
         async with session.begin():
             app = (
@@ -582,6 +583,26 @@ def create_role():
                 namespace_id=namespace.id, name=name, display_name=display_name
             )
             session.add(role)
+        if with_capabilities:
+            caps = [
+                DBCapability(
+                    namespace_id=namespace.id,
+                    name=f"{name}_cap_{i}",
+                    relation=CapabilityConditionRelation.AND,
+                    permissions=set(),
+                    conditions=set(),
+                )
+                for i in range(2)
+            ]
+            async with session.begin():
+                session.add_all(caps)
+            async with session.begin():
+                for cap in caps:
+                    await session.execute(
+                        role_capability_table.insert().values(
+                            role_id=role.id, capability_id=cap.id
+                        )
+                    )
         async with session.begin():
             await session.refresh(role, attribute_names=["namespace", "capability"])
         return role
@@ -596,6 +617,7 @@ def create_roles(create_namespaces):
         roles_per_namespace: int,
         namespaces_per_app: int = 1,
         num_apps: int = 1,
+        with_capabilities: bool = True,
     ) -> list[DBRole]:
         namespaces = await create_namespaces(session, namespaces_per_app, num_apps)
         async with session.begin():
@@ -609,6 +631,31 @@ def create_roles(create_namespaces):
                 for namespace in namespaces
             ]
             session.add_all(roles)
+        if with_capabilities:
+            cap_pairs = []
+            for role in roles:
+                caps = [
+                    DBCapability(
+                        namespace_id=role.namespace_id,
+                        name=f"{role.name}_cap_{i}",
+                        relation=CapabilityConditionRelation.AND,
+                        permissions=set(),
+                        conditions=set(),
+                    )
+                    for i in range(2)
+                ]
+                cap_pairs.append((role, caps))
+            async with session.begin():
+                for _, caps in cap_pairs:
+                    session.add_all(caps)
+            async with session.begin():
+                for role, caps in cap_pairs:
+                    for cap in caps:
+                        await session.execute(
+                            role_capability_table.insert().values(
+                                role_id=role.id, capability_id=cap.id
+                            )
+                        )
         async with session.begin():
             [
                 await session.refresh(role, attribute_names=["namespace", "capability"])
@@ -789,7 +836,13 @@ def create_capabilities(
         db_namespace = (await create_namespaces(session, 1))[0]
         db_app = db_namespace.app
         db_roles = [
-            await create_role(session, db_app.name, db_namespace.name, f"role_{i:09d}")
+            await create_role(
+                session,
+                db_app.name,
+                db_namespace.name,
+                f"role_{i:09d}",
+                with_capabilities=False,
+            )
             for i in range(num_roles)
         ]
         caps = []
@@ -864,7 +917,10 @@ def create_capability(
             session=session, app_name=app_name, namespace_name=namespace_name
         )
         role = await create_role(
-            session=session, app_name=app_name, namespace_name=namespace_name
+            session=session,
+            app_name=app_name,
+            namespace_name=namespace_name,
+            with_capabilities=False,
         )
         async with session.begin():
             capability = DBCapability(

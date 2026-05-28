@@ -27,7 +27,6 @@ from ..models.routers.role import (
 from ..models.routers.role import (
     RoleCapability,
     RoleCreateRequest,
-    RoleEditRequest,
     RoleGetAllRequest,
     RoleGetByAppRequest,
     RoleGetByNamespaceRequest,
@@ -87,12 +86,7 @@ class FastAPIRoleAPIAdapter(
                     name=api_request.data.name,
                     display_name=api_request.data.display_name,
                     capabilities=[
-                        CapabilityReference(
-                            app_name=cap.app_name,
-                            namespace_name=cap.namespace_name,
-                            name=cap.name,
-                        )
-                        for cap in api_request.data.capabilities
+                        cap.to_reference() for cap in api_request.data.capabilities
                     ],
                 )
             ]
@@ -173,29 +167,24 @@ class FastAPIRoleAPIAdapter(
             ],
         )
 
-    async def to_role_edit(self, old_role: Role, api_request: RoleEditRequest) -> Role:
-        display_name = (
-            api_request.data.display_name
-            if api_request.data.display_name is not None
-            else old_role.display_name
+    async def to_role_edit(
+        self,
+        old_role: Role,
+        display_name: Optional[str] = None,
+        capabilities: Optional[list[CapabilityReference]] = None,
+    ) -> Role:
+        new_display_name = (
+            display_name if display_name is not None else old_role.display_name
         )
-        if api_request.data.capabilities is None:
-            capabilities = list(old_role.capabilities)
-        else:
-            capabilities = [
-                CapabilityReference(
-                    app_name=cap.app_name,
-                    namespace_name=cap.namespace_name,
-                    name=cap.name,
-                )
-                for cap in api_request.data.capabilities
-            ]
+        new_capabilities = (
+            list(old_role.capabilities) if capabilities is None else list(capabilities)
+        )
         return Role(
             app_name=old_role.app_name,
             namespace_name=old_role.namespace_name,
             name=old_role.name,
-            display_name=display_name,
-            capabilities=capabilities,
+            display_name=new_display_name,
+            capabilities=new_capabilities,
         )
 
 

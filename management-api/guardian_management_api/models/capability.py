@@ -53,6 +53,13 @@ class Capability:
     conditions: list[ParametrizedCondition]
     flags: Flag = Flag.NONE
 
+    def to_reference(self) -> CapabilityReference:
+        return CapabilityReference(
+            app_name=self.app_name,
+            namespace_name=self.namespace_name,
+            name=self.name,
+        )
+
 
 @dataclass(frozen=True)
 class CapabilityGetQuery:

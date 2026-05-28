@@ -129,7 +129,7 @@ class TestSQLNamespacePersistenceAdapterDelete:
         create_roles,
     ):
         async with namespace_sql_adapter.session() as session:
-            db_roles = await create_roles(session, 2)
+            db_roles = await create_roles(session, 2, with_capabilities=False)
         db_namespace = db_roles[0].namespace
         result = await namespace_sql_adapter.read_dependencies(
             NamespaceGetQuery(name=db_namespace.name, app_name=db_namespace.app.name)

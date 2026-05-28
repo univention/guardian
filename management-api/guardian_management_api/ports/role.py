@@ -11,7 +11,7 @@ from typing import Generic, List, Optional, TypeVar
 
 from guardian_lib.ports import BasePort
 
-from ..models.capability import Capability
+from ..models.capability import CapabilityReference
 from ..models.role import (
     Role,
     RoleCreateQuery,
@@ -90,7 +90,12 @@ class RoleAPIPort(
         raise NotImplementedError  # pragma: no cover
 
     @abstractmethod
-    async def to_role_edit(self, old_role: Role, api_request) -> Role:
+    async def to_role_edit(
+        self,
+        old_role: Role,
+        display_name: Optional[str] = None,
+        capabilities: Optional[List[CapabilityReference]] = None,
+    ) -> Role:
         raise NotImplementedError  # pragma: no cover
 
 

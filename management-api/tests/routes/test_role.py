@@ -8,7 +8,12 @@ import pytest
 from guardian_management_api.adapters.role import SQLRolePersistenceAdapter
 from guardian_management_api.constants import BASE_URL, COMPLETE_URL
 from guardian_management_api.main import app
-from guardian_management_api.models.sql_persistence import DBRole
+from guardian_management_api.models.capability import CapabilityConditionRelation
+from guardian_management_api.models.sql_persistence import (
+    DBCapability,
+    DBNamespace,
+    DBRole,
+)
 from sqlalchemy import select
 from sqlalchemy.sql.functions import count
 
@@ -144,13 +149,27 @@ class TestRoleEndpoints:
             json={"display_name": new_display_name},
         )
         assert response.status_code == 200
-        assert response.json()["role"] == {
+        role_response = response.json()["role"]
+        # PATCH with only display_name must leave the fixture's 2 capabilities intact.
+        role_response["capabilities"].sort(key=lambda c: c["name"])
+        assert role_response == {
             "name": name,
             "display_name": new_display_name,
             "namespace_name": namespace_name,
             "app_name": app_name,
             "resource_url": f"{COMPLETE_URL}/roles/{app_name}/{namespace_name}/{name}",
-            "capabilities": [],
+            "capabilities": [
+                {
+                    "app_name": app_name,
+                    "namespace_name": namespace_name,
+                    "name": "test_role_cap_0",
+                },
+                {
+                    "app_name": app_name,
+                    "namespace_name": namespace_name,
+                    "name": "test_role_cap_1",
+                },
+            ],
         }
 
         db_role = await sqlalchemy_mixin._get_single_object(
@@ -196,6 +215,107 @@ class TestRoleEndpoints:
 
     @pytest.mark.usefixtures("create_tables")
     @pytest.mark.asyncio
+    async def test_patch_role_replaces_capabilities(
+        self,
+        client,
+        sqlalchemy_mixin,
+        create_app,
+        create_namespace,
+        create_role,
+    ):
+        app_name = "test_app"
+        namespace_name = "test_namespace"
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session, name=app_name, display_name=None)
+            await create_namespace(
+                session, name=namespace_name, app_name=app_name, display_name=None
+            )
+            # Role starts with the fixture's default 2 capabilities.
+            await create_role(
+                session,
+                namespace_name=namespace_name,
+                app_name=app_name,
+                name="test_role",
+                display_name="Role",
+            )
+        async with sqlalchemy_mixin.session() as session:
+            async with session.begin():
+                # Add a third capability in the same namespace to swap in.
+                namespace = (
+                    await session.execute(
+                        select(DBNamespace).where(DBNamespace.name == namespace_name)
+                    )
+                ).scalar_one()
+                session.add(
+                    DBCapability(
+                        namespace_id=namespace.id,
+                        name="replacement_cap",
+                        relation=CapabilityConditionRelation.AND,
+                        permissions=set(),
+                        conditions=set(),
+                    )
+                )
+
+        response = client.patch(
+            client.app.url_path_for(
+                "edit_role",
+                app_name=app_name,
+                namespace_name=namespace_name,
+                name="test_role",
+            ),
+            json={
+                "capabilities": [
+                    {
+                        "app_name": app_name,
+                        "namespace_name": namespace_name,
+                        "name": "replacement_cap",
+                    }
+                ],
+            },
+        )
+        assert response.status_code == 200
+        assert [
+            (c["app_name"], c["namespace_name"], c["name"])
+            for c in response.json()["role"]["capabilities"]
+        ] == [(app_name, namespace_name, "replacement_cap")]
+
+    @pytest.mark.usefixtures("create_tables")
+    @pytest.mark.asyncio
+    async def test_post_role_unknown_capability_404(
+        self, client, sqlalchemy_mixin, create_app, create_namespace
+    ):
+        app_name = "test_app"
+        namespace_name = "test_namespace"
+        async with sqlalchemy_mixin.session() as session:
+            await create_app(session, name=app_name, display_name=None)
+            await create_namespace(
+                session, name=namespace_name, app_name=app_name, display_name=None
+            )
+        response = client.post(
+            client.app.url_path_for(
+                "create_role", app_name=app_name, namespace_name=namespace_name
+            ),
+            json={
+                "name": "test_role",
+                "display_name": "Role",
+                "capabilities": [
+                    {
+                        "app_name": app_name,
+                        "namespace_name": namespace_name,
+                        "name": "does_not_exist",
+                    }
+                ],
+            },
+        )
+        assert response.status_code == 404
+        assert response.json() == {
+            "detail": {
+                "message": "Not all capabilities specified for the role could be found."
+            }
+        }
+
+    @pytest.mark.usefixtures("create_tables")
+    @pytest.mark.asyncio
     async def test_get_role_fully_identified(
         self,
         client,
@@ -230,15 +350,26 @@ class TestRoleEndpoints:
             )
         )
         assert response.status_code == 200
-        assert response.json() == {
-            "role": {
-                "name": "test_role",
-                "app_name": app_name,
-                "namespace_name": namespace_name,
-                "display_name": "test_role_display_name",
-                "resource_url": f"{COMPLETE_URL}/roles/{app_name}/{namespace_name}/test_role",
-                "capabilities": [],
-            }
+        role_response = response.json()["role"]
+        role_response["capabilities"].sort(key=lambda c: c["name"])
+        assert role_response == {
+            "name": "test_role",
+            "app_name": app_name,
+            "namespace_name": namespace_name,
+            "display_name": "test_role_display_name",
+            "resource_url": f"{COMPLETE_URL}/roles/{app_name}/{namespace_name}/test_role",
+            "capabilities": [
+                {
+                    "app_name": app_name,
+                    "namespace_name": namespace_name,
+                    "name": "test_role_cap_0",
+                },
+                {
+                    "app_name": app_name,
+                    "namespace_name": namespace_name,
+                    "name": "test_role_cap_1",
+                },
+            ],
         }
 
     @pytest.mark.usefixtures("create_tables")
@@ -299,6 +430,7 @@ class TestRoleEndpoints:
                     namespace_name=namespace_name,
                     name=role_name,
                     display_name=role_name + "_display_name",
+                    with_capabilities=False,
                 )
         response = client.get(
             client.app.url_path_for(
@@ -364,6 +496,7 @@ class TestRoleEndpoints:
                     namespace_name=namespace_name,
                     name=role_name,
                     display_name=role_name + "_display_name",
+                    with_capabilities=False,
                 )
         response = client.get(
             client.app.url_path_for(
@@ -430,6 +563,7 @@ class TestRoleEndpoints:
                     namespace_name=namespace_name,
                     name=role_name,
                     display_name=role_name + "_display_name",
+                    with_capabilities=False,
                 )
         response = client.get(
             client.app.url_path_for(
@@ -486,7 +620,7 @@ class TestRoleEndpoints:
         self, client, create_roles, sqlalchemy_mixin, offset, limit
     ):
         async with sqlalchemy_mixin.session() as session:
-            db_roles = await create_roles(session, 10)
+            db_roles = await create_roles(session, 10, with_capabilities=False)
         params = {"offset": offset}
         if limit:
             params["limit"] = limit
