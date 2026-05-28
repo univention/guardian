@@ -240,7 +240,9 @@ test-e2e:
             DOCKERFILE_PATH: "authorization-api/Dockerfile"
           - IMAGE_NAME: "guardian-management-api"
             DOCKERFILE_PATH: "management-api/Dockerfile"
-  image: "${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:24.0.7"
+  image:
+    name: "${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:24.0.7"
+    pull_policy: if-not-present
   variables:
     UCS_HOST_IP: "127.0.0.1"
     GUARDIAN_OPA_IMAGE: "${CI_REGISTRY_IMAGE}/guardian-opa:${RELEASE_VERSION}"
@@ -342,7 +344,9 @@ generate-filesystem-sbom:
 
 .generate_keycloak_script:
   stage: "build"
-  image: gitregistry.knut.univention.de/univention/dev/internal/ucsschool-ci-utils/app-release:latest
+  image:
+    name: gitregistry.knut.univention.de/univention/dev/internal/ucsschool-ci-utils/app-release:latest
+    pull_policy: if-not-present
   variables:
     APP_NAME: "guardian-authorization-api"
     CONFIGURE_KEYCLOAK_TEMPLATE: "appcenter-authz/includes/configure-keycloak.tmpl"
