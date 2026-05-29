@@ -1,4 +1,4 @@
-.. Copyright (C) 2023 Univention GmbH
+.. Copyright (C) 2023-2026 Univention GmbH
 ..
 .. SPDX-License-Identifier: AGPL-3.0-only
 
@@ -6,21 +6,58 @@
 Releases
 ********
 
-This chapter describes the process of releasing the different components of the Guardian and is specific to the
-internal tools and structures of Univention.
+This chapter describes how the Guardian components are released and is specific
+to the internal tools and structures of Univention.
+
+Since the migration to the shared ``common-ci`` pipeline, releases are driven by
+GitLab CI and a single Git tag releases all three apps at once. The previous
+Jenkins jobs, the per-app tags (``management-api_$VERSION`` and friends) and the
+manual ``omar`` commands are no longer used.
 
 Versioning
 ==========
 
-The components of the Guardian are versioned following `Semantic Versioning <https://semver.org/>`_.
+The components of the Guardian are versioned following `Semantic Versioning
+<https://semver.org/>`_.
 
-The documentation of the Guardian follows semantic versioning as well, but omits the patch level version number.
-This means that the Guardian Manual in version ``1.1`` is valid for all components of version ``1.1.x``.
+The documentation of the Guardian follows semantic versioning as well, but omits
+the patch level version number. This means that the Guardian Manual in version
+``1.1`` is valid for all components of version ``1.1.x``.
 
-*Version Synchronisation* is strict: Major and minor version changes must be in sync for all three applications.
-Only the patchlevel is allowed to be not synchronized.
-For example, there must never be a state were the latest release contains an Authorization API 2.3.0
-and a Management API 2.2.0.
+*Version synchronisation* is strict: the Authorization API, the Management API
+and the Management UI always share a single version. This is now enforced by the
+release mechanism itself. One ``vX.Y.Z`` tag releases all three at the same
+version, so they cannot drift apart.
+
+How a release is triggered
+==========================
+
+All three app-release components are configured with the shared tag prefix ``v``
+(see ``.gitlab-ci/gitlab-ci.yml``). Pushing a single annotated tag of the form
+``vX.Y.Z`` (for example ``v3.0.10``) on the release commit on ``main`` starts a
+tag pipeline that:
+
+#. builds the container images and pushes them to the public ``nubus`` Harbor
+   project, tagged ``X.Y.Z`` (the ``v`` is stripped), as well as to the private
+   ``nubus-dev`` project,
+#. runs ``create_app_version`` and ``update_appcenter`` for each app, which
+   uploads the app at version ``X.Y.Z`` to the **test** App Center. The App
+   Center ``ini`` and ``compose`` files are templated (``Version = {{ APP_VERSION }}``),
+   so the version is injected automatically and no manual edit is required,
+#. waits for the manual ``do_release`` jobs to publish to the **production**
+   App Center,
+#. creates a GitLab release for the tag and sends the announcement mail and chat
+   message automatically.
+
+Pushes to ``main`` without a tag do **not** create a public release. They build
+the images and publish them only to the private ``nubus-dev`` project, and they
+keep the ``999.0.0-staging`` version in the test App Center up to date. A public
+release happens exclusively on a ``vX.Y.Z`` tag.
+
+.. note::
+   The tag pipeline only starts if the project's ``workflow:rules`` allow tag
+   pipelines (a rule matching ``$CI_COMMIT_TAG``). If pushing a tag does not
+   create a pipeline, add such a rule to the ``workflow`` configuration.
 
 Checklist
 =========
@@ -30,75 +67,76 @@ Copy this into a release issue:
 .. code-block:: text
 
     - [ ] Announce that a release is planned a day prior
-    - [ ] Check if Jenkins is green: https://jenkins2022.knut.univention.de/job/Guardian/
-    - [ ] Check if major/minor or patch level version increase is needed
-    - [ ] Prepare a test VM
-    - [ ] Ensure a merge stop on the main branch during the duration of the release
-    - [ ] Ensure the correct version of the component in all places.
-        - [ ] The version in ``management-api/pyproject.toml``
-        - [ ] The version of the migration folder in ``management-api/alembic`` if a new one was added
-        - [ ] The app center version in ``appcenter-management/ini``
-        - [ ] The version in the App center's `provider portal <https://provider-portal.software-univention.de>`_
-    - [ ] Create the tag ``management-api_$VERSION`` on the latest commit on main to mark the correct release.
-    - [ ] Copy the docker image referenced in the compose file to the public docker registry.
-    - [ ] Smoke test the app a final time (follow the manual and interact with the management-ui)
-        - [ ] Installation of the new version
+    - [ ] Ensure the branch test succeeded for the branch: https://jenkins2022.knut.univention.de/job/UCS-5.2/job/UCS-5.2-5/job/guardian-tests-branch/
+    - [ ] Ensure a merge stop on the main branch during the release
+    - [ ] Decide whether a major, minor or patch level increase is needed
+    - [ ] Ensure the version is consistent in all places:
+        - [ ] management-api/pyproject.toml
+        - [ ] authorization-api/pyproject.toml
+        - [ ] the alembic migration folder in management-api/alembic (if a new one was added)
+    - [ ] Merge the release commit to main and check that the main pipeline is green
+    - [ ] Wait for the Guardian Product Tests to pass (run after merge, takes about one day): https://jenkins2022.knut.univention.de/job/UCS-5.2/job/UCS-5.2-5/job/Guardian%20Product%20Tests/
+    - [ ] Push the tag vX.Y.Z on the release commit on main
+    - [ ] Wait for the tag pipeline to build/push the images and upload all three apps to the test App Center
+    - [ ] Smoke test from the test App Center (follow the manual, interact with the management-ui):
+        - [ ] Fresh installation of the new version
         - [ ] Upgrade from the last public release to the new version
-    - [ ] Release the app
-    - [ ] Verify the app files were released `here <https://appcenter.software-univention.de/meta-inf/5.0/guardian-management-api/>`_
-       and `there <https://appcenter.software-univention.de/univention-repository/5.0/maintained/component/>`_.
-    - [ ] Verify the release with a test installation/upgrade.
-    - [ ] Announce the release via mail and chat
-    - [ ] Create a new version for each component in the test appcenter (increase patch level) and set the docker images to `latest`.
-    - [ ] Adapt the repo (ini files & toml) to reference the new dev version.
-    - [ ] Create the next release issue.
+    - [ ] Trigger the manual do_release jobs for all three apps (authz-do_release, management-do_release, management-ui-do_release)
+    - [ ] Confirm the manual check_release jobs once the apps are public
+    - [ ] Verify the app files were released (links below)
+    - [ ] Verify the release with a test installation/upgrade
+    - [ ] Confirm the announcement mail and chat message were sent
+    - [ ] Release the Guardian Manual (see below)
+    - [ ] Adapt the repo to the next dev version (pyproject.toml, App Center ini) if needed
+    - [ ] Create the next release issue
 
-Guardian Management API
-=======================
+Releasing the apps
+==================
 
-The Guardian Management API is a docker compose app in the Univention App center. The following steps have to be observed
-to release a new version of the app:
+#. Ensure a merge stop on ``main`` for the duration of the release.
+#. Make sure the branch test succeeded for the branch:
+   `guardian-tests-branch <https://jenkins2022.knut.univention.de/job/UCS-5.2/job/UCS-5.2-5/job/guardian-tests-branch/>`_.
+#. Make sure the version is consistent in all places:
 
-#. Ensure a merge stop on the main branch during the duration of the release
-#. Ensure the correct version of the component in all places.
+   * the version in ``management-api/pyproject.toml`` and
+     ``authorization-api/pyproject.toml``,
+   * the alembic migration folder in ``management-api/alembic`` if a new one was
+     added.
 
-   * The version in ``management-api/pyproject.toml``
-   * The version of the migration folder in ``management-api/alembic`` if a new one was added
-   * The app center version in ``appcenter-management/ini``
-   * The version in the App center's `provider portal <https://provider-portal.software-univention.de>`_
-
-#. Create the tag ``management-api_$VERSION`` on the latest commit on main to mark the correct release.
-#. Copy the docker image referenced in the compose file to the public docker registry.
-
-   For that to work, use `this jenkins job <https://univention-dist-jenkins.k8s.knut.univention.de/job/UCS-5.0/job/Apps/job/guardian-management-api/job/App%20Autotest%20MultiEnv/>`_
-   and run it. Make sure to only run the ``docker-update/s4`` job. This will publish the image and modify the compose file.
-
-   .. warning::
-      If there are any commits on main that trigger the ``management_app_to_test_appcenter`` job, the changes made by this
-      jenkins job are overwritten.
-#. For installation smoke tests install the latest version from the test App Center and follow the installation steps in the manual. Check that you can log into the ``management-ui`` with the Administrator (he needs the Guardian `super` and that you can interact with it (e.g. create a role).
-#. For upgrade smoke tests, install the latest version that is publicly released and follow the upgrade steps in the manual. Check that you can log into and interact with the ``mangement-ui`` again.
-#. The following steps require the correct app center id to proceed. You can find it by examining the
-   `ini files <https://appcenter-test.software-univention.de/meta-inf/5.0/guardian-management-api/>`_. Search for the one
-   that corresponds with the app version you want to release. This will be your ``$APP_ID``.
-#. To release the app, run the following commands on :guilabel:`omar`:
+#. Merge the release commit to ``main`` and wait for the pipeline to pass. The
+   dev images are published to the private ``nubus-dev`` project.
+#. Wait for the `Guardian Product Tests <https://jenkins2022.knut.univention.de/job/UCS-5.2/job/UCS-5.2-5/job/Guardian%20Product%20Tests/>`_
+   to pass. They run after the merge and take about one day.
+#. Push a single annotated tag on the release commit on ``main``:
 
    .. code-block:: bash
 
-      APP_ID = guardian-management-api_20231222153016
-      cd /var/univention/buildsystem2/mirror/appcenter
-      ./copy_from_appcenter.test.sh 5.0
-      ./copy_from_appcenter.test.sh 5.0 $APP_ID
-      sudo update_mirror.sh -v appcenter
+      git tag -a v3.0.10 -m "Guardian 3.0.10"
+      git push origin v3.0.10
 
+#. The tag pipeline builds and publishes the public images and uploads all three
+   apps at ``X.Y.Z`` to the test App Center automatically. The relevant jobs are
+   ``<prefix>create_app_version`` and ``<prefix>update_appcenter`` with the
+   prefixes ``authz-``, ``management-`` and ``management-ui-``.
+#. For installation smoke tests, install the latest version from the test App
+   Center and follow the installation steps in the manual. Check that you can log
+   into the ``management-ui`` with the Administrator (who needs the Guardian
+   ``super`` role) and that you can interact with it, for example create a role.
+#. For upgrade smoke tests, install the latest publicly released version and
+   follow the upgrade steps in the manual. Check that you can log into and
+   interact with the ``management-ui`` again.
+#. To publish to the production App Center, trigger the manual ``do_release`` job
+   of each app in the tag pipeline (``authz-do_release``,
+   ``management-do_release`` and ``management-ui-do_release``). These jobs run
+   the ``copy_from_appcenter.test.sh`` and ``update_mirror.sh`` steps on
+   :guilabel:`omar` for you, no manual SSH is required.
+#. Confirm the manual ``check_release`` job of each app when prompted. It verifies
+   that the app is reachable in the production App Center.
 #. Verify the app files were released `here <https://appcenter.software-univention.de/meta-inf/5.0/guardian-management-api/>`_
    and `there <https://appcenter.software-univention.de/univention-repository/5.0/maintained/component/>`_.
-#. Verify the release with a test installation/update.
-
-Guardian Authorization API & Guardian Management UI
-===================================================
-
-The release of the Authorization API and Management UI closely follow the instructions for the Management API.
+#. The ``create_gitlab_release`` job creates the GitLab release for the tag, and
+   the ``send_mail`` and ``send_chat_message`` jobs announce the release
+   automatically (see `Release Announcement`_ for the message content).
 
 Guardian Manual
 ===============
@@ -123,8 +161,11 @@ The release of the Guardian Manual is mostly automated, but contains a couple of
 Release Announcement
 ====================
 
-The last step is to announce the new release. Good places are the Rocket.Chat channels ``Guardian`` and an email
-to ``app-announcement@univention.de``. You can use the following template for each app:
+The announcement mail (to ``app-announcement@univention.de``) and the chat
+message (to the ``#ucsschool`` channel) are sent automatically by the tag
+pipeline's ``send_mail`` and ``send_chat_message`` jobs. The template below
+documents the content. You can also use it when announcing a release manually,
+for example in the Rocket.Chat channel ``Guardian``:
 
 .. code-block:: text
 
