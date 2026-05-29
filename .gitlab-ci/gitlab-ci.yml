@@ -28,7 +28,10 @@ include:
           optional: true
         - authz_keycloak_script
       appcenter_file_dir: "appcenter-authz/"
-      release_tag_prefix: "authorization-api_"
+      # Shared across all three apps so a single "vX.Y.Z" tag releases all of
+      # them at the same version (they have always shared a version). The "v"
+      # is stripped from APP_VERSION by create_app_version.sh.
+      release_tag_prefix: "v"
       build_stage: "package"
       release_stage: "publish"
       cleanup_stage: ".post"
@@ -51,7 +54,8 @@ include:
                 KANIKO_BUILD_CONTEXT: "${CI_PROJECT_DIR}/management-api"
           optional: true
       appcenter_file_dir: "appcenter-management/"
-      release_tag_prefix: "management-api_"
+      # Shared "v" prefix: one "vX.Y.Z" tag releases all three apps together.
+      release_tag_prefix: "v"
       build_stage: "package"
       release_stage: "publish"
       cleanup_stage: ".post"
@@ -75,7 +79,8 @@ include:
                 DOCKERFILE_PATH: "management-ui/docker/Dockerfile"
           optional: true
       appcenter_file_dir: "appcenter-management-ui/"
-      release_tag_prefix: "management-ui_"
+      # Shared "v" prefix: one "vX.Y.Z" tag releases all three apps together.
+      release_tag_prefix: "v"
       build_stage: "package"
       release_stage: "publish"
       cleanup_stage: ".post"
@@ -143,6 +148,31 @@ lint-pre-commit:
 # auto-releases on main.
 pre-semantic-release:
   extends: .pre-semantic-release
+  # The inherited upstream script computes RELEASE_VERSION and writes deploy.env.
+  #   - On a release tag ("vX.Y.Z"): pin the version straight from the tag (minus
+  #     the "v") so images/charts come out as "X.Y.Z", and set PUBLIC_RELEASE=true
+  #     so publish/sign/attestation push to the public "nubus" project.
+  #   - On every other pipeline (main, branches, MRs): force PUBLIC_RELEASE off so
+  #     images/charts publish only to the private "nubus-dev" project. main would
+  #     otherwise be treated as a public release (clean version on default branch).
+  after_script:
+    - |
+      DEPLOY_ENV="${CI_PROJECT_DIR}/deploy.env"
+      if [[ -n "${CI_COMMIT_TAG:-}" ]]; then
+        VERSION="${CI_COMMIT_TAG#v}"
+        echo "Release tag ${CI_COMMIT_TAG}: pinning RELEASE_VERSION=${VERSION}, PUBLIC_RELEASE=true"
+        {
+          echo "SEMANTIC_VERSION=${VERSION}"
+          echo "RELEASE_VERSION=${VERSION}"
+          echo "PUBLIC_RELEASE=true"
+          echo "BRANCH_NAME_TAG="
+          echo "SR_NO_RELEVANT_CHANGE="
+        } > "${DEPLOY_ENV}"
+      else
+        echo "Non-tag pipeline: forcing PUBLIC_RELEASE off"
+        sed -i 's/^PUBLIC_RELEASE=.*/PUBLIC_RELEASE=/' "${DEPLOY_ENV}"
+      fi
+      cat "${DEPLOY_ENV}"
 
 .build-matrix: &build-matrix
   - IMAGE_NAME: "testrunner"
@@ -176,6 +206,15 @@ container-malware-scan:
   parallel:
     matrix: *publish-matrix
 
+# These run on every pipeline (upstream harbor default). Routing is driven by
+# PUBLIC_RELEASE, which pre-semantic-release sets false on every non-tag pipeline
+# and true only on a "vX.Y.Z" tag:
+#   - push-image-external always pushes to the private "nubus-dev" project, and
+#     additionally to the public "nubus" project only when PUBLIC_RELEASE is set.
+#   - container-sign-external / -release-attestation self-skip when PUBLIC_RELEASE
+#     is empty, so they effectively only act on a release tag.
+# So merges to main publish dev images to nubus-dev; public release happens only
+# on the tag.
 push-image-external:
   parallel:
     matrix: *publish-matrix
