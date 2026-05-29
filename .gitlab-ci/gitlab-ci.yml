@@ -94,7 +94,12 @@ include:
       - "jobs/generate-filesystem-sbom.yaml"
       - "jobs/lint-pre-commit.yaml"
       - "jobs/lint-commit-messages.yaml"
-      - "jobs/semantic-release-env.yaml"
+      # Include the template (not jobs/semantic-release-env.yaml) so we get the
+      # `.pre-semantic-release` job template for versioning only. We deliberately
+      # do NOT define `post-semantic-release`, which would auto-tag/release on
+      # every conventional-commit merge to main. Releases are driven instead by
+      # manually pushed `<app>_X.Y.Z` tags handled by the app-release components.
+      - "templates/semantic-release-env.yaml"
       - "jobs/container-build-external.yaml"
       # - "jobs/package-and-publish-helm-charts-external.yaml"
       - "jobs/check-debian-updates.yaml"
@@ -131,6 +136,13 @@ lint-pre-commit:
   variables:
     RUNNER_REGISTRY_IMAGE: "gitregistry.knut.univention.de/univention/dev/tooling/pre-commit/univention-pre-commit"
     RUNNER_IMAGE_TAG: "0.6.2"
+
+# Versioning only: computes RELEASE_VERSION via `semantic-release --dry-run`
+# (consumed by test/test-e2e/coverage-merge and image tags). The counterpart
+# `post-semantic-release` job is intentionally omitted so nothing auto-tags or
+# auto-releases on main.
+pre-semantic-release:
+  extends: .pre-semantic-release
 
 .build-matrix: &build-matrix
   - IMAGE_NAME: "testrunner"
@@ -231,15 +243,7 @@ test-e2e:
     - job: pre-semantic-release
     - job: container-build
       parallel:
-        matrix:
-          - IMAGE_NAME: "testrunner"
-            DOCKERFILE_PATH: "docker/testrunner/Dockerfile"
-          - IMAGE_NAME: "guardian-opa"
-            KANIKO_BUILD_CONTEXT: "${CI_PROJECT_DIR}/opa"
-          - IMAGE_NAME: "guardian-authorization-api"
-            DOCKERFILE_PATH: "authorization-api/Dockerfile"
-          - IMAGE_NAME: "guardian-management-api"
-            DOCKERFILE_PATH: "management-api/Dockerfile"
+        matrix: *build-matrix
   image: "${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:24.0.7"
   variables:
     UCS_HOST_IP: "127.0.0.1"
