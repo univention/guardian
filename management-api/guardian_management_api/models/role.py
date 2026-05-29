@@ -7,7 +7,6 @@ from typing import List, Optional
 
 from .base import PaginatedAPIResponse, PaginationRequest, ResponseObject
 from .capability import CapabilityReference
-from .flags import Flag
 
 
 @dataclass
@@ -16,7 +15,7 @@ class Role:
     namespace_name: str
     name: str
     display_name: Optional[str] = None
-    flags: Flag = Flag.NONE
+    is_builtin: bool = False
     capabilities: list[CapabilityReference] = field(default_factory=list)
 
 

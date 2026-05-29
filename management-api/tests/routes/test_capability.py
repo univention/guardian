@@ -36,7 +36,7 @@ class TestCapabilityEndpoints:
         permissions = [asdict(perm) for perm in capability.permissions]
         for perm in permissions:
             del perm["display_name"]
-            del perm["flags"]
+            del perm["is_builtin"]
         expected = {
             "capability": {
                 "app_name": capability.app_name,
@@ -89,7 +89,7 @@ class TestCapabilityEndpoints:
             permissions = [asdict(perm) for perm in orig_capability.permissions]
             for perm in permissions:
                 del perm["display_name"]
-                del perm["flags"]
+                del perm["is_builtin"]
             resource = client.app.url_path_for(
                 "get_capability",
                 app_name=orig_capability.app_name,
@@ -159,7 +159,7 @@ class TestCapabilityEndpoints:
             permissions = [asdict(perm) for perm in orig_capability.permissions]
             for perm in permissions:
                 del perm["display_name"]
-                del perm["flags"]
+                del perm["is_builtin"]
             resource = client.app.url_path_for(
                 "get_capability",
                 app_name=orig_capability.app_name,
@@ -282,7 +282,7 @@ class TestCapabilityEndpoints:
         permissions = [asdict(perm) for perm in cap_to_create.permissions]
         for perm in permissions:
             del perm["display_name"]
-            del perm["flags"]
+            del perm["is_builtin"]
         expected = {
             "capability": {
                 "app_name": cap_to_create.app_name,

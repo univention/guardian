@@ -10,7 +10,6 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 from .base import PaginatedAPIResponse, PaginationRequest, ResponseObject
-from .flags import Flag
 from .role import ResponseRole
 
 
@@ -18,7 +17,7 @@ from .role import ResponseRole
 class App:
     name: str
     display_name: Optional[str] = None
-    flags: Flag = Flag.NONE
+    is_builtin: bool = False
 
 
 @dataclass(frozen=True)

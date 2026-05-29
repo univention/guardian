@@ -1,4 +1,4 @@
-"""Add Flags to models
+"""Add status flags (is_builtin) to models
 
 Revision ID: 3.0.10
 Revises: 3.0.4
@@ -41,7 +41,12 @@ def upgrade() -> None:
     with op.batch_alter_table("capability") as batch_op:
         batch_op.drop_column("role_id")
         batch_op.add_column(
-            sa.Column("flags", sa.Integer(), server_default="0", nullable=False)
+            sa.Column(
+                "is_builtin",
+                sa.Boolean(),
+                server_default=sa.false(),
+                nullable=False,
+            )
         )
 
     op.execute(
@@ -71,37 +76,28 @@ def upgrade() -> None:
     )
     op.execute("DROP TABLE _role_capability_seed")
 
-    op.add_column(
-        "app", sa.Column("flags", sa.Integer(), server_default="0", nullable=False)
-    )
-    op.add_column(
-        "condition",
-        sa.Column("flags", sa.Integer(), server_default="0", nullable=False),
-    )
-    op.add_column(
-        "context", sa.Column("flags", sa.Integer(), server_default="0", nullable=False)
-    )
-    op.add_column(
-        "namespace",
-        sa.Column("flags", sa.Integer(), server_default="0", nullable=False),
-    )
-    op.add_column(
-        "permission",
-        sa.Column("flags", sa.Integer(), server_default="0", nullable=False),
-    )
-    op.add_column(
-        "role", sa.Column("flags", sa.Integer(), server_default="0", nullable=False)
-    )
+    for table in ("app", "condition", "context", "namespace", "permission", "role"):
+        op.add_column(
+            table,
+            sa.Column(
+                "is_builtin",
+                sa.Boolean(),
+                server_default=sa.false(),
+                nullable=False,
+            ),
+        )
 
-    op.execute("UPDATE app SET flags = 1 WHERE name = 'guardian'")
+    # Backfill the shipped Guardian objects as built-ins. Scoped by app/namespace
+    # rather than by name so the criterion is unambiguous.
+    op.execute("UPDATE app SET is_builtin = true WHERE name = 'guardian'")
     op.execute(
-        "UPDATE namespace SET flags = 1 WHERE app_id = "
+        "UPDATE namespace SET is_builtin = true WHERE app_id = "
         "(SELECT id FROM app WHERE name = 'guardian') "
         "AND name IN ('builtin', 'management-api', 'default')"
     )
     op.execute(
         """
-        UPDATE condition SET flags = 1 WHERE namespace_id IN (
+        UPDATE condition SET is_builtin = true WHERE namespace_id IN (
             SELECT n.id FROM namespace n
             JOIN app a ON a.id = n.app_id
             WHERE a.name = 'guardian' AND n.name = 'builtin'
@@ -110,7 +106,7 @@ def upgrade() -> None:
     )
     op.execute(
         """
-        UPDATE permission SET flags = 1 WHERE namespace_id IN (
+        UPDATE permission SET is_builtin = true WHERE namespace_id IN (
             SELECT n.id FROM namespace n
             JOIN app a ON a.id = n.app_id
             WHERE a.name = 'guardian' AND n.name = 'management-api'
@@ -119,7 +115,7 @@ def upgrade() -> None:
     )
     op.execute(
         """
-        UPDATE role SET flags = 1 WHERE namespace_id IN (
+        UPDATE role SET is_builtin = true WHERE namespace_id IN (
             SELECT n.id FROM namespace n
             JOIN app a ON a.id = n.app_id
             WHERE a.name = 'guardian' AND n.name = 'builtin'
@@ -128,7 +124,7 @@ def upgrade() -> None:
     )
     op.execute(
         """
-        UPDATE capability SET flags = 1 WHERE namespace_id IN (
+        UPDATE capability SET is_builtin = true WHERE namespace_id IN (
             SELECT n.id FROM namespace n
             JOIN app a ON a.id = n.app_id
             WHERE a.name = 'guardian' AND n.name = 'management-api'
@@ -138,13 +134,13 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_column("role", "flags")
-    op.drop_column("permission", "flags")
-    op.drop_column("namespace", "flags")
-    op.drop_column("context", "flags")
-    op.drop_column("condition", "flags")
-    op.drop_column("capability", "flags")
-    op.drop_column("app", "flags")
+    op.drop_column("role", "is_builtin")
+    op.drop_column("permission", "is_builtin")
+    op.drop_column("namespace", "is_builtin")
+    op.drop_column("context", "is_builtin")
+    op.drop_column("condition", "is_builtin")
+    op.drop_column("capability", "is_builtin")
+    op.drop_column("app", "is_builtin")
 
     with op.batch_alter_table("capability") as batch_op:
         batch_op.add_column(sa.Column("role_id", sa.INTEGER(), nullable=True))

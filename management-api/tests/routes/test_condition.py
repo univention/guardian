@@ -208,7 +208,7 @@ class TestConditionEndpoints:
         assert result.status_code == 201, result.json()
         expected_result = asdict(condition_to_create)
         del expected_result["code"]
-        del expected_result["flags"]
+        del expected_result["is_builtin"]
         # Parameters are Pydantic models, not dataclasses, so asdict doesn't convert them
         expected_result["parameters"] = [
             p.model_dump(mode="json") for p in condition_to_create.parameters

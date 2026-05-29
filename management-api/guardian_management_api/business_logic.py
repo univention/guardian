@@ -17,7 +17,6 @@ from .models.capability import (
     CapabilityConditionRelation,
     ParametrizedCondition,
 )
-from .models.flags import Flag
 from .models.namespace import Namespace
 from .models.permission import Permission
 from .models.role import Role
@@ -830,7 +829,7 @@ async def delete_condition(
     try:
         query = await api_port.to_obj_get_single(api_request)
         condition = await persistence_port.read_one(query)
-        is_builtin = Flag.IS_BUILTIN in condition.flags
+        is_builtin = condition.is_builtin
         dependencies = await persistence_port.read_dependencies(query)
         actor_id: str = await authc_port.get_actor_identifier(request)
         resource: Resource = Resource(
@@ -1114,7 +1113,7 @@ async def delete_permission(
     try:
         query = await api_port.to_obj_get_single(api_request)
         permission = await persistence_port.read_one(query)
-        is_builtin = Flag.IS_BUILTIN in permission.flags
+        is_builtin = permission.is_builtin
         dependencies = await persistence_port.read_dependencies(query)
         actor_id: str = await authc_port.get_actor_identifier(request)
         resource: Resource = Resource(
@@ -1393,7 +1392,7 @@ async def delete_role(
     try:
         query = await role_api_port.to_role_get(api_request)
         role = await persistence_port.read_one(query)
-        is_builtin = Flag.IS_BUILTIN in role.flags
+        is_builtin = role.is_builtin
         dependencies = await persistence_port.read_dependencies(query)
         actor_id: str = await authc_port.get_actor_identifier(request)
         resource: Resource = Resource(
@@ -1656,7 +1655,7 @@ async def delete_context(
     try:
         query = await api_port.to_context_get(api_request)
         context = await persistence_port.read_one(query)
-        is_builtin = Flag.IS_BUILTIN in context.flags
+        is_builtin = context.is_builtin
         actor_id: str = await authc_port.get_actor_identifier(request)
         resource: Resource = Resource(
             resource_type=ResourceType.CONTEXT,
@@ -1996,7 +1995,7 @@ async def delete_capability(
     try:
         query = await api_port.to_obj_get_single(api_request)
         capability = await persistence_port.read_one(query)
-        is_builtin = Flag.IS_BUILTIN in capability.flags
+        is_builtin = capability.is_builtin
         dependencies = await persistence_port.read_dependencies(query)
         actor_id: str = await authc_port.get_actor_identifier(request)
         resource: Resource = Resource(
@@ -2072,7 +2071,7 @@ async def delete_app(
     try:
         query = await app_api_port.to_app_get(api_request)
         app = await persistence_port.read_one(query)
-        is_builtin = Flag.IS_BUILTIN in app.flags
+        is_builtin = app.is_builtin
         dependencies = await persistence_port.read_dependencies(query)
         actor_id: str = await authc_port.get_actor_identifier(request)
         resource = Resource(resource_type=ResourceType.APP, name=app.name)
@@ -2142,7 +2141,7 @@ async def delete_namespace(
     try:
         query = await namespace_api_port.to_namespace_get(api_request)
         namespace = await namespace_persistence_port.read_one(query)
-        is_builtin = Flag.IS_BUILTIN in namespace.flags
+        is_builtin = namespace.is_builtin
         dependencies = await namespace_persistence_port.read_dependencies(query)
         actor_id: str = await authc_port.get_actor_identifier(request)
         resource = Resource(

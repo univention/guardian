@@ -2,12 +2,11 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
-"""End-to-end protection that rows with Flag.IS_BUILTIN cannot be deleted."""
+"""End-to-end protection that rows with is_builtin=True cannot be deleted."""
 
 import pytest
 from guardian_management_api.adapters.capability import SQLCapabilityPersistenceAdapter
 from guardian_management_api.main import app
-from guardian_management_api.models.flags import Flag
 from guardian_management_api.models.sql_persistence import (
     DBApp,
     DBCapability,
@@ -16,24 +15,23 @@ from guardian_management_api.models.sql_persistence import (
     DBNamespace,
     DBPermission,
     DBRole,
+    role_capability_table,
 )
 from sqlalchemy import select, update
 from sqlalchemy.sql.functions import count
 
-OTHER_BIT_ONLY = 1 << 1  # a hypothetical second flag bit, IS_BUILTIN unset
 
-
-async def _set_flags(sqlalchemy_mixin, model, row_id, flags_value):
+async def _set_builtin(sqlalchemy_mixin, model, row_id, value=True):
     async with sqlalchemy_mixin.session() as session:
         async with session.begin():
             await session.execute(
-                update(model).where(model.id == row_id).values(flags=flags_value)
+                update(model).where(model.id == row_id).values(is_builtin=value)
             )
 
 
 @pytest.mark.e2e
 class TestBuiltinFlagProtectionRoutes:
-    """For every DELETE endpoint, a row flagged IS_BUILTIN responds 409 conflict."""
+    """For every DELETE endpoint, a row with is_builtin=True responds 409 conflict."""
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")
@@ -42,7 +40,7 @@ class TestBuiltinFlagProtectionRoutes:
     ):
         async with sqlalchemy_mixin.session() as session:
             db_app = (await create_apps(session, 1))[0]
-        await _set_flags(sqlalchemy_mixin, DBApp, db_app.id, Flag.IS_BUILTIN)
+        await _set_builtin(sqlalchemy_mixin, DBApp, db_app.id)
 
         result = client.delete(app.url_path_for("delete_app", name=db_app.name))
 
@@ -57,9 +55,7 @@ class TestBuiltinFlagProtectionRoutes:
     ):
         async with sqlalchemy_mixin.session() as session:
             db_namespace = (await create_namespaces(session, 1))[0]
-        await _set_flags(
-            sqlalchemy_mixin, DBNamespace, db_namespace.id, Flag.IS_BUILTIN
-        )
+        await _set_builtin(sqlalchemy_mixin, DBNamespace, db_namespace.id)
 
         result = client.delete(
             app.url_path_for(
@@ -83,7 +79,7 @@ class TestBuiltinFlagProtectionRoutes:
             app_name = db_role.namespace.app.name
             namespace_name = db_role.namespace.name
             name = db_role.name
-        await _set_flags(sqlalchemy_mixin, DBRole, db_role.id, Flag.IS_BUILTIN)
+        await _set_builtin(sqlalchemy_mixin, DBRole, db_role.id)
 
         result = client.delete(
             client.app.url_path_for(
@@ -108,7 +104,7 @@ class TestBuiltinFlagProtectionRoutes:
             app_name = db_perm.namespace.app.name
             namespace_name = db_perm.namespace.name
             name = db_perm.name
-        await _set_flags(sqlalchemy_mixin, DBPermission, db_perm.id, Flag.IS_BUILTIN)
+        await _set_builtin(sqlalchemy_mixin, DBPermission, db_perm.id)
 
         result = client.delete(
             client.app.url_path_for(
@@ -133,7 +129,7 @@ class TestBuiltinFlagProtectionRoutes:
             app_name = db_cond.namespace.app.name
             namespace_name = db_cond.namespace.name
             name = db_cond.name
-        await _set_flags(sqlalchemy_mixin, DBCondition, db_cond.id, Flag.IS_BUILTIN)
+        await _set_builtin(sqlalchemy_mixin, DBCondition, db_cond.id)
 
         result = client.delete(
             client.app.url_path_for(
@@ -158,7 +154,7 @@ class TestBuiltinFlagProtectionRoutes:
             app_name = db_ctx.namespace.app.name
             namespace_name = db_ctx.namespace.name
             name = db_ctx.name
-        await _set_flags(sqlalchemy_mixin, DBContext, db_ctx.id, Flag.IS_BUILTIN)
+        await _set_builtin(sqlalchemy_mixin, DBContext, db_ctx.id)
 
         result = client.delete(
             client.app.url_path_for(
@@ -181,7 +177,7 @@ class TestBuiltinFlagProtectionRoutes:
         async with sqlalchemy_mixin.session() as session:
             db_cap = (await create_capabilities(session, 1))[0]
         cap = SQLCapabilityPersistenceAdapter._db_cap_to_cap(db_cap)
-        await _set_flags(sqlalchemy_mixin, DBCapability, db_cap.id, Flag.IS_BUILTIN)
+        await _set_builtin(sqlalchemy_mixin, DBCapability, db_cap.id)
 
         result = client.delete(
             client.app.url_path_for(
@@ -196,23 +192,17 @@ class TestBuiltinFlagProtectionRoutes:
         async with sqlalchemy_mixin.session() as session:
             assert (await session.scalar(select(count(DBCapability.id)))) == 1
 
-
-@pytest.mark.e2e
-class TestBuiltinFlagProtectionBitSemantics:
-    """Verify the check is a true bitmask AND, not an equality with 1 or != 0."""
-
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")
-    async def test_other_bit_alone_does_not_block_delete(
+    async def test_delete_proceeds_when_not_builtin(
         self, client, create_conditions, sqlalchemy_mixin
     ):
-        # A flag with only a non-IS_BUILTIN bit set must NOT block deletion.
+        # Positive control: a row left with is_builtin=False deletes normally.
         async with sqlalchemy_mixin.session() as session:
             db_cond = (await create_conditions(session, 1))[0]
             app_name = db_cond.namespace.app.name
             namespace_name = db_cond.namespace.name
             name = db_cond.name
-        await _set_flags(sqlalchemy_mixin, DBCondition, db_cond.id, OTHER_BIT_ONLY)
 
         result = client.delete(
             client.app.url_path_for(
@@ -231,41 +221,10 @@ class TestBuiltinFlagProtectionBitSemantics:
                 )
             ) == 0
 
-    @pytest.mark.asyncio
-    @pytest.mark.usefixtures("create_tables")
-    async def test_composite_flag_with_builtin_bit_blocks_delete(
-        self, client, create_conditions, sqlalchemy_mixin
-    ):
-        # IS_BUILTIN bit alongside other future bits must still block deletion.
-        async with sqlalchemy_mixin.session() as session:
-            db_cond = (await create_conditions(session, 1))[0]
-            app_name = db_cond.namespace.app.name
-            namespace_name = db_cond.namespace.name
-            name = db_cond.name
-        composite = int(Flag.IS_BUILTIN) | OTHER_BIT_ONLY
-        await _set_flags(sqlalchemy_mixin, DBCondition, db_cond.id, composite)
-
-        result = client.delete(
-            client.app.url_path_for(
-                "delete_condition",
-                app_name=app_name,
-                namespace_name=namespace_name,
-                name=name,
-            )
-        )
-
-        assert result.status_code == 409, result.json()
-        async with sqlalchemy_mixin.session() as session:
-            assert (
-                await session.scalar(
-                    select(count(DBCondition.id)).where(DBCondition.name == name)
-                )
-            ) == 1
-
 
 @pytest.mark.e2e
 class TestBuiltinFlagPreservedThroughEdits:
-    """Editing a built-in object must not silently clear its IS_BUILTIN flag."""
+    """Editing a built-in object must not silently clear its is_builtin flag."""
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")
@@ -274,14 +233,11 @@ class TestBuiltinFlagPreservedThroughEdits:
     ):
         # capability.update is a delete+create under the hood, which is why it has
         # a flag-preservation path. Regression guard for that.
-        from guardian_management_api.adapters.capability import (
-            SQLCapabilityPersistenceAdapter,
-        )
-
         async with sqlalchemy_mixin.session() as session:
             db_cap = (await create_capabilities(session, 1))[0]
+            cap_id = db_cap.id
         cap = SQLCapabilityPersistenceAdapter._db_cap_to_cap(db_cap)
-        await _set_flags(sqlalchemy_mixin, DBCapability, db_cap.id, Flag.IS_BUILTIN)
+        await _set_builtin(sqlalchemy_mixin, DBCapability, db_cap.id)
 
         edit_payload = {
             "name": cap.name,
@@ -301,7 +257,17 @@ class TestBuiltinFlagPreservedThroughEdits:
         )
         assert result.status_code == 200, result.json()
 
-        # After edit, delete must still be blocked: flag must have survived.
+        # Detach the role link so the final 409 is attributable to is_builtin
+        # rather than to the role dependency check.
+        async with sqlalchemy_mixin.session() as session:
+            async with session.begin():
+                await session.execute(
+                    role_capability_table.delete().where(
+                        role_capability_table.c.capability_id == cap_id
+                    )
+                )
+
+        # After edit, delete must still be blocked: the flag must have survived.
         delete_result = client.delete(
             client.app.url_path_for(
                 "delete_capability",

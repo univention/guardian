@@ -7,7 +7,6 @@ from typing import Any, Optional
 
 from .base import PaginationRequest
 from .condition import ConditionParameterType
-from .flags import Flag
 from .permission import Permission
 
 
@@ -50,7 +49,7 @@ class Capability:
     permissions: list[Permission]
     relation: CapabilityConditionRelation
     conditions: list[ParametrizedCondition]
-    flags: Flag = Flag.NONE
+    is_builtin: bool = False
 
     def to_reference(self) -> CapabilityReference:
         return CapabilityReference(

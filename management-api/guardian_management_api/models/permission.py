@@ -15,13 +15,12 @@ from .base import (
     QueryResponse,
     ResponseObject,
 )
-from .flags import Flag
 
 
 @dataclass(frozen=True)
 class Permission(NamespacedObject):
     display_name: Optional[str] = None
-    flags: Flag = Flag.NONE
+    is_builtin: bool = False
 
 
 class PermissionQueryResponse(QueryResponse):

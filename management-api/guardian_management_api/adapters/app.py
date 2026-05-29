@@ -16,7 +16,6 @@ from ..models.app import (
     AppsGetQuery,
 )
 from ..models.base import PaginationRequest, PersistenceGetManyResult
-from ..models.flags import Flag
 from ..models.namespace import Namespace
 from ..models.role import Role
 from ..models.routers.app import (
@@ -178,7 +177,7 @@ class SQLAppPersistenceAdapter(
         return App(
             name=db_app.name,
             display_name=db_app.display_name,
-            flags=Flag(db_app.flags),
+            is_builtin=db_app.is_builtin,
         )
 
     class Config:

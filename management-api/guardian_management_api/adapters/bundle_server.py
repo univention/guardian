@@ -240,7 +240,7 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
                     cap = asdict(capability)
                     del cap["name"]
                     del cap["display_name"]
-                    del cap["flags"]
+                    del cap["is_builtin"]
                     cap["appName"] = cap.pop("app_name")
                     cap["namespace"] = cap.pop("namespace_name")
                     cap["permissions"] = [perm.name for perm in capability.permissions]

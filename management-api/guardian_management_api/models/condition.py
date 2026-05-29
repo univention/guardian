@@ -7,7 +7,6 @@ from enum import StrEnum
 from typing import Optional
 
 from .base import PaginationRequest
-from .flags import Flag
 
 
 class ConditionParameterType(StrEnum):
@@ -35,7 +34,7 @@ class Condition:
     display_name: Optional[str] = None
     documentation: Optional[str] = None
     parameters: list[ConditionParameter] = field(default_factory=list)
-    flags: Flag = Flag.NONE
+    is_builtin: bool = False
 
 
 @dataclass(frozen=True)

@@ -14,7 +14,6 @@ from ..constants import COMPLETE_URL
 from ..errors import ObjectNotFoundError, ParentNotFoundError
 from ..models.base import PaginationRequest, PersistenceGetManyResult
 from ..models.capability import CapabilityReference
-from ..models.flags import Flag
 from ..models.role import (
     Role,
     RoleCreateQuery,
@@ -199,7 +198,7 @@ class SQLRolePersistenceAdapter(
             namespace_name=db_role.namespace.name,
             name=db_role.name,
             display_name=db_role.display_name,
-            flags=Flag(db_role.flags),
+            is_builtin=db_role.is_builtin,
             capabilities=[
                 CapabilityReference(
                     app_name=db_cap.namespace.app.name,

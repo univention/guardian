@@ -24,7 +24,6 @@ from guardian_management_api.business_logic import (
 )
 from guardian_management_api.errors import DependencyExistsError, UnauthorizedError
 from guardian_management_api.models.authz import ResourceType
-from guardian_management_api.models.flags import Flag
 from guardian_management_api.models.routers.app import AppCreateRequest, AppsGetRequest
 from guardian_management_api.models.routers.base import GetAllRequest, GetByAppRequest
 from guardian_management_api.models.routers.namespace import NamespacesGetRequest
@@ -954,7 +953,7 @@ DELETE_FN_CONFIGS = [
         "name": "cap",
         "namespace_name": "ns",
         "app_name": "app",
-        "has_dependencies_check": False,
+        "has_dependencies_check": True,
         "builtin_msg": "This capability cannot be deleted because it is a built-in capability.",
         "unauthorized_msg": "The logged in user is not authorized to delete this capability.",
         "uses_bundle_server": True,
@@ -1022,10 +1021,10 @@ def _resource_id(cfg):
     return f"{cfg['app_name']}:{cfg['namespace_name']}:{cfg['name']}"
 
 
-def _build_delete_mocks(cfg, mocker, *, flags, allowed=True, dependencies=None):
+def _build_delete_mocks(cfg, mocker, *, is_builtin, allowed=True, dependencies=None):
     """Build the mock kwargs needed to invoke a delete_* business_logic function.
 
-    `flags` is the Flag value on the persistence object returned by read_one.
+    `is_builtin` is the boolean status flag on the object returned by read_one.
     `allowed` controls the authz mock outcome.
     `dependencies` is what persistence.read_dependencies returns (default []).
     """
@@ -1033,7 +1032,7 @@ def _build_delete_mocks(cfg, mocker, *, flags, allowed=True, dependencies=None):
     persisted.name = cfg["name"]
     persisted.namespace_name = cfg["namespace_name"]
     persisted.app_name = cfg["app_name"]
-    persisted.flags = flags
+    persisted.is_builtin = is_builtin
 
     persistence_mock = mocker.AsyncMock()
     persistence_mock.read_one.return_value = persisted
@@ -1080,47 +1079,25 @@ async def _invoke_delete(cfg, mocks):
 
 @pytest.mark.parametrize("cfg", DELETE_FN_CONFIGS, ids=lambda c: c["id"])
 class TestBuiltinFlagProtection:
-    """IS_BUILTIN flag prevents deletion across every delete_* business_logic function."""
+    """The is_builtin flag prevents deletion across every delete_* business_logic function."""
 
     @pytest.mark.asyncio
-    async def test_delete_proceeds_when_flag_not_builtin(self, cfg, mocker):
-        mocks = _build_delete_mocks(cfg, mocker, flags=Flag.NONE)
+    async def test_delete_proceeds_when_not_builtin(self, cfg, mocker):
+        mocks = _build_delete_mocks(cfg, mocker, is_builtin=False)
         result = await _invoke_delete(cfg, mocks)
         assert result is None
         mocks["persistence"].delete.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_delete_blocked_when_builtin_bit_set(self, cfg, mocker):
-        mocks = _build_delete_mocks(cfg, mocker, flags=Flag.IS_BUILTIN)
+    async def test_delete_blocked_when_builtin(self, cfg, mocker):
+        mocks = _build_delete_mocks(cfg, mocker, is_builtin=True)
         with pytest.raises(DependencyExistsError, match=cfg["builtin_msg"]):
             await _invoke_delete(cfg, mocks)
         mocks["persistence"].delete.assert_not_called()
-
-    @pytest.mark.asyncio
-    async def test_delete_blocked_with_composite_flag_including_builtin(
-        self, cfg, mocker
-    ):
-        # 0b11: IS_BUILTIN plus a hypothetical second bit. Guards against an
-        # implementation that compared flags == 1 instead of testing the bit.
-        composite = Flag.IS_BUILTIN | Flag(1 << 1)
-        mocks = _build_delete_mocks(cfg, mocker, flags=composite)
-        with pytest.raises(DependencyExistsError, match=cfg["builtin_msg"]):
-            await _invoke_delete(cfg, mocks)
-        mocks["persistence"].delete.assert_not_called()
-
-    @pytest.mark.asyncio
-    async def test_delete_proceeds_when_only_non_builtin_bit_set(self, cfg, mocker):
-        # 0b10: a hypothetical future bit set, IS_BUILTIN not set. Guards
-        # against an implementation that compared flags != 0.
-        other_bit_only = Flag(1 << 1)
-        mocks = _build_delete_mocks(cfg, mocker, flags=other_bit_only)
-        result = await _invoke_delete(cfg, mocks)
-        assert result is None
-        mocks["persistence"].delete.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_unauthorized_takes_precedence_over_builtin(self, cfg, mocker):
-        mocks = _build_delete_mocks(cfg, mocker, flags=Flag.IS_BUILTIN, allowed=False)
+        mocks = _build_delete_mocks(cfg, mocker, is_builtin=True, allowed=False)
         with pytest.raises(UnauthorizedError, match=cfg["unauthorized_msg"]):
             await _invoke_delete(cfg, mocks)
         mocks["persistence"].delete.assert_not_called()
@@ -1132,7 +1109,7 @@ class TestBuiltinFlagProtection:
         mocks = _build_delete_mocks(
             cfg,
             mocker,
-            flags=Flag.IS_BUILTIN,
+            is_builtin=True,
             dependencies=[mocker.Mock(), mocker.Mock()],
         )
         with pytest.raises(DependencyExistsError, match=cfg["builtin_msg"]):

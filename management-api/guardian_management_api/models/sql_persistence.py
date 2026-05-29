@@ -8,15 +8,16 @@ from typing import Optional
 from port_loader.models import SETTINGS_NAME_METADATA
 from sqlalchemy import (
     JSON,
+    Boolean,
     Column,
     Enum,
     ForeignKey,
-    Integer,
     LargeBinary,
     String,
     Table,
     Text,
     UniqueConstraint,
+    false,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -46,17 +47,32 @@ class Base(DeclarativeBase):
     pass
 
 
-class DBApp(Base):
+class StatusFlagsMixin:
+    """Shared status flags for all persisted Guardian objects.
+
+    Every object type carries the same set of status flags. To add a new flag,
+    add a single ``mapped_column`` here and generate one Alembic migration that
+    applies the column to every table inheriting this mixin. Plain boolean
+    columns are used (rather than a packed bitmask) so each flag is type-safe,
+    self-documenting, and independently indexable/queryable in SQL.
+    """
+
+    is_builtin: Mapped[bool] = mapped_column(
+        Boolean(), nullable=False, default=False, server_default=false()
+    )
+    # Add the next flag here. This is the only edit on the ORM/schema side.
+
+
+class DBApp(StatusFlagsMixin, Base):
     __tablename__ = "app"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(STRING_MAX_LENGTH), unique=True)
     display_name: Mapped[Optional[str]] = mapped_column(String(STRING_MAX_LENGTH))
     namespaces: Mapped[list["DBNamespace"]] = relationship(back_populates="app")
-    flags: Mapped[int] = mapped_column(Integer(), default=0, server_default="0")
 
 
-class DBNamespace(Base):
+class DBNamespace(StatusFlagsMixin, Base):
     __tablename__ = "namespace"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -64,14 +80,13 @@ class DBNamespace(Base):
     app: Mapped[DBApp] = relationship(back_populates="namespaces", lazy="joined")
     name: Mapped[str] = mapped_column(String(STRING_MAX_LENGTH))
     display_name: Mapped[Optional[str]] = mapped_column(String(STRING_MAX_LENGTH))
-    flags: Mapped[int] = mapped_column(Integer(), default=0, server_default="0")
 
     __table_args__ = (  # type: ignore[var-annotated]
         UniqueConstraint("app_id", "name"),
     )
 
 
-class DBPermission(Base):
+class DBPermission(StatusFlagsMixin, Base):
     __tablename__ = "permission"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -79,14 +94,13 @@ class DBPermission(Base):
     namespace: Mapped[DBNamespace] = relationship(lazy="joined")
     name: Mapped[str] = mapped_column(String(STRING_MAX_LENGTH))
     display_name: Mapped[Optional[str]] = mapped_column(String(STRING_MAX_LENGTH))
-    flags: Mapped[int] = mapped_column(Integer(), default=0, server_default="0")
 
     __table_args__ = (  # type: ignore[var-annotated]
         UniqueConstraint("namespace_id", "name"),
     )
 
 
-class DBContext(Base):
+class DBContext(StatusFlagsMixin, Base):
     __tablename__ = "context"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -94,7 +108,6 @@ class DBContext(Base):
     namespace: Mapped[DBNamespace] = relationship(lazy="joined")
     name: Mapped[str] = mapped_column(String(STRING_MAX_LENGTH))
     display_name: Mapped[Optional[str]] = mapped_column(String(STRING_MAX_LENGTH))
-    flags: Mapped[int] = mapped_column(Integer(), default=0, server_default="0")
 
     __table_args__ = (  # type: ignore[var-annotated]
         UniqueConstraint("namespace_id", "name"),
@@ -113,7 +126,7 @@ class DBConditionParameter(Base):
     position: Mapped[int] = mapped_column(nullable=False)
 
 
-class DBCondition(Base):
+class DBCondition(StatusFlagsMixin, Base):
     __tablename__ = "condition"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -128,7 +141,6 @@ class DBCondition(Base):
         order_by=DBConditionParameter.position,
     )
     code: Mapped[bytes] = mapped_column(LargeBinary())
-    flags: Mapped[int] = mapped_column(Integer(), default=0, server_default="0")
 
     __table_args__ = (  # type: ignore[var-annotated]
         UniqueConstraint("namespace_id", "name"),
@@ -167,7 +179,7 @@ class DBCapabilityCondition(Base):
     kwargs = mapped_column(JSON())
 
 
-class DBCapability(Base):
+class DBCapability(StatusFlagsMixin, Base):
     __tablename__ = "capability"
     id: Mapped[int] = mapped_column(primary_key=True)
     namespace_id: Mapped[int] = mapped_column(ForeignKey(DBNamespace.id))
@@ -185,7 +197,6 @@ class DBCapability(Base):
     conditions: Mapped[set[DBCapabilityCondition]] = relationship(
         lazy="joined", back_populates="capability", cascade="all, delete"
     )
-    flags: Mapped[int] = mapped_column(Integer(), default=0, server_default="0")
 
     __table_args__ = (  # type: ignore[var-annotated]
         UniqueConstraint("namespace_id", "name"),
@@ -208,7 +219,7 @@ role_capability_table = Table(
 )
 
 
-class DBRole(Base):
+class DBRole(StatusFlagsMixin, Base):
     __tablename__ = "role"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -221,7 +232,6 @@ class DBRole(Base):
         passive_deletes=True,
     )
     display_name: Mapped[Optional[str]] = mapped_column(String(STRING_MAX_LENGTH))
-    flags: Mapped[int] = mapped_column(Integer(), default=0, server_default="0")
 
     __table_args__ = (  # type: ignore[var-annotated]
         UniqueConstraint("namespace_id", "name"),

@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from typing import Optional
 
 from .base import PaginationRequest
-from .flags import Flag
 
 
 @dataclass
@@ -15,7 +14,7 @@ class Context:
     namespace_name: str
     name: str
     display_name: Optional[str] = None
-    flags: Flag = Flag.NONE
+    is_builtin: bool = False
 
 
 @dataclass(frozen=True)
