@@ -46,7 +46,6 @@ class TestPermissionsCheckUnittest:
                 "roles": [
                     {
                         "app_name": "app1",
-                        "namespace_name": "namespace1",
                         "name": "role1",
                     },
                 ],
@@ -294,9 +293,7 @@ class TestPermissionsCheck:
           the actor should always have the permission read_first_name
         """
         data = get_authz_permissions_check_request_dict(n_actor_roles=1, n_targets=1)
-        data["actor"]["roles"] = [
-            {"app_name": "ucsschool", "namespace_name": "users", "name": "teacher"}
-        ]
+        data["actor"]["roles"] = [{"app_name": "ucsschool", "name": "teacher"}]
 
         data["contexts"] = []
         data["targeted_permissions_to_check"] = [
@@ -308,7 +305,7 @@ class TestPermissionsCheck:
         ]
         data["general_permissions_to_check"] = []
         data["targets"][0]["old_target"]["roles"] = [
-            {"app_name": "ucsschool", "namespace_name": "users", "name": "teacher"}
+            {"app_name": "ucsschool", "name": "teacher"}
         ]
         data["targets"][0]["new_target"] = data["targets"][0]["old_target"]
         data["namespaces"] = [{"app_name": "ucsschool", "name": "users"}]
@@ -336,9 +333,7 @@ class TestPermissionsCheck:
             {"app_name": "ucsschool", "name": "users"},
             {"app_name": "oxmail", "name": "mail"},
         ]
-        data["actor"]["roles"] = [
-            {"app_name": "ucsschool", "namespace_name": "users", "name": "teacher"}
-        ]
+        data["actor"]["roles"] = [{"app_name": "ucsschool", "name": "teacher"}]
 
         data["targeted_permissions_to_check"] = [
             {
@@ -356,7 +351,7 @@ class TestPermissionsCheck:
         ]
 
         data["targets"][0]["old_target"]["roles"] = [
-            {"app_name": "ucsschool", "namespace_name": "users", "name": "student"}
+            {"app_name": "ucsschool", "name": "student"}
         ]
         data["targets"][0]["old_target"]["attributes"]["school"] = "school1"
         data["targets"][0]["new_target"] = data["targets"][0]["old_target"]
@@ -381,9 +376,7 @@ class TestPermissionsCheck:
         data = get_authz_permissions_check_request_dict(n_actor_roles=1, n_targets=1)
 
         data["namespaces"] = [{"app_name": "ucsschool", "name": "users"}]
-        data["actor"]["roles"] = [
-            {"app_name": "ucsschool", "namespace_name": "users", "name": "teacher"}
-        ]
+        data["actor"]["roles"] = [{"app_name": "ucsschool", "name": "teacher"}]
 
         data["targeted_permissions_to_check"] = []
         data["general_permissions_to_check"] = [
@@ -394,7 +387,7 @@ class TestPermissionsCheck:
             }
         ]
         data["targets"][0]["old_target"]["roles"] = [
-            {"app_name": "ucsschool", "namespace_name": "users", "name": "student"}
+            {"app_name": "ucsschool", "name": "student"}
         ]
         data["targets"][0]["old_target"]["attributes"]["school"] = "school1"
         data["targets"][0]["new_target"] = data["targets"][0]["old_target"]
@@ -431,7 +424,7 @@ class TestPermissionsCheck:
         data["general_permissions_to_check"] = []
         data["namespaces"] = [{"app_name": "ucsschool", "name": "users"}]
         data["targets"][0]["new_target"]["roles"] = [
-            {"app_name": "ucsschool", "namespace_name": "users", "name": "teacher"}
+            {"app_name": "ucsschool", "name": "teacher"}
         ]
         data["targets"][0]["new_target"]["attributes"] = {}
         users = {
@@ -556,7 +549,7 @@ class TestPermissionsCheck:
         target_id_provided = "uid=target-id"
         data["targets"][1]["old_target"]["id"] = target_id_provided
         data["targets"][1]["old_target"]["roles"] = [
-            {"app_name": "ucsschool", "namespace_name": "users", "name": "teacher"}
+            {"app_name": "ucsschool", "name": "teacher"}
         ]
         data["targets"][1]["new_target"] = data["targets"][1]["old_target"]
         data["namespaces"] = [{"app_name": "ucsschool", "name": "users"}]
@@ -605,7 +598,7 @@ class TestPermissionsCheck:
             }
         ]
         data["targets"][0]["new_target"]["roles"] = [
-            {"app_name": "ucsschool", "namespace_name": "users", "name": "teacher"}
+            {"app_name": "ucsschool", "name": "teacher"}
         ]
         data["targets"][0]["new_target"]["attributes"] = {"school": "school1"}
         users = {
@@ -658,7 +651,7 @@ class TestPermissionsCheck:
             }
         ]
         data["targets"][0]["new_target"]["roles"] = [
-            {"app_name": "ucsschool", "namespace_name": "users", "name": "teacher"}
+            {"app_name": "ucsschool", "name": "teacher"}
         ]
         data["targets"][0]["new_target"]["attributes"] = {"school": "school1"}
         users = {

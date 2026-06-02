@@ -35,11 +35,9 @@ def get_actor_object(get_policy_object) -> Callable:
             roles=[
                 PolicyRole(
                     app_name="ucsschool",
-                    namespace_name="users",
                     name="teacher",
                     context=Context(
                         app_name="ucsschool",
-                        namespace_name="users",
                         name="school1",
                     ),
                 )
@@ -287,7 +285,6 @@ class TestOPAAdapterIntegration:
                 roles=[
                     PolicyRole(
                         app_name="ucsschool",
-                        namespace_name="users",
                         name="teacher",
                     )
                 ],
@@ -344,11 +341,9 @@ class TestOPAAdapterIntegration:
                 roles=[
                     PolicyRole(
                         app_name="ucsschool",
-                        namespace_name="users",
                         name="teacher",
                         context=Context(
                             app_name="ucsschool",
-                            namespace_name="users",
                             name="school1",
                         ),
                     ),
@@ -403,11 +398,7 @@ class TestOPAAdapterIntegration:
         query = CheckPermissionsQuery(
             actor=PolicyObject(
                 id="actor",
-                roles=[
-                    PolicyRole(
-                        app_name="ucsschool", namespace_name="users", name="teacher"
-                    )
-                ],
+                roles=[PolicyRole(app_name="ucsschool", name="teacher")],
                 attributes={},
             ),
             targets=[

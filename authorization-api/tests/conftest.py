@@ -179,7 +179,6 @@ def get_authz_permission_dict() -> dict:
 def get_authz_context_dict() -> dict:
     return {
         "app_name": _generate_valid_name(),
-        "namespace_name": _generate_valid_name(),
         "name": _generate_valid_name(),
     }
 
@@ -187,7 +186,6 @@ def get_authz_context_dict() -> dict:
 def get_authz_roles_dict() -> dict:
     return {
         "app_name": _generate_valid_name(),
-        "namespace_name": _generate_valid_name(),
         "name": _generate_valid_name(),
     }
 

@@ -248,20 +248,20 @@ class TestUDMDataAdapter:
         )
         assert actor_obj == PolicyObject(
             actor_id,
-            [Role("ucsschool", "users", "teacher")],
+            [Role("ucsschool", "teacher")],
             attributes={"school": "school1"},
         )
 
         assert targets == [
             PolicyObject(
                 id=user_id_0,
-                roles=[Role("ucsschool", "users", "student")],
+                roles=[Role("ucsschool", "student")],
                 attributes={"school": "school1"},
             ),
             None,
             PolicyObject(
                 id=user_id_1,
-                roles=[Role("ucsschool", "users", "teacher")],
+                roles=[Role("ucsschool", "teacher")],
                 attributes={"school": "school2"},
             ),
             None,
@@ -313,7 +313,7 @@ class TestUDMDataAdapter:
         )
         assert actor_obj == PolicyObject(
             "ID",
-            [Role("ucsschool", "users", "teacher")],
+            [Role("ucsschool", "teacher")],
             attributes={"school": "school1"},
         )
 
@@ -321,12 +321,12 @@ class TestUDMDataAdapter:
             None,
             PolicyObject(
                 id=group_id,
-                roles=[Role("ucsschool", "groups", "class")],
+                roles=[Role("ucsschool", "class")],
                 attributes={"school": "school1"},
             ),
             PolicyObject(
                 id=group_id_2,
-                roles=[Role("ucsschool", "groups", "class")],
+                roles=[Role("ucsschool", "class")],
                 attributes={"school": "school2"},
             ),
         ]
@@ -342,24 +342,42 @@ class TestUDMDataAdapter:
         assert client is not client3
 
     def test_to_policy_role(self):
+        # UDM/LDAP enforces a three-segment "app:namespace:name" format on the
+        # guardianRoles attribute; we accept it on the wire and drop the
+        # namespace segment when constructing the app-scoped Role.
         assert UDMPersistenceAdapter._to_policy_role("ucsschool:users:teacher") == Role(
-            app_name="ucsschool", namespace_name="users", name="teacher"
+            app_name="ucsschool", name="teacher"
         )
         with pytest.raises(PersistenceError):
             UDMPersistenceAdapter._to_policy_role("ucsschool-users-teacher")
+        # Two-segment "app:name" is not a valid LDAP role string.
+        with pytest.raises(PersistenceError):
+            UDMPersistenceAdapter._to_policy_role("ucsschool:teacher")
 
     def test_to_policy_role_with_context(self):
-        context = Context(app_name="ucsschool", namespace_name="users", name="school1")
+        context = Context(app_name="ucsschool", name="school1")
         assert UDMPersistenceAdapter._to_policy_role(
             "ucsschool:users:teacher&ucsschool:users:school1"
         ) == Role(
             app_name="ucsschool",
-            namespace_name="users",
             name="teacher",
             context=context,
         )
         with pytest.raises(PersistenceError):
             UDMPersistenceAdapter._to_policy_role("ucsschool:users:teacher&funky-role")
+
+    def test_to_policy_role_with_dn_context(self):
+        # UCS's GuardianRole syntax allows '=' and ',' in the trailing segment
+        # of a context so it can carry an LDAP DN
+        # (e.g. position=cn=foo,dc=bar).
+        context = Context(app_name="udm", name="position=cn=foo,dc=school,dc=test")
+        assert UDMPersistenceAdapter._to_policy_role(
+            "udm:default-roles:admin&udm:contexts:position=cn=foo,dc=school,dc=test"
+        ) == Role(
+            app_name="udm",
+            name="admin",
+            context=context,
+        )
 
 
 @pytest.mark.skipif(

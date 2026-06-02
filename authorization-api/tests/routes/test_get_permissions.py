@@ -246,9 +246,7 @@ class TestGetPermissions:
           the actor should always have the checked permissions
         """
         data = get_authz_permissions_get_request_dict(n_actor_roles=1, n_targets=1)
-        data["actor"]["roles"] = [
-            {"app_name": "ucsschool", "namespace_name": "users", "name": "teacher"}
-        ]
+        data["actor"]["roles"] = [{"app_name": "ucsschool", "name": "teacher"}]
         data["namespaces"] = [{"app_name": "ucsschool", "name": "users"}]
         response = client.post(client.app.url_path_for("get_permissions"), json=data)
         assert response.status_code == 200, response.json()

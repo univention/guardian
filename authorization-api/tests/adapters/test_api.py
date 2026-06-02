@@ -58,7 +58,6 @@ def get_route_object() -> Callable[[], AuthzObject]:
             roles=[
                 Role(
                     app_name=AppName("app"),
-                    namespace_name=NamespaceName("namespace"),
                     name=AuthzObjectIdentifier("role"),
                 )
             ],
@@ -108,7 +107,6 @@ class TestFastAPICheckPermissionsAPIAdapter:
                 roles=[
                     PoliciesRole(
                         app_name=AppName(role["app_name"]),
-                        namespace_name=NamespaceName(role["namespace_name"]),
                         name=AuthzObjectIdentifier(role["name"]),
                     )
                     for role in data["actor"]["roles"]
@@ -122,7 +120,6 @@ class TestFastAPICheckPermissionsAPIAdapter:
                         roles=[
                             PoliciesRole(
                                 app_name=AppName(role["app_name"]),
-                                namespace_name=NamespaceName(role["namespace_name"]),
                                 name=AuthzObjectIdentifier(role["name"]),
                             )
                             for role in target["old_target"]["roles"]
@@ -134,7 +131,6 @@ class TestFastAPICheckPermissionsAPIAdapter:
                         roles=[
                             PoliciesRole(
                                 app_name=AppName(role["app_name"]),
-                                namespace_name=NamespaceName(role["namespace_name"]),
                                 name=AuthzObjectIdentifier(role["name"]),
                             )
                             for role in target["new_target"]["roles"]
@@ -170,7 +166,6 @@ class TestFastAPICheckPermissionsAPIAdapter:
             contexts=[
                 PoliciesContext(
                     app_name=AppName(context["app_name"]),
-                    namespace_name=NamespaceName(context["namespace_name"]),
                     name=PermissionName(context["name"]),
                 )
                 for context in data["contexts"]
@@ -189,9 +184,7 @@ class TestFastAPIGetPermissionsAPIAdapter:
         result = FastAPIAdapterUtils.authz_to_policy_object(obj)
         assert result == PolicyObject(
             id="test-id",
-            roles=[
-                PoliciesRole(app_name="app", namespace_name="namespace", name="role")
-            ],
+            roles=[PoliciesRole(app_name="app", name="role")],
             attributes={"a": "b"},
         )
 
@@ -203,9 +196,7 @@ class TestFastAPIGetPermissionsAPIAdapter:
         new = get_route_object() if has_new else None
         expected_policy_obj = PolicyObject(
             id="test-id",
-            roles=[
-                PoliciesRole(app_name="app", namespace_name="namespace", name="role")
-            ],
+            roles=[PoliciesRole(app_name="app", name="role")],
             attributes={"a": "b"},
         )
         target = Target(old_target=old, new_target=new)
@@ -229,13 +220,10 @@ class TestFastAPIGetPermissionsAPIAdapter:
     def test_to_policy_context(self):
         input_ctx = Context(
             app_name=AppName("app"),
-            namespace_name=NamespaceName("namespace"),
             name=ContextName("context"),
         )
         result = FastAPIAdapterUtils.api_context_to_policy_context(input_ctx)
-        assert result == PoliciesContext(
-            app_name="app", namespace_name="namespace", name="context"
-        )
+        assert result == PoliciesContext(app_name="app", name="context")
 
     @pytest.mark.asyncio
     async def test_to_policy_query(self, get_route_object, adapter_instance):
@@ -252,7 +240,6 @@ class TestFastAPIGetPermissionsAPIAdapter:
             contexts=[
                 Context(
                     app_name=AppName("app"),
-                    namespace_name=NamespaceName("namespace"),
                     name=ContextName("context"),
                 )
             ],
@@ -263,41 +250,25 @@ class TestFastAPIGetPermissionsAPIAdapter:
         assert result == GetPermissionsQuery(
             actor=PolicyObject(
                 id="test-id",
-                roles=[
-                    PoliciesRole(
-                        app_name="app", namespace_name="namespace", name="role"
-                    )
-                ],
+                roles=[PoliciesRole(app_name="app", name="role")],
                 attributes={"a": "b"},
             ),
             targets=[
                 PoliciesTarget(
                     old_target=PolicyObject(
                         id="test-id",
-                        roles=[
-                            PoliciesRole(
-                                app_name="app", namespace_name="namespace", name="role"
-                            )
-                        ],
+                        roles=[PoliciesRole(app_name="app", name="role")],
                         attributes={"a": "b"},
                     ),
                     new_target=PolicyObject(
                         id="test-id",
-                        roles=[
-                            PoliciesRole(
-                                app_name="app", namespace_name="namespace", name="role"
-                            )
-                        ],
+                        roles=[PoliciesRole(app_name="app", name="role")],
                         attributes={"a": "b"},
                     ),
                 )
             ],
             namespaces=[PoliciesNamespace(app_name="app", name="namespace")],
-            contexts=[
-                PoliciesContext(
-                    app_name="app", namespace_name="namespace", name="context"
-                )
-            ],
+            contexts=[PoliciesContext(app_name="app", name="context")],
             extra_args={"a": "b"},
             include_general_permissions=True,
         )
@@ -307,11 +278,7 @@ class TestFastAPIGetPermissionsAPIAdapter:
         input_obj = GetPermissionsResult(
             actor=PolicyObject(
                 id="test-id",
-                roles=[
-                    PoliciesRole(
-                        app_name="app", namespace_name="namespace", name="role"
-                    )
-                ],
+                roles=[PoliciesRole(app_name="app", name="role")],
                 attributes={"a": "b"},
             ),
             target_permissions=[
@@ -365,7 +332,6 @@ class TestFastAPIAdapterUtils:
         [
             Context(
                 app_name=AppName("app"),
-                namespace_name=NamespaceName("namespace"),
                 name=ContextName("context"),
             ),
             None,
@@ -377,7 +343,6 @@ class TestFastAPIAdapterUtils:
             roles=[
                 Role(
                     app_name=AppName("app"),
-                    namespace_name=NamespaceName("namespace"),
                     name=AuthzObjectIdentifier("role"),
                     context=context,
                 )
@@ -390,12 +355,10 @@ class TestFastAPIAdapterUtils:
             roles=[
                 PoliciesRole(
                     app_name="app",
-                    namespace_name="namespace",
                     name="role",
                     context=(
                         PoliciesContext(
                             app_name=context.app_name,
-                            namespace_name=context.namespace_name,
                             name=context.name,
                         )
                         if context
