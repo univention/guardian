@@ -36,7 +36,11 @@ class Resource:
     def id(self):
         if self.resource_type == ResourceType.APP:
             return self.name
-        elif self.resource_type == ResourceType.NAMESPACE:
+        elif self.resource_type in (
+            ResourceType.NAMESPACE,
+            ResourceType.ROLE,
+            ResourceType.CONTEXT,
+        ):
             return f"{self.app_name}:{self.name}"
         else:
             return f"{self.app_name}:{self.namespace_name}:{self.name}"

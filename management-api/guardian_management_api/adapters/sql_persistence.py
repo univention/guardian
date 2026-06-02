@@ -158,7 +158,7 @@ class SQLAlchemyMixin:
                     DBNamespace.name == namespace_name,
                 )
             )
-        elif app_name and issubclass(orm_cls, DBNamespace):
+        elif app_name and hasattr(orm_cls, "app_id"):
             stmt = stmt.join(DBApp).where(
                 DBApp.name == app_name, getattr(orm_cls, "app_id") == DBApp.id
             )

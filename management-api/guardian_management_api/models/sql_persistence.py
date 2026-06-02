@@ -104,13 +104,13 @@ class DBContext(StatusFlagsMixin, Base):
     __tablename__ = "context"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    namespace_id: Mapped[int] = mapped_column(ForeignKey(DBNamespace.id))
-    namespace: Mapped[DBNamespace] = relationship(lazy="joined")
+    app_id: Mapped[int] = mapped_column(ForeignKey(DBApp.id))
+    app: Mapped[DBApp] = relationship(lazy="joined")
     name: Mapped[str] = mapped_column(String(STRING_MAX_LENGTH))
     display_name: Mapped[Optional[str]] = mapped_column(String(STRING_MAX_LENGTH))
 
     __table_args__ = (  # type: ignore[var-annotated]
-        UniqueConstraint("namespace_id", "name"),
+        UniqueConstraint("app_id", "name"),
     )
 
 
@@ -223,8 +223,8 @@ class DBRole(StatusFlagsMixin, Base):
     __tablename__ = "role"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    namespace_id: Mapped[int] = mapped_column(ForeignKey(DBNamespace.id))
-    namespace: Mapped[DBNamespace] = relationship(lazy="joined")
+    app_id: Mapped[int] = mapped_column(ForeignKey(DBApp.id))
+    app: Mapped[DBApp] = relationship(lazy="joined")
     name: Mapped[str] = mapped_column(String(STRING_MAX_LENGTH))
     capability: Mapped[set[DBCapability]] = relationship(
         secondary=role_capability_table,
@@ -234,5 +234,5 @@ class DBRole(StatusFlagsMixin, Base):
     display_name: Mapped[Optional[str]] = mapped_column(String(STRING_MAX_LENGTH))
 
     __table_args__ = (  # type: ignore[var-annotated]
-        UniqueConstraint("namespace_id", "name"),
+        UniqueConstraint("app_id", "name"),
     )

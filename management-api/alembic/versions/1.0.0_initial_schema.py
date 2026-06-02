@@ -49,13 +49,13 @@ def create_app_admin(
     cap_table,
     cap_perm_table,
     cap_cond_table,
-    builtin_ns_id,
+    app_id,
     management_ns_id,
     conditions,
     permissions,
 ):
     role_data = {
-        "namespace_id": builtin_ns_id,
+        "app_id": app_id,
         "name": "app-admin",
         "display_name": "The app admin for the Guardian Application",
     }
@@ -177,13 +177,13 @@ def create_super_admin(
     cap_table,
     cap_perm_table,
     cap_cond_table,
-    builtin_ns,
+    app_id,
     management_ns,
     permissions,
     conditions,
 ):
     super_admin = {
-        "namespace_id": builtin_ns,
+        "app_id": app_id,
         "name": "super-admin",
         "display_name": "The super admin for the Guardian Application",
     }
@@ -310,15 +310,15 @@ def upgrade() -> None:
     op.create_table(
         "context",
         sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("namespace_id", sa.Integer(), nullable=False),
+        sa.Column("app_id", sa.Integer(), nullable=False),
         sa.Column("name", sa.String(length=256), nullable=False),
         sa.Column("display_name", sa.String(length=256), nullable=True),
         sa.ForeignKeyConstraint(
-            ["namespace_id"],
-            ["namespace.id"],
+            ["app_id"],
+            ["app.id"],
         ),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("namespace_id", "name"),
+        sa.UniqueConstraint("app_id", "name"),
     )
     permission_table = op.create_table(
         "permission",
@@ -336,15 +336,15 @@ def upgrade() -> None:
     role_table = op.create_table(
         "role",
         sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("namespace_id", sa.Integer(), nullable=False),
+        sa.Column("app_id", sa.Integer(), nullable=False),
         sa.Column("name", sa.String(length=256), nullable=False),
         sa.Column("display_name", sa.String(length=256), nullable=True),
         sa.ForeignKeyConstraint(
-            ["namespace_id"],
-            ["namespace.id"],
+            ["app_id"],
+            ["app.id"],
         ),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("namespace_id", "name"),
+        sa.UniqueConstraint("app_id", "name"),
     )
     cap_table = op.create_table(
         "capability",
@@ -446,7 +446,7 @@ def upgrade() -> None:
         cap_table,
         cap_perm_table,
         cap_cond_table,
-        builtin_ns_id,
+        app_id,
         management_ns_id,
         conditions,
         permissions,
@@ -457,7 +457,7 @@ def upgrade() -> None:
         cap_table,
         cap_perm_table,
         cap_cond_table,
-        builtin_ns_id,
+        app_id,
         management_ns_id,
         permissions,
         conditions,

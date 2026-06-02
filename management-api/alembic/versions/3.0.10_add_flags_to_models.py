@@ -115,11 +115,9 @@ def upgrade() -> None:
     )
     op.execute(
         """
-        UPDATE role SET is_builtin = true WHERE namespace_id IN (
-            SELECT n.id FROM namespace n
-            JOIN app a ON a.id = n.app_id
-            WHERE a.name = 'guardian' AND n.name = 'builtin'
-        )
+        UPDATE role SET is_builtin = true
+        WHERE name IN ('app-admin', 'super-admin')
+        AND app_id = (SELECT id FROM app WHERE name = 'guardian')
         """
     )
     op.execute(

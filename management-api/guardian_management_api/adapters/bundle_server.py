@@ -30,7 +30,7 @@ BUNDLE_SERVER_ADAPTER_BASE_DIR = "bundle_server_adapter.base_dir"
 
 DUMMY_MAPPING_JSON = {
     "roleCapabilityMapping": {
-        "ucsschool:users:teacher": [
+        "ucsschool:teacher": [
             {
                 "appName": "ucsschool",
                 "conditions": [],
@@ -47,7 +47,7 @@ DUMMY_MAPPING_JSON = {
                     },
                     {
                         "name": "target_has_role",
-                        "parameters": {"role": "ucsschool:users:student"},
+                        "parameters": {"role": "ucsschool:student"},
                     },
                 ],
                 "namespace": "users",
@@ -232,7 +232,7 @@ class BundleServerAdapter(BundleServerPort, AsyncConfiguredAdapterMixin):
                 for cap in caps_result.objects
             }
             for role in roles_result.objects:
-                role_key = f"{role.app_name}:{role.namespace_name}:{role.name}"
+                role_key = f"{role.app_name}:{role.name}"
                 for cap_ref in role.capabilities:
                     capability = cap_by_identifier[
                         (cap_ref.app_name, cap_ref.namespace_name, cap_ref.name)

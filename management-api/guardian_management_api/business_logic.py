@@ -51,7 +51,6 @@ from .models.routers.role import (
     RoleEditRequest,
     RoleGetAllRequest,
     RoleGetByAppRequest,
-    RoleGetByNamespaceRequest,
     RoleGetFullIdentifierRequest,
     RoleMultipleResponse,
     RoleSingleResponse,
@@ -547,7 +546,6 @@ async def register_app(
         admin_role = await role_persistence_port.create(
             Role(
                 app_name=app.name,
-                namespace_name=default_namespace.name,
                 name="app-admin",
                 display_name=f"App Administrator for {app_display}",
                 capabilities=[
@@ -1190,7 +1188,6 @@ async def get_role(
         resource: Resource = Resource(
             resource_type=ResourceType.ROLE,
             name=query.name,
-            namespace_name=query.namespace_name,
             app_name=query.app_name,
         )
         logger.debug(
@@ -1224,7 +1221,7 @@ async def get_role(
 
 
 async def get_roles(
-    api_request: RoleGetAllRequest | RoleGetByAppRequest | RoleGetByNamespaceRequest,
+    api_request: RoleGetAllRequest | RoleGetByAppRequest,
     role_api_port: RoleAPIPort,
     persistence_port: RolePersistencePort,
     authc_port: AuthenticationPort,
@@ -1243,7 +1240,6 @@ async def get_roles(
                 Resource(
                     resource_type=ResourceType.ROLE,
                     name=role.name,
-                    namespace_name=role.namespace_name,
                     app_name=role.app_name,
                 )
                 for role in many_roles.objects
@@ -1261,7 +1257,6 @@ async def get_roles(
                 if Resource(
                     resource_type=ResourceType.ROLE,
                     name=role.name,
-                    namespace_name=role.namespace_name,
                     app_name=role.app_name,
                 ).id
                 in allowed_roles
@@ -1300,7 +1295,6 @@ async def create_role(
         resource: Resource = Resource(
             resource_type=ResourceType.ROLE,
             name=role.name,
-            namespace_name=role.namespace_name,
             app_name=role.app_name,
         )
         logger.debug(
@@ -1345,7 +1339,6 @@ async def edit_role(
         resource: Resource = Resource(
             resource_type=ResourceType.ROLE,
             name=query.name,
-            namespace_name=query.namespace_name,
             app_name=query.app_name,
         )
         allowed = (
@@ -1399,7 +1392,6 @@ async def delete_role(
             resource_type=ResourceType.ROLE,
             name=role.name,
             app_name=role.app_name,
-            namespace_name=role.namespace_name,
         )
         logger.debug(
             "Received request to delete role.",
@@ -1470,7 +1462,6 @@ async def create_context(
         resource: Resource = Resource(
             resource_type=ResourceType.CONTEXT,
             name=query.name,
-            namespace_name=query.namespace_name,
             app_name=query.app_name,
         )
         allowed = (
@@ -1509,7 +1500,6 @@ async def get_context(
         resource: Resource = Resource(
             resource_type=ResourceType.CONTEXT,
             name=query.name,
-            namespace_name=query.namespace_name,
             app_name=query.app_name,
         )
         allowed = (
@@ -1554,7 +1544,6 @@ async def get_contexts(
                 Resource(
                     resource_type=ResourceType.CONTEXT,
                     name=context.name,
-                    namespace_name=context.namespace_name,
                     app_name=context.app_name,
                 )
                 for context in contexts.objects
@@ -1572,7 +1561,6 @@ async def get_contexts(
                 if Resource(
                     resource_type=ResourceType.CONTEXT,
                     name=context.name,
-                    namespace_name=context.namespace_name,
                     app_name=context.app_name,
                 ).id
                 in allowed_contexts
@@ -1610,7 +1598,6 @@ async def edit_context(
         resource: Resource = Resource(
             resource_type=ResourceType.CONTEXT,
             name=query.name,
-            namespace_name=query.namespace_name,
             app_name=query.app_name,
         )
         logger.debug(
@@ -1661,7 +1648,6 @@ async def delete_context(
             resource_type=ResourceType.CONTEXT,
             name=context.name,
             app_name=context.app_name,
-            namespace_name=context.namespace_name,
         )
         logger.debug(
             "Received request to delete context.",

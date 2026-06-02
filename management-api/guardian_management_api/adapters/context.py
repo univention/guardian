@@ -18,7 +18,6 @@ from ..models.context import (
 from ..models.routers.base import (
     GetAllRequest,
     GetByAppRequest,
-    GetByNamespaceRequest,
     PaginationInfo,
 )
 from ..models.routers.context import (
@@ -34,7 +33,6 @@ from ..models.routers.context import (
 from ..models.sql_persistence import (
     DBApp,
     DBContext,
-    DBNamespace,
     SQLPersistenceAdapterSettings,
 )
 from ..ports.context import (
@@ -55,7 +53,7 @@ class FastAPIContextAPIAdapter(
         ContextSingleResponse,
         ContextGetRequest,
         ContextSingleResponse,
-        Union[GetAllRequest, GetByAppRequest, GetByNamespaceRequest],
+        Union[GetAllRequest, GetByAppRequest],
         ContextMultipleResponse,
         Tuple[ContextGetQuery, Dict[str, Any]],
         ContextSingleResponse,
@@ -72,8 +70,7 @@ class FastAPIContextAPIAdapter(
                 name=context_result.name,
                 app_name=context_result.app_name,
                 display_name=context_result.display_name,
-                namespace_name=context_result.namespace_name,
-                resource_url=f"{COMPLETE_URL}/contexts/{context_result.app_name}/{context_result.namespace_name}/{context_result.name}",
+                resource_url=f"{COMPLETE_URL}/contexts/{context_result.app_name}/{context_result.name}",
             )
         )
 
@@ -83,14 +80,13 @@ class FastAPIContextAPIAdapter(
     ) -> Tuple[ContextGetQuery, Dict[str, Any]]:
         query = ContextGetQuery(
             name=api_request.name,
-            namespace_name=api_request.namespace_name,
             app_name=api_request.app_name,
         )
         changed_data = api_request.data.model_dump(exclude_unset=True)
         return query, changed_data
 
     async def to_contexts_get(
-        self, api_request: Union[GetAllRequest, GetByAppRequest, GetByNamespaceRequest]
+        self, api_request: GetAllRequest | GetByAppRequest
     ) -> ContextsGetQuery:
         return ContextsGetQuery(
             pagination=PaginationRequest(
@@ -98,7 +94,6 @@ class FastAPIContextAPIAdapter(
                 query_limit=api_request.limit,
             ),
             app_name=getattr(api_request, "app_name", None),
-            namespace_name=getattr(api_request, "namespace_name", None),
         )
 
     async def to_context_create(self, api_request: ContextCreateRequest) -> Context:
@@ -106,7 +101,6 @@ class FastAPIContextAPIAdapter(
             name=api_request.data.name,
             display_name=api_request.data.display_name,
             app_name=api_request.app_name,
-            namespace_name=api_request.namespace_name,
         )
 
     async def to_api_create_response(
@@ -117,8 +111,7 @@ class FastAPIContextAPIAdapter(
                 name=context_result.name,
                 app_name=context_result.app_name,
                 display_name=context_result.display_name,
-                namespace_name=context_result.namespace_name,
-                resource_url=f"{COMPLETE_URL}/contexts/{context_result.app_name}/{context_result.namespace_name}/{context_result.name}",
+                resource_url=f"{COMPLETE_URL}/contexts/{context_result.app_name}/{context_result.name}",
             )
         )
 
@@ -130,8 +123,7 @@ class FastAPIContextAPIAdapter(
                 name=context_result.name,
                 app_name=context_result.app_name,
                 display_name=context_result.display_name,
-                namespace_name=context_result.namespace_name,
-                resource_url=f"{COMPLETE_URL}/contexts/{context_result.app_name}/{context_result.namespace_name}/{context_result.name}",
+                resource_url=f"{COMPLETE_URL}/contexts/{context_result.app_name}/{context_result.name}",
             )
         )
 
@@ -139,7 +131,6 @@ class FastAPIContextAPIAdapter(
         return ContextGetQuery(
             name=api_request.name,
             app_name=api_request.app_name,
-            namespace_name=api_request.namespace_name,
         )
 
     async def to_api_contexts_get_response(
@@ -160,8 +151,7 @@ class FastAPIContextAPIAdapter(
                     name=context.name,
                     display_name=context.display_name,
                     app_name=context.app_name,
-                    namespace_name=context.namespace_name,
-                    resource_url=f"{COMPLETE_URL}/contexts/{context.app_name}/{context.namespace_name}/{context.name}",
+                    resource_url=f"{COMPLETE_URL}/contexts/{context.app_name}/{context.name}",
                 )
                 for context in contexts
             ],
@@ -172,9 +162,9 @@ class SQLContextPersistenceAdapter(
     AsyncConfiguredAdapterMixin, ContextPersistencePort, SQLAlchemyMixin
 ):
     @staticmethod
-    def _context_to_db_context(context: Context, namespace_id: int) -> DBContext:
+    def _context_to_db_context(context: Context, app_id: int) -> DBContext:
         return DBContext(
-            namespace_id=namespace_id,
+            app_id=app_id,
             name=context.name,
             display_name=context.display_name,
         )
@@ -182,8 +172,7 @@ class SQLContextPersistenceAdapter(
     @staticmethod
     def _db_context_to_context(db_context: DBContext) -> Context:
         return Context(
-            app_name=db_context.namespace.app.name,
-            namespace_name=db_context.namespace.name,
+            app_name=db_context.app.name,
             name=db_context.name,
             display_name=db_context.display_name,
             is_builtin=db_context.is_builtin,
@@ -208,18 +197,9 @@ class SQLContextPersistenceAdapter(
             raise ParentNotFoundError(
                 "The app of the object to be created does not exist."
             )
-        db_namespace = await self._get_single_object(
-            DBNamespace,
-            app_name=db_app.name,
-            name=context.namespace_name,
-        )
-        if db_namespace is None:
-            raise ParentNotFoundError(
-                "The namespace of the object to be created does not exist."
-            )
         async with self.session() as session:
             db_context = SQLContextPersistenceAdapter._context_to_db_context(
-                context, db_namespace.id
+                context, db_app.id
             )
             result = await self._create_object(db_context, session=session)
         return SQLContextPersistenceAdapter._db_context_to_context(result)
@@ -229,12 +209,10 @@ class SQLContextPersistenceAdapter(
             DBContext,
             name=query.name,
             app_name=query.app_name,
-            namespace_name=query.namespace_name,
         )
         if result is None:
             raise ObjectNotFoundError(
-                f"No context with the identifier '{query.app_name}:"
-                f"{query.namespace_name}:{query.name}' could be found."
+                f"No context with the identifier '{query.app_name}:{query.name}' could be found."
             )
         return SQLContextPersistenceAdapter._db_context_to_context(result)
 
@@ -247,7 +225,6 @@ class SQLContextPersistenceAdapter(
             query.pagination.query_offset,
             query.pagination.query_limit,
             app_name=query.app_name,
-            namespace_name=query.namespace_name,
         )
         contexts = [
             SQLContextPersistenceAdapter._db_context_to_context(db_context)
@@ -260,12 +237,10 @@ class SQLContextPersistenceAdapter(
             DBContext,
             name=context.name,
             app_name=context.app_name,
-            namespace_name=context.namespace_name,
         )
         if db_context is None:
             raise ObjectNotFoundError(
-                f"No context with the identifier '{context.app_name}:"
-                f"{context.namespace_name}:{context.name}' could be found."
+                f"No context with the identifier '{context.app_name}:{context.name}' could be found."
             )
         modified = await self._update_object(
             db_context, display_name=context.display_name
@@ -277,12 +252,10 @@ class SQLContextPersistenceAdapter(
             DBContext,
             name=query.name,
             app_name=query.app_name,
-            namespace_name=query.namespace_name,
         )
         if db_context is None:
             raise ObjectNotFoundError(
-                f"No context with the identifier '{query.app_name}:"
-                f"{query.namespace_name}:{query.name}' could be found.",
+                f"No context with the identifier '{query.app_name}:{query.name}' could be found.",
                 object_type=Context,
             )
         await self._delete_obj(db_context)

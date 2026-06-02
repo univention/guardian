@@ -92,7 +92,7 @@ async def get_all_capabilities(
     )
 
 
-@router.get("/roles/{app_name}/{namespace_name}/{name}/capabilities")
+@router.get("/roles/{app_name}/{name}/capabilities")
 async def get_capabilities_by_role(
     request: Request,
     request_data: CapabilitiesGetByRoleRequest = Depends(),

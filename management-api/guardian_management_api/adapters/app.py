@@ -108,10 +108,9 @@ class FastAPIAppAPIAdapter(
             ),
             admin_role=AppAdmin(
                 app_name=ManagementObjectName(admin_role.app_name),
-                namespace_name=ManagementObjectName(admin_role.namespace_name),
                 name=ManagementObjectName(admin_role.name),
                 display_name=admin_role.display_name,
-                resource_url=f"{COMPLETE_URL}/roles/{admin_role.app_name}/{admin_role.namespace_name}/{admin_role.name}",
+                resource_url=f"{COMPLETE_URL}/roles/{admin_role.app_name}/{admin_role.name}",
             ),
             default_namespace=AppDefaultNamespace(
                 app_name=ManagementObjectName(default_namespace.app_name),

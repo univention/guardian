@@ -4,14 +4,13 @@
 
 from guardian_management_api.models.routers.base import (
     AppNamePathMixin,
-    CreateBaseRequest,
+    AppScopedCreateBaseRequest,
+    AppScopedEditBaseRequest,
+    AppScopedObjectMixin,
     DisplayNameObjectMixin,
-    EditBaseRequest,
     GuardianBaseModel,
     NameObjectMixin,
     NamePathMixin,
-    NamespacedObjectMixin,
-    NamespacePathMixin,
     PaginationObjectMixin,
     PaginationRequestMixin,
     ResourceURLObjectMixin,
@@ -25,20 +24,18 @@ from guardian_management_api.models.routers.base import (
 class ContextCreateData(GuardianBaseModel, DisplayNameObjectMixin, NameObjectMixin): ...
 
 
-class ContextCreateRequest(CreateBaseRequest):
+class ContextCreateRequest(AppScopedCreateBaseRequest):
     data: ContextCreateData
 
 
 class ContextEditData(GuardianBaseModel, DisplayNameObjectMixin): ...
 
 
-class ContextEditRequest(EditBaseRequest):
+class ContextEditRequest(AppScopedEditBaseRequest):
     data: ContextEditData
 
 
-class ContextGetRequest(
-    GuardianBaseModel, NamePathMixin, NamespacePathMixin, AppNamePathMixin
-): ...
+class ContextGetRequest(GuardianBaseModel, NamePathMixin, AppNamePathMixin): ...
 
 
 class ContextsGetRequest(GuardianBaseModel, PaginationRequestMixin): ...
@@ -46,10 +43,6 @@ class ContextsGetRequest(GuardianBaseModel, PaginationRequestMixin): ...
 
 class ContextsByAppnameGetRequest(GuardianBaseModel, PaginationRequestMixin):
     app_name: str
-
-
-class ContextsByNamespaceGetRequest(GuardianBaseModel, PaginationRequestMixin):
-    namespace_name: str
 
 
 #####
@@ -61,7 +54,7 @@ class Context(
     GuardianBaseModel,
     ResourceURLObjectMixin,
     DisplayNameObjectMixin,
-    NamespacedObjectMixin,
+    AppScopedObjectMixin,
 ): ...
 
 

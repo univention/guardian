@@ -29,7 +29,6 @@ from ..models.routers.role import (
     RoleCreateRequest,
     RoleGetAllRequest,
     RoleGetByAppRequest,
-    RoleGetByNamespaceRequest,
     RoleGetFullIdentifierRequest,
     RoleMultipleResponse,
     RoleSingleResponse,
@@ -59,7 +58,7 @@ class FastAPIRoleAPIAdapter(
         RoleSingleResponse,
         RoleGetFullIdentifierRequest,
         RoleSingleResponse,
-        Union[RoleGetAllRequest, RoleGetByAppRequest, RoleGetByNamespaceRequest],
+        Union[RoleGetAllRequest, RoleGetByAppRequest],
         RoleMultipleResponse,
     ],
 ):
@@ -82,7 +81,6 @@ class FastAPIRoleAPIAdapter(
             roles=[
                 Role(
                     app_name=api_request.app_name,
-                    namespace_name=api_request.namespace_name,
                     name=api_request.data.name,
                     display_name=api_request.data.display_name,
                     capabilities=[
@@ -96,12 +94,11 @@ class FastAPIRoleAPIAdapter(
         return RoleSingleResponse(
             role=ResponseRole(
                 app_name=role_result.app_name,
-                namespace_name=role_result.namespace_name,
                 name=role_result.name,
                 display_name=(
                     role_result.display_name if role_result.display_name else ""
                 ),
-                resource_url=f"{COMPLETE_URL}/roles/{role_result.app_name}/{role_result.namespace_name}/{role_result.name}",
+                resource_url=f"{COMPLETE_URL}/roles/{role_result.app_name}/{role_result.name}",
                 capabilities=self._capability_refs(role_result),
             )
         )
@@ -111,7 +108,6 @@ class FastAPIRoleAPIAdapter(
     ) -> RoleGetQuery:
         return RoleGetQuery(
             app_name=api_request.app_name,
-            namespace_name=api_request.namespace_name,
             name=api_request.name,
         )
 
@@ -119,23 +115,19 @@ class FastAPIRoleAPIAdapter(
         return RoleSingleResponse(
             role=ResponseRole(
                 app_name=role_result.app_name,
-                namespace_name=role_result.namespace_name,
                 name=role_result.name,
                 display_name=role_result.display_name,
-                resource_url=f"{COMPLETE_URL}/roles/{role_result.app_name}/{role_result.namespace_name}/{role_result.name}",
+                resource_url=f"{COMPLETE_URL}/roles/{role_result.app_name}/{role_result.name}",
                 capabilities=self._capability_refs(role_result),
             )
         )
 
     async def to_roles_get(
         self,
-        api_request: Union[
-            RoleGetAllRequest, RoleGetByAppRequest, RoleGetByNamespaceRequest
-        ],
+        api_request: RoleGetAllRequest | RoleGetByAppRequest,
     ) -> RolesGetQuery:
         return RolesGetQuery(
             app_name=getattr(api_request, "app_name", None),
-            namespace_name=getattr(api_request, "namespace_name", None),
             pagination=PaginationRequest(
                 query_offset=api_request.offset, query_limit=api_request.limit
             ),
@@ -157,10 +149,9 @@ class FastAPIRoleAPIAdapter(
             roles=[
                 ResponseRole(
                     app_name=role.app_name,
-                    namespace_name=role.namespace_name,
                     name=role.name,
                     display_name=role.display_name,
-                    resource_url=f"{COMPLETE_URL}/roles/{role.app_name}/{role.namespace_name}/{role.name}",
+                    resource_url=f"{COMPLETE_URL}/roles/{role.app_name}/{role.name}",
                     capabilities=self._capability_refs(role),
                 )
                 for role in roles
@@ -181,7 +172,6 @@ class FastAPIRoleAPIAdapter(
         )
         return Role(
             app_name=old_role.app_name,
-            namespace_name=old_role.namespace_name,
             name=old_role.name,
             display_name=new_display_name,
             capabilities=new_capabilities,
@@ -194,8 +184,7 @@ class SQLRolePersistenceAdapter(
     @staticmethod
     def _db_role_to_role(db_role: DBRole) -> Role:
         return Role(
-            app_name=db_role.namespace.app.name,
-            namespace_name=db_role.namespace.name,
+            app_name=db_role.app.name,
             name=db_role.name,
             display_name=db_role.display_name,
             is_builtin=db_role.is_builtin,
@@ -256,15 +245,6 @@ class SQLRolePersistenceAdapter(
             raise ParentNotFoundError(
                 "The app of the object to be created does not exist."
             )
-        db_namespace = await self._get_single_object(
-            DBNamespace,
-            app_name=db_app.name,
-            name=role.namespace_name,
-        )
-        if db_namespace is None:
-            raise ParentNotFoundError(
-                "The namespace of the object to be created does not exist."
-            )
         async with self.session() as session:
             try:
                 async with session.begin():
@@ -272,7 +252,7 @@ class SQLRolePersistenceAdapter(
                         role.capabilities, session=session
                     )
                     db_role = DBRole(
-                        namespace_id=db_namespace.id,
+                        app_id=db_app.id,
                         name=role.name,
                         display_name=role.display_name,
                         capability=set(db_capabilities),
@@ -288,12 +268,10 @@ class SQLRolePersistenceAdapter(
             DBRole,
             name=query.name,
             app_name=query.app_name,
-            namespace_name=query.namespace_name,
         )
         if result is None:
             raise ObjectNotFoundError(
-                f"No role with the identifier '{query.app_name}:"
-                f"{query.namespace_name}:{query.name}' could be found."
+                f"No role with the identifier '{query.app_name}:{query.name}' could be found."
             )
         return SQLRolePersistenceAdapter._db_role_to_role(result)
 
@@ -306,7 +284,6 @@ class SQLRolePersistenceAdapter(
             query.pagination.query_offset,
             query.pagination.query_limit,
             app_name=query.app_name,
-            namespace_name=query.namespace_name,
         )
         roles = [
             SQLRolePersistenceAdapter._db_role_to_role(db_role) for db_role in db_roles
@@ -318,12 +295,10 @@ class SQLRolePersistenceAdapter(
             DBRole,
             name=role.name,
             app_name=role.app_name,
-            namespace_name=role.namespace_name,
         )
         if db_role is None:
             raise ObjectNotFoundError(
-                f"No role with the identifier '{role.app_name}:"
-                f"{role.namespace_name}:{role.name}' could be found."
+                f"No role with the identifier '{role.app_name}:{role.name}' could be found."
             )
         async with self.session() as session:
             try:
@@ -345,12 +320,10 @@ class SQLRolePersistenceAdapter(
             DBRole,
             name=query.name,
             app_name=query.app_name,
-            namespace_name=query.namespace_name,
         )
         if db_role is None:
             raise ObjectNotFoundError(
-                f"No role with the identifier '{query.app_name}:"
-                f"{query.namespace_name}:{query.name}' could be found.",
+                f"No role with the identifier '{query.app_name}:{query.name}' could be found.",
                 object_type=Role,
             )
         await self._delete_obj(db_role)
@@ -360,12 +333,10 @@ class SQLRolePersistenceAdapter(
             DBRole,
             name=query.name,
             app_name=query.app_name,
-            namespace_name=query.namespace_name,
         )
         if db_role is None:
             raise ObjectNotFoundError(
-                f"No role with the identifier '{query.app_name}:"
-                f"{query.namespace_name}:{query.name}' could be found.",
+                f"No role with the identifier '{query.app_name}:{query.name}' could be found.",
                 object_type=Role,
             )
         return [

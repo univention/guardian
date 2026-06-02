@@ -77,5 +77,4 @@ class CapabilitiesGetQuery:
 class CapabilitiesByRoleQuery:
     pagination: PaginationRequest
     app_name: str
-    namespace_name: str
     role_name: str

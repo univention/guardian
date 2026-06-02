@@ -34,10 +34,8 @@ from ..models.sql_persistence import (
     DBApp,
     DBCapability,
     DBCondition,
-    DBContext,
     DBNamespace,
     DBPermission,
-    DBRole,
     SQLPersistenceAdapterSettings,
 )
 from ..ports.namespace import (
@@ -283,9 +281,7 @@ class SQLNamespacePersistenceAdapter(
             )
         prefix = f"{query.app_name}:{query.name}"
         child_types = [
-            ("role", DBRole),
             ("permission", DBPermission),
-            ("context", DBContext),
             ("condition", DBCondition),
             ("capability", DBCapability),
         ]

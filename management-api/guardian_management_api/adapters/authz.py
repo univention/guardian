@@ -56,6 +56,17 @@ def _get_resource_target(resource: Resource) -> dict[str, str]:
             "namespace_name": resource.name,
             "name": resource.name,
         }
+    if resource.resource_type in (ResourceType.ROLE, ResourceType.CONTEXT):
+        # Roles and contexts are app-scoped and no longer carry a namespace,
+        # but OPA conditions still inspect target.attributes.namespace_name.
+        # Pass an empty namespace so existing builtin conditions
+        # (e.g. namespace_name != "builtin") still evaluate sensibly.
+        return {
+            "resource_type": resource.resource_type.value,
+            "app_name": resource.app_name,
+            "namespace_name": "",
+            "name": resource.name,
+        }
     if not resource.namespace_name:
         raise RuntimeError("This resource must have a namespace name.")
     return {

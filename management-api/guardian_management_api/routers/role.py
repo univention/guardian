@@ -17,7 +17,6 @@ from ..models.routers.role import (
     RoleEditRequest,
     RoleGetAllRequest,
     RoleGetByAppRequest,
-    RoleGetByNamespaceRequest,
     RoleGetFullIdentifierRequest,
     RoleMultipleResponse,
     RoleSingleResponse,
@@ -29,9 +28,7 @@ from ..ports.role import RoleAPIPort, RolePersistencePort
 router = APIRouter(tags=["role"])
 
 
-@router.get(
-    "/roles/{app_name}/{namespace_name}/{name}", response_model=RoleSingleResponse
-)
+@router.get("/roles/{app_name}/{name}", response_model=RoleSingleResponse)
 async def get_role(
     request: Request,
     role_get_request: RoleGetFullIdentifierRequest = Depends(),
@@ -45,7 +42,7 @@ async def get_role(
     ),
 ) -> Dict[str, Any]:
     """
-    Returns a role object identified by `app_name`, `namespace_name` and `name`.
+    Returns a role object identified by `app_name` and `name`.
     """
     response: RoleSingleResponse = await business_logic.get_role(
         api_request=role_get_request,
@@ -115,36 +112,8 @@ async def get_roles_by_app(
     return response.model_dump()
 
 
-@router.get("/roles/{app_name}/{namespace_name}", response_model=RoleMultipleResponse)
-async def get_roles_by_namespace(
-    request: Request,
-    role_get_request: RoleGetByNamespaceRequest = Depends(),
-    management_role_api: RoleAPIPort = Depends(
-        port_dep(RoleAPIPort, FastAPIRoleAPIAdapter)
-    ),
-    persistence: RolePersistencePort = Depends(port_dep(RolePersistencePort)),
-    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
-    authz_port: ResourceAuthorizationPort = Depends(
-        port_dep(ResourceAuthorizationPort)
-    ),
-) -> Dict[str, Any]:
-    """
-    Returns a list of all roles that belong to `namespace_name` under `app_name`.
-    """
-    response: RoleMultipleResponse = await business_logic.get_roles(
-        api_request=role_get_request,
-        role_api_port=management_role_api,
-        persistence_port=persistence,
-        authc_port=authc_port,
-        authz_port=authz_port,
-        request=request,
-    )
-
-    return response.model_dump()
-
-
 @router.post(
-    "/roles/{app_name}/{namespace_name}",
+    "/roles/{app_name}",
     response_model=RoleSingleResponse,
     status_code=201,
 )
@@ -174,9 +143,7 @@ async def create_role(
     return response.model_dump()
 
 
-@router.patch(
-    "/roles/{app_name}/{namespace_name}/{name}", response_model=RoleSingleResponse
-)
+@router.patch("/roles/{app_name}/{name}", response_model=RoleSingleResponse)
 async def edit_role(
     request: Request,
     role_edit_request: RoleEditRequest = Depends(),
@@ -205,7 +172,7 @@ async def edit_role(
 
 
 @router.delete(
-    "/roles/{app_name}/{namespace_name}/{name}",
+    "/roles/{app_name}/{name}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_role(

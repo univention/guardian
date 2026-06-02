@@ -7,12 +7,12 @@ from pydantic import Field
 
 from ...models.routers.base import (
     AppNameObjectMixin,
+    AppScopedObjectMixin,
     DisplayNameObjectMixin,
     GuardianBaseModel,
     ManagementObjectName,
     NameObjectMixin,
     NamePathMixin,
-    NamespacedObjectMixin,
     PaginationObjectMixin,
     PaginationRequestMixin,
     ResourceURLObjectMixin,
@@ -52,7 +52,7 @@ class AppAdmin(
     GuardianBaseModel,
     ResourceURLObjectMixin,
     DisplayNameObjectMixin,
-    NamespacedObjectMixin,
+    AppScopedObjectMixin,
 ): ...
 
 

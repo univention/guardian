@@ -11,9 +11,8 @@ from starlette import status
 from .. import business_logic
 from ..adapters.context import FastAPIContextAPIAdapter
 from ..models.routers.base import (
+    GetByAppFullIdentifierRequest,
     GetByAppRequest,
-    GetByNamespaceRequest,
-    GetFullIdentifierRequest,
 )
 from ..models.routers.context import (
     ContextCreateRequest,
@@ -30,9 +29,7 @@ from ..ports.context import ContextAPIPort, ContextPersistencePort
 router = APIRouter(tags=["context"])
 
 
-@router.get(
-    "/contexts/{app_name}/{namespace_name}/{name}", response_model=ContextSingleResponse
-)
+@router.get("/contexts/{app_name}/{name}", response_model=ContextSingleResponse)
 async def get_context(
     request: Request,
     context_get_request: ContextGetRequest = Depends(),
@@ -48,7 +45,7 @@ async def get_context(
     ),
 ) -> Dict[str, Any]:
     """
-    Returns a context object identified by `app_name`, `namespace_name` and `name`.
+    Returns a context object identified by `app_name` and `name`.
     """
     response: ContextSingleResponse = await business_logic.get_context(
         api_request=context_get_request,
@@ -119,39 +116,8 @@ async def get_contexts_by_app(
     return response.model_dump()
 
 
-@router.get(
-    "/contexts/{app_name}/{namespace_name}", response_model=ContextMultipleResponse
-)
-async def get_contexts_by_namespace(
-    request: Request,
-    context_get_request: GetByNamespaceRequest = Depends(),
-    api_port: FastAPIContextAPIAdapter = Depends(
-        port_dep(ContextAPIPort, FastAPIContextAPIAdapter)
-    ),
-    persistence_port: ContextPersistencePort = Depends(
-        port_dep(ContextPersistencePort)
-    ),
-    authc_port: AuthenticationPort = Depends(port_dep(AuthenticationPort)),
-    authz_port: ResourceAuthorizationPort = Depends(
-        port_dep(ResourceAuthorizationPort)
-    ),
-):
-    """
-    Returns a list of all contexts that belong to `namespace_name` under `app_name`.
-    """
-    response: ContextMultipleResponse = await business_logic.get_contexts(
-        api_request=context_get_request,
-        api_port=api_port,
-        persistence_port=persistence_port,
-        authc_port=authc_port,
-        authz_port=authz_port,
-        request=request,
-    )
-    return response.model_dump()
-
-
 @router.post(
-    "/contexts/{app_name}/{namespace_name}",
+    "/contexts/{app_name}",
     response_model=ContextSingleResponse,
     status_code=201,
 )
@@ -184,7 +150,7 @@ async def create_context(
 
 
 @router.patch(
-    "/contexts/{app_name}/{namespace_name}/{name}",
+    "/contexts/{app_name}/{name}",
     response_model=ContextSingleResponse,
 )
 async def edit_context(
@@ -216,12 +182,12 @@ async def edit_context(
 
 
 @router.delete(
-    "/contexts/{app_name}/{namespace_name}/{name}",
+    "/contexts/{app_name}/{name}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_context(
     request: Request,
-    request_data: GetFullIdentifierRequest = Depends(),
+    request_data: GetByAppFullIdentifierRequest = Depends(),
     api_port: FastAPIContextAPIAdapter = Depends(
         port_dep(ContextAPIPort, FastAPIContextAPIAdapter)
     ),

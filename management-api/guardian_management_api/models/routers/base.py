@@ -17,6 +17,7 @@ class GuardianBaseModel(BaseModel):
 
 
 MANAGEMENT_OBJECT_NAME_REGEX = r"^[a-z][a-z0-9\-_]*$"
+DESCRIPTION = "Name of the object"
 
 
 ManagementObjectName = Annotated[
@@ -84,7 +85,7 @@ class NameObjectMixin(BaseModel):
     Mixin to add a name attribute to a model.
     """
 
-    name: ManagementObjectName = Field(..., description="Name of the object.")
+    name: ManagementObjectName = Field(..., description=DESCRIPTION)
 
 
 class NamespaceNameObjectMixin(BaseModel):
@@ -126,7 +127,18 @@ class NamespacedObjectMixin(BaseModel):
     namespace_name: ManagementObjectName = Field(
         ..., description="Name of the namespace the object belongs to."
     )
-    name: ManagementObjectName = Field(..., description="Name of the object.")
+    name: ManagementObjectName = Field(..., description=DESCRIPTION)
+
+
+class AppScopedObjectMixin(BaseModel):
+    """
+    Mixin to add app_name and name attributes to a model.
+    """
+
+    app_name: ManagementObjectName = Field(
+        ..., description="Name of the app the object belongs to."
+    )
+    name: ManagementObjectName = Field(..., description=DESCRIPTION)
 
 
 class AppNamePathMixin(BaseModel):
@@ -160,7 +172,7 @@ class NamePathMixin(BaseModel):
 
     name: str = Path(
         ...,
-        description="Name of the object.",
+        description=DESCRIPTION,
         pattern=MANAGEMENT_OBJECT_NAME_REGEX,
     )
 
@@ -228,4 +240,28 @@ class EditBaseRequest(
     Default request model for object manipulation (PATCH). Should be used as a base class only.
 
     Expects app name, namespace name and name as path parameters.
+    """
+
+
+class GetByAppFullIdentifierRequest(GuardianBaseModel, NamePathMixin, AppNamePathMixin):
+    """
+    Default request model to query for a specific app-scoped object.
+
+    Expects app name and name as path parameters.
+    """
+
+
+class AppScopedCreateBaseRequest(GuardianBaseModel, AppNamePathMixin):
+    """
+    Default request model for app-scoped object creation (POST).
+
+    Expects app name as path parameter.
+    """
+
+
+class AppScopedEditBaseRequest(GuardianBaseModel, NamePathMixin, AppNamePathMixin):
+    """
+    Default request model for app-scoped object manipulation (PATCH).
+
+    Expects app name and name as path parameters.
     """

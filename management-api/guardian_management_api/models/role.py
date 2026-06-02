@@ -12,7 +12,6 @@ from .capability import CapabilityReference
 @dataclass
 class Role:
     app_name: str
-    namespace_name: str
     name: str
     display_name: Optional[str] = None
     is_builtin: bool = False
@@ -27,7 +26,6 @@ class RoleCreateQuery:
 @dataclass(frozen=True)
 class RoleGetQuery:
     app_name: str
-    namespace_name: str
     name: str
 
 
@@ -35,13 +33,11 @@ class RoleGetQuery:
 class RolesGetQuery:
     pagination: PaginationRequest
     app_name: Optional[str] = None
-    namespace_name: Optional[str] = None
 
 
 @dataclass(frozen=True)
 class ResponseRole(ResponseObject):
     app_name: str
-    namespace_name: str
     name: str
     display_name: Optional[str]
 

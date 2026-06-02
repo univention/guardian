@@ -17,7 +17,6 @@ from guardian_management_api.models.routers.base import (
     ManagementObjectName,
     NamePathMixin,
     NamespacedObjectMixin,
-    NamespacePathMixin,
     PaginationObjectMixin,
     PaginationRequestMixin,
     ResourceURLObjectMixin,
@@ -128,7 +127,6 @@ class CapabilityEditRequest(EditBaseRequest):
 class CapabilitiesGetByRoleRequest(
     GuardianBaseModel,
     NamePathMixin,
-    NamespacePathMixin,
     AppNamePathMixin,
     PaginationRequestMixin,
 ): ...

@@ -11,7 +11,6 @@ from .base import PaginationRequest
 @dataclass
 class Context:
     app_name: str
-    namespace_name: str
     name: str
     display_name: Optional[str] = None
     is_builtin: bool = False
@@ -20,7 +19,6 @@ class Context:
 @dataclass(frozen=True)
 class ContextGetQuery:
     app_name: str
-    namespace_name: str
     name: str
 
 
@@ -28,4 +26,3 @@ class ContextGetQuery:
 class ContextsGetQuery:
     pagination: PaginationRequest
     app_name: Optional[str] = None
-    namespace_name: Optional[str] = None

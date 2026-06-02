@@ -8,13 +8,13 @@ from pydantic import Field
 
 from guardian_management_api.models.capability import CapabilityReference
 from guardian_management_api.models.routers.base import (
-    CreateBaseRequest,
+    AppScopedCreateBaseRequest,
+    AppScopedEditBaseRequest,
+    AppScopedObjectMixin,
     DisplayNameObjectMixin,
-    EditBaseRequest,
     GetAllRequest,
+    GetByAppFullIdentifierRequest,
     GetByAppRequest,
-    GetByNamespaceRequest,
-    GetFullIdentifierRequest,
     GuardianBaseModel,
     NameObjectMixin,
     NamespacedObjectMixin,
@@ -39,8 +39,8 @@ class RoleCapability(GuardianBaseModel, NamespacedObjectMixin):
 #####
 
 
-# request for route: GET .../roles/{app_name}/{namepace_name}/{name}
-class RoleGetFullIdentifierRequest(GetFullIdentifierRequest): ...
+# request for route: GET .../roles/{app_name}/{name}
+class RoleGetFullIdentifierRequest(GetByAppFullIdentifierRequest): ...
 
 
 class RoleCreateData(GuardianBaseModel, DisplayNameObjectMixin, NameObjectMixin):
@@ -50,8 +50,8 @@ class RoleCreateData(GuardianBaseModel, DisplayNameObjectMixin, NameObjectMixin)
     )
 
 
-# request for route: POST .../roles/{app_name}/{namespace_name}
-class RoleCreateRequest(CreateBaseRequest):
+# request for route: POST .../roles/{app_name}
+class RoleCreateRequest(AppScopedCreateBaseRequest):
     data: RoleCreateData
 
 
@@ -66,8 +66,8 @@ class RoleEditData(GuardianBaseModel, DisplayNameObjectMixin):
     )
 
 
-# request for route: PATCH .../roles/{app_name}/{namepace_name}/{name}
-class RoleEditRequest(EditBaseRequest):
+# request for route: PATCH .../roles/{app_name}/{name}
+class RoleEditRequest(AppScopedEditBaseRequest):
     data: RoleEditData
 
 
@@ -79,10 +79,6 @@ class RoleGetAllRequest(GetAllRequest): ...
 class RoleGetByAppRequest(GetByAppRequest): ...
 
 
-# request for route: GET .../roles/{app_name}/{namespace_name}
-class RoleGetByNamespaceRequest(GetByNamespaceRequest): ...
-
-
 #####
 # Responses
 #####
@@ -92,7 +88,7 @@ class Role(
     GuardianBaseModel,
     ResourceURLObjectMixin,
     DisplayNameObjectMixin,
-    NamespacedObjectMixin,
+    AppScopedObjectMixin,
 ):
     capabilities: list[RoleCapability] = Field(
         default_factory=list,

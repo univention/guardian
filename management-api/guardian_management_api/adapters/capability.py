@@ -295,8 +295,7 @@ class SQLCapabilityPersistenceAdapter(
             db_roles = (await session.scalars(stmt)).unique().all()
         return [
             Role(
-                app_name=db_role.namespace.app.name,
-                namespace_name=db_role.namespace.name,
+                app_name=db_role.app.name,
                 name=db_role.name,
                 display_name=db_role.display_name,
             )
@@ -319,20 +318,16 @@ class SQLCapabilityPersistenceAdapter(
         return SQLCapabilityPersistenceAdapter._db_cap_to_cap(result)
 
     @staticmethod
-    def _configure_search_stmt_by_role(
-        stmt, app_name: str, namespace_name: str, name: str
-    ):
+    def _configure_search_stmt_by_role(stmt, app_name: str, name: str):
         return (
             stmt.join(
                 role_capability_table,
                 DBCapability.id == role_capability_table.c.capability_id,
             )
             .join(DBRole, role_capability_table.c.role_id == DBRole.id)
-            .join(DBNamespace, DBRole.namespace_id == DBNamespace.id)
-            .join(DBApp, DBNamespace.app_id == DBApp.id)
+            .join(DBApp, DBRole.app_id == DBApp.id)
             .where(
                 DBApp.name == app_name,
-                DBNamespace.name == namespace_name,
                 DBRole.name == name,
             )
         )
@@ -351,10 +346,10 @@ class SQLCapabilityPersistenceAdapter(
         if query.pagination.query_limit:
             select_stmt = select_stmt.limit(query.pagination.query_limit)
         select_stmt = SQLCapabilityPersistenceAdapter._configure_search_stmt_by_role(
-            select_stmt, query.app_name, query.namespace_name, query.role_name
+            select_stmt, query.app_name, query.role_name
         )
         count_stmt = SQLCapabilityPersistenceAdapter._configure_search_stmt_by_role(
-            count_stmt, query.app_name, query.namespace_name, query.role_name
+            count_stmt, query.app_name, query.role_name
         )
         return (
             list((await session.scalars(select_stmt)).unique().all()),
@@ -470,7 +465,6 @@ class FastAPICapabilityAPIAdapter(
             return CapabilitiesByRoleQuery(
                 pagination=pagination,
                 app_name=api_request.app_name,
-                namespace_name=api_request.namespace_name,
                 role_name=api_request.name,
             )
         elif isinstance(api_request, GetByNamespaceRequest):
