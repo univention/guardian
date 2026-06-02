@@ -28,8 +28,15 @@ from ..udm_client import (  # type: ignore[attr-defined]
     ConnectionError as UDMConnectionError,
 )
 
+# Guardian roles are app-scoped (app:name), but the UDM/LDAP `guardianRoles`
+# attribute is validated by UCS against a three-segment "app:namespace:name"
+# regex. We accept that wire format and drop the middle namespace segment when
+# building PoliciesRole/PoliciesContext. The context half follows the same
+# rule, except its trailing segment may also contain '=' and ',' to encode an
+# LDAP DN (e.g. position=cn=foo,dc=bar) per UCS's GuardianRole syntax.
 re_split_roles_and_contexts = re.compile(
-    r"^((?P<role_app>[a-z0-9-_]+):(?P<role_namespace>[a-z0-9-_]+):(?P<role_name>[a-z0-9-_]+))(&(?P<context_app>[a-z0-9-_]+):(?P<context_namespace>[a-z0-9-_]+):(?P<context_name>[a-z0-9-_]+))?$"
+    r"^(?P<role_app>[a-z0-9-_]+):(?P<role_namespace>[a-z0-9-_]+):(?P<role_name>[a-z0-9-_]+)"
+    r"(&(?P<context_app>[a-z0-9-_]+):(?P<context_namespace>[a-z0-9-_]+):(?P<context_name>[a-z0-9-_=,]+))?$"
 )
 
 
@@ -126,19 +133,16 @@ class UDMPersistenceAdapter(PersistencePort, AsyncConfiguredAdapterMixin):
         if res := re.search(re_split_roles_and_contexts, role):
             groups = res.groupdict()
             role_app = groups["role_app"]
-            role_namespace = groups["role_namespace"]
             role_name = groups["role_name"]
             context = None
             if groups["context_name"] is not None:
                 context = PoliciesContext(
                     name=groups["context_name"],
                     app_name=groups["context_app"],
-                    namespace_name=groups["context_namespace"],
                 )
 
             return PoliciesRole(
                 app_name=role_app,
-                namespace_name=role_namespace,
                 name=role_name,
                 context=context,
             )

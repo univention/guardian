@@ -70,12 +70,10 @@ class FastAPIAdapterUtils:
         roles = [
             PoliciesRole(
                 app_name=role.app_name,
-                namespace_name=role.namespace_name,
                 name=role.name,
                 context=(
                     PoliciesContext(
                         app_name=role.context.app_name,
-                        namespace_name=role.context.namespace_name,
                         name=role.context.name,
                     )
                     if role.context
@@ -192,7 +190,6 @@ class FastAPIAdapterUtils:
     def api_context_to_policy_context(context: Context) -> PoliciesContext:
         return PoliciesContext(
             app_name=context.app_name,
-            namespace_name=context.namespace_name,
             name=context.name,
         )
 
@@ -332,7 +329,7 @@ class FastAPICheckPermissionsAPIAdapter(
         actor = PolicyObject(
             id=api_request.actor.id,
             roles=[
-                PoliciesRole(role.app_name, role.namespace_name, role.name)
+                PoliciesRole(role.app_name, role.name)
                 for role in api_request.actor.roles
             ],
             attributes=api_request.actor.attributes,

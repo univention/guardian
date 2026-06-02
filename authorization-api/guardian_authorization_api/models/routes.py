@@ -40,13 +40,11 @@ class NamespaceMinimal(GuardianBaseModel):
 
 class Context(GuardianBaseModel):
     app_name: AppName
-    namespace_name: NamespaceName
     name: ContextName
 
 
 class Role(GuardianBaseModel):
     app_name: AppName
-    namespace_name: NamespaceName
     name: AuthzObjectIdentifier
     context: Optional[Context] = None
 

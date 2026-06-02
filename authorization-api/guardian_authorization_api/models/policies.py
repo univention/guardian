@@ -30,18 +30,25 @@ class Permission(NamespacedValue): ...
 
 
 @dataclass(frozen=True)
-class Context(NamespacedValue): ...
+class Context:
+    app_name: str
+    name: str
+
+    def __str__(self):
+        return f"{self.app_name}:{self.name}"
 
 
 @dataclass(frozen=True)
-class Role(NamespacedValue):
+class Role:
+    app_name: str
+    name: str
     context: Optional[Context] = None
 
     def __str__(self):
         if self.context:
-            return f"{super().__str__()}&{self.context}"
+            return f"{self.app_name}:{self.name}&{self.context}"
         else:
-            return f"{super().__str__()}"
+            return f"{self.app_name}:{self.name}"
 
 
 @dataclass(frozen=True)
