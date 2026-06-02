@@ -59,8 +59,7 @@ class TestSQLCapabilityPersistenceAdapter:
             )
             db_role = await create_role(
                 session,
-                db_permissions[0].namespace.app.name,
-                db_permissions[0].namespace.name,
+                app_name=db_permissions[0].namespace.app.name,
                 with_capabilities=False,
             )
             cap = Capability(
@@ -449,14 +448,12 @@ class TestSQLCapabilityPersistenceAdapter:
                     select(DBRole).where(DBRole.name == "role_000000000")
                 )
             ).scalar_one()
-            app_name = db_role.namespace.app.name
-            namespace_name = db_role.namespace.name
+            app_name = db_role.app.name
             role_name = db_role.name
         result = await adapter.read_many(
             CapabilitiesByRoleQuery(
                 pagination=PaginationRequest(query_limit=5, query_offset=0),
                 app_name=app_name,
-                namespace_name=namespace_name,
                 role_name=role_name,
             )
         )

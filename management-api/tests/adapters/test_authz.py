@@ -105,28 +105,26 @@ class TestFunctions:
             (
                 Resource(
                     name="role",
-                    namespace_name="namespace",
                     app_name="app",
                     resource_type=ResourceType.ROLE,
                 ),
                 {
                     "resource_type": "role",
                     "app_name": "app",
-                    "namespace_name": "namespace",
+                    "namespace_name": "",
                     "name": "role",
                 },
             ),
             (
                 Resource(
                     name="context",
-                    namespace_name="namespace",
                     app_name="app",
                     resource_type=ResourceType.CONTEXT,
                 ),
                 {
                     "resource_type": "context",
                     "app_name": "app",
-                    "namespace_name": "namespace",
+                    "namespace_name": "",
                     "name": "context",
                 },
             ),

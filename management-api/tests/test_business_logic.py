@@ -964,7 +964,7 @@ DELETE_FN_CONFIGS = [
         "api_port_method": "to_context_get",
         "resource_type": ResourceType.CONTEXT,
         "name": "ctx",
-        "namespace_name": "ns",
+        "namespace_name": None,
         "app_name": "app",
         "has_dependencies_check": False,
         "builtin_msg": "This context cannot be deleted because it is a built-in context.",
@@ -977,7 +977,7 @@ DELETE_FN_CONFIGS = [
         "api_port_method": "to_role_get",
         "resource_type": ResourceType.ROLE,
         "name": "role",
-        "namespace_name": "ns",
+        "namespace_name": None,
         "app_name": "app",
         "has_dependencies_check": True,
         "builtin_msg": "This role cannot be deleted because it is a built-in role.",
@@ -1016,7 +1016,11 @@ DELETE_FN_CONFIGS = [
 def _resource_id(cfg):
     if cfg["resource_type"] == ResourceType.APP:
         return cfg["name"]
-    if cfg["resource_type"] == ResourceType.NAMESPACE:
+    if cfg["resource_type"] in (
+        ResourceType.NAMESPACE,
+        ResourceType.ROLE,
+        ResourceType.CONTEXT,
+    ):
         return f"{cfg['app_name']}:{cfg['name']}"
     return f"{cfg['app_name']}:{cfg['namespace_name']}:{cfg['name']}"
 

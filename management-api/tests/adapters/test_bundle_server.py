@@ -357,14 +357,12 @@ class TestBundleServerAdapter:
                 objects=[
                     Role(
                         app_name="app",
-                        namespace_name="namespace",
                         name="role",
                         display_name="role",
                         capabilities=[_ref(cap1), _ref(cap2)],
                     ),
                     Role(
                         app_name="app",
-                        namespace_name="namespace",
                         name="role2",
                         display_name="role2",
                         capabilities=[_ref(cap3)],
@@ -388,7 +386,7 @@ class TestBundleServerAdapter:
             result = orjson.loads(file.read())
         assert result == {
             "roleCapabilityMapping": {
-                "app:namespace:role": [
+                "app:role": [
                     {
                         "appName": "app",
                         "namespace": "namespace",
@@ -413,7 +411,7 @@ class TestBundleServerAdapter:
                         "conditions": [],
                     },
                 ],
-                "app:namespace:role2": [
+                "app:role2": [
                     {
                         "appName": "app",
                         "namespace": "namespace",

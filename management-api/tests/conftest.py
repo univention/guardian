@@ -562,28 +562,30 @@ def create_role():
     async def _create_role(
         session: AsyncSession,
         app_name: str = "app",
-        namespace_name: str = "namespace",
         name: str = "role",
         display_name: str = "Role",
-        with_capabilities: bool = True,
+        with_capabilities: bool = False,
+        namespace_name: Optional[str] = None,
+        **_kwargs,
     ):
         async with session.begin():
             app = (
                 await session.execute(select(DBApp).where(DBApp.name == app_name))
             ).scalar()
-            namespace = (
-                await session.execute(
-                    select(DBNamespace).where(
-                        DBNamespace.app_id == app.id, DBNamespace.name == namespace_name
+            namespace = None
+            if with_capabilities:
+                namespace = (
+                    await session.execute(
+                        select(DBNamespace).where(
+                            DBNamespace.app_id == app.id,
+                            DBNamespace.name == (namespace_name or "namespace"),
+                        )
                     )
-                )
-            ).scalar()
+                ).scalar()
         async with session.begin():
-            role = DBRole(
-                namespace_id=namespace.id, name=name, display_name=display_name
-            )
+            role = DBRole(app_id=app.id, name=name, display_name=display_name)
             session.add(role)
-        if with_capabilities:
+        if with_capabilities and namespace is not None:
             caps = [
                 DBCapability(
                     namespace_id=namespace.id,
@@ -604,61 +606,38 @@ def create_role():
                         )
                     )
         async with session.begin():
-            await session.refresh(role, attribute_names=["namespace", "capability"])
+            await session.refresh(role, attribute_names=["app", "capability"])
         return role
 
     return _create_role
 
 
 @pytest.fixture
-def create_roles(create_namespaces):
+def create_roles(create_apps):
     async def _create_roles(
         session: AsyncSession,
-        roles_per_namespace: int,
-        namespaces_per_app: int = 1,
+        roles_per_app: int,
         num_apps: int = 1,
-        with_capabilities: bool = True,
+        with_capabilities: bool = False,
     ) -> list[DBRole]:
-        namespaces = await create_namespaces(session, namespaces_per_app, num_apps)
+        apps = await create_apps(session, num_apps)
         async with session.begin():
             roles = [
                 DBRole(
-                    namespace_id=namespace.id,
-                    name=f"role_{namespace.app_id:09d}_{namespace.id:09d}_{i:09d}",
-                    display_name=f"Role {namespace.app_id} {namespace.id} {i}",
+                    app_id=app.id,
+                    name=f"role_{app.id:09d}_{i:09d}",
+                    display_name=f"Role {app.id} {i}",
                 )
-                for i in range(roles_per_namespace)
-                for namespace in namespaces
+                for i in range(roles_per_app)
+                for app in apps
             ]
             session.add_all(roles)
-        if with_capabilities:
-            cap_pairs = []
-            for role in roles:
-                caps = [
-                    DBCapability(
-                        namespace_id=role.namespace_id,
-                        name=f"{role.name}_cap_{i}",
-                        relation=CapabilityConditionRelation.AND,
-                        permissions=set(),
-                        conditions=set(),
-                    )
-                    for i in range(2)
-                ]
-                cap_pairs.append((role, caps))
-            async with session.begin():
-                for _, caps in cap_pairs:
-                    session.add_all(caps)
-            async with session.begin():
-                for role, caps in cap_pairs:
-                    for cap in caps:
-                        await session.execute(
-                            role_capability_table.insert().values(
-                                role_id=role.id, capability_id=cap.id
-                            )
-                        )
+        # NOTE: post-merge, roles are app-scoped and no longer have a namespace.
+        # Capability creation per-role needs an explicit namespace; tests that
+        # need this should build it themselves.
         async with session.begin():
             [
-                await session.refresh(role, attribute_names=["namespace", "capability"])
+                await session.refresh(role, attribute_names=["app", "capability"])
                 for role in roles
             ]
         return roles
@@ -671,56 +650,46 @@ def create_context():
     async def _create_context(
         session: AsyncSession,
         app_name: str = "app",
-        namespace_name: str = "namespace",
         name: str = "context",
         display_name: str = "Context",
+        **_kwargs,
     ):
         async with session.begin():
             app = (
                 await session.execute(select(DBApp).where(DBApp.name == app_name))
             ).scalar()
-            namespace = (
-                await session.execute(
-                    select(DBNamespace).where(
-                        DBNamespace.app_id == app.id, DBNamespace.name == namespace_name
-                    )
-                )
-            ).scalar()
         async with session.begin():
-            context = DBContext(
-                namespace_id=namespace.id, name=name, display_name=display_name
-            )
+            context = DBContext(app_id=app.id, name=name, display_name=display_name)
             session.add(context)
         async with session.begin():
-            await session.refresh(context, attribute_names=["namespace"])
+            await session.refresh(context, attribute_names=["app"])
         return context
 
     return _create_context
 
 
 @pytest.fixture
-def create_contexts(create_namespaces):
+def create_contexts(create_apps):
     async def _create_contexts(
         session: AsyncSession,
-        contexts_per_namespace: int,
-        namespaces_per_app: int = 1,
+        contexts_per_app: int,
         num_apps: int = 1,
     ) -> list[DBContext]:
-        namespaces = await create_namespaces(session, namespaces_per_app, num_apps)
+        apps = await create_apps(session, num_apps)
         async with session.begin():
             contexts = [
                 DBContext(
-                    namespace_id=namespace.id,
-                    name=f"context_{namespace.app_id:09d}_{namespace.id:09d}_{i:09d}",
-                    display_name=f"Context {namespace.app_id} {namespace.id} {i}",
+                    app_id=app.id,
+                    name=f"context_{app.id:09d}_{i:09d}",
+                    display_name=f"Context {app.id} {i}",
                 )
-                for i in range(contexts_per_namespace)
-                for namespace in namespaces
+                for i in range(contexts_per_app)
+                for app in apps
             ]
             session.add_all(contexts)
         async with session.begin():
             [
-                await session.refresh(context, attribute_names=["namespace"])
+                await session.refresh(context, attribute_names=["app"])
                 for context in contexts
             ]
         return contexts
@@ -838,9 +807,8 @@ def create_capabilities(
         db_roles = [
             await create_role(
                 session,
-                db_app.name,
-                db_namespace.name,
-                f"role_{i:09d}",
+                app_name=db_app.name,
+                name=f"role_{i:09d}",
                 with_capabilities=False,
             )
             for i in range(num_roles)
@@ -919,7 +887,6 @@ def create_capability(
         role = await create_role(
             session=session,
             app_name=app_name,
-            namespace_name=namespace_name,
             with_capabilities=False,
         )
         async with session.begin():

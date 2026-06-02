@@ -9,7 +9,7 @@ test_get_permissions_happy_case if {
 	inp = {
 		"actor": {
 			"id": "actor_id_1",
-			"roles": {"ucsschool:users:teacher"},
+			"roles": {"ucsschool:teacher"},
 		},
 		"targets": [{
 			"old": {"id": "target_id_1"},
@@ -38,7 +38,7 @@ test_get_permissions_null_namespaces if {
 	inp = {
 		"actor": {
 			"id": "actor_id_1",
-			"roles": {"ucsschool:users:teacher"},
+			"roles": {"ucsschool:teacher"},
 		},
 		"targets": [{
 			"old": {"id": "target_id_1"},
@@ -67,7 +67,7 @@ test_get_permissions_null_namespaces if {
 
 test_get_permissions_filtering if {
 	role_capability_mapping = {
-		"ucsschool:users:teacher": [
+		"ucsschool:teacher": [
 			{
 				"appName": "ucsschool",
 				"conditions": [],
@@ -101,7 +101,7 @@ test_get_permissions_filtering if {
 					},
 					{
 						"name": "target_has_role",
-						"parameters": {"role": "ucsschool:users:student"},
+						"parameters": {"role": "ucsschool:student"},
 					},
 				],
 				"namespace": "users",
@@ -130,14 +130,14 @@ test_get_permissions_filtering if {
 				"relation": "AND",
 			},
 		],
-		"ucsschool:users:student": [{
+		"ucsschool:student": [{
 			"appName": "ucsschool",
 			"conditions": [],
 			"namespace": "users",
 			"permissions": ["read_nickname"],
 			"relation": "AND",
 		}],
-		"ucsschool:users:admin": [{
+		"ucsschool:admin": [{
 			"appName": "ucsschool",
 			"conditions": [],
 			"namespace": "users",
@@ -152,8 +152,8 @@ test_get_permissions_filtering if {
 		"actor": {
 			"id": "actor_id_1",
 			#  The roles were choosen to show that we can return multiple roles
-			#  while still filtering some (role ucsschool:users:student)
-			"roles": {"ucsschool:users:teacher", "ucsschool:users:admin"},
+			#  while still filtering some (role ucsschool:student)
+			"roles": {"ucsschool:teacher", "ucsschool:admin"},
 		},
 		"targets": [
 			{
@@ -218,7 +218,7 @@ test_get_permissions_empty_old_target if {
 	inp = {
 		"actor": {
 			"id": "actor_id_1",
-			"roles": {"ucsschool:users:admin"},
+			"roles": {"ucsschool:admin"},
 		},
 		"targets": [
 			{
@@ -245,7 +245,7 @@ test_get_permissions_wrong_role if {
 	inp = {
 		"actor": {
 			"id": "actor_id_1",
-			"roles": {"ucsschool:users:parent"},
+			"roles": {"ucsschool:parent"},
 		},
 		"targets": [{
 			"old": {"id": "target_id_1"},
@@ -274,7 +274,7 @@ check_permissions_parametrize := [
 		"input": {
 			"actor": {
 				"id": "actor_id_1",
-				"roles": {"ucsschool:users:teacher"},
+				"roles": {"ucsschool:teacher"},
 			},
 			"targets": [{
 				"old": {"id": "target_id_1"},
@@ -291,7 +291,7 @@ check_permissions_parametrize := [
 		"input": {
 			"actor": {
 				"id": "actor_id_1",
-				"roles": {"ucsschool:users:teacher"},
+				"roles": {"ucsschool:teacher"},
 			},
 			"targets": [{
 				"old": {"id": "target_id_1"},
@@ -308,7 +308,7 @@ check_permissions_parametrize := [
 		"input": {
 			"actor": {
 				"id": "actor_id_1",
-				"roles": {"ucsschool:users:teacher"},
+				"roles": {"ucsschool:teacher"},
 			},
 			"targets": [{
 				"old": {"id": "target_id_1"},
@@ -325,7 +325,7 @@ check_permissions_parametrize := [
 		"input": {
 			"actor": {
 				"id": "actor_id_1",
-				"roles": {"ucsschool:users:teacher"},
+				"roles": {"ucsschool:teacher"},
 			},
 			"targets": [{
 				"old": {"id": "target_id_1"},
@@ -347,7 +347,7 @@ check_permissions_parametrize := [
 		"input": {
 			"actor": {
 				"id": "actor_id_1",
-				"roles": {"ucsschool:users:teacher&ucsschool:school:school1"},
+				"roles": {"ucsschool:teacher&ucsschool:school:school1"},
 			},
 			"targets": [{
 				"old": {"id": "target_id_1"},
@@ -369,7 +369,7 @@ check_permissions_parametrize := [
 		"input": {
 			"actor": {
 				"id": "actor_id_1",
-				"roles": {"ucsschool:users:teacher"},
+				"roles": {"ucsschool:teacher"},
 			},
 			"targets": [{
 				"old": {"id": "target_id_1"},

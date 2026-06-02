@@ -192,13 +192,12 @@ class TestSQLAlchemyMixin:
     @pytest.mark.usefixtures("create_tables")
     async def test__get_many_objects_total_count(self, sqlalchemy_mixin, create_roles):
         async with sqlalchemy_mixin.session() as session:
-            roles = await create_roles(session, 10, 2, 2)
+            roles = await create_roles(session, 10, 2)
         result, total_count = await sqlalchemy_mixin._get_many_objects(
             DBRole,
             0,
             None,
-            app_name=roles[0].namespace.app.name,
-            namespace_name=roles[0].namespace.name,
+            app_name=roles[0].app.name,
         )
         assert total_count == 10
 
@@ -242,11 +241,9 @@ class TestSQLAlchemyMixin:
     @pytest.mark.usefixtures("create_tables")
     async def test__get_many_objects_by_app(self, sqlalchemy_mixin, create_roles):
         async with sqlalchemy_mixin.session() as session:
-            roles = await create_roles(session, 10, 2, 2)
-        app_name = roles[0].namespace.app.name
-        roles_beginning = [
-            role for role in roles if role.namespace.app.name == app_name
-        ]
+            roles = await create_roles(session, 10, 2)
+        app_name = roles[0].app.name
+        roles_beginning = [role for role in roles if role.app.name == app_name]
         roles_beginning.sort(key=lambda x: x.name)
         result, total_count = await sqlalchemy_mixin._get_many_objects(
             DBRole, 0, None, app_name=app_name

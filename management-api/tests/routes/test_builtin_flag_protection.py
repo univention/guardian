@@ -76,8 +76,7 @@ class TestBuiltinFlagProtectionRoutes:
     ):
         async with sqlalchemy_mixin.session() as session:
             db_role = (await create_roles(session, 1))[0]
-            app_name = db_role.namespace.app.name
-            namespace_name = db_role.namespace.name
+            app_name = db_role.app.name
             name = db_role.name
         await _set_builtin(sqlalchemy_mixin, DBRole, db_role.id)
 
@@ -85,7 +84,6 @@ class TestBuiltinFlagProtectionRoutes:
             client.app.url_path_for(
                 "delete_role",
                 app_name=app_name,
-                namespace_name=namespace_name,
                 name=name,
             )
         )
@@ -151,8 +149,7 @@ class TestBuiltinFlagProtectionRoutes:
     ):
         async with sqlalchemy_mixin.session() as session:
             db_ctx = (await create_contexts(session, 1))[0]
-            app_name = db_ctx.namespace.app.name
-            namespace_name = db_ctx.namespace.name
+            app_name = db_ctx.app.name
             name = db_ctx.name
         await _set_builtin(sqlalchemy_mixin, DBContext, db_ctx.id)
 
@@ -160,7 +157,6 @@ class TestBuiltinFlagProtectionRoutes:
             client.app.url_path_for(
                 "delete_context",
                 app_name=app_name,
-                namespace_name=namespace_name,
                 name=name,
             )
         )

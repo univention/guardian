@@ -126,16 +126,16 @@ class TestSQLNamespacePersistenceAdapterDelete:
     async def test_read_dependencies_with_children(
         self,
         namespace_sql_adapter: SQLNamespacePersistenceAdapter,
-        create_roles,
+        create_permissions,
     ):
         async with namespace_sql_adapter.session() as session:
-            db_roles = await create_roles(session, 2, with_capabilities=False)
-        db_namespace = db_roles[0].namespace
+            db_permissions = await create_permissions(session, 2)
+        db_namespace = db_permissions[0].namespace
         result = await namespace_sql_adapter.read_dependencies(
             NamespaceGetQuery(name=db_namespace.name, app_name=db_namespace.app.name)
         )
         assert len(result) == 2
-        prefix = f"role:{db_namespace.app.name}:{db_namespace.name}:"
+        prefix = f"permission:{db_namespace.app.name}:{db_namespace.name}:"
         assert all(isinstance(r, str) and r.startswith(prefix) for r in result)
 
     @pytest.mark.asyncio

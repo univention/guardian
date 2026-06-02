@@ -1,6 +1,6 @@
 {
   "roleCapabilityMapping": {
-    "ucsschool:users:head_master": [
+    "ucsschool:head_master": [
       {
         "appName": "context-app",
         "conditions": [
@@ -16,7 +16,7 @@
         "relation": "AND"
       }
     ],
-    "ucsschool:users:teacher": [
+    "ucsschool:teacher": [
       {
         "appName": "ucsschool",
         "conditions": [],
@@ -37,7 +37,7 @@
           {
             "name": "target_has_role",
             "parameters": {
-              "role": "ucsschool:users:student"
+              "role": "ucsschool:student"
             }
           }
         ],

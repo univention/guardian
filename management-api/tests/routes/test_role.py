@@ -28,20 +28,13 @@ class TestRoleEndpoints:
         client,
         sqlalchemy_mixin,
         create_app,
-        create_namespace,
     ):
         app_name = "test_app"
-        namespace_name = "test_namespace"
         async with sqlalchemy_mixin.session() as session:
             await create_app(session, name=app_name, display_name=None)
-            await create_namespace(
-                session, name=namespace_name, app_name=app_name, display_name=None
-            )
 
         response = client.post(
-            client.app.url_path_for(
-                "create_role", app_name=app_name, namespace_name=namespace_name
-            ),
+            client.app.url_path_for("create_role", app_name=app_name),
             json={"name": "test_role", "display_name": "test_role_display_name"},
         )
 
@@ -50,9 +43,8 @@ class TestRoleEndpoints:
             "role": {
                 "name": "test_role",
                 "app_name": app_name,
-                "namespace_name": namespace_name,
                 "display_name": "test_role_display_name",
-                "resource_url": f"{COMPLETE_URL}/roles/{app_name}/{namespace_name}/test_role",
+                "resource_url": f"{COMPLETE_URL}/roles/{app_name}/test_role",
                 "capabilities": [],
             }
         }
@@ -60,38 +52,9 @@ class TestRoleEndpoints:
             DBRole,
             name="test_role",
             app_name=app_name,
-            namespace_name=namespace_name,
         )
 
         assert db_role is not None
-
-    @pytest.mark.usefixtures("create_tables")
-    @pytest.mark.asyncio
-    async def test_post_role_404_missing_namespace(
-        self,
-        client,
-        sqlalchemy_mixin,
-        create_app,
-        create_namespace,
-    ):
-        app_name = "test_app"
-        namespace_name = "test_namespace"
-        async with sqlalchemy_mixin.session() as session:
-            await create_app(session, name=app_name, display_name=None)
-
-        response = client.post(
-            client.app.url_path_for(
-                "create_role", app_name=app_name, namespace_name=namespace_name
-            ),
-            json={"name": "test_role", "display_name": "test_role_display_name"},
-        )
-
-        assert response.status_code == 404
-        assert response.json() == {
-            "detail": {
-                "message": "The namespace of the object to be created does not exist."
-            }
-        }
 
     @pytest.mark.usefixtures("create_tables")
     @pytest.mark.asyncio
@@ -100,15 +63,11 @@ class TestRoleEndpoints:
         client,
         sqlalchemy_mixin,
         create_app,
-        create_namespace,
     ):
         app_name = "test_app1"
-        namespace_name = "test_namespace1"
 
         response = client.post(
-            client.app.url_path_for(
-                "create_role", app_name=app_name, namespace_name=namespace_name
-            ),
+            client.app.url_path_for("create_role", app_name=app_name),
             json={"name": "test_role", "display_name": "test_role_display_name"},
         )
 
@@ -134,17 +93,17 @@ class TestRoleEndpoints:
             )
             await create_role(
                 session,
-                namespace_name=namespace_name,
                 app_name=app_name,
                 name=name,
                 display_name=display_name,
+                with_capabilities=True,
+                namespace_name=namespace_name,
             )
 
         response = client.patch(
             client.app.url_path_for(
                 "edit_role",
                 app_name=app_name,
-                namespace_name=namespace_name,
                 name="test_role",
             ),
             json={"display_name": new_display_name},
@@ -156,9 +115,8 @@ class TestRoleEndpoints:
         assert role_response == {
             "name": name,
             "display_name": new_display_name,
-            "namespace_name": namespace_name,
             "app_name": app_name,
-            "resource_url": f"{COMPLETE_URL}/roles/{app_name}/{namespace_name}/{name}",
+            "resource_url": f"{COMPLETE_URL}/roles/{app_name}/{name}",
             "capabilities": [
                 {
                     "app_name": app_name,
@@ -177,7 +135,6 @@ class TestRoleEndpoints:
             DBRole,
             name="test_role",
             app_name=app_name,
-            namespace_name=namespace_name,
         )
 
         assert db_role is not None
@@ -186,22 +143,17 @@ class TestRoleEndpoints:
     @pytest.mark.usefixtures("create_tables")
     @pytest.mark.asyncio
     async def test_edit_role_404(
-        self, client, sqlalchemy_mixin, create_app, create_namespace, create_role
+        self, client, sqlalchemy_mixin, create_app, create_role
     ):
         app_name = "test_app"
-        namespace_name = "test_namespace"
         display_name = "test_displayname"
         async with sqlalchemy_mixin.session() as session:
             await create_app(session, name=app_name, display_name=None)
-            await create_namespace(
-                session, name=namespace_name, app_name=app_name, display_name=None
-            )
 
         response = client.patch(
             client.app.url_path_for(
                 "edit_role",
                 app_name=app_name,
-                namespace_name=namespace_name,
                 name="test_role1",
             ),
             json={"display_name": display_name},
@@ -210,7 +162,7 @@ class TestRoleEndpoints:
         assert response.json() == {
             "detail": {
                 "message": "No role with the identifier "
-                "'test_app:test_namespace:test_role1' could be found."
+                "'test_app:test_role1' could be found."
             }
         }
 
@@ -234,7 +186,6 @@ class TestRoleEndpoints:
             # Role starts with the fixture's default 2 capabilities.
             await create_role(
                 session,
-                namespace_name=namespace_name,
                 app_name=app_name,
                 name="test_role",
                 display_name="Role",
@@ -261,7 +212,6 @@ class TestRoleEndpoints:
             client.app.url_path_for(
                 "edit_role",
                 app_name=app_name,
-                namespace_name=namespace_name,
                 name="test_role",
             ),
             json={
@@ -293,9 +243,7 @@ class TestRoleEndpoints:
                 session, name=namespace_name, app_name=app_name, display_name=None
             )
         response = client.post(
-            client.app.url_path_for(
-                "create_role", app_name=app_name, namespace_name=namespace_name
-            ),
+            client.app.url_path_for("create_role", app_name=app_name),
             json={
                 "name": "test_role",
                 "display_name": "Role",
@@ -326,7 +274,7 @@ class TestRoleEndpoints:
         create_role,
     ):
         app_name: str = "test_app"
-        namespace_name: str = "test_namespace"
+        namespace_name = "test_namespace"
         role_name = "test_role"
 
         async with sqlalchemy_mixin.session() as session:
@@ -337,16 +285,16 @@ class TestRoleEndpoints:
             await create_role(
                 session=session,
                 app_name=app_name,
-                namespace_name=namespace_name,
                 name=role_name,
                 display_name="test_role_display_name",
+                with_capabilities=True,
+                namespace_name=namespace_name,
             )
 
         response = client.get(
             client.app.url_path_for(
                 "get_role",
                 app_name=app_name,
-                namespace_name=namespace_name,
                 name=role_name,
             )
         )
@@ -356,9 +304,8 @@ class TestRoleEndpoints:
         assert role_response == {
             "name": "test_role",
             "app_name": app_name,
-            "namespace_name": namespace_name,
             "display_name": "test_role_display_name",
-            "resource_url": f"{COMPLETE_URL}/roles/{app_name}/{namespace_name}/test_role",
+            "resource_url": f"{COMPLETE_URL}/roles/{app_name}/test_role",
             "capabilities": [
                 {
                     "app_name": app_name,
@@ -380,24 +327,18 @@ class TestRoleEndpoints:
         client,
         sqlalchemy_mixin,
         create_app,
-        create_namespace,
         create_role,
     ):
         app_name: str = "test_app"
-        namespace_name: str = "test_namespace"
         role_name = "test_role"
 
         async with sqlalchemy_mixin.session() as session:
             await create_app(session, name=app_name, display_name=None)
-            await create_namespace(
-                session, name=namespace_name, app_name=app_name, display_name=None
-            )
 
         response = client.get(
             client.app.url_path_for(
                 "get_role",
                 app_name=app_name,
-                namespace_name=namespace_name,
                 name=role_name,
             )
         )
@@ -411,24 +352,16 @@ class TestRoleEndpoints:
         create_role,
         sqlalchemy_mixin,
         create_app,
-        create_namespace,
     ):
         app_names: list[str] = ["test_app" + str(i) for i in range(0, 2)]
-        namespace_names: list[str] = ["test_namespace" + str(i) for i in range(0, 2)]
         role_names: list[str] = ["test_role" + str(i) for i in range(0, 2)]
 
         async with sqlalchemy_mixin.session() as session:
-            for app_name, namespace_name, role_name in zip(
-                app_names, namespace_names, role_names
-            ):
+            for app_name, role_name in zip(app_names, role_names):
                 await create_app(session, name=app_name, display_name=None)
-                await create_namespace(
-                    session, name=namespace_name, app_name=app_name, display_name=None
-                )
                 await create_role(
                     session=session,
                     app_name=app_name,
-                    namespace_name=namespace_name,
                     name=role_name,
                     display_name=role_name + "_display_name",
                     with_capabilities=False,
@@ -445,85 +378,16 @@ class TestRoleEndpoints:
         scoped_role = {
             "name": role_names[0],
             "app_name": app_names[0],
-            "namespace_name": namespace_names[0],
             "display_name": role_names[0] + "_display_name",
-            "resource_url": f"{COMPLETE_URL}/roles/{app_names[0]}/{namespace_names[0]}/{role_names[0]}",
+            "resource_url": f"{COMPLETE_URL}/roles/{app_names[0]}/{role_names[0]}",
             "capabilities": [],
         }
 
         unscoped_role = {
             "name": role_names[1],
             "app_name": app_names[1],
-            "namespace_name": namespace_names[1],
             "display_name": role_names[1] + "_display_name",
-            "resource_url": f"{COMPLETE_URL}/roles/{app_names[1]}/{namespace_names[1]}/{role_names[1]}",
-            "capabilities": [],
-        }
-
-        assert json_response["pagination"] == {
-            "offset": 0,
-            "limit": 1,
-            "total_count": 1,
-        }
-        assert len(json_response["roles"]) == 1
-        assert json_response["roles"][0] == scoped_role
-        assert json_response["roles"][0] != unscoped_role
-
-    @pytest.mark.usefixtures("create_tables")
-    @pytest.mark.asyncio
-    async def test_get_roles_by_namespace(
-        self,
-        client,
-        create_role,
-        sqlalchemy_mixin,
-        create_app,
-        create_namespace,
-    ):
-        app_names: list[str] = ["test_app" + str(i) for i in range(0, 2)]
-        namespace_names: list[str] = ["test_namespace" + str(i) for i in range(0, 2)]
-        role_names: list[str] = ["test_role" + str(i) for i in range(0, 2)]
-
-        async with sqlalchemy_mixin.session() as session:
-            for app_name, namespace_name, role_name in zip(
-                app_names, namespace_names, role_names
-            ):
-                await create_app(session, name=app_name, display_name=None)
-                await create_namespace(
-                    session, name=namespace_name, app_name=app_name, display_name=None
-                )
-                await create_role(
-                    session=session,
-                    app_name=app_name,
-                    namespace_name=namespace_name,
-                    name=role_name,
-                    display_name=role_name + "_display_name",
-                    with_capabilities=False,
-                )
-        response = client.get(
-            client.app.url_path_for(
-                "get_roles_by_namespace",
-                app_name=app_names[0],
-                namespace_name=namespace_names[0],
-            )
-        )
-        assert response.status_code == 200
-        json_response = response.json()
-
-        scoped_role = {
-            "name": role_names[0],
-            "app_name": app_names[0],
-            "namespace_name": namespace_names[0],
-            "display_name": role_names[0] + "_display_name",
-            "resource_url": f"{COMPLETE_URL}/roles/{app_names[0]}/{namespace_names[0]}/{role_names[0]}",
-            "capabilities": [],
-        }
-
-        unscoped_role = {
-            "name": role_names[1],
-            "app_name": app_names[1],
-            "namespace_name": namespace_names[1],
-            "display_name": role_names[1] + "_display_name",
-            "resource_url": f"{COMPLETE_URL}/roles/{app_names[1]}/{namespace_names[1]}/{role_names[1]}",
+            "resource_url": f"{COMPLETE_URL}/roles/{app_names[1]}/{role_names[1]}",
             "capabilities": [],
         }
 
@@ -544,24 +408,16 @@ class TestRoleEndpoints:
         create_role,
         sqlalchemy_mixin,
         create_app,
-        create_namespace,
     ):
         app_names: list[str] = ["test_app" + str(i) for i in range(0, 2)]
-        namespace_names: list[str] = ["test_namespace" + str(i) for i in range(0, 2)]
         role_names: list[str] = ["test_role" + str(i) for i in range(0, 2)]
 
         async with sqlalchemy_mixin.session() as session:
-            for app_name, namespace_name, role_name in zip(
-                app_names, namespace_names, role_names
-            ):
+            for app_name, role_name in zip(app_names, role_names):
                 await create_app(session, name=app_name, display_name=None)
-                await create_namespace(
-                    session, name=namespace_name, app_name=app_name, display_name=None
-                )
                 await create_role(
                     session=session,
                     app_name=app_name,
-                    namespace_name=namespace_name,
                     name=role_name,
                     display_name=role_name + "_display_name",
                     with_capabilities=False,
@@ -578,20 +434,18 @@ class TestRoleEndpoints:
             {
                 "name": role_names[0],
                 "app_name": app_names[0],
-                "namespace_name": namespace_names[0],
                 "display_name": role_names[0] + "_display_name",
                 "resource_url": (
-                    f"{COMPLETE_URL}/roles/{app_names[0]}/{namespace_names[0]}/{role_names[0]}"
+                    f"{COMPLETE_URL}/roles/{app_names[0]}/{role_names[0]}"
                 ),
                 "capabilities": [],
             },
             {
                 "name": role_names[1],
                 "app_name": app_names[1],
-                "namespace_name": namespace_names[1],
                 "display_name": role_names[1] + "_display_name",
                 "resource_url": (
-                    f"{COMPLETE_URL}/roles/{app_names[1]}/{namespace_names[1]}/{role_names[1]}"
+                    f"{COMPLETE_URL}/roles/{app_names[1]}/{role_names[1]}"
                 ),
                 "capabilities": [],
             },
@@ -641,13 +495,11 @@ class TestRoleEndpoints:
             resource = client.app.url_path_for(
                 "get_role",
                 app_name=orig_role.app_name,
-                namespace_name=orig_role.namespace_name,
                 name=orig_role.name,
             )
 
             assert role == {
                 "app_name": orig_role.app_name,
-                "namespace_name": orig_role.namespace_name,
                 "name": orig_role.name,
                 "display_name": orig_role.display_name,
                 "resource_url": urljoin(BASE_URL, resource),
@@ -658,16 +510,14 @@ class TestRoleEndpoints:
     @pytest.mark.usefixtures("create_tables")
     async def test_delete_role(self, client, create_roles, sqlalchemy_mixin):
         async with sqlalchemy_mixin.session() as session:
-            db_roles = await create_roles(session, 2, with_capabilities=False)
+            db_roles = await create_roles(session, 2)
             target = db_roles[0]
-            app_name = target.namespace.app.name
-            namespace_name = target.namespace.name
+            app_name = target.app.name
             name = target.name
         result = client.delete(
             client.app.url_path_for(
                 "delete_role",
                 app_name=app_name,
-                namespace_name=namespace_name,
                 name=name,
             )
         )
@@ -682,7 +532,6 @@ class TestRoleEndpoints:
             client.app.url_path_for(
                 "delete_role",
                 app_name="app",
-                namespace_name="namespace",
                 name="role",
             )
         )
@@ -705,14 +554,12 @@ class TestRoleEndpoints:
                     .where(role_capability_table.c.capability_id == db_cap.id)
                 )
             ).one()
-            app_name = db_role.namespace.app.name
-            namespace_name = db_role.namespace.name
+            app_name = db_role.app.name
             name = db_role.name
         result = client.delete(
             client.app.url_path_for(
                 "delete_role",
                 app_name=app_name,
-                namespace_name=namespace_name,
                 name=name,
             )
         )
@@ -730,31 +577,22 @@ class TestRoleEndpointsAuthorization:
         client,
         create_tables,
         create_app,
-        create_namespace,
         create_role,
         sqlalchemy_mixin,
         set_up_auth,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session=session, name="guardian", display_name=None)
-            await create_namespace(
-                session=session,
-                name="namespace",
-                display_name=None,
-                app_name="guardian",
-            )
             await create_role(
                 session=session,
                 name="test",
                 display_name=None,
                 app_name="guardian",
-                namespace_name="namespace",
             )
         response = client.get(
             app.url_path_for(
                 "get_role",
                 name="test",
-                namespace_name="namespace",
                 app_name="guardian",
             ),
         )
@@ -767,31 +605,22 @@ class TestRoleEndpointsAuthorization:
         client,
         create_tables,
         create_app,
-        create_namespace,
         create_role,
         sqlalchemy_mixin,
         set_up_auth,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session=session, name="other", display_name=None)
-            await create_namespace(
-                session=session,
-                name="namespace",
-                display_name=None,
-                app_name="other",
-            )
             await create_role(
                 session=session,
                 name="test",
                 display_name=None,
                 app_name="other",
-                namespace_name="namespace",
             )
         response = client.get(
             app.url_path_for(
                 "get_role",
                 name="test",
-                namespace_name="namespace",
                 app_name="other",
             ),
         )
@@ -804,40 +633,25 @@ class TestRoleEndpointsAuthorization:
         client,
         create_tables,
         create_app,
-        create_namespace,
         create_role,
         sqlalchemy_mixin,
         set_up_auth,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session=session, name="guardian", display_name=None)
-            await create_namespace(
-                session=session,
-                name="namespace",
-                display_name=None,
-                app_name="guardian",
-            )
             await create_role(
                 session=session,
                 name="test",
                 display_name=None,
                 app_name="guardian",
-                namespace_name="namespace",
             )
         async with sqlalchemy_mixin.session() as session:
             await create_app(session=session, name="other", display_name=None)
-            await create_namespace(
-                session=session,
-                name="namespace",
-                display_name=None,
-                app_name="other",
-            )
             await create_role(
                 session=session,
                 name="test",
                 display_name=None,
                 app_name="other",
-                namespace_name="namespace",
             )
         response = client.get(
             app.url_path_for("get_all_roles"),
@@ -852,23 +666,14 @@ class TestRoleEndpointsAuthorization:
         client,
         create_tables,
         create_app,
-        create_namespace,
         create_role,
         sqlalchemy_mixin,
         set_up_auth,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session=session, name="other", display_name=None)
-            await create_namespace(
-                session=session,
-                name="namespace",
-                display_name=None,
-                app_name="other",
-            )
         response = client.post(
-            app.url_path_for(
-                "create_role", namespace_name="namespace", app_name="other"
-            ),
+            app.url_path_for("create_role", app_name="other"),
             json={
                 "name": "test3",
                 "display_name": "expected displayname",
@@ -877,7 +682,6 @@ class TestRoleEndpointsAuthorization:
                 "relation": "AND",
                 "role": {
                     "app_name": "other",
-                    "namespace_name": "namespace",
                     "name": "role",
                 },
             },
@@ -900,25 +704,17 @@ class TestRoleEndpointsAuthorization:
         client,
         create_tables,
         create_app,
-        create_namespace,
         create_role,
         sqlalchemy_mixin,
         set_up_auth,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session=session, name="guardian", display_name=None)
-            await create_namespace(
-                session=session,
-                name="namespace",
-                display_name=None,
-                app_name="guardian",
-            )
             await create_role(
                 session=session,
                 name="test",
                 display_name=None,
                 app_name="guardian",
-                namespace_name="namespace",
             )
         response = client.get(
             app.url_path_for("get_roles_by_app", app_name="guardian"),
@@ -932,100 +728,20 @@ class TestRoleEndpointsAuthorization:
         client,
         create_tables,
         create_app,
-        create_namespace,
         create_role,
         sqlalchemy_mixin,
         set_up_auth,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session=session, name="other", display_name=None)
-            await create_namespace(
-                session=session,
-                name="namespace",
-                display_name=None,
-                app_name="other",
-            )
             await create_role(
                 session=session,
                 name="test",
                 display_name=None,
                 app_name="other",
-                namespace_name="namespace",
             )
         response = client.get(
             app.url_path_for("get_roles_by_app", app_name="other"),
-        )
-        assert response.status_code == 200
-        assert any(role["name"] == "test" for role in response.json()["roles"])
-
-    @pytest.mark.asyncio
-    async def test_get_roles_by_namespace_allowed(
-        self,
-        client,
-        create_tables,
-        create_app,
-        create_namespace,
-        create_role,
-        sqlalchemy_mixin,
-        set_up_auth,
-    ):
-        async with sqlalchemy_mixin.session() as session:
-            await create_app(session=session, name="guardian", display_name=None)
-            await create_namespace(
-                session=session,
-                name="namespace",
-                display_name=None,
-                app_name="guardian",
-            )
-            await create_role(
-                session=session,
-                name="test",
-                display_name=None,
-                app_name="guardian",
-                namespace_name="namespace",
-            )
-        response = client.get(
-            app.url_path_for(
-                "get_roles_by_namespace",
-                app_name="guardian",
-                namespace_name="namespace",
-            ),
-        )
-        assert response.status_code == 200
-        assert any(role["name"] == "test" for role in response.json()["roles"])
-
-    @pytest.mark.asyncio
-    async def test_get_roles_by_namespace_other_allowed(
-        self,
-        client,
-        create_tables,
-        create_app,
-        create_namespace,
-        create_role,
-        sqlalchemy_mixin,
-        set_up_auth,
-    ):
-        async with sqlalchemy_mixin.session() as session:
-            await create_app(session=session, name="other", display_name=None)
-            await create_namespace(
-                session=session,
-                name="namespace",
-                display_name=None,
-                app_name="other",
-            )
-            await create_role(
-                session=session,
-                name="test",
-                display_name=None,
-                app_name="other",
-                namespace_name="namespace",
-            )
-        response = client.get(
-            app.url_path_for(
-                "get_roles_by_namespace",
-                app_name="other",
-                namespace_name="namespace",
-            ),
         )
         assert response.status_code == 200
         assert any(role["name"] == "test" for role in response.json()["roles"])

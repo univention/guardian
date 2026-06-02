@@ -75,11 +75,11 @@ class TestNamespaceDeleteEndpoint:
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")
     async def test_delete_namespace_with_children_returns_409(
-        self, client, create_roles, sqlalchemy_mixin
+        self, client, create_permissions, sqlalchemy_mixin
     ):
         async with sqlalchemy_mixin.session() as session:
-            db_roles = await create_roles(session, 1)
-        db_namespace = db_roles[0].namespace
+            db_permissions = await create_permissions(session, 1)
+        db_namespace = db_permissions[0].namespace
         result = client.delete(
             app.url_path_for(
                 "delete_namespace",

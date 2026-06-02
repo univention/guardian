@@ -40,27 +40,25 @@ class TestSQLRolePersistenceAdapter:
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")
     async def test_create(
-        self, role_sql_adapter: SQLRolePersistenceAdapter, create_namespaces
+        self, role_sql_adapter: SQLRolePersistenceAdapter, create_apps
     ):
         async with role_sql_adapter.session() as session:
-            namespace = (await create_namespaces(session, 1))[0]
+            app = (await create_apps(session, 1))[0]
         role = await role_sql_adapter.create(
             Role(
-                app_name=namespace.app.name,
-                namespace_name=namespace.name,
+                app_name=app.name,
                 name="role",
                 display_name="Role",
             )
         )
         assert role == Role(
-            app_name=namespace.app.name,
-            namespace_name=namespace.name,
+            app_name=app.name,
             name="role",
             display_name="Role",
         )
         async with role_sql_adapter.session() as session:
             result = (await session.scalars(select(DBRole))).one()
-            assert result.namespace_id == namespace.id
+            assert result.app_id == app.id
             assert result.name == "role"
             assert result.display_name == "Role"
 
@@ -70,18 +68,15 @@ class TestSQLRolePersistenceAdapter:
         self,
         role_sql_adapter: SQLRolePersistenceAdapter,
         create_role,
-        create_namespaces,
+        create_apps,
     ):
         async with role_sql_adapter.session() as session:
-            namespace = (await create_namespaces(session, 1))[0]
-            role = await create_role(
-                session, app_name=namespace.app.name, namespace_name=namespace.name
-            )
+            app = (await create_apps(session, 1))[0]
+            role = await create_role(session, app_name=app.name)
         with pytest.raises(ObjectExistsError):
             await role_sql_adapter.create(
                 Role(
-                    app_name=role.namespace.app.name,
-                    namespace_name=role.namespace.name,
+                    app_name=role.app.name,
                     name=role.name,
                     display_name="Role",
                 )
@@ -101,7 +96,6 @@ class TestSQLRolePersistenceAdapter:
             await role_sql_adapter.create(
                 Role(
                     app_name=namespace.app.name,
-                    namespace_name=namespace.name,
                     name="role",
                     display_name="Role",
                     capabilities=[
@@ -128,27 +122,6 @@ class TestSQLRolePersistenceAdapter:
             await role_sql_adapter.create(
                 Role(
                     app_name="app",
-                    namespace_name="namespace",
-                    name="role",
-                    display_name="Role",
-                )
-            )
-
-    @pytest.mark.asyncio
-    @pytest.mark.usefixtures("create_tables")
-    async def test_create_namespace_not_found_error(
-        self, role_sql_adapter: SQLRolePersistenceAdapter, create_apps
-    ):
-        async with role_sql_adapter.session() as session:
-            app = (await create_apps(session, 1))[0]
-        with pytest.raises(
-            ParentNotFoundError,
-            match="The namespace of the object to be created does not exist.",
-        ):
-            await role_sql_adapter.create(
-                Role(
-                    app_name=app.name,
-                    namespace_name="namespace",
                     name="role",
                     display_name="Role",
                 )
@@ -163,7 +136,6 @@ class TestSQLRolePersistenceAdapter:
             await role_sql_adapter.create(
                 Role(
                     app_name="foo",
-                    namespace_name="bar",
                     name="role",
                     display_name="Role",
                 )
@@ -180,13 +152,11 @@ class TestSQLRolePersistenceAdapter:
             db_role = (await create_roles(session, 1))[0]
         role = await role_sql_adapter.read_one(
             RoleGetQuery(
-                app_name=db_role.namespace.app.name,
-                namespace_name=db_role.namespace.name,
+                app_name=db_role.app.name,
                 name=db_role.name,
             )
         )
-        assert role.app_name == db_role.namespace.app.name
-        assert role.namespace_name == db_role.namespace.name
+        assert role.app_name == db_role.app.name
         assert role.name == db_role.name
         assert role.display_name == db_role.display_name
 
@@ -197,9 +167,7 @@ class TestSQLRolePersistenceAdapter:
         role_sql_adapter: SQLRolePersistenceAdapter,
     ):
         with pytest.raises(ObjectNotFoundError):
-            await role_sql_adapter.read_one(
-                RoleGetQuery(app_name="foo", namespace_name="bar", name="role")
-            )
+            await role_sql_adapter.read_one(RoleGetQuery(app_name="foo", name="role"))
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("drop_tables")
@@ -207,9 +175,7 @@ class TestSQLRolePersistenceAdapter:
         self, role_sql_adapter: SQLRolePersistenceAdapter
     ):
         with pytest.raises(PersistenceError):
-            await role_sql_adapter.read_one(
-                RoleGetQuery(app_name="foo", namespace_name="bar", name="role")
-            )
+            await role_sql_adapter.read_one(RoleGetQuery(app_name="foo", name="role"))
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")
@@ -254,7 +220,7 @@ class TestSQLRolePersistenceAdapter:
         offset,
     ):
         async with role_sql_adapter.session() as session:
-            roles = await create_roles(session, 5, 2, 10)
+            roles = await create_roles(session, 10, 10)
             roles.sort(key=lambda x: x.name)
         result = await role_sql_adapter.read_many(
             RolesGetQuery(
@@ -278,15 +244,13 @@ class TestSQLRolePersistenceAdapter:
             db_role = (await create_roles(session, 1))[0]
         result = await role_sql_adapter.update(
             Role(
-                app_name=db_role.namespace.app.name,
-                namespace_name=db_role.namespace.name,
+                app_name=db_role.app.name,
                 name=db_role.name,
                 display_name="NEW DISPLAY NAME",
             )
         )
         assert result == Role(
-            app_name=db_role.namespace.app.name,
-            namespace_name=db_role.namespace.name,
+            app_name=db_role.app.name,
             name=db_role.name,
             display_name="NEW DISPLAY NAME",
         )
@@ -306,12 +270,11 @@ class TestSQLRolePersistenceAdapter:
             await create_roles(session, 1)
         with pytest.raises(
             ObjectNotFoundError,
-            match="No role with the identifier 'app:namespace:role' could be found.",
+            match="No role with the identifier 'app:role' could be found.",
         ):
             await role_sql_adapter.update(
                 Role(
                     app_name="app",
-                    namespace_name="namespace",
                     name="role",
                     display_name="NEW DISPLAY NAME",
                 )
@@ -326,15 +289,10 @@ class TestSQLRolePersistenceAdapter:
     ):
         async with role_sql_adapter.session() as session:
             db_role = (await create_roles(session, 1))[0]
-            app_name = db_role.namespace.app.name
-            namespace_name = db_role.namespace.name
+            app_name = db_role.app.name
             name = db_role.name
         assert (
-            await role_sql_adapter.delete(
-                RoleGetQuery(
-                    app_name=app_name, namespace_name=namespace_name, name=name
-                )
-            )
+            await role_sql_adapter.delete(RoleGetQuery(app_name=app_name, name=name))
             is None
         )
         async with role_sql_adapter.session() as session:
@@ -346,9 +304,7 @@ class TestSQLRolePersistenceAdapter:
         self, role_sql_adapter: SQLRolePersistenceAdapter
     ):
         with pytest.raises(ObjectNotFoundError) as exc_info:
-            await role_sql_adapter.delete(
-                RoleGetQuery(app_name="app", namespace_name="namespace", name="role")
-            )
+            await role_sql_adapter.delete(RoleGetQuery(app_name="app", name="role"))
         assert exc_info.value.object_type == Role
 
     @pytest.mark.asyncio
@@ -359,12 +315,11 @@ class TestSQLRolePersistenceAdapter:
         create_roles,
     ):
         async with role_sql_adapter.session() as session:
-            db_role = (await create_roles(session, 1, with_capabilities=False))[0]
-            app_name = db_role.namespace.app.name
-            namespace_name = db_role.namespace.name
+            db_role = (await create_roles(session, 1))[0]
+            app_name = db_role.app.name
             name = db_role.name
         result = await role_sql_adapter.read_dependencies(
-            RoleGetQuery(app_name=app_name, namespace_name=namespace_name, name=name)
+            RoleGetQuery(app_name=app_name, name=name)
         )
         assert result == []
 
@@ -387,12 +342,11 @@ class TestSQLRolePersistenceAdapter:
                     .where(role_capability_table.c.capability_id == db_cap.id)
                 )
             ).one()
-            app_name = db_role.namespace.app.name
-            namespace_name = db_role.namespace.name
+            app_name = db_role.app.name
             name = db_role.name
             expected_cap_name = db_cap.name
         result = await role_sql_adapter.read_dependencies(
-            RoleGetQuery(app_name=app_name, namespace_name=namespace_name, name=name)
+            RoleGetQuery(app_name=app_name, name=name)
         )
         assert len(result) == 1
         assert isinstance(result[0], CapabilityReference)
@@ -405,6 +359,6 @@ class TestSQLRolePersistenceAdapter:
     ):
         with pytest.raises(ObjectNotFoundError) as exc_info:
             await role_sql_adapter.read_dependencies(
-                RoleGetQuery(app_name="app", namespace_name="namespace", name="role")
+                RoleGetQuery(app_name="app", name="role")
             )
         assert exc_info.value.object_type == Role

@@ -17,7 +17,6 @@ from guardian_management_api.models.routers.base import ManagementObjectName
 from guardian_management_api.models.sql_persistence import (
     DBApp,
     DBCapability,
-    DBNamespace,
     DBRole,
 )
 from sqlalchemy import select
@@ -82,10 +81,9 @@ class TestAppEndpoints:
             ),
             admin_role=AppAdmin(
                 app_name=ManagementObjectName("app1"),
-                namespace_name=ManagementObjectName("default"),
                 name=ManagementObjectName("app-admin"),
                 display_name="App Administrator for App 1",
-                resource_url=f"{COMPLETE_URL}/roles/app1/default/app-admin",
+                resource_url=f"{COMPLETE_URL}/roles/app1/app-admin",
             ),
             default_namespace=AppDefaultNamespace(
                 app_name=ManagementObjectName("app1"),
@@ -135,14 +133,11 @@ class TestAppEndpoints:
                 await session.execute(
                     select(DBRole)
                     .where(DBRole.name == "app-admin")
-                    .join(DBRole.namespace)
-                    .where(DBNamespace.name == "default")
+                    .join(DBRole.app)
+                    .where(DBApp.name == "app1")
                 )
             ).scalar_one()
-            assert (
-                f"{admin_role.namespace.app.name}:{admin_role.namespace.name}:{admin_role.name}"
-                == "app1:default:app-admin"
-            )
+            assert f"{admin_role.app.name}:{admin_role.name}" == "app1:app-admin"
             assert {cap.name for cap in admin_role.capability} == {
                 "app1-admin-cap",
                 "app1-admin-cap-read-role-cond",

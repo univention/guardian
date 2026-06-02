@@ -137,14 +137,12 @@ class TestCapabilityEndpoints:
                     select(DBRole).where(DBRole.name == "role_000000000")
                 )
             ).scalar_one()
-            role_app_name = db_role1.namespace.app.name
-            role_namespace_name = db_role1.namespace.name
+            role_app_name = db_role1.app.name
             role_name = db_role1.name
         response = client.get(
             client.app.url_path_for(
                 "get_capabilities_by_role",
                 app_name=role_app_name,
-                namespace_name=role_namespace_name,
                 name=role_name,
             )
         )
@@ -188,7 +186,6 @@ class TestCapabilityEndpoints:
             client.app.url_path_for(
                 "get_capabilities_by_role",
                 app_name="foo",
-                namespace_name="bar",
                 name="foo",
             )
         )
@@ -303,9 +300,7 @@ class TestCapabilityEndpoints:
     async def test_create_and_get_capability(self, client):
         """Test for https://git.knut.univention.de/univention/components/authorization-engine/guardian/-/issues/143"""
         response = client.post(
-            client.app.url_path_for(
-                "create_role", app_name="guardian", namespace_name="default"
-            ),
+            client.app.url_path_for("create_role", app_name="guardian"),
             json={"name": "test", "display_name": "Test role"},
         )
         assert response.status_code == 201
@@ -932,7 +927,6 @@ class TestCapabilityEndpointsAuthorization:
         response = client.get(
             app.url_path_for(
                 "get_capabilities_by_role",
-                namespace_name="namespace",
                 app_name="guardian",
                 name="role",
             ),
@@ -963,7 +957,6 @@ class TestCapabilityEndpointsAuthorization:
         response = client.get(
             app.url_path_for(
                 "get_capabilities_by_role",
-                namespace_name="namespace",
                 app_name="other",
                 name="role",
             ),

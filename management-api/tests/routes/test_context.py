@@ -11,7 +11,6 @@ from sqlalchemy import select
 from sqlalchemy.sql.functions import count
 
 DEFAULT_TEST_APP = "app"
-DEFAULT_TEST_NAMESPACE = "namespace"
 DEFAULT_TEST_CONTEXT = "context"
 
 
@@ -22,18 +21,15 @@ class TestContextEndpoints:
         self,
         client,
         create_app,
-        create_namespace,
         sqlalchemy_mixin,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session)
-            await create_namespace(session)
         context_name = "new-context"
         response = client.post(
             app.url_path_for(
                 "create_context",
                 app_name=DEFAULT_TEST_APP,
-                namespace_name=DEFAULT_TEST_NAMESPACE,
             ),
             json={
                 "name": context_name,
@@ -44,11 +40,10 @@ class TestContextEndpoints:
         assert response.json() == {
             "context": {
                 "app_name": DEFAULT_TEST_APP,
-                "namespace_name": DEFAULT_TEST_NAMESPACE,
                 "name": context_name,
                 "display_name": "test",
                 "resource_url": f"{COMPLETE_URL}/contexts/{DEFAULT_TEST_APP}"
-                f"/{DEFAULT_TEST_NAMESPACE}/{context_name}",
+                f"/{context_name}",
             }
         }
 
@@ -57,19 +52,16 @@ class TestContextEndpoints:
         self,
         client,
         create_app,
-        create_namespace,
         create_context,
         sqlalchemy_mixin,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session)
-            await create_namespace(session)
             await create_context(session)
         response = client.post(
             app.url_path_for(
                 "create_context",
                 app_name=DEFAULT_TEST_APP,
-                namespace_name=DEFAULT_TEST_NAMESPACE,
             ),
             json={
                 "name": DEFAULT_TEST_CONTEXT,
@@ -90,31 +82,6 @@ class TestContextEndpoints:
             app.url_path_for(
                 "create_context",
                 app_name=DEFAULT_TEST_APP,
-                namespace_name=DEFAULT_TEST_NAMESPACE,
-            ),
-            json={
-                "name": context_name,
-                "display_name": "test",
-            },
-        )
-        assert response.status_code == 404, response.json()
-
-    @pytest.mark.asyncio
-    async def test_post_non_existing_namespace(
-        self,
-        client,
-        create_app,
-        sqlalchemy_mixin,
-    ):
-        async with sqlalchemy_mixin.session() as session:
-            await create_app(session)
-
-        context_name = "new-context"
-        response = client.post(
-            app.url_path_for(
-                "create_context",
-                app_name=DEFAULT_TEST_APP,
-                namespace_name=DEFAULT_TEST_NAMESPACE,
             ),
             json={
                 "name": context_name,
@@ -129,19 +96,16 @@ class TestContextEndpoints:
         client,
         create_app,
         sqlalchemy_mixin,
-        create_namespace,
         create_context,
         base_url,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session)
-            await create_namespace(session)
             await create_context(session)
         response = client.get(
             app.url_path_for(
                 "get_context",
                 app_name=DEFAULT_TEST_APP,
-                namespace_name=DEFAULT_TEST_NAMESPACE,
                 name=DEFAULT_TEST_CONTEXT,
             ),
         )
@@ -149,11 +113,10 @@ class TestContextEndpoints:
         assert response.json() == {
             "context": {
                 "app_name": DEFAULT_TEST_APP,
-                "namespace_name": DEFAULT_TEST_NAMESPACE,
                 "display_name": "Context",
                 "name": DEFAULT_TEST_CONTEXT,
                 "resource_url": f"{base_url}/guardian/management/contexts/"
-                f"{DEFAULT_TEST_APP}/{DEFAULT_TEST_NAMESPACE}/{DEFAULT_TEST_CONTEXT}",
+                f"{DEFAULT_TEST_APP}/{DEFAULT_TEST_CONTEXT}",
             }
         }
 
@@ -163,16 +126,13 @@ class TestContextEndpoints:
         client,
         create_app,
         sqlalchemy_mixin,
-        create_namespace,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session)
-            await create_namespace(session)
         response = client.get(
             app.url_path_for(
                 "get_context",
                 app_name=DEFAULT_TEST_APP,
-                namespace_name=DEFAULT_TEST_NAMESPACE,
                 name=DEFAULT_TEST_CONTEXT,
             ),
         )
@@ -184,13 +144,11 @@ class TestContextEndpoints:
         client,
         create_app,
         sqlalchemy_mixin,
-        create_namespace,
         create_context,
         base_url,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session)
-            await create_namespace(session)
             await create_context(session, name="context1")
             await create_context(session, name="context2")
 
@@ -201,17 +159,15 @@ class TestContextEndpoints:
             "contexts": [
                 {
                     "app_name": "app",
-                    "namespace_name": "namespace",
                     "name": "context1",
                     "display_name": "Context",
-                    "resource_url": f"{base_url}/guardian/management/contexts/app/namespace/context1",
+                    "resource_url": f"{base_url}/guardian/management/contexts/app/context1",
                 },
                 {
                     "app_name": "app",
-                    "namespace_name": "namespace",
                     "name": "context2",
                     "display_name": "Context",
-                    "resource_url": f"{base_url}/guardian/management/contexts/app/namespace/context2",
+                    "resource_url": f"{base_url}/guardian/management/contexts/app/context2",
                 },
             ],
         }
@@ -222,15 +178,12 @@ class TestContextEndpoints:
         client,
         create_app,
         sqlalchemy_mixin,
-        create_namespace,
         create_context,
         base_url,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session)
             await create_app(session, name="app2")
-            await create_namespace(session)
-            await create_namespace(session, app_name="app2")
             await create_context(session, name="context1")
             await create_context(session, name="context2", app_name="app2")
 
@@ -241,51 +194,9 @@ class TestContextEndpoints:
             "contexts": [
                 {
                     "app_name": "app2",
-                    "namespace_name": "namespace",
                     "name": "context2",
                     "display_name": "Context",
-                    "resource_url": f"{base_url}/guardian/management/contexts/app2/namespace/context2",
-                }
-            ],
-        }
-
-    @pytest.mark.asyncio
-    async def test_get_contexts_for_namespace_name(
-        self,
-        client,
-        create_app,
-        sqlalchemy_mixin,
-        create_namespace,
-        create_context,
-        base_url,
-    ):
-        namespace_name = "namespace2"
-        async with sqlalchemy_mixin.session() as session:
-            await create_app(session)
-            await create_namespace(session)
-            await create_namespace(session, name=namespace_name)
-            await create_context(session, name="context1")
-            await create_context(
-                session, name="context2", namespace_name=namespace_name
-            )
-
-        response = client.get(
-            app.url_path_for(
-                "get_contexts_by_namespace",
-                namespace_name=namespace_name,
-                app_name=DEFAULT_TEST_APP,
-            )
-        )
-        assert response.status_code == 200
-        assert response.json() == {
-            "pagination": {"offset": 0, "limit": 1, "total_count": 1},
-            "contexts": [
-                {
-                    "app_name": "app",
-                    "namespace_name": "namespace2",
-                    "name": "context2",
-                    "display_name": "Context",
-                    "resource_url": f"{base_url}/guardian/management/contexts/app/namespace2/context2",
+                    "resource_url": f"{base_url}/guardian/management/contexts/app2/context2",
                 }
             ],
         }
@@ -296,12 +207,10 @@ class TestContextEndpoints:
         client,
         create_app,
         sqlalchemy_mixin,
-        create_namespace,
         create_context,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session)
-            await create_namespace(session)
             await create_context(session, name="context1")
 
         response = client.get(app.url_path_for("get_contexts_by_app", app_name="app2"))
@@ -317,12 +226,10 @@ class TestContextEndpoints:
         client,
         create_app,
         sqlalchemy_mixin,
-        create_namespace,
         create_context,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session)
-            await create_namespace(session)
             await create_context(session)
 
         changed_display_name = "changed_display_name"
@@ -330,7 +237,6 @@ class TestContextEndpoints:
             app.url_path_for(
                 "edit_context",
                 app_name=DEFAULT_TEST_APP,
-                namespace_name=DEFAULT_TEST_NAMESPACE,
                 name=DEFAULT_TEST_CONTEXT,
             ),
             json={"display_name": changed_display_name},
@@ -339,11 +245,10 @@ class TestContextEndpoints:
         assert response.json() == {
             "context": {
                 "app_name": DEFAULT_TEST_APP,
-                "namespace_name": DEFAULT_TEST_NAMESPACE,
                 "name": DEFAULT_TEST_CONTEXT,
                 "display_name": changed_display_name,
                 "resource_url": f"{COMPLETE_URL}/contexts/{DEFAULT_TEST_APP}/"
-                f"{DEFAULT_TEST_NAMESPACE}/{DEFAULT_TEST_CONTEXT}",
+                f"{DEFAULT_TEST_CONTEXT}",
             }
         }
 
@@ -353,18 +258,15 @@ class TestContextEndpoints:
         client,
         create_app,
         sqlalchemy_mixin,
-        create_namespace,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session)
-            await create_namespace(session)
 
         changed_display_name = "changed_display_name"
         response = client.patch(
             app.url_path_for(
                 "edit_context",
                 app_name=DEFAULT_TEST_APP,
-                namespace_name=DEFAULT_TEST_NAMESPACE,
                 name=DEFAULT_TEST_CONTEXT,
             ),
             json={"display_name": changed_display_name},
@@ -381,28 +283,6 @@ class TestContextEndpoints:
             app.url_path_for(
                 "edit_context",
                 app_name=DEFAULT_TEST_APP,
-                namespace_name=DEFAULT_TEST_NAMESPACE,
-                name=DEFAULT_TEST_CONTEXT,
-            ),
-            json={"display_name": changed_display_name},
-        )
-        assert response.status_code == 404, response.json()
-
-    @pytest.mark.asyncio
-    async def test_patch_context_non_existing_namespace(
-        self,
-        client,
-        create_app,
-        sqlalchemy_mixin,
-    ):
-        async with sqlalchemy_mixin.session() as session:
-            await create_app(session)
-        changed_display_name = "changed_display_name"
-        response = client.patch(
-            app.url_path_for(
-                "edit_context",
-                app_name=DEFAULT_TEST_APP,
-                namespace_name=DEFAULT_TEST_NAMESPACE,
                 name=DEFAULT_TEST_CONTEXT,
             ),
             json={"display_name": changed_display_name},
@@ -414,14 +294,12 @@ class TestContextEndpoints:
         async with sqlalchemy_mixin.session() as session:
             db_contexts = await create_contexts(session, 2)
             target = db_contexts[0]
-            app_name = target.namespace.app.name
-            namespace_name = target.namespace.name
+            app_name = target.app.name
             name = target.name
         result = client.delete(
             client.app.url_path_for(
                 "delete_context",
                 app_name=app_name,
-                namespace_name=namespace_name,
                 name=name,
             )
         )
@@ -435,7 +313,6 @@ class TestContextEndpoints:
             client.app.url_path_for(
                 "delete_context",
                 app_name=DEFAULT_TEST_APP,
-                namespace_name=DEFAULT_TEST_NAMESPACE,
                 name=DEFAULT_TEST_CONTEXT,
             )
         )
@@ -451,31 +328,22 @@ class TestContextEndpointsAuthorization:
         client,
         create_tables,
         create_app,
-        create_namespace,
         create_context,
         sqlalchemy_mixin,
         set_up_auth,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session=session, name="guardian", display_name=None)
-            await create_namespace(
-                session=session,
-                name="namespace",
-                display_name=None,
-                app_name="guardian",
-            )
             await create_context(
                 session=session,
                 name="test",
                 display_name=None,
                 app_name="guardian",
-                namespace_name="namespace",
             )
         response = client.get(
             app.url_path_for(
                 "get_context",
                 name="test",
-                namespace_name="namespace",
                 app_name="guardian",
             ),
         )
@@ -488,31 +356,22 @@ class TestContextEndpointsAuthorization:
         client,
         create_tables,
         create_app,
-        create_namespace,
         create_context,
         sqlalchemy_mixin,
         set_up_auth,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session=session, name="other", display_name=None)
-            await create_namespace(
-                session=session,
-                name="namespace",
-                display_name=None,
-                app_name="other",
-            )
             await create_context(
                 session=session,
                 name="test",
                 display_name=None,
                 app_name="other",
-                namespace_name="namespace",
             )
         response = client.get(
             app.url_path_for(
                 "get_context",
                 name="test",
-                namespace_name="namespace",
                 app_name="other",
             ),
         )
@@ -524,31 +383,22 @@ class TestContextEndpointsAuthorization:
         client,
         create_tables,
         create_app,
-        create_namespace,
         create_context,
         sqlalchemy_mixin,
         set_up_auth,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session=session, name="guardian", display_name=None)
-            await create_namespace(
-                session=session,
-                name="namespace",
-                display_name=None,
-                app_name="guardian",
-            )
             await create_context(
                 session=session,
                 name="test",
                 display_name=None,
                 app_name="guardian",
-                namespace_name="namespace",
             )
         response = client.patch(
             app.url_path_for(
                 "edit_context",
                 name="test",
-                namespace_name="namespace",
                 app_name="guardian",
             ),
             json={
@@ -559,7 +409,6 @@ class TestContextEndpointsAuthorization:
                 "relation": "AND",
                 "context": {
                     "app_name": "guardian",
-                    "namespace_name": "namespace",
                     "name": "context",
                 },
             },
@@ -573,31 +422,22 @@ class TestContextEndpointsAuthorization:
         client,
         create_tables,
         create_app,
-        create_namespace,
         create_context,
         sqlalchemy_mixin,
         set_up_auth,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session=session, name="other", display_name=None)
-            await create_namespace(
-                session=session,
-                name="namespace",
-                display_name=None,
-                app_name="other",
-            )
             await create_context(
                 session=session,
                 name="test",
                 display_name=None,
                 app_name="other",
-                namespace_name="namespace",
             )
         response = client.patch(
             app.url_path_for(
                 "edit_context",
                 name="test",
-                namespace_name="namespace",
                 app_name="other",
             ),
             json={
@@ -608,7 +448,6 @@ class TestContextEndpointsAuthorization:
                 "relation": "AND",
                 "context": {
                     "app_name": "other",
-                    "namespace_name": "namespace",
                     "name": "context",
                 },
             },
@@ -630,40 +469,25 @@ class TestContextEndpointsAuthorization:
         client,
         create_tables,
         create_app,
-        create_namespace,
         create_context,
         sqlalchemy_mixin,
         set_up_auth,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session=session, name="guardian", display_name=None)
-            await create_namespace(
-                session=session,
-                name="namespace",
-                display_name=None,
-                app_name="guardian",
-            )
             await create_context(
                 session=session,
                 name="test",
                 display_name=None,
                 app_name="guardian",
-                namespace_name="namespace",
             )
         async with sqlalchemy_mixin.session() as session:
             await create_app(session=session, name="other", display_name=None)
-            await create_namespace(
-                session=session,
-                name="namespace",
-                display_name=None,
-                app_name="other",
-            )
             await create_context(
                 session=session,
                 name="test",
                 display_name=None,
                 app_name="other",
-                namespace_name="namespace",
             )
         response = client.get(
             app.url_path_for("get_all_contexts"),
@@ -680,23 +504,14 @@ class TestContextEndpointsAuthorization:
         client,
         create_tables,
         create_app,
-        create_namespace,
         create_context,
         sqlalchemy_mixin,
         set_up_auth,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session=session, name="other", display_name=None)
-            await create_namespace(
-                session=session,
-                name="namespace",
-                display_name=None,
-                app_name="other",
-            )
         response = client.post(
-            app.url_path_for(
-                "create_context", namespace_name="namespace", app_name="other"
-            ),
+            app.url_path_for("create_context", app_name="other"),
             json={
                 "name": "test3",
                 "display_name": "expected displayname",
@@ -705,7 +520,6 @@ class TestContextEndpointsAuthorization:
                 "relation": "AND",
                 "context": {
                     "app_name": "other",
-                    "namespace_name": "namespace",
                     "name": "context",
                 },
             },
@@ -728,25 +542,17 @@ class TestContextEndpointsAuthorization:
         client,
         create_tables,
         create_app,
-        create_namespace,
         create_context,
         sqlalchemy_mixin,
         set_up_auth,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session=session, name="guardian", display_name=None)
-            await create_namespace(
-                session=session,
-                name="namespace",
-                display_name=None,
-                app_name="guardian",
-            )
             await create_context(
                 session=session,
                 name="test",
                 display_name=None,
                 app_name="guardian",
-                namespace_name="namespace",
             )
         response = client.get(
             app.url_path_for("get_contexts_by_app", app_name="guardian"),
@@ -760,99 +566,20 @@ class TestContextEndpointsAuthorization:
         client,
         create_tables,
         create_app,
-        create_namespace,
         create_context,
         sqlalchemy_mixin,
         set_up_auth,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session=session, name="other", display_name=None)
-            await create_namespace(
-                session=session,
-                name="namespace",
-                display_name=None,
-                app_name="other",
-            )
             await create_context(
                 session=session,
                 name="test",
                 display_name=None,
                 app_name="other",
-                namespace_name="namespace",
             )
         response = client.get(
             app.url_path_for("get_contexts_by_app", app_name="other"),
-        )
-        assert response.json()["contexts"] == []
-
-    @pytest.mark.asyncio
-    async def test_get_contexts_by_namespace_allowed(
-        self,
-        client,
-        create_tables,
-        create_app,
-        create_namespace,
-        create_context,
-        sqlalchemy_mixin,
-        set_up_auth,
-    ):
-        async with sqlalchemy_mixin.session() as session:
-            await create_app(session=session, name="guardian", display_name=None)
-            await create_namespace(
-                session=session,
-                name="namespace",
-                display_name=None,
-                app_name="guardian",
-            )
-            await create_context(
-                session=session,
-                name="test",
-                display_name=None,
-                app_name="guardian",
-                namespace_name="namespace",
-            )
-        response = client.get(
-            app.url_path_for(
-                "get_contexts_by_namespace",
-                app_name="guardian",
-                namespace_name="namespace",
-            ),
-        )
-        assert response.status_code == 200
-        assert any(context["name"] == "test" for context in response.json()["contexts"])
-
-    @pytest.mark.asyncio
-    async def test_get_contexts_by_namespace_not_allowed(
-        self,
-        client,
-        create_tables,
-        create_app,
-        create_namespace,
-        create_context,
-        sqlalchemy_mixin,
-        set_up_auth,
-    ):
-        async with sqlalchemy_mixin.session() as session:
-            await create_app(session=session, name="other", display_name=None)
-            await create_namespace(
-                session=session,
-                name="namespace",
-                display_name=None,
-                app_name="other",
-            )
-            await create_context(
-                session=session,
-                name="test",
-                display_name=None,
-                app_name="other",
-                namespace_name="namespace",
-            )
-        response = client.get(
-            app.url_path_for(
-                "get_contexts_by_namespace",
-                app_name="other",
-                namespace_name="namespace",
-            ),
         )
         assert response.json()["contexts"] == []
 
@@ -862,31 +589,22 @@ class TestContextEndpointsAuthorization:
         client,
         create_tables,
         create_app,
-        create_namespace,
         create_context,
         sqlalchemy_mixin,
         set_up_auth,
     ):
         async with sqlalchemy_mixin.session() as session:
             await create_app(session=session, name="other", display_name=None)
-            await create_namespace(
-                session=session,
-                name="namespace",
-                display_name=None,
-                app_name="other",
-            )
             await create_context(
                 session=session,
                 name="test",
                 display_name=None,
                 app_name="other",
-                namespace_name="namespace",
             )
         response = client.delete(
             app.url_path_for(
                 "delete_context",
                 name="test",
-                namespace_name="namespace",
                 app_name="other",
             ),
         )

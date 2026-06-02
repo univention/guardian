@@ -27,7 +27,6 @@ from guardian_management_api.models.context import (
 from guardian_management_api.models.routers.base import (
     GetAllRequest,
     GetByAppRequest,
-    GetByNamespaceRequest,
     PaginationInfo,
 )
 from guardian_management_api.models.routers.context import (
@@ -58,10 +57,8 @@ class TestFastAPIContextAdapter:
     @pytest.mark.asyncio
     async def test_to_context_create(self, adapter):
         app_name = "app-name"
-        namespace_name = "namespace-name"
         api_request = ContextCreateRequest(
             app_name=app_name,
-            namespace_name=namespace_name,
             data=ContextCreateData(display_name="display_name", name="context-name"),
         )
         result = await adapter.to_context_create(api_request)
@@ -69,7 +66,6 @@ class TestFastAPIContextAdapter:
             name="context-name",
             display_name="display_name",
             app_name=app_name,
-            namespace_name=namespace_name,
         )
 
     @pytest.mark.asyncio
@@ -78,7 +74,6 @@ class TestFastAPIContextAdapter:
             name="name",
             display_name="display_name",
             app_name="app-name",
-            namespace_name="namespace-name",
         )
         result = await adapter.to_api_create_response(context)
         assert result == ContextSingleResponse(
@@ -86,8 +81,7 @@ class TestFastAPIContextAdapter:
                 name=context.name,
                 app_name=context.app_name,
                 display_name=context.display_name,
-                namespace_name=context.namespace_name,
-                resource_url=f"{COMPLETE_URL}/contexts/{context.app_name}/{context.namespace_name}/{context.name}",
+                resource_url=f"{COMPLETE_URL}/contexts/{context.app_name}/{context.name}",
             )
         )
 
@@ -97,13 +91,11 @@ class TestFastAPIContextAdapter:
         api_request = ContextGetRequest(
             app_name=app_name,
             name="context-name",
-            namespace_name="namespace-name",
         )
         result = await adapter.to_context_get(api_request)
         assert result == ContextGetQuery(
             name="context-name",
             app_name=app_name,
-            namespace_name="namespace-name",
         )
 
     @pytest.mark.asyncio
@@ -112,7 +104,6 @@ class TestFastAPIContextAdapter:
             name="name",
             display_name="display_name",
             app_name="app-name",
-            namespace_name="namespace-name",
         )
         result = await adapter.to_api_get_response(context)
         assert result == ContextSingleResponse(
@@ -120,8 +111,7 @@ class TestFastAPIContextAdapter:
                 name=context.name,
                 app_name=context.app_name,
                 display_name=context.display_name,
-                namespace_name=context.namespace_name,
-                resource_url=f"{COMPLETE_URL}/contexts/{context.app_name}/{context.namespace_name}/{context.name}",
+                resource_url=f"{COMPLETE_URL}/contexts/{context.app_name}/{context.name}",
             )
         )
 
@@ -140,7 +130,6 @@ class TestFastAPIContextAdapter:
                 name=f"name-{i}",
                 display_name="display_name",
                 app_name="app-name",
-                namespace_name="namespace-name",
             )
             for i in range(3)
         ]
@@ -151,9 +140,8 @@ class TestFastAPIContextAdapter:
             ResponseContext(
                 name=context.name,
                 app_name=context.app_name,
-                namespace_name=context.namespace_name,
                 display_name=context.display_name,
-                resource_url=f"{COMPLETE_URL}/contexts/{context.app_name}/{context.namespace_name}/{context.name}",
+                resource_url=f"{COMPLETE_URL}/contexts/{context.app_name}/{context.name}",
             )
             for context in contexts
         ]
@@ -172,16 +160,14 @@ class TestFastAPIContextAdapter:
             name="name",
             display_name="display_name",
             app_name="app-name",
-            namespace_name="namespace-name",
         )
         result = await adapter.to_api_edit_response(context)
         assert result == ContextSingleResponse(
             context=ResponseContext(
                 name=context.name,
                 app_name=context.app_name,
-                namespace_name=context.namespace_name,
                 display_name=context.display_name,
-                resource_url=f"{COMPLETE_URL}/contexts/{context.app_name}/{context.namespace_name}/{context.name}",
+                resource_url=f"{COMPLETE_URL}/contexts/{context.app_name}/{context.name}",
             )
         )
 
@@ -191,14 +177,12 @@ class TestFastAPIContextAdapter:
         api_request = ContextEditRequest(
             app_name=app_name,
             name="context-name",
-            namespace_name="namespace-name",
             data=ContextEditData(display_name="display_name"),
         )
         result, data = await adapter.to_context_edit(api_request)
         assert result == ContextGetQuery(
             app_name=app_name,
             name="context-name",
-            namespace_name="namespace-name",
         )
         assert data["display_name"] == "display_name"
 
@@ -208,18 +192,6 @@ class TestFastAPIContextAdapter:
         result = await adapter.to_contexts_get(api_request)
         assert result == ContextsGetQuery(
             pagination=PaginationRequest(query_offset=0, query_limit=1),
-            app_name="test-app",
-        )
-
-    @pytest.mark.asyncio
-    async def test_to_contexts_by_namespace_get(self, adapter):
-        api_request = GetByNamespaceRequest(
-            offset=0, limit=1, namespace_name="test-namespace", app_name="test-app"
-        )
-        result = await adapter.to_contexts_get(api_request)
-        assert result == ContextsGetQuery(
-            pagination=PaginationRequest(query_offset=0, query_limit=1),
-            namespace_name="test-namespace",
             app_name="test-app",
         )
 
@@ -234,27 +206,25 @@ class TestSQLContextPersistenceAdapter:
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("create_tables")
     async def test_create(
-        self, context_sql_adapter: SQLContextPersistenceAdapter, create_namespaces
+        self, context_sql_adapter: SQLContextPersistenceAdapter, create_apps
     ):
         async with context_sql_adapter.session() as session:
-            namespace = (await create_namespaces(session, 1))[0]
+            app = (await create_apps(session, 1))[0]
         context = await context_sql_adapter.create(
             Context(
-                app_name=namespace.app.name,
-                namespace_name=namespace.name,
+                app_name=app.name,
                 name="context",
                 display_name="Context",
             )
         )
         assert context == Context(
-            app_name=namespace.app.name,
-            namespace_name=namespace.name,
+            app_name=app.name,
             name="context",
             display_name="Context",
         )
         async with context_sql_adapter.session() as session:
             result = (await session.scalars(select(DBContext))).one()
-            assert result.namespace_id == namespace.id
+            assert result.app_id == app.id
             assert result.name == "context"
             assert result.display_name == "Context"
 
@@ -264,18 +234,15 @@ class TestSQLContextPersistenceAdapter:
         self,
         context_sql_adapter: SQLContextPersistenceAdapter,
         create_context,
-        create_namespaces,
+        create_apps,
     ):
         async with context_sql_adapter.session() as session:
-            namespace = (await create_namespaces(session, 1))[0]
-            context = await create_context(
-                session, app_name=namespace.app.name, namespace_name=namespace.name
-            )
+            app = (await create_apps(session, 1))[0]
+            context = await create_context(session, app_name=app.name)
         with pytest.raises(ObjectExistsError):
             await context_sql_adapter.create(
                 Context(
-                    app_name=context.namespace.app.name,
-                    namespace_name=context.namespace.name,
+                    app_name=context.app.name,
                     name=context.name,
                     display_name="Context",
                 )
@@ -294,27 +261,6 @@ class TestSQLContextPersistenceAdapter:
             await context_sql_adapter.create(
                 Context(
                     app_name="app",
-                    namespace_name="namespace",
-                    name="context",
-                    display_name="Context",
-                )
-            )
-
-    @pytest.mark.asyncio
-    @pytest.mark.usefixtures("create_tables")
-    async def test_create_namespace_not_found_error(
-        self, context_sql_adapter: SQLContextPersistenceAdapter, create_apps
-    ):
-        async with context_sql_adapter.session() as session:
-            app = (await create_apps(session, 1))[0]
-        with pytest.raises(
-            ParentNotFoundError,
-            match="The namespace of the object to be created does not exist.",
-        ):
-            await context_sql_adapter.create(
-                Context(
-                    app_name=app.name,
-                    namespace_name="namespace",
                     name="context",
                     display_name="Context",
                 )
@@ -329,7 +275,6 @@ class TestSQLContextPersistenceAdapter:
             await context_sql_adapter.create(
                 Context(
                     app_name="foo",
-                    namespace_name="bar",
                     name="context",
                     display_name="Context",
                 )
@@ -346,13 +291,11 @@ class TestSQLContextPersistenceAdapter:
             db_context = (await create_contexts(session, 1))[0]
         context = await context_sql_adapter.read_one(
             ContextGetQuery(
-                app_name=db_context.namespace.app.name,
-                namespace_name=db_context.namespace.name,
+                app_name=db_context.app.name,
                 name=db_context.name,
             )
         )
-        assert context.app_name == db_context.namespace.app.name
-        assert context.namespace_name == db_context.namespace.name
+        assert context.app_name == db_context.app.name
         assert context.name == db_context.name
         assert context.display_name == db_context.display_name
 
@@ -364,7 +307,7 @@ class TestSQLContextPersistenceAdapter:
     ):
         with pytest.raises(ObjectNotFoundError):
             await context_sql_adapter.read_one(
-                ContextGetQuery(app_name="foo", namespace_name="bar", name="context")
+                ContextGetQuery(app_name="foo", name="context")
             )
 
     @pytest.mark.asyncio
@@ -374,7 +317,7 @@ class TestSQLContextPersistenceAdapter:
     ):
         with pytest.raises(PersistenceError):
             await context_sql_adapter.read_one(
-                ContextGetQuery(app_name="foo", namespace_name="bar", name="context")
+                ContextGetQuery(app_name="foo", name="context")
             )
 
     @pytest.mark.asyncio
@@ -422,7 +365,7 @@ class TestSQLContextPersistenceAdapter:
         offset,
     ):
         async with context_sql_adapter.session() as session:
-            contexts = await create_contexts(session, 5, 2, 10)
+            contexts = await create_contexts(session, 10, 10)
             contexts.sort(key=lambda x: x.name)
         result = await context_sql_adapter.read_many(
             ContextsGetQuery(
@@ -448,15 +391,13 @@ class TestSQLContextPersistenceAdapter:
             db_context = (await create_contexts(session, 1))[0]
         result = await context_sql_adapter.update(
             Context(
-                app_name=db_context.namespace.app.name,
-                namespace_name=db_context.namespace.name,
+                app_name=db_context.app.name,
                 name=db_context.name,
                 display_name="NEW DISPLAY NAME",
             )
         )
         assert result == Context(
-            app_name=db_context.namespace.app.name,
-            namespace_name=db_context.namespace.name,
+            app_name=db_context.app.name,
             name=db_context.name,
             display_name="NEW DISPLAY NAME",
         )
@@ -476,12 +417,11 @@ class TestSQLContextPersistenceAdapter:
             await create_contexts(session, 1)
         with pytest.raises(
             ObjectNotFoundError,
-            match="No context with the identifier 'app:namespace:context' could be found.",
+            match="No context with the identifier 'app:context' could be found.",
         ):
             await context_sql_adapter.update(
                 Context(
                     app_name="app",
-                    namespace_name="namespace",
                     name="context",
                     display_name="NEW DISPLAY NAME",
                 )
@@ -496,14 +436,11 @@ class TestSQLContextPersistenceAdapter:
     ):
         async with context_sql_adapter.session() as session:
             db_context = (await create_contexts(session, 1))[0]
-            app_name = db_context.namespace.app.name
-            namespace_name = db_context.namespace.name
+            app_name = db_context.app.name
             name = db_context.name
         assert (
             await context_sql_adapter.delete(
-                ContextGetQuery(
-                    app_name=app_name, namespace_name=namespace_name, name=name
-                )
+                ContextGetQuery(app_name=app_name, name=name)
             )
             is None
         )
@@ -518,8 +455,6 @@ class TestSQLContextPersistenceAdapter:
     ):
         with pytest.raises(ObjectNotFoundError) as exc_info:
             await context_sql_adapter.delete(
-                ContextGetQuery(
-                    app_name="app", namespace_name="namespace", name="context"
-                )
+                ContextGetQuery(app_name="app", name="context")
             )
         assert exc_info.value.object_type == Context
