@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 variables:
+  # Bump this when starting a new UCS release branch.
+  UCS_VERSION: "5.2-5"
   RUN_RENOVATE:
     value: "no"
     options:
@@ -31,3 +33,6 @@ include:
       - renovatebot/renovate.gitlab-ci.yml
     rules:
       - if: $RUN_RENOVATE == "yes"
+  - component: "$CI_SERVER_FQDN/univention/dev/tooling/ci-components/debian-aptly@2.5.2"
+    inputs:
+      pkg-dir: univention-guardian
