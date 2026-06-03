@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: 2026 Univention GmbH
+# SPDX-License-Identifier: AGPL-3.0-only
+
+services:
+  my-cerbos-container:
+  guardian-cerbos:
+    container_name: guardian-cerbos
+    image: ${IMAGE:?IMAGE must be set}
+    ports:
+      - "3592:3592"
+    volumes:
+      - /opt/policies:/policies:ro
+      - /usr/share/univention-guardian/config:/config:ro
+    command: ["server", "--log-level=${LOG_LEVEL:-INFO}", "--config=/config/config.yaml"]

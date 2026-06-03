@@ -1,0 +1,12 @@
+#!/usr/bin/make -f
+#
+# Univention Guardian
+#  rules file for the debian package
+#
+# SPDX-FileCopyrightText: 2022-2026 Univention GmbH
+# SPDX-License-Identifier: AGPL-3.0-only
+
+export DH_VERBOSE=1
+
+%:
+	dh $@ --with univention-join,ucr
