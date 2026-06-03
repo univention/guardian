@@ -22,9 +22,6 @@ workflow:
     - if: $RUN_RENOVATE == "yes"
 
 include:
-  - local: /.gitlab-ci/gitlab-ci.yml
-    rules:
-      - if: $RUN_RENOVATE != "yes"
   - local: /.gitlab-ci/ai-review.yml
     rules:
       - if: $RUN_RENOVATE != "yes"
@@ -36,3 +33,8 @@ include:
   - component: "$CI_SERVER_FQDN/univention/dev/tooling/ci-components/debian-aptly@2.5.2"
     inputs:
       pkg-dir: univention-guardian
+
+stages:
+  - "prepare"
+  - "build"
+  - "test"
