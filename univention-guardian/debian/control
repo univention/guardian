@@ -1,0 +1,22 @@
+Source: univention-guardian
+Section: univention
+Priority: optional
+Maintainer: Univention GmbH <packages@univention.de>
+Build-Depends:
+ debhelper-compat (= 13),
+ univention-config-dev (>= 15.0.3),
+ univention-join-dev,
+Standards-Version: 4.3.0.3
+
+Package: univention-guardian
+Architecture: all
+Depends:
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: UCS guardian
+ This package installs the univention-guardian component.
+ .
+ This package is part of Univention Corporate Server (UCS),
+ an integrated, directory driven solution for managing
+ corporate environments. For more information about UCS,
+ refer to: https://www.univention.de/
