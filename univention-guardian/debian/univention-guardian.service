@@ -1,0 +1,14 @@
+[Unit]
+Description=Univention guardian
+Requires=docker.service
+After=docker.service network-online.target
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Type=simple
+EnvironmentFile=/usr/share/univention-guardian/guardian.env
+ExecStart=/usr/bin/docker-compose -f /usr/share/univention-guardian/docker-compose.yaml -p univention-guardian up --no-build
+ExecStop=/usr/bin/docker-compose -f /usr/share/univention-guardian/docker-compose.yaml -p univention-guardian down --remove-orphans
+Restart=on-failure
