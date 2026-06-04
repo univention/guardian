@@ -55,9 +55,14 @@ keep the ``999.0.0-staging`` version in the test App Center up to date. A public
 release happens exclusively on a ``vX.Y.Z`` tag.
 
 .. note::
-   The tag pipeline only starts if the project's ``workflow:rules`` allow tag
-   pipelines (a rule matching ``$CI_COMMIT_TAG``). If pushing a tag does not
-   create a pipeline, add such a rule to the ``workflow`` configuration.
+   The release pipeline only starts for a **protected** ``vX.Y.Z`` tag. The
+   ``workflow`` configuration matches
+   ``$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/ && $CI_COMMIT_REF_PROTECTED == "true"``.
+   This requires a one-time setup: configure ``v*`` as a protected tag under
+   :menuselection:`Settings --> Repository --> Protected tags`, and the person
+   cutting the release must have permission to push protected tags. A
+   non-protected tag (for example one created on an unmerged branch) matches no
+   rule and starts no pipeline, so it cannot trigger an accidental release.
 
 Checklist
 =========
@@ -76,7 +81,7 @@ Copy this into a release issue:
         - [ ] the alembic migration folder in management-api/alembic (if a new one was added)
     - [ ] Merge the release commit to main and check that the main pipeline is green
     - [ ] Wait for the Guardian Product Tests to pass (run after merge, takes about one day): https://jenkins2022.knut.univention.de/job/UCS-5.2/job/UCS-5.2-5/job/Guardian%20Product%20Tests/
-    - [ ] Push the tag vX.Y.Z on the release commit on main
+    - [ ] Push the protected tag vX.Y.Z on the release commit on main (this starts the release pipeline)
     - [ ] Wait for the tag pipeline to build/push the images and upload all three apps to the test App Center
     - [ ] Smoke test from the test App Center (follow the manual, interact with the management-ui):
         - [ ] Fresh installation of the new version
@@ -113,6 +118,9 @@ Releasing the apps
 
       git tag -a v3.0.10 -m "Guardian 3.0.10"
       git push origin v3.0.10
+
+   The tag must be a protected ``v*`` tag (see the note above), otherwise no
+   pipeline starts.
 
 #. The tag pipeline builds and publishes the public images and uploads all three
    apps at ``X.Y.Z`` to the test App Center automatically. The relevant jobs are

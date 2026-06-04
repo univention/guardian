@@ -99,21 +99,50 @@ include:
       - "jobs/generate-filesystem-sbom.yaml"
       - "jobs/lint-pre-commit.yaml"
       - "jobs/lint-commit-messages.yaml"
-      # Include the template (not jobs/semantic-release-env.yaml) so we get the
-      # `.pre-semantic-release` job template for versioning only. We deliberately
-      # do NOT define `post-semantic-release`, which would auto-tag/release on
-      # every conventional-commit merge to main. Releases are driven instead by
-      # manually pushed `<app>_X.Y.Z` tags handled by the app-release components.
-      - "templates/semantic-release-env.yaml"
       - "jobs/container-build-external.yaml"
       # - "jobs/package-and-publish-helm-charts-external.yaml"
       - "jobs/check-debian-updates.yaml"
       - "templates/pip-package-and-publish.yaml"
       - "templates/sonarqube.yaml"
+  # tagged-release: deterministic version stamp where releases come only from a
+  # protected vX.Y.Z tag (see common-ci USAGE.md "tagged releases"). This replaces
+  # semantic-release for versioning, so we no longer include semantic-release-env.
+  # TODO: bump this ref to the released common-ci version once the
+  # jconde/tagged-release MR is merged (it is not in v1.62.0 yet).
+  - project: "univention/dev/nubus-for-k8s/common-ci"
+    ref: "jconde/tagged-release"
+    file:
+      - "templates/tagged-release.yaml"
   - project: "univention/infrastructure/docker-services"
     ref: "master"
     file:
       - "dind.yml"
+
+# Guardian defines its own workflow, which REPLACES the included nubus-workflow,
+# to additionally allow release-tag pipelines. These rules mirror nubus-workflow
+# (v1.62.0) and add one: a pipeline starts on a *protected* "vX.Y.Z" tag. That
+# tag pipeline is the public release, images/charts go to the public "nubus"
+# project (PUBLIC_RELEASE=true) and the three apps are released to the App Center.
+# Restricting to protected tags ensures only a maintainer can cut a release from
+# an intentional tag (configure Settings -> Repository -> Protected tags: "v*").
+# A non-protected tag matches no rule, so it starts no pipeline (no accidental
+# release, e.g. from a tag on an unmerged MR branch).
+workflow:
+  rules:
+    # Support triggering a pipeline in various ways by default
+    - if: '$CI_PIPELINE_SOURCE == "parent_pipeline"'
+    - if: '$CI_PIPELINE_SOURCE == "pipeline"'
+    - if: '$CI_PIPELINE_SOURCE == "trigger"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule-release"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    # Release pipeline: only for protected vX.Y.Z tags (a maintainer-cut release).
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/ && $CI_COMMIT_REF_PROTECTED == "true"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
+      when: "never"
+    - if: '$CI_COMMIT_BRANCH'
 
 variables:
   APPCENTER_CONTROL_IMAGE: "docker-registry.knut.univention.de/knut/univention-appcenter-control"
@@ -142,37 +171,17 @@ lint-pre-commit:
     RUNNER_REGISTRY_IMAGE: "gitregistry.knut.univention.de/univention/dev/tooling/pre-commit/univention-pre-commit"
     RUNNER_IMAGE_TAG: "0.6.2"
 
-# Versioning only: computes RELEASE_VERSION via `semantic-release --dry-run`
-# (consumed by test/test-e2e/coverage-merge and image tags). The counterpart
-# `post-semantic-release` job is intentionally omitted so nothing auto-tags or
-# auto-releases on main.
+# Version stamp via common-ci's reusable ".tagged-release" template. Releases come
+# only from a protected vX.Y.Z tag; every other ref is a dev build
+# "<base>-post-<slug>" published to nubus-dev only. The job name stays
+# "pre-semantic-release" because test/test-e2e/coverage-merge/
+# container-release-attestation depend on it for the RELEASE_VERSION dotenv.
+# No vX.Y.Z tags exist yet and the legacy "<app>_X.Y.Z" tags are not in release
+# format, so INITIAL_VERSION seeds the base; the first vX.Y.Z release takes over.
 pre-semantic-release:
-  extends: .pre-semantic-release
-  # The inherited upstream script computes RELEASE_VERSION and writes deploy.env.
-  #   - On a release tag ("vX.Y.Z"): pin the version straight from the tag (minus
-  #     the "v") so images/charts come out as "X.Y.Z", and set PUBLIC_RELEASE=true
-  #     so publish/sign/attestation push to the public "nubus" project.
-  #   - On every other pipeline (main, branches, MRs): force PUBLIC_RELEASE off so
-  #     images/charts publish only to the private "nubus-dev" project. main would
-  #     otherwise be treated as a public release (clean version on default branch).
-  after_script:
-    - |
-      DEPLOY_ENV="${CI_PROJECT_DIR}/deploy.env"
-      if [[ -n "${CI_COMMIT_TAG:-}" ]]; then
-        VERSION="${CI_COMMIT_TAG#v}"
-        echo "Release tag ${CI_COMMIT_TAG}: pinning RELEASE_VERSION=${VERSION}, PUBLIC_RELEASE=true"
-        {
-          echo "SEMANTIC_VERSION=${VERSION}"
-          echo "RELEASE_VERSION=${VERSION}"
-          echo "PUBLIC_RELEASE=true"
-          echo "BRANCH_NAME_TAG="
-          echo "SR_NO_RELEVANT_CHANGE="
-        } > "${DEPLOY_ENV}"
-      else
-        echo "Non-tag pipeline: forcing PUBLIC_RELEASE off"
-        sed -i 's/^PUBLIC_RELEASE=.*/PUBLIC_RELEASE=/' "${DEPLOY_ENV}"
-      fi
-      cat "${DEPLOY_ENV}"
+  extends: .tagged-release
+  variables:
+    INITIAL_VERSION: "3.0.9"
 
 .build-matrix: &build-matrix
   - IMAGE_NAME: "testrunner"
