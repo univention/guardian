@@ -85,14 +85,14 @@ include:
       release_stage: "publish"
       cleanup_stage: ".post"
 
-  - component: $CI_SERVER_FQDN/univention/dev/nubus-for-k8s/common-ci/pip-package-and-publish-with-uv@v1.63.0
+  - component: $CI_SERVER_FQDN/univention/dev/nubus-for-k8s/common-ci/pip-package-and-publish-with-uv@v1.64.0
     inputs:
       package_root: "authorization-client"
 
   - project: 'univention/dev/docs/sphinx-docker'
     file: 'pipeline/sphinx.yml'
   - project: "univention/dev/nubus-for-k8s/common-ci"
-    ref: "v1.63.0"
+    ref: "v1.64.0"
     file:
       - "defaults/stages.yaml"
       - "defaults/nubus-workflow.yaml"
@@ -113,33 +113,10 @@ include:
     file:
       - "dind.yml"
 
-# Guardian defines its own workflow, which REPLACES the included nubus-workflow,
-# to additionally allow release-tag pipelines. These rules mirror nubus-workflow
-# (v1.63.0) and add one: a pipeline starts on a *protected* "vX.Y.Z" tag. That
-# tag pipeline is the public release, images/charts go to the public "nubus"
-# project (PUBLIC_RELEASE=true) and the three apps are released to the App Center.
-# Restricting to protected tags ensures only a maintainer can cut a release from
-# an intentional tag (configure Settings -> Repository -> Protected tags: "v*").
-# A non-protected tag matches no rule, so it starts no pipeline (no accidental
-# release, e.g. from a tag on an unmerged MR branch).
-workflow:
-  rules:
-    # Support triggering a pipeline in various ways by default
-    - if: '$CI_PIPELINE_SOURCE == "parent_pipeline"'
-    - if: '$CI_PIPELINE_SOURCE == "pipeline"'
-    - if: '$CI_PIPELINE_SOURCE == "trigger"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule-release"'
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    # Release pipeline: only for protected vX.Y.Z tags (a maintainer-cut release).
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/ && $CI_COMMIT_REF_PROTECTED == "true"'
-    - if: '$CI_COMMIT_BRANCH == "main"'
-    - if: '$CI_PIPELINE_SOURCE == "web"'
-    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
-      when: "never"
-    - if: '$CI_COMMIT_BRANCH'
-
 variables:
+  # Opt in to common-ci's release-tag pipeline (the protected-vX.Y.Z rule lives in
+  # nubus-workflow, gated on this).
+  TAGGED_RELEASE: "true"
   APPCENTER_CONTROL_IMAGE: "docker-registry.knut.univention.de/knut/univention-appcenter-control"
   POETRY_VERSION: "2.2.1"
   UCS_VERSION: "505"
@@ -234,7 +211,7 @@ container-release-attestation:
 # All three app-release components emit a `create_gitlab_release` job targeting
 # the same vX.Y.Z tag, but GitLab allows only one Release per tag (the other two
 # would fail with "release already exists"). Since the apps share one version and
-# tag, keep a single Guardian-wide Release (on the management-api job) and disable
+# tag, we keep a single Guardian-wide Release (on the management-api job) and disable
 # the per-app duplicates. Nothing depends on these jobs, so disabling is safe.
 authz-create_gitlab_release:
   rules:
