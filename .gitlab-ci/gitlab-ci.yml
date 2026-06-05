@@ -231,6 +231,31 @@ container-release-attestation:
   parallel:
     matrix: *publish-matrix
 
+# All three app-release components emit a `create_gitlab_release` job targeting
+# the same vX.Y.Z tag, but GitLab allows only one Release per tag (the other two
+# would fail with "release already exists"). Since the apps share one version and
+# tag, keep a single Guardian-wide Release (on the management-api job) and disable
+# the per-app duplicates. Nothing depends on these jobs, so disabling is safe.
+authz-create_gitlab_release:
+  rules:
+    - when: never
+
+management-ui-create_gitlab_release:
+  rules:
+    - when: never
+
+management-create_gitlab_release:
+  # Fully specify the release (not just an overridden name) so it is correct
+  # whether GitLab merges or replaces the inherited `release` block.
+  release:
+    tag_name: "$CI_COMMIT_TAG"
+    name: "Guardian $APP_VERSION"
+    description: "$CI_COMMIT_TAG_MESSAGE"
+    assets:
+      links:
+        - name: "Changelog"
+          url: "https://docs.software-univention.de/guardian-manual/latest/changelogs.html"
+
 test:
   stage: test
   image: "${CI_REGISTRY_IMAGE}/testrunner:${RELEASE_VERSION}"
