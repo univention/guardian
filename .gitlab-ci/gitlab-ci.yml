@@ -85,14 +85,14 @@ include:
       release_stage: "publish"
       cleanup_stage: ".post"
 
-  - component: $CI_SERVER_FQDN/univention/dev/nubus-for-k8s/common-ci/pip-package-and-publish-with-uv@v1.62.0
+  - component: $CI_SERVER_FQDN/univention/dev/nubus-for-k8s/common-ci/pip-package-and-publish-with-uv@v1.63.0
     inputs:
       package_root: "authorization-client"
 
   - project: 'univention/dev/docs/sphinx-docker'
     file: 'pipeline/sphinx.yml'
   - project: "univention/dev/nubus-for-k8s/common-ci"
-    ref: "v1.62.0"
+    ref: "v1.63.0"
     file:
       - "defaults/stages.yaml"
       - "defaults/nubus-workflow.yaml"
@@ -104,14 +104,9 @@ include:
       - "jobs/check-debian-updates.yaml"
       - "templates/pip-package-and-publish.yaml"
       - "templates/sonarqube.yaml"
-  # tagged-release: deterministic version stamp where releases come only from a
-  # protected vX.Y.Z tag (see common-ci USAGE.md "tagged releases"). This replaces
-  # semantic-release for versioning, so we no longer include semantic-release-env.
-  # TODO: bump this ref to the released common-ci version once the
-  # jconde/tagged-release MR is merged (it is not in v1.62.0 yet).
-  - project: "univention/dev/nubus-for-k8s/common-ci"
-    ref: "jconde/tagged-release"
-    file:
+      # tagged-release: deterministic version stamp where releases come only from
+      # a protected vX.Y.Z tag (see common-ci USAGE.md "tagged releases"). This
+      # replaces semantic-release for versioning.
       - "templates/tagged-release.yaml"
   - project: "univention/infrastructure/docker-services"
     ref: "master"
@@ -120,7 +115,7 @@ include:
 
 # Guardian defines its own workflow, which REPLACES the included nubus-workflow,
 # to additionally allow release-tag pipelines. These rules mirror nubus-workflow
-# (v1.62.0) and add one: a pipeline starts on a *protected* "vX.Y.Z" tag. That
+# (v1.63.0) and add one: a pipeline starts on a *protected* "vX.Y.Z" tag. That
 # tag pipeline is the public release, images/charts go to the public "nubus"
 # project (PUBLIC_RELEASE=true) and the three apps are released to the App Center.
 # Restricting to protected tags ensures only a maintainer can cut a release from
