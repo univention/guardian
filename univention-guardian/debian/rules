@@ -10,3 +10,8 @@ export DH_VERBOSE=1
 
 %:
 	dh $@ --with univention-join,ucr
+
+# Don't auto-start: the unit's templated configs are empty until the
+# join script runs `ucr set` + `ucr commit` and starts the service.
+override_dh_installsystemd:
+	dh_installsystemd --no-enable --no-start

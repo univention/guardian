@@ -1,1 +1,2 @@
 docker-compose.yaml	usr/share/univention-guardian/
+policies/defaults/	usr/share/univention-guardian/policies/
