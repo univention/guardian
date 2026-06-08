@@ -1,0 +1,26 @@
+apiVersion: api.cerbos.dev/v1
+
+resourcePolicy:
+  version: "default"
+  resource: user
+
+  importDerivedRoles:
+    - udm_derived_roles
+
+  rules:
+    - actions:
+        - reset_password
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - helpdesk_context
+
+    - actions:
+        - modify_user
+      effect: EFFECT_ALLOW
+      roles:
+        - ouadmin
+      condition:
+        match:
+          expr: request.principal.attr.assignments.exists(a,
+                  a.role == "ouadmin" &&
+                  a.context == request.resource.attr.position)

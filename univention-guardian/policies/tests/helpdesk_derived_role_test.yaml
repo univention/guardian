@@ -1,0 +1,124 @@
+# yaml-language-server: $schema=https://api.cerbos.dev/latest/cerbos/policy/v1/TestSuite.schema.json
+
+name: Test helpdesk role with context
+description: Tests for context by derived role approach
+
+principals:
+
+  sally:
+    id: sally
+    roles:
+      - user
+
+  ian:
+    id: ian
+    roles:
+      - helpdesk
+    attr:
+      assignments:
+       - role: helpdesk
+         context: hamburg
+       - role: helpdesk
+         context: bremen
+
+  frank:
+    id: frank
+    roles:
+      - helpdesk
+    attr:
+      assignments:
+       - role: helpdesk
+         context: hamburg
+
+
+resources:
+  resource1:
+    id: user1
+    kind: user
+    attr:
+      position: hamburg
+  resource2:
+    id: user2
+    kind: user
+    attr:
+      position: bremen
+  resource3:
+    id: user3
+    kind: user
+    attr:
+      position: berlin
+
+tests:
+
+  - name: helpdesk bremen hamburg, not berlin
+    input:
+      principals:
+        - ian
+      resources:
+        - resource1
+        - resource2
+        - resource3
+      actions:
+        - reset_password
+    expected:
+      - principal: ian
+        resource: resource1
+        actions:
+          reset_password: EFFECT_ALLOW
+      - principal: ian
+        resource: resource2
+        actions:
+          reset_password: EFFECT_ALLOW
+      - principal: ian
+        resource: resource3
+        actions:
+          reset_password: EFFECT_DENY
+
+
+  - name: helpdesk hamburg, not berlin or bremen
+    input:
+      principals:
+        - frank
+      resources:
+        - resource1
+        - resource2
+        - resource3
+      actions:
+        - reset_password
+    expected:
+      - principal: frank
+        resource: resource1
+        actions:
+          reset_password: EFFECT_ALLOW
+      - principal: frank
+        resource: resource2
+        actions:
+          reset_password: EFFECT_DENY
+      - principal: frank
+        resource: resource3
+        actions:
+          reset_password: EFFECT_DENY
+
+  - name: no helpdesk role
+    input:
+      principals:
+        - sally
+      resources:
+        - resource1
+        - resource2
+        - resource3
+      actions:
+        - reset_password
+    expected:
+      - principal: sally
+        resource: resource1
+        actions:
+          reset_password: EFFECT_DENY
+      - principal: sally
+        resource: resource2
+        actions:
+          reset_password: EFFECT_DENY
+      - principal: sally
+        resource: resource3
+        actions:
+          reset_password: EFFECT_DENY
