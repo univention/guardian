@@ -2,13 +2,36 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 services:
-  my-cerbos-container:
+  # No ports: the OIDC proxy is the only entrypoint.
   guardian-cerbos:
     container_name: guardian-cerbos
     image: ${IMAGE:?IMAGE must be set}
-    ports:
-      - "3592:3592"
     volumes:
-      - /opt/policies:/policies:ro
+      - /usr/share/univention-guardian/policies:/policies/defaults:ro
+      # For ADDING policies, not editing the defaults: Cerbos's disk
+      # driver rejects same-(resource, version) duplicates rather than
+      # shadowing them.
+      - /opt/univention-guardian/policies:/policies/overrides:ro
       - /usr/share/univention-guardian/config:/config:ro
     command: ["server", "--log-level=${LOG_LEVEL:-INFO}", "--config=/config/config.yaml"]
+    restart: unless-stopped
+    networks:
+      - guardian-internal
+
+  guardian-oidc-proxy:
+    container_name: guardian-oidc-proxy
+    image: ${OIDC_PROXY_IMAGE:-quay.io/oauth2-proxy/oauth2-proxy:v7.8.2}
+    depends_on:
+      - guardian-cerbos
+    ports:
+      - "${PROXY_LISTEN_ADDR:-0.0.0.0}:8593:8593"
+    volumes:
+      - /usr/share/univention-guardian/proxy:/proxy:ro
+    command: ["--config=/proxy/oauth2-proxy.cfg"]
+    restart: unless-stopped
+    networks:
+      - guardian-internal
+
+networks:
+  guardian-internal:
+    driver: bridge

@@ -1,23 +1,26 @@
+@%@UCRWARNING=# @%@
 # SPDX-FileCopyrightText: 2026 Univention GmbH
 # SPDX-License-Identifier: AGPL-3.0-only
 
 # https://docs.cerbos.dev/cerbos/latest/configuration/index.html
 
 server:
+  # Docker-compose scopes this to the internal network.
   httpListenAddr: ":3592"
-  # grpcListenAddr: ":3593"
-  playgroundEnabled: false # Enables the interactive web dashboard (disable in production)
-
-  apiExplorerEnabled: true # APIExplorerEnabled defines whether the API explorer UI is enabled.
-  adminAPI: # AdminAPI defines the admin API configuration.
-    adminCredentials: # AdminCredentials defines the admin user credentials.
-      passwordHash: JDJiJDEyJFp5amRJZDY2NDVJZW0xTDJmWFFlZy5JZ2ZHbXdKck1UYXFaM2FvS2lmTmxMMElyNHl4YWwy # PasswordHash is the base64-encoded bcrypt hash of the password to use for authentication.
-      username: cerbos # Username is the hardcoded username to use for authentication.
-    enabled: true # Enabled defines whether the admin API is enabled.
+  playgroundEnabled: false
+  apiExplorerEnabled: false
 
 storage:
   driver: "disk"
   disk:
     directory: "/policies"
-    watchForChanges: true # Automatically reloads policies on changes
+    watchForChanges: true
 
+# Re-verify the bearer the proxy forwarded so claims are usable in
+# policies as request.auxData.jwt.claims.* (defense-in-depth).
+auxData:
+  jwt:
+    keySets:
+      - id: keycloak
+        remote:
+          url: "@%@guardian/cerbos/keycloak/jwks-url@%@"

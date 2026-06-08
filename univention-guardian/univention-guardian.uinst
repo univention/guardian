@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+# Univention Guardian (Cerbos) un-join script.
+#
+# SPDX-FileCopyrightText: 2026 Univention GmbH
+# SPDX-License-Identifier: AGPL-3.0-only
+
+VERSION=1
+
+. /usr/share/univention-join/joinscripthelper.lib || exit 1
+eval "$(ucr shell)" || exit 1
+
+joinscript_init
+
+systemctl disable --now univention-guardian.service || true
+
+CLIENT_ID="${guardian_cerbos_keycloak_client_id:-guardian-cerbos}"
+
+univention-keycloak "$@" oidc/rp remove --name "$CLIENT_ID" || true
+
+ucr unset \
+    guardian/cerbos/keycloak/issuer-url \
+    guardian/cerbos/keycloak/jwks-url \
+    guardian/cerbos/keycloak/client-id \
+    guardian/cerbos/proxy/cookie-secret \
+    || true
+
+joinscript_remove_script_from_status_file univention-guardian
+
+exit 0

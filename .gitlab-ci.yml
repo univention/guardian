@@ -2,13 +2,33 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-only
 
+include:
+  - local: /.gitlab-ci/ai-review.yml
+    rules:
+      - if: $RUN_RENOVATE != "yes"
+  - project: univention/infrastructure/docker-services
+    file:
+      - renovatebot/renovate.gitlab-ci.yml
+    rules:
+      - if: $RUN_RENOVATE == "yes"
+  - component: "$CI_SERVER_FQDN/univention/dev/tooling/ci-components/debian-aptly@2.5.2"
+    inputs:
+      pkg-dir: univention-guardian
+
 variables:
+  # Bump this when starting a new UCS release branch.
+  UCS_VERSION: "5.2-5"
   RUN_RENOVATE:
     value: "no"
     options:
       - "yes"
       - "no"
     description: "Set to yes if you want to run renovate"
+
+stages:
+  - "prepare"
+  - "build"
+  - "test"
 
 workflow:
   rules:
@@ -18,16 +38,3 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == "webide"
     - if: $CI_COMMIT_TAG
     - if: $RUN_RENOVATE == "yes"
-
-include:
-  - local: /.gitlab-ci/gitlab-ci.yml
-    rules:
-      - if: $RUN_RENOVATE != "yes"
-  - local: /.gitlab-ci/ai-review.yml
-    rules:
-      - if: $RUN_RENOVATE != "yes"
-  - project: univention/infrastructure/docker-services
-    file:
-      - renovatebot/renovate.gitlab-ci.yml
-    rules:
-      - if: $RUN_RENOVATE == "yes"

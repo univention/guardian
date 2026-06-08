@@ -1,0 +1,111 @@
+# SPDX-FileCopyrightText: 2026 Univention GmbH
+# SPDX-License-Identifier: AGPL-3.0-only
+
+---
+name: GuardianManagementApiTests
+description: Lock in the app-admin scenario translated from Guardian's OPA rules
+principals:
+  alice_myapp_admin:
+    id: alice
+    roles:
+      - "guardian:myapp-admin"
+  bob_otherapp_admin:
+    id: bob
+    roles:
+      - "guardian:otherapp-admin"
+  carol_no_roles:
+    id: carol
+    # Cerbos requires at least one role on a principal; "user" is a dummy
+    # value that does not match the app-admin derived role.
+    roles:
+      - "user"
+
+resources:
+  role_in_myapp:
+    id: "myapp:default:somerole"
+    kind: guardian.management_api
+    attr:
+      app_name: "myapp"
+      resource_type: "role"
+
+  role_in_otherapp:
+    id: "otherapp:default:somerole"
+    kind: guardian.management_api
+    attr:
+      app_name: "otherapp"
+      resource_type: "role"
+
+tests:
+  - name: app-admin can CRUD resources in their app
+    input:
+      principals:
+        - alice_myapp_admin
+      resources:
+        - role_in_myapp
+      actions:
+        - create_resource
+        - read_resource
+        - update_resource
+        - delete_resource
+    expected:
+      - principal: alice_myapp_admin
+        resource: role_in_myapp
+        actions:
+          create_resource: EFFECT_ALLOW
+          read_resource: EFFECT_ALLOW
+          update_resource: EFFECT_ALLOW
+          delete_resource: EFFECT_ALLOW
+
+  - name: app-admin cannot touch a different app's resources
+    input:
+      principals:
+        - alice_myapp_admin
+      resources:
+        - role_in_otherapp
+      actions:
+        - read_resource
+        - update_resource
+    expected:
+      - principal: alice_myapp_admin
+        resource: role_in_otherapp
+        actions:
+          read_resource: EFFECT_DENY
+          update_resource: EFFECT_DENY
+
+  - name: principal with no roles is denied everywhere
+    input:
+      principals:
+        - carol_no_roles
+      resources:
+        - role_in_myapp
+        - role_in_otherapp
+      actions:
+        - read_resource
+    expected:
+      - principal: carol_no_roles
+        resource: role_in_myapp
+        actions:
+          read_resource: EFFECT_DENY
+      - principal: carol_no_roles
+        resource: role_in_otherapp
+        actions:
+          read_resource: EFFECT_DENY
+
+  - name: otherapp-admin can CRUD resources in otherapp but not myapp
+    input:
+      principals:
+        - bob_otherapp_admin
+      resources:
+        - role_in_otherapp
+        - role_in_myapp
+      actions:
+        - update_resource
+    expected:
+      - principal: bob_otherapp_admin
+        resource: role_in_otherapp
+        actions:
+          update_resource: EFFECT_ALLOW
+      - principal: bob_otherapp_admin
+        resource: role_in_myapp
+        actions:
+          update_resource: EFFECT_DENY
