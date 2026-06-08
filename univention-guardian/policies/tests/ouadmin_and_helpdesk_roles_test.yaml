@@ -1,0 +1,94 @@
+# yaml-language-server: $schema=https://api.cerbos.dev/latest/cerbos/policy/v1/TestSuite.schema.json
+
+name: Test ouadmin and helpdesk
+description: Tests context
+
+principals:
+
+  ian:
+    id: ian
+    roles:
+      - ouadmin
+      - helpdesk
+    attr:
+      assignments:
+       - role: ouadmin
+         context: hamburg
+       - role: ouadmin
+         context: berlin
+       - role: helpdesk
+         context: bremen
+       - role: ouadmin
+         context: kiel
+       - role: helpdesk
+         context: kiel
+
+resources:
+  resource1:
+    id: user1
+    kind: user
+    attr:
+      position: hamburg
+  resource2:
+    id: user2
+    kind: user
+    attr:
+      position: bremen
+  resource3:
+    id: user3
+    kind: user
+    attr:
+      position: berlin
+  resource4:
+    id: user4
+    kind: user
+    attr:
+      position: madrid
+  resource5:
+    id: user5
+    kind: user
+    attr:
+      position: kiel
+
+
+tests:
+
+  - name: ouadmin and helpdesk role
+    input:
+      principals:
+        - ian
+      resources:
+        - resource1
+        - resource2
+        - resource3
+        - resource4
+        - resource5
+      actions:
+        - modify_user
+        - reset_password
+    expected:
+      - principal: ian
+        resource: resource1
+        actions:
+          modify_user: EFFECT_ALLOW
+          reset_password: EFFECT_DENY
+      - principal: ian
+        resource: resource2
+        actions:
+          modify_user: EFFECT_DENY
+          reset_password: EFFECT_ALLOW
+      - principal: ian
+        resource: resource3
+        actions:
+          modify_user: EFFECT_ALLOW
+          reset_password: EFFECT_DENY
+      - principal: ian
+        resource: resource4
+        actions:
+          modify_user: EFFECT_DENY
+          reset_password: EFFECT_DENY
+      - principal: ian
+        resource: resource5
+        actions:
+          modify_user: EFFECT_ALLOW
+          reset_password: EFFECT_ALLOW
