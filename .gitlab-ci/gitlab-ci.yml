@@ -227,6 +227,19 @@ container-release-attestation:
   parallel:
     matrix: *publish-matrix
 
+test-cerbos-policies:
+  stage: test
+  image:
+    name: "ghcr.io/cerbos/cerbos:0.34.0"
+    entrypoint: [""]
+  rules:
+    - changes:
+        - "univention-guardian/policies/**/*"
+        - ".gitlab-ci/gitlab-ci.yml"
+    - if: $CI_PIPELINE_SOURCE == "web"
+  script:
+    - /cerbos compile univention-guardian/policies/defaults --tests=univention-guardian/policies/tests
+
 test:
   stage: test
   image: "${CI_REGISTRY_IMAGE}/testrunner:${RELEASE_VERSION}"

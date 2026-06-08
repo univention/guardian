@@ -1,0 +1,21 @@
+# SPDX-FileCopyrightText: 2026 Univention GmbH
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# Cerbos equivalent of Guardian's target_field_equals_value(app_name).
+# Principal roles arrive from Guardian as "<app>:<name>" strings.
+
+---
+apiVersion: api.cerbos.dev/v1
+derivedRoles:
+  name: guardian_common
+  definitions:
+    - name: app_admin_for_resource
+      parentRoles:
+        - "*"
+      condition:
+        match:
+          expr: >
+            P.roles.exists(r,
+              r.startsWith("guardian:") &&
+              r == "guardian:" + R.attr.app_name + "-admin"
+            )

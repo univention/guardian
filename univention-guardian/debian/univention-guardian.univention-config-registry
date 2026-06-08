@@ -1,11 +1,14 @@
 Type: file
 File: usr/share/univention-guardian/guardian.env
-Variables: server/role
-Variables: ldap/.*
-Variables: portal/.*
+Variables: guardian/cerbos/image
+Variables: guardian/cerbos/log-level
 
 Type: file
 File: usr/share/univention-guardian/config/config.yaml
-Variables: server/role
-Variables: ldap/.*
-Variables: portal/.*
+Variables: guardian/cerbos/keycloak/jwks-url
+
+Type: file
+File: usr/share/univention-guardian/proxy/oauth2-proxy.cfg
+Variables: guardian/cerbos/keycloak/issuer-url
+Variables: guardian/cerbos/keycloak/client-id
+Variables: guardian/cerbos/proxy/cookie-secret

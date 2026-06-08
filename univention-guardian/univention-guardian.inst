@@ -1,0 +1,74 @@
+#!/bin/sh
+#
+# Univention Guardian-Cerbos join script.
+#
+# SPDX-FileCopyrightText: 2026 Univention GmbH
+# SPDX-License-Identifier: AGPL-3.0-only
+
+## joinscript api: bindpwdfile
+
+VERSION=1
+
+. /usr/share/univention-join/joinscripthelper.lib || exit 1
+eval "$(ucr shell)" || exit 1
+
+joinscript_init
+
+CLIENT_ID="${guardian_cerbos_keycloak_client_id:-guardian-cerbos}"
+
+KEYCLOAK_FQDN="ucs-sso-ng.$domainname"
+KEYCLOAK_ISSUER_URL="https://$KEYCLOAK_FQDN/realms/ucs"
+KEYCLOAK_JWKS_URL="$KEYCLOAK_ISSUER_URL/protocol/openid-connect/certs"
+
+# Skip OIDC client creation on a primary without Keycloak installed —
+# the operator can re-run the join script after `univention-app install
+# keycloak`.
+if command -v univention-keycloak >/dev/null 2>&1 &&
+  getent hosts "$KEYCLOAK_FQDN" >/dev/null 2>&1; then
+  univention-keycloak "$@" oidc/rp create \
+    --name "$CLIENT_ID" \
+    --app-url "https://$hostname.$domainname:8593" \
+    --add-audience-mapper "$CLIENT_ID" ||
+    die
+  KEYCLOAK_READY=1
+else
+  echo "WARNING: Keycloak not reachable at $KEYCLOAK_FQDN; skipping" \
+    "OIDC client provisioning. Install the Keycloak app and re-run" \
+    "this join script (univention-run-join-scripts --force --run-scripts" \
+    "univention-guardian.inst) to enable the OIDC proxy."
+  KEYCLOAK_READY=0
+fi
+
+# `head -c 32 /dev/urandom | base64` adds `=` padding that oauth2-proxy
+# decodes to 33 bytes (which it then rejects). python3 is on every UCS box.
+if [ -z "$guardian_cerbos_proxy_cookie_secret" ]; then
+  COOKIE_SECRET="$(python3 -c 'import os,base64; print(base64.urlsafe_b64encode(os.urandom(32)).decode())')"
+  ucr set "guardian/cerbos/proxy/cookie-secret=$COOKIE_SECRET" || die
+fi
+
+ucr set \
+  "guardian/cerbos/keycloak/issuer-url=$KEYCLOAK_ISSUER_URL" \
+  "guardian/cerbos/keycloak/jwks-url=$KEYCLOAK_JWKS_URL" \
+  "guardian/cerbos/keycloak/client-id=$CLIENT_ID" ||
+  die
+
+ucr commit \
+  /usr/share/univention-guardian/guardian.env \
+  /usr/share/univention-guardian/config/config.yaml \
+  /usr/share/univention-guardian/proxy/oauth2-proxy.cfg ||
+  die
+
+systemctl enable univention-guardian.service
+systemctl restart univention-guardian.service
+
+# Without Keycloak, the OIDC proxy restart-loops but Cerbos itself is
+# healthy on the internal docker network.
+if [ "$KEYCLOAK_READY" = "0" ]; then
+  echo "Join completed with WARNINGS, see above re: Keycloak. Cerbos" \
+    "is up on the internal docker network; the OIDC proxy will" \
+    "stay down until Keycloak is reachable."
+fi
+
+joinscript_save_current_version
+
+exit 0

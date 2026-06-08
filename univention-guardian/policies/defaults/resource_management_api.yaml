@@ -1,0 +1,22 @@
+# SPDX-FileCopyrightText: 2026 Univention GmbH
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# Partial port of management-api's <app>-admin-cap. The cross-app
+# read carve-out (-admin-cap-read-role-cond) is NOT included.
+
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: guardian.management_api
+  version: "default"
+  importDerivedRoles:
+    - guardian_common
+  rules:
+    - actions:
+        - create_resource
+        - read_resource
+        - update_resource
+        - delete_resource
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - app_admin_for_resource

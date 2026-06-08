@@ -13,6 +13,8 @@ Architecture: all
 Depends:
  ${misc:Depends},
  ${shlibs:Depends},
+ docker-compose,
+ univention-keycloak-client,
 Description: UCS guardian
  This package installs the univention-guardian component.
  .
