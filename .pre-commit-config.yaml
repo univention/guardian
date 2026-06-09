@@ -17,7 +17,7 @@ repos:
       name: general-check-xml
     - id: check-yaml
       name: general-check-yaml
-      exclude: ^helm/.+/templates/
+      exclude: '^(helm/.+/templates/|.+/conffiles/)'
     - id: check-toml
       name: backend-check-toml
     - id: trailing-whitespace
