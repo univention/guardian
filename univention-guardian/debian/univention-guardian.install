@@ -1,5 +1,0 @@
-docker-compose.yaml	usr/share/univention-guardian/
-policies/defaults/	usr/share/univention-guardian/policies/
-policies/examples/	usr/share/univention-guardian/policies/
-policies/tests/	usr/share/univention-guardian/policies/
-univention-guardian-test	usr/sbin/
