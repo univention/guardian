@@ -1,0 +1,21 @@
+@%@UCRWARNING=# @%@
+# SPDX-FileCopyrightText: 2026 Univention GmbH
+# SPDX-License-Identifier: AGPL-3.0-only
+
+services:
+  guardian-server:
+    container_name: guardian-server
+    image: ghcr.io/cerbos/cerbos:0.53.0@sha256:c3fe64202e3793b7e9c41c5cbfcf390a51fb28ebce0a7d70754155e70db839c4
+    ports:
+      - "127.0.0.1:3592:3592"
+    volumes:
+      - /usr/share/univention-guardian-server/policies:/policies:ro
+      - /usr/share/univention-guardian-server/config:/config:ro
+    command: ["server", "--log-level=WARN", "--config=/config/config.yaml"]
+    restart: unless-stopped
+    networks:
+      - guardian-internal
+
+networks:
+  guardian-internal:
+    driver: bridge

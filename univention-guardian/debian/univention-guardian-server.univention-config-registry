@@ -1,0 +1,6 @@
+Type: file
+File: usr/share/univention-guardian-server/docker-compose.yaml
+Variables: guardian/cerbos/log-level
+
+Type: file
+File: usr/share/univention-guardian-server/config/config.yaml

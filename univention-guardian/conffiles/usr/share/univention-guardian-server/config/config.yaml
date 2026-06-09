@@ -5,7 +5,7 @@
 # https://docs.cerbos.dev/cerbos/latest/configuration/index.html
 
 server:
-  # Docker-compose scopes this to the internal network.
+  # Docker-compose binds this to 127.0.0.1 on the host.
   httpListenAddr: ":3592"
   playgroundEnabled: false
   apiExplorerEnabled: false
@@ -15,12 +15,3 @@ storage:
   disk:
     directory: "/policies"
     watchForChanges: true
-
-# Re-verify the bearer the proxy forwarded so claims are usable in
-# policies as request.auxData.jwt.claims.* (defense-in-depth).
-auxData:
-  jwt:
-    keySets:
-      - id: keycloak
-        remote:
-          url: "@%@guardian/cerbos/keycloak/jwks-url@%@"

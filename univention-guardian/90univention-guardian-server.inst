@@ -1,0 +1,25 @@
+#!/bin/bash
+#
+# Univention guardian
+#  join script
+#
+# SPDX-FileCopyrightText: 2026 Univention GmbH
+# SPDX-License-Identifier: AGPL-3.0-only
+
+## joinscript api: bindpwdfile
+
+# shellcheck disable=SC2034
+VERSION=1
+# shellcheck source=/dev/null
+. /usr/share/univention-join/joinscripthelper.lib
+
+joinscript_init
+
+# shellcheck source=/dev/null
+. /usr/share/univention-lib/all.sh
+
+ucs_addServiceToLocalhost 'univention-guardian-server' "$@" || die
+
+joinscript_save_current_version
+
+exit 0
