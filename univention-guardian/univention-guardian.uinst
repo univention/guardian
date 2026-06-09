@@ -12,8 +12,6 @@ eval "$(ucr shell)" || exit 1
 
 joinscript_init
 
-systemctl disable --now univention-guardian.service || true
-
 CLIENT_ID="${guardian_cerbos_keycloak_client_id:-guardian-cerbos}"
 
 univention-keycloak "$@" oidc/rp remove --name "$CLIENT_ID" || true

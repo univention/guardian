@@ -6,16 +6,9 @@
 # SPDX-FileCopyrightText: 2026 Univention GmbH
 # SPDX-License-Identifier: AGPL-3.0-only
 
-set -a
-# shellcheck source=/dev/null
-source /usr/share/univention-guardian/guardian.env
-set +a
-
-POLICIES_DIR=/usr/share/univention-guardian/policies
-
 docker run --rm -i \
-  -v "$POLICIES_DIR":/policies:ro \
-  "$IMAGE" compile --verbose \
+  -v /usr/share/univention-guardian/policies:/policies:ro \
+  ghcr.io/cerbos/cerbos:0.46.0 compile --verbose \
   --tests=/policies/tests \
   /policies
 

@@ -1,10 +1,10 @@
 Type: file
-File: usr/share/univention-guardian/guardian.env
-Variables: guardian/cerbos/image
-Variables: guardian/cerbos/log-level
+File: usr/share/univention-guardian/docker-compose.yaml
+Variables: guardian/authentication
 
 Type: file
 File: usr/share/univention-guardian/config/config.yaml
+Variables: guardian/authentication
 Variables: guardian/cerbos/keycloak/jwks-url
 
 Type: file

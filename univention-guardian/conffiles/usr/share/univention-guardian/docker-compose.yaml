@@ -1,0 +1,46 @@
+@%@UCRWARNING=# @%@
+# SPDX-FileCopyrightText: 2026 Univention GmbH
+# SPDX-License-Identifier: AGPL-3.0-only
+
+services:
+  guardian-cerbos:
+    container_name: guardian-cerbos
+    image: ghcr.io/cerbos/cerbos:0.46.0
+    ports:
+      - "127.0.0.1:3592:3592"
+    volumes:
+      - /usr/share/univention-guardian/policies:/policies:ro
+      - /usr/share/univention-guardian/config:/config:ro
+      # Trust the UCS root CA so JWKS fetches over HTTPS work.
+      - /etc/univention/ssl/ucsCA/CAcert.pem:/etc/ssl/certs/ucs-ca.pem:ro
+    environment:
+      SSL_CERT_FILE: /etc/ssl/certs/ucs-ca.pem
+    command: ["server", "--log-level=WARN", "--config=/config/config.yaml"]
+    restart: unless-stopped
+    networks:
+      - guardian-internal
+
+@!@
+if configRegistry.is_true('guardian/authentication', False):
+    print("""\
+  guardian-oidc-proxy:
+    container_name: guardian-oidc-proxy
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.8.2
+    depends_on:
+      - guardian-cerbos
+    ports:
+      - "0.0.0.0:8593:8593"
+    volumes:
+      - /usr/share/univention-guardian/proxy:/proxy:ro
+      - /etc/univention/ssl/ucsCA/CAcert.pem:/etc/ssl/certs/ucs-ca.pem:ro
+    environment:
+      SSL_CERT_FILE: /etc/ssl/certs/ucs-ca.pem
+    command: ["--config=/proxy/oauth2-proxy.cfg"]
+    restart: unless-stopped
+    networks:
+      - guardian-internal""")
+@!@
+
+networks:
+  guardian-internal:
+    driver: bridge
