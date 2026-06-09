@@ -1,0 +1,15 @@
+[Unit]
+Description=Univention Guardian (Cerbos)
+Requires=docker.service
+After=docker.service network-online.target
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Type=simple
+ExecStartPre=/usr/bin/docker-compose -f /usr/share/univention-cerbos-server/docker-compose.yaml -p univention-cerbos-server pull --quiet
+ExecStart=/usr/bin/docker-compose -f /usr/share/univention-cerbos-server/docker-compose.yaml -p univention-cerbos-server up --no-build
+ExecStop=/usr/bin/docker-compose -f /usr/share/univention-cerbos-server/docker-compose.yaml -p univention-cerbos-server down --remove-orphans
+Restart=on-failure
+RestartSec=5s

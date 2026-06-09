@@ -19,15 +19,14 @@ storage:
     directory: "/policies"
     watchForChanges: true
 
+# Re-verify the bearer the proxy forwarded so claims are usable in
+# policies as request.auxData.jwt.claims.* (defense-in-depth).
 @!@
-if configRegistry.is_true('guardian/authentication', False):
-    jwks_url = configRegistry.get('guardian/cerbos/keycloak/jwks-url', '')
-    # Re-verify the bearer the proxy forwarded so claims are usable in
-    # policies as request.auxData.jwt.claims.* (defense-in-depth).
-    print("auxData:")
-    print("  jwt:")
-    print("    keySets:")
-    print("      - id: keycloak")
-    print("        remote:")
-    print("          url: \"%s\"" % jwks_url)
+if configRegistry.is_true('cerbos/authentication', False):
+    import yaml
+    block = {'auxData': {'jwt': {'keySets': [{
+        'id': 'keycloak',
+        'remote': {'url': configRegistry.get('cerbos/keycloak/jwks-url', '')},
+    }]}}}
+    print(yaml.safe_dump(block, default_flow_style=False, sort_keys=False).rstrip())
 @!@

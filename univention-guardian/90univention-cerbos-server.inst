@@ -1,0 +1,47 @@
+#!/bin/sh
+#
+# SPDX-FileCopyrightText: 2026 Univention GmbH
+# SPDX-License-Identifier: AGPL-3.0-only
+
+## joinscript api: bindpwdfile
+
+VERSION=1
+
+. /usr/share/univention-join/joinscripthelper.lib || exit 1
+eval "$(ucr shell)" || exit 1
+
+joinscript_init
+
+AUTH="${cerbos_authentication:-false}"
+
+if [ "$AUTH" = "true" ]; then
+  CLIENT_ID="${cerbos_keycloak_client_id:-cerbos-server}"
+  KEYCLOAK_FQDN="ucs-sso-ng.$domainname"
+  KEYCLOAK_ISSUER_URL="https://$KEYCLOAK_FQDN/realms/ucs"
+  KEYCLOAK_JWKS_URL="$KEYCLOAK_ISSUER_URL/protocol/openid-connect/certs"
+
+  if ! command -v univention-keycloak >/dev/null ||
+    ! getent hosts "$KEYCLOAK_FQDN" >/dev/null; then
+    die "ERROR: cerbos/authentication=true but Keycloak is not" \
+      "reachable at $KEYCLOAK_FQDN. Install the Keycloak app first, or" \
+      "set cerbos/authentication=false."
+  fi
+
+  univention-keycloak "$@" oidc/rp create \
+    --name "$CLIENT_ID" \
+    --app-url "https://$hostname.$domainname:8593" \
+    --add-audience-mapper "$CLIENT_ID" ||
+    die "Could not create OIDC RP"
+
+  ucr set \
+    "cerbos/keycloak/issuer-url=$KEYCLOAK_ISSUER_URL" \
+    "cerbos/keycloak/jwks-url=$KEYCLOAK_JWKS_URL" \
+    "cerbos/keycloak/client-id=$CLIENT_ID" ||
+    die "Could not configure Keycloak"
+fi
+
+systemctl restart univention-cerbos-server.service
+
+joinscript_save_current_version
+
+exit 0

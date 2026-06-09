@@ -1,13 +1,13 @@
 #!/bin/bash
 #
-# Univention guardian
+# Univention cerbos-server
 #  Compile policies and run policy tests.
 #
 # SPDX-FileCopyrightText: 2026 Univention GmbH
 # SPDX-License-Identifier: AGPL-3.0-only
 
 docker run --rm -i \
-  -v /usr/share/univention-guardian/policies:/policies:ro \
+  -v /usr/share/univention-cerbos-server/policies:/policies:ro \
   ghcr.io/cerbos/cerbos:0.46.0 compile --verbose \
   --tests=/policies/tests \
   /policies

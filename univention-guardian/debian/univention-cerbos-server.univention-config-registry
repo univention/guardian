@@ -1,0 +1,13 @@
+Type: file
+File: usr/share/univention-cerbos-server/docker-compose.yaml
+Variables: cerbos/authentication
+
+Type: file
+File: usr/share/univention-cerbos-server/config/config.yaml
+Variables: cerbos/authentication
+Variables: cerbos/keycloak/jwks-url
+
+Type: file
+File: usr/share/univention-cerbos-server/proxy/oauth2-proxy.cfg
+Variables: cerbos/keycloak/issuer-url
+Variables: cerbos/keycloak/client-id

@@ -8,15 +8,16 @@ Build-Depends:
  univention-join-dev,
 Standards-Version: 4.3.0.3
 
-Package: univention-guardian
+Package: univention-cerbos-server
 Architecture: all
 Depends:
  ${misc:Depends},
  ${shlibs:Depends},
  docker-compose,
  univention-keycloak-client,
-Description: UCS guardian
- This package installs the univention-guardian component.
+Description: Cerbos policy engine for UCS
+ This package installs Cerbos as a policy engine on a UCS primary,
+ fronted by an optional Keycloak-OIDC oauth2-proxy.
  .
  This package is part of Univention Corporate Server (UCS),
  an integrated, directory driven solution for managing

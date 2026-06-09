@@ -1,0 +1,22 @@
+#!/bin/sh
+#
+# SPDX-FileCopyrightText: 2026 Univention GmbH
+# SPDX-License-Identifier: AGPL-3.0-only
+
+set -e
+
+#DEBHELPER#
+
+case "$1" in
+    configure)
+        # env-file format so docker-compose can pass it to the proxy
+        SECRET_FILE=/etc/univention/cerbos-server.secret
+        if [ ! -e "$SECRET_FILE" ]; then
+            COOKIE_SECRET="$(python3 -c 'import os,base64; print(base64.urlsafe_b64encode(os.urandom(32)).decode())')"
+            install -m 0600 -o root -g root /dev/null "$SECRET_FILE"
+            printf "OAUTH2_PROXY_COOKIE_SECRET=%s\n" "$COOKIE_SECRET" > "$SECRET_FILE"
+        fi
+        ;;
+esac
+
+exit 0

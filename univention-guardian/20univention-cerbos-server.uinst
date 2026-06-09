@@ -1,0 +1,25 @@
+#!/bin/sh
+#
+# SPDX-FileCopyrightText: 2026 Univention GmbH
+# SPDX-License-Identifier: AGPL-3.0-only
+
+VERSION=1
+
+. /usr/share/univention-join/joinscripthelper.lib || exit 1
+eval "$(ucr shell)" || exit 1
+
+joinscript_init
+
+CLIENT_ID="${cerbos_keycloak_client_id:-cerbos-server}"
+
+univention-keycloak "$@" oidc/rp remove --name "$CLIENT_ID" || true
+
+ucr unset \
+    cerbos/keycloak/issuer-url \
+    cerbos/keycloak/jwks-url \
+    cerbos/keycloak/client-id \
+    || true
+
+joinscript_remove_script_from_status_file univention-cerbos-server
+
+exit 0
