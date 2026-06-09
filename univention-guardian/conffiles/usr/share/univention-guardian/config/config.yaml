@@ -9,6 +9,9 @@ server:
   httpListenAddr: ":3592"
   playgroundEnabled: false
   apiExplorerEnabled: false
+  requestLimits:
+    maxActionsPerResource: 100
+    maxResourcesPerRequest: 50
 
 storage:
   driver: "disk"
