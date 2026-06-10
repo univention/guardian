@@ -1,0 +1,7 @@
+[guardian/cerbos/log-level]
+Description[en]=Cerbos log level. One of DEBUG, INFO, WARN, ERROR.
+Description[de]=Cerbos Log-Level. Einer von DEBUG, INFO, WARN, ERROR.
+Type=str
+Categories=service-guardian
+Default=WARN
+Regex=^(DEBUG|INFO|WARN|ERROR)$

@@ -11,7 +11,7 @@ services:
     volumes:
       - /usr/share/univention-guardian-server/policies:/policies:ro
       - /usr/share/univention-guardian-server/config:/config:ro
-    command: ["server", "--log-level=WARN", "--config=/config/config.yaml"]
+    command: ["server", "--log-level=@%@guardian/cerbos/log-level@%@", "--config=/config/config.yaml"]
     restart: unless-stopped
     networks:
       - guardian-internal
