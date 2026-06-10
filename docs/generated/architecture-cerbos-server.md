@@ -43,9 +43,9 @@ Tracking issue:
 ```text
 /usr/share/univention-guardian-server/
 ├── docker-compose.yaml      ─── UCR-templated
-├── config/config.yaml       ─── Cerbos config
+├── config/config.yaml       ─── UCR-templated Cerbos config
 └── policies/
-    ├── *.yaml               ─── Product-shipped policies (loaded by Cerbos)
+    ├── default/*.yaml               ─── Product-shipped policies (loaded by Cerbos)
     ├── examples/            ─── UDM/helpdesk/ouadmin example policies
     └── tests/               ─── Policy test files (not loaded by Cerbos)
 
@@ -151,10 +151,17 @@ addressed before any production use.
   any caller on the primary can reach it.
 - **No primary-role gate** in the deb. Just don't install it on a
   non-primary.
-- **No override directory for shipped policies.** Edits under
-  `/usr/share/univention-guardian-server/policies/` are overwritten by
-  `apt upgrade`. To add policies that survive upgrades, ship them in
-  a separate package or extend Cerbos's storage driver.
+- **Shipped policies are still replaced on upgrade; custom ones can be
+  added but not shadowed.** The deb owns only `policies/default/` and
+  `policies/examples/`, so `apt upgrade` overwrites files there (and drops
+  any a new version stops shipping). Admin- or third-party-supplied
+  policies in *any other* subdir under
+  `/usr/share/univention-guardian-server/policies/` (e.g. `local/` or a
+  per-app dir from a separate package) are not owned by this deb and
+  survive upgrades — Cerbos loads the whole tree recursively. The
+  remaining limit is *override*, not placement: two policies with the same
+  `(resource, version)` are a duplicate-definition error, not a shadow, so
+  a custom dir can only add new policies, not replace the shipped ones.
 
 ---
 

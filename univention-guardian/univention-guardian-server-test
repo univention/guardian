@@ -1,7 +1,11 @@
 #!/bin/bash
 #
 # Univention guardian-server
-#  Compile policies and run policy tests.
+#  Validate (compile) the shipped policies on the installed tree.
+#
+# Policy test suites are not shipped to production; they live in the
+# source repo and run in CI. This wrapper only compiles the policies
+# that are actually served.
 #
 # SPDX-FileCopyrightText: 2026 Univention GmbH
 # SPDX-License-Identifier: AGPL-3.0-only
@@ -9,7 +13,6 @@
 docker run --rm -i \
   -v /usr/share/univention-guardian-server/policies:/policies:ro \
   ghcr.io/cerbos/cerbos:0.53.0@sha256:c3fe64202e3793b7e9c41c5cbfcf390a51fb28ebce0a7d70754155e70db839c4 compile --verbose \
-  --tests=/policies/tests \
   /policies
 
 exit $?
