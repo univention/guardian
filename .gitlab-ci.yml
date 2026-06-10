@@ -11,6 +11,13 @@ include:
       - renovatebot/renovate.gitlab-ci.yml
     rules:
       - if: $RUN_RENOVATE == "yes"
+  - project: "univention/dev/nubus-for-k8s/common-ci"
+    ref: "v1.64.0"
+    file:
+      - "defaults/stages.yaml"
+      - "defaults/nubus-workflow.yaml"
+      - "jobs/lint-pre-commit.yaml"
+      - "jobs/lint-commit-messages.yaml"
   - component: "$CI_SERVER_FQDN/univention/dev/tooling/ci-components/debian-aptly@2.5.2"
     inputs:
       pkg-dir: univention-guardian
@@ -25,11 +32,6 @@ variables:
       - "no"
     description: "Set to yes if you want to run renovate"
 
-stages:
-  - "prepare"
-  - "build"
-  - "test"
-
 workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_OPEN_MERGE_REQUESTS
@@ -38,3 +40,9 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == "webide"
     - if: $CI_COMMIT_TAG
     - if: $RUN_RENOVATE == "yes"
+
+lint-pre-commit:
+  extends: .lint-pre-commit
+  variables:
+    RUNNER_REGISTRY_IMAGE: "gitregistry.knut.univention.de/univention/dev/tooling/pre-commit/univention-pre-commit"
+    RUNNER_IMAGE_TAG: "0.6.2"
