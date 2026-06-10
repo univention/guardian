@@ -41,13 +41,13 @@ repos:
   hooks:
     - id: bandit
       name: backend-bandit
-      exclude: "authorization-api/tests/|management-api/tests|udm_client.py|guardian-lib/guardian_pytest|guardian-lib/tests|authorization-client/tests"
+      exclude: "authorization-api/tests/|management-api/tests|udm_client.py|guardian-lib/guardian_pytest|guardian-lib/tests|authorization-client/tests|univention-guardian-test/tests"
 - repo: https://github.com/pre-commit/mirrors-mypy
   rev: v1.13.0
   hooks:
     - id: mypy
       name: backend-mypy
-      exclude: "docs/|authorization-api/tests/|management-api/tests|guardian-lib/tests|authorization-client/tests"
+      exclude: "docs/|authorization-api/tests/|management-api/tests|guardian-lib/tests|authorization-client/tests|univention-guardian-test/tests"
       args: []
       additional_dependencies: [pydantic>=2.0.0, pydantic-settings>=2.0.0, fastapi>=0.100.0, loguru==0.7.0, requests==2.31.0, types-requests==2.31.0, alembic==1.11.3, types-aiofiles, types-pymysql, types-PyYAML]
 - repo: https://github.com/jackdewinter/pymarkdown
