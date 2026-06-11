@@ -14,7 +14,7 @@ The goal is to evaluate whether Cerbos could replace OPA as Guardian's
 policy backend, **without** touching the existing Guardian services. The
 package ships with a small set of YAML policies translated from
 Guardian's current OPA-based capabilities. Cerbos is reachable on
-`127.0.0.1:3592` (localhost only).
+`127.0.0.1:3593` (gRPC, localhost only).
 
 This is a Proof of Concept. It does not change Guardian's
 `authorization-api` / `management-api` / `management-ui` and is not
@@ -32,7 +32,7 @@ Tracking issue:
 | **Standalone** on the UCS primary | No changes to existing Guardian services; safe to add and remove without affecting current authorization paths |
 | **Policies as YAML** under `/usr/share/univention-guardian-server/policies` | Shipped in the deb. Single dir (no shipped/admin split) — Cerbos's disk driver has no shadow semantics, so a dual-mount design was abandoned |
 | **Product-shipped only** | Defaults are baked into the package; `apt upgrade` replaces them. A multi-package "register policies across debs" mechanism is the subject of [guardian#286 follow-up issues](https://git.knut.univention.de/univention/dev/projects/authorization-engine/guardian/-/issues) |
-| **No transport authentication** | Cerbos binds to `127.0.0.1:3592` (localhost only). Authentication is not yet implemented; see [guardian#288](https://git.knut.univention.de/univention/dev/projects/authorization-engine/guardian/-/issues/288) |
+| **No transport authentication** | Cerbos binds to `127.0.0.1:3593` (localhost only). Authentication is not yet implemented; see [guardian#288](https://git.knut.univention.de/univention/dev/projects/authorization-engine/guardian/-/issues/288) |
 | **Service auto-starts** at install | No `--no-enable --no-start` override on `dh_installsystemd`; default flow needs no manual `systemctl` |
 | **First scenario translated**: Guardian's `<app>-admin` capability | CRUD on management-api resources where `app_name` matches. One Cerbos resource policy + one derived role; policy tests lock in ALLOW/DENY |
 
@@ -73,7 +73,7 @@ sudo apt install -y docker-compose univention-guardian-server
 ```
 
 That's it. The systemd unit auto-starts Cerbos bound to
-`127.0.0.1:3592`. Verify with the steps below.
+`127.0.0.1:3593` (gRPC). Verify with the steps below.
 
 ## Verify it's working
 
@@ -82,26 +82,26 @@ sudo systemctl is-active univention-guardian-server.service    # active
 sudo docker ps                                           # guardian-cerbos healthy
 
 # Same-app: alice (guardian:myapp-admin) on a myapp resource → ALLOW
-curl -s -X POST -H "Content-Type: application/json" -d '{
+grpcurl -plaintext -d '{
   "requestId": "r1",
   "principal": {"id": "alice", "roles": ["guardian:myapp-admin"]},
   "resources": [{
     "resource": {"id": "x", "kind": "guardian.management_api",
-                 "attr": {"app_name": "myapp"}},
+                 "attr": {"app_name": {"stringValue": "myapp"}}},
     "actions": ["read_resource"]
   }]
-}' http://127.0.0.1:3592/api/check/resources
+}' 127.0.0.1:3593 cerbos.svc.v1.CerbosService/CheckResources
 
 # Cross-app: same alice on an otherapp resource → DENY
-curl -s -X POST -H "Content-Type: application/json" -d '{
+grpcurl -plaintext -d '{
   "requestId": "r2",
   "principal": {"id": "alice", "roles": ["guardian:myapp-admin"]},
   "resources": [{
     "resource": {"id": "y", "kind": "guardian.management_api",
-                 "attr": {"app_name": "otherapp"}},
+                 "attr": {"app_name": {"stringValue": "otherapp"}}},
     "actions": ["read_resource"]
   }]
-}' http://127.0.0.1:3592/api/check/resources
+}' 127.0.0.1:3593 cerbos.svc.v1.CerbosService/CheckResources
 ```
 
 To compile and self-test the policies in the installed tree:
@@ -192,8 +192,8 @@ splitting policies into shipped `defaults/` and admin-writable
 - `dpkg-buildpackage -us -uc -b` produces the `.deb`.
 - `apt install univention-guardian-server` (after `apt install docker-compose`)
   → service auto-starts, `guardian-cerbos` container healthy on
-  `127.0.0.1:3592`.
-- `curl http://127.0.0.1:3592/api/check/resources` returns
+  `127.0.0.1:3593`.
+- `grpcurl -plaintext 127.0.0.1:3593 cerbos.svc.v1.CerbosService/CheckResources` returns
   `EFFECT_ALLOW` / `EFFECT_DENY` as expected for the `<app>-admin`
   scenario.
 - `univention-guardian-test` → 38/38 policy tests pass.

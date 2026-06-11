@@ -2,7 +2,7 @@
 
 Pytest suite for the `univention-guardian-server` package. Talks to the
 Cerbos instance run by the installed package (systemd-watched
-container on `127.0.0.1:3592`) using the official Cerbos Python SDK.
+container on `127.0.0.1:3593`) using the official Cerbos Python SDK (gRPC).
 Tests never start, stop, or reconfigure Cerbos.
 
 ## What's covered
@@ -44,7 +44,7 @@ variables:
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `CERBOS_HOST` | `http://127.0.0.1:3592` | Cerbos HTTP endpoint |
+| `CERBOS_HOST` | `127.0.0.1:3593` | Cerbos gRPC endpoint |
 | `CERBOS_POLICIES_DIR` | `/usr/share/univention-guardian-server/policies` | Where hot-reload tests drop files |
 | `CERBOS_RELOAD_TIMEOUT` | `5` | Seconds to wait for a reload to take effect |
 
