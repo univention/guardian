@@ -5,7 +5,6 @@
 # https://docs.cerbos.dev/cerbos/latest/configuration/index.html
 
 server:
-  # Docker-compose binds this to 127.0.0.1 on the host.
   httpListenAddr: ":3592"
   playgroundEnabled: false
   apiExplorerEnabled: false
@@ -18,3 +17,9 @@ storage:
   disk:
     directory: "/policies"
     watchForChanges: true
+
+schema:
+  enforcement: reject
+
+telemetry:
+  disabled: true
