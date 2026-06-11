@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-FileCopyrightText: 2026 Univention GmbH
+
 from typing import Any
 
 from guardian_authorization_api.udm_client import UnprocessableEntity

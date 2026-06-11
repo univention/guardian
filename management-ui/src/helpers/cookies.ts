@@ -1,3 +1,8 @@
+/**
+ * SPDX-License-Identifier: AGPL-3.0-only
+ * SPDX-FileCopyrightText: 2026 Univention GmbH
+ */
+
 export const getCookie = (name: string): string | undefined => {
   const cookies: Record<string, string> = {};
   document.cookie.split('; ').forEach(cookieWithValue => {

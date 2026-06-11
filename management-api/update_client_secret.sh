@@ -1,4 +1,7 @@
 #!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-FileCopyrightText: 2026 Univention GmbH
+
 
 if [ -f /var/lib/univention-appcenter/apps/guardian-management-api/conf/m2m.secret ]; then
     echo "Copying m2m secret file..."

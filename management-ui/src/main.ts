@@ -1,3 +1,8 @@
+/**
+ * SPDX-License-Identifier: AGPL-3.0-only
+ * SPDX-FileCopyrightText: 2026 Univention GmbH
+ */
+
 import {createApp} from 'vue';
 import I18NextVue from 'i18next-vue';
 import i18next from 'i18next';

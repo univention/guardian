@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-FileCopyrightText: 2026 Univention GmbH
+
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Optional

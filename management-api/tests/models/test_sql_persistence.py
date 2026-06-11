@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-FileCopyrightText: 2026 Univention GmbH
+
 import pytest
 from guardian_management_api.models.capability import CapabilityConditionRelation
 from guardian_management_api.models.condition import ConditionParameterType

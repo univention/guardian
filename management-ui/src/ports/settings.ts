@@ -1,3 +1,8 @@
+/**
+ * SPDX-License-Identifier: AGPL-3.0-only
+ * SPDX-FileCopyrightText: 2026 Univention GmbH
+ */
+
 export const portSetting = 'managementUi.adapter.settingsPort';
 
 export interface SettingsPort {

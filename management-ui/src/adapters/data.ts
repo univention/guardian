@@ -1,3 +1,8 @@
+/**
+ * SPDX-License-Identifier: AGPL-3.0-only
+ * SPDX-FileCopyrightText: 2026 Univention GmbH
+ */
+
 import i18next from 'i18next';
 import {v4 as uuid4} from 'uuid';
 import type {AuthenticationPort} from '@/ports/authentication';

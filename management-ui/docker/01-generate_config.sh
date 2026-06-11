@@ -1,4 +1,7 @@
 #!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-FileCopyrightText: 2026 Univention GmbH
+
 
 if [ -z ${SKIP_CONFIG_GENERATION+x} ]; then
     env_variable_names=$(compgen -e)

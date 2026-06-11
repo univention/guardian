@@ -1,3 +1,8 @@
+/**
+ * SPDX-License-Identifier: AGPL-3.0-only
+ * SPDX-FileCopyrightText: 2026 Univention GmbH
+ */
+
 import Keycloak from 'keycloak-js';
 import type {AuthenticationPort, AuthenticationSuccess} from '@/ports/authentication';
 import router from '@/router';

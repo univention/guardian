@@ -1,3 +1,8 @@
+/**
+ * SPDX-License-Identifier: AGPL-3.0-only
+ * SPDX-FileCopyrightText: 2026 Univention GmbH
+ */
+
 import {type RoleResponseData, type RolesResponse} from '@/helpers/models/roles';
 import {type PaginationResponseData} from '@/helpers/models/pagination';
 import {getPagination} from '@/helpers/mocks/api/pagination';

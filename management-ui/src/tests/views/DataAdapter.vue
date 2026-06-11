@@ -1,3 +1,8 @@
+<!--
+ SPDX-License-Identifier: AGPL-3.0-only
+ SPDX-FileCopyrightText: 2026 Univention GmbH
+-->
+
 <script setup lang="ts">
 import {computed, type ComputedRef, onMounted, type Ref, ref, watch} from 'vue';
 import {

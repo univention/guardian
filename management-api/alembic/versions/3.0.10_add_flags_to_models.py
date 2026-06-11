@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-FileCopyrightText: 2026 Univention GmbH
+
 """Add status flags (is_builtin) to models
 
 Revision ID: 3.0.10

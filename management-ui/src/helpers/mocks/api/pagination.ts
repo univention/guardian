@@ -1,3 +1,8 @@
+/**
+ * SPDX-License-Identifier: AGPL-3.0-only
+ * SPDX-FileCopyrightText: 2026 Univention GmbH
+ */
+
 import {type PaginationResponseData} from '@/helpers/models/pagination';
 
 export const getPagination = (totalCount: number, offset: number = 0, limit?: number): PaginationResponseData => {

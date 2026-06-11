@@ -1,3 +1,8 @@
+/**
+ * SPDX-License-Identifier: AGPL-3.0-only
+ * SPDX-FileCopyrightText: 2026 Univention GmbH
+ */
+
 import {test, expect} from '@playwright/test';
 
 test('visiting root redirects to /roles', async ({page}) => {

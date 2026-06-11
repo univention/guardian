@@ -1,3 +1,8 @@
+/**
+ * SPDX-License-Identifier: AGPL-3.0-only
+ * SPDX-FileCopyrightText: 2026 Univention GmbH
+ */
+
 import {fileURLToPath, URL} from 'node:url';
 import {defineConfig, loadEnv, type UserConfig} from 'vite';
 import vue from '@vitejs/plugin-vue';

@@ -1,3 +1,8 @@
+<!--
+ SPDX-License-Identifier: AGPL-3.0-only
+ SPDX-FileCopyrightText: 2026 Univention GmbH
+-->
+
 <script setup lang="ts">
 import {ref, type Ref, onMounted} from 'vue';
 import {UButton} from '@univention/univention-veb';

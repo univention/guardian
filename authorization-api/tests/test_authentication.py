@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-FileCopyrightText: 2026 Univention GmbH
+
 import guardian_lib.adapter_registry as adapter_registry
 import pytest
 import pytest_asyncio

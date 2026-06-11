@@ -1,3 +1,8 @@
+/**
+ * SPDX-License-Identifier: AGPL-3.0-only
+ * SPDX-FileCopyrightText: 2026 Univention GmbH
+ */
+
 import {createRouter, createWebHistory} from 'vue-router';
 import ListView from '@/views/ListView.vue';
 import EditView from '@/views/EditView.vue';

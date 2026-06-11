@@ -1,3 +1,8 @@
+/**
+ * SPDX-License-Identifier: AGPL-3.0-only
+ * SPDX-FileCopyrightText: 2026 Univention GmbH
+ */
+
 import type {WrappedAppsList} from '@/helpers/models/apps';
 import type {Namespace, WrappedNamespace, WrappedNamespacesList} from '@/helpers/models/namespaces';
 import type {Role, WrappedRole, WrappedRolesList} from '@/helpers/models/roles';

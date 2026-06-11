@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-FileCopyrightText: 2026 Univention GmbH
+
 from abc import abstractmethod
 from enum import StrEnum
 from pathlib import Path

@@ -1,3 +1,8 @@
+/**
+ * SPDX-License-Identifier: AGPL-3.0-only
+ * SPDX-FileCopyrightText: 2026 Univention GmbH
+ */
+
 import type {AddViewConfig, Field} from '@/helpers/models';
 import type {LabeledValue} from '@/helpers/models';
 import i18next from 'i18next';
