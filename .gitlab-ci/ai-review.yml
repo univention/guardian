@@ -5,7 +5,7 @@
 ai-review:
   stage: test
   needs: []
-  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/nikitafilonov/ai-review:latest
+  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/nikitafilonov/ai-review:latest@sha256:7ce4fbf99fa36f673b81f706f26619774d010a946a5a672f5b00a7822021f175
   rules:
     - if: '$CI_MERGE_REQUEST_IID'
       when: "manual"
