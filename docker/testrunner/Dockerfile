@@ -15,7 +15,7 @@ ADD --checksum=${opa_checksum} \
     https://github.com/open-policy-agent/opa/releases/download/v${opa_version}/opa_linux_amd64_static \
     /usr/local/bin/opa
 
-COPY --from=ghcr.io/astral-sh/uv:0.11.14@sha256:1025398289b62de8269e70c45b91ffa37c373f38118d7da036fb8bb8efc85d97 /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.11.21@sha256:ff07b86af50d4d9391d9daf4ff89ce427bc544f9aae87057e69a1cc0aa369946 /uv /usr/local/bin/uv
 
 ENV UV_LINK_MODE=copy \
   UV_COMPILE_BYTECODE=1 \
