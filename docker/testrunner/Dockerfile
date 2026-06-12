@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2026 Univention GmbH
 
 ARG UCS_BASE_IMAGE=gitregistry.knut.univention.de/univention/dev/projects/ucs-base-image/ucs-base-python
-ARG UCS_BASE_IMAGE_TAG=5.2.3-build.20251030@sha256:36f081b5f57553bb1b5d714cca5f4853d985ba09ed03a5f3ef7e0042acc47963
+ARG UCS_BASE_IMAGE_TAG=5.2.5-build.20260611@sha256:909004d4f4c2d2cd8f88ebd3f996e9c589bd35b23a8c41b6355558708e594500
 
 FROM ${UCS_BASE_IMAGE}:${UCS_BASE_IMAGE_TAG}
 SHELL ["/bin/bash", "-uxo", "pipefail", "-c"]
