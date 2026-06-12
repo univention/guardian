@@ -289,7 +289,7 @@ test-e2e:
     - job: container-build
       parallel:
         matrix: *build-matrix
-  image: "${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:24.0.7"
+  image: "${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:29.5.3@sha256:ad68e89b675740867a3bb96488a93fea9209ad36c6305bfba2664912d6dcf11a"
   variables:
     UCS_HOST_IP: "127.0.0.1"
     GUARDIAN_OPA_IMAGE: "${CI_REGISTRY_IMAGE}/guardian-opa:${RELEASE_VERSION}"
