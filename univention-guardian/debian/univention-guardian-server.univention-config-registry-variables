@@ -5,3 +5,10 @@ Type=str
 Categories=service-guardian
 Default=WARN
 Regex=^(DEBUG|INFO|WARN|ERROR)$
+
+[guardian/cerbos/audit-logging/enabled]
+Description[en]=Enables Cerbos audit logging, writing access and decision logs to stdout. Defaults to disabled.
+Description[de]=Aktiviert das Cerbos-Audit-Logging, wobei Zugriffs- und Entscheidungsprotokolle nach stdout geschrieben werden. Standardmäßig deaktiviert.
+Type=bool
+Categories=service-guardian
+Default=false
