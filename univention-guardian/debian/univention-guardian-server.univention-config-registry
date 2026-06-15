@@ -7,3 +7,5 @@ User: root
 Group: guardian-server
 Mode: 640
 File: usr/share/univention-guardian-server/config/config.yaml
+Variables: guardian/cerbos/audit-logging/enabled
+Postinst: cerbos-restart.py

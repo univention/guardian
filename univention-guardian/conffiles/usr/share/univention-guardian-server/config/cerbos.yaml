@@ -7,6 +7,10 @@
 server:
   httpListenAddr: ":3592"
   grpcListenAddr: ":3593"
+@!@
+if configRegistry.is_true('guardian/cerbos/audit-logging/enabled', False):
+    print('  logRequestPayloads: true')
+@!@
   playgroundEnabled: false
   apiExplorerEnabled: false
   requestLimits:
@@ -22,5 +26,16 @@ storage:
 schema:
   enforcement: reject
 
+@!@
+if configRegistry.is_true('guardian/cerbos/audit-logging/enabled', False):
+    print('audit:')
+    print('  enabled: true')
+    print('  accessLogsEnabled: true')
+    print('  decisionLogsEnabled: true')
+    print('  backend: file')
+    print('  file:')
+    print('    path: stdout')
+    print('')
+@!@
 telemetry:
   disabled: true
