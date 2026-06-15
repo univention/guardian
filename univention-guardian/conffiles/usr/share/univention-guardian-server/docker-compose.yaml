@@ -15,6 +15,7 @@ services:
     security_opt:
       - no-new-privileges:true
     ports:
+      - "127.0.0.1:3592:3592"
       - "127.0.0.1:3593:3593"
     volumes:
       - /usr/share/univention-guardian-server/policies:/policies:ro
