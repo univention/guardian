@@ -4,6 +4,8 @@
 
 set -e
 
+#DEBHELPER#
+
 case "$1" in
     install|upgrade)
     # Fixed UID/GID: cerbos is FROM scratch, so docker-compose user: must be numeric.
@@ -18,7 +20,5 @@ case "$1" in
     fi
     ;;
 esac
-
-#DEBHELPER#
 
 exit 0
