@@ -9,8 +9,8 @@ server:
   playgroundEnabled: false
   apiExplorerEnabled: false
   requestLimits:
-    maxActionsPerResource: 100
-    maxResourcesPerRequest: 50
+    maxActionsPerResource: 500
+    maxResourcesPerRequest: 500
 
 storage:
   driver: "disk"

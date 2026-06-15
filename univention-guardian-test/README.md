@@ -21,8 +21,8 @@ Tests never start, stop, or reconfigure Cerbos.
 
 - A UCS VM with `univention-guardian-server` installed and the service
   active (`systemctl is-active univention-guardian-server.service`).
-- Cerbos config bumps `requestLimits` to 100 actions × 50 resources
-  per request — already in the shipped `config.yaml`.
+- Cerbos config bumps `requestLimits` to 500 actions × 500 resources
+  per request — already in the shipped `cerbos.yaml`.
 - Python 3.11+.
 - **Root** — the hot-reload tests write `pytest_scratch_*.yaml` directly
   into `/usr/share/univention-guardian-server/policies/`. Non-root runs
