@@ -1,0 +1,21 @@
+#!/usr/share/ucs-test/runner bash
+# shellcheck shell=bash
+## desc: Compile and test the shipped Guardian policies with cerbos compile
+## tags: [guardian]
+## exposure: safe
+## packages:
+##   - univention-guardian-server
+
+# Validate (compile) the shipped policies on the installed tree, running any
+# policy test suites found alongside them. The policies are mounted read-only,
+# so this leaves the system unchanged.
+#
+# SPDX-FileCopyrightText: 2026 Univention GmbH
+# SPDX-License-Identifier: AGPL-3.0-only
+
+docker run --rm -i \
+  -v /usr/share/univention-guardian-server/policies:/policies:ro \
+  ghcr.io/cerbos/cerbos:0.53.0@sha256:c3fe64202e3793b7e9c41c5cbfcf390a51fb28ebce0a7d70754155e70db839c4 compile --verbose \
+  /policies
+
+exit $?

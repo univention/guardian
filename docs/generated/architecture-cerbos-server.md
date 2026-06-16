@@ -49,7 +49,6 @@ Tracking issue:
     ├── examples/            ─── UDM/helpdesk/ouadmin example policies
     └── tests/               ─── Policy test files (not loaded by Cerbos)
 
-/usr/sbin/univention-guardian-server-test   ─── compile + run policy tests against the installed tree
 /usr/lib/univention-install/90univention-guardian-server.inst
 /usr/lib/univention-uninstall/20univention-guardian-server.uinst
 ```
