@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Univention GmbH
 # SPDX-License-Identifier: AGPL-3.0-only
 
-"""Shared fixtures and helpers. Talks to Cerbos at 127.0.0.1:3593; never starts or stops it."""
+"""Shared fixtures and helpers"""
 
 import os
 import time
@@ -10,13 +10,10 @@ from pathlib import Path
 from typing import Any, TypeVar
 
 import pytest
-from cerbos.effect.v1 import effect_pb2
-from cerbos.engine.v1 import engine_pb2
-from cerbos.request.v1 import request_pb2
-from cerbos.sdk.grpc.client import CerbosClient
-from google.protobuf.struct_pb2 import ListValue, Struct, Value
+import requests
 
-CERBOS_HOST = os.environ.get("CERBOS_HOST", "127.0.0.1:3593")
+CERBOS_HOST = os.environ.get("CERBOS_HOST", "127.0.0.1:3592")
+CERBOS_BASE_URL = os.environ.get("CERBOS_BASE_URL", f"http://{CERBOS_HOST}")
 POLICIES_DIR = Path(
     os.environ.get(
         "CERBOS_POLICIES_DIR", "/usr/share/univention-guardian-server/policies"
@@ -29,10 +26,10 @@ T = TypeVar("T")
 
 
 @pytest.fixture(scope="session")
-def cerbos() -> CerbosClient:
-    """Cerbos SDK client."""
-    with CerbosClient(host=CERBOS_HOST) as client:
-        yield client
+def cerbos() -> requests.Session:
+    """HTTP session for the Cerbos REST API."""
+    with requests.Session() as session:
+        yield session
 
 
 @pytest.fixture
@@ -79,28 +76,8 @@ def wait_until(
     )
 
 
-def _to_pb_value(v: Any) -> Value:
-    if isinstance(v, bool):
-        return Value(bool_value=v)
-    if isinstance(v, str):
-        return Value(string_value=v)
-    if isinstance(v, (int, float)):
-        return Value(number_value=float(v))
-    if isinstance(v, dict):
-        return Value(
-            struct_value=Struct(fields={k: _to_pb_value(vv) for k, vv in v.items()})
-        )
-    if isinstance(v, list):
-        return Value(list_value=ListValue(values=[_to_pb_value(i) for i in v]))
-    raise TypeError(f"Unsupported attr value type: {type(v)}")
-
-
-def _to_attr(d: dict[str, Any] | None) -> dict[str, Value]:
-    return {k: _to_pb_value(v) for k, v in (d or {}).items()}
-
-
 def check_resources(
-    client: CerbosClient,
+    session: requests.Session,
     *,
     roles: Iterable[str],
     resources: list[dict[str, Any]],
@@ -111,25 +88,30 @@ def check_resources(
 
     Each resource dict: ``{"id": str, "kind": str, "actions": list[str], "attr": dict}``
     """
-    principal = engine_pb2.Principal(
-        id=principal_id,
-        roles=list(roles),
-        attr=_to_attr(principal_attr),
+    payload = {
+        "principal": {
+            "id": principal_id,
+            "roles": list(roles),
+            "attr": principal_attr or {},
+        },
+        "resources": [
+            {
+                "resource": {
+                    "id": r["id"],
+                    "kind": r["kind"],
+                    "attr": r.get("attr") or {},
+                },
+                "actions": list(r["actions"]),
+            }
+            for r in resources
+        ],
+    }
+    resp = session.post(
+        f"{CERBOS_BASE_URL}/api/check/resources", json=payload, timeout=10
     )
-    entries = [
-        request_pb2.CheckResourcesRequest.ResourceEntry(
-            resource=engine_pb2.Resource(
-                id=r["id"], kind=r["kind"], attr=_to_attr(r.get("attr"))
-            ),
-            actions=list(r["actions"]),
-        )
-        for r in resources
-    ]
-    resp = client.check_resources(principal=principal, resources=entries)
+    resp.raise_for_status()
+    data = resp.json()
     return {
-        result.resource.id: {
-            action: effect_pb2.Effect.Name(effect)
-            for action, effect in result.actions.items()
-        }
-        for result in resp.results
+        result["resource"]["id"]: dict(result.get("actions", {}))
+        for result in data.get("results", [])
     }

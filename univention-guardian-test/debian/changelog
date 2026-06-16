@@ -1,0 +1,5 @@
+univention-guardian-test (0.0.1) unstable; urgency=medium
+
+  * Bug #0: initial release
+
+ -- Christian Castens <castens@univention.de>  Tue, 16 Jun 2026 15:42:18 +0200

@@ -1,9 +1,16 @@
+#!/usr/share/ucs-test/runner pytest-3 -s -l -vv
+## desc: Guardian negative tests - deny-by-default for uncovered inputs
+## tags: [guardian]
+## exposure: safe
+## packages:
+##   - univention-guardian-server
+
 # SPDX-FileCopyrightText: 2026 Univention GmbH
 # SPDX-License-Identifier: AGPL-3.0-only
 
 """Negative / robustness: deny-by-default for inputs no policy covers."""
 
-from .conftest import check_resources
+from conftest import check_resources
 
 UNKNOWN_KIND = "pytest.does_not_exist"
 

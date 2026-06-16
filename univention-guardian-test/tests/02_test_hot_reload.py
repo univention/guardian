@@ -1,3 +1,10 @@
+#!/usr/share/ucs-test/runner pytest-3 -s -l -vv
+## desc: Guardian hot-reload - policy changes take effect without restart
+## tags: [guardian]
+## exposure: dangerous
+## packages:
+##   - univention-guardian-server
+
 # SPDX-FileCopyrightText: 2026 Univention GmbH
 # SPDX-License-Identifier: AGPL-3.0-only
 
@@ -5,7 +12,7 @@
 
 import time
 
-from .conftest import RELOAD_TIMEOUT, SCRATCH_PREFIX, check_resources, wait_until
+from conftest import RELOAD_TIMEOUT, SCRATCH_PREFIX, check_resources, wait_until
 
 SCRATCH_KIND = "pytest.scratch"
 

@@ -1,3 +1,2 @@
 policies/default	usr/share/univention-guardian-server/policies/
 policies/examples	usr/share/univention-guardian-server/policies/
-univention-guardian-server-test	usr/sbin/

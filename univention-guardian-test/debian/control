@@ -1,0 +1,26 @@
+Source: univention-guardian-test
+Section: univention
+Priority: optional
+Maintainer: Univention GmbH <packages@univention.de>
+Build-Depends:
+ debhelper-compat (= 13),
+Standards-Version: 4.3.0.3
+
+Package: ucs-test-guardian
+Architecture: all
+Depends:
+ ucs-test-framework,
+ ucs-test-libs,
+ univention-guardian-server,
+ python3-requests,
+ ${misc:Depends},
+Provides:
+ ucs-test-module,
+Description: Additional Guardian tests for ucs-test
+ This package includes integration tests for the univention-guardian-server
+ package as a ucs-test module.
+ .
+ This package is part of Univention Corporate Server (UCS),
+ an integrated, directory driven solution for managing
+ corporate environments. For more information about UCS,
+ refer to: https://www.univention.de/

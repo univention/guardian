@@ -1,3 +1,10 @@
+#!/usr/share/ucs-test/runner pytest-3 -s -l -vv
+## desc: Guardian request limits - 500 actions/resource, 500 resources/request
+## tags: [guardian]
+## exposure: safe
+## packages:
+##   - univention-guardian-server
+
 # SPDX-FileCopyrightText: 2026 Univention GmbH
 # SPDX-License-Identifier: AGPL-3.0-only
 

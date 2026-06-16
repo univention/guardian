@@ -1,9 +1,16 @@
+#!/usr/share/ucs-test/runner pytest-3 -s -l -vv
+## desc: Smoke tests for Guardian - shipped example policies
+## tags: [guardian]
+## exposure: safe
+## packages:
+##   - univention-guardian-server
+
 # SPDX-FileCopyrightText: 2026 Univention GmbH
 # SPDX-License-Identifier: AGPL-3.0-only
 
 """Smoke tests against shipped example policies."""
 
-from .conftest import check_resources
+from conftest import check_resources
 
 
 def test_d1_document_view_allowed_for_user(cerbos):
