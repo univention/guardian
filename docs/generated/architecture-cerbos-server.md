@@ -43,7 +43,7 @@ Tracking issue:
 ```text
 /usr/share/univention-guardian-server/
 ├── docker-compose.yaml      ─── UCR-templated
-├── config/config.yaml       ─── UCR-templated Cerbos config
+├── config/cerbos.yaml       ─── UCR-templated Cerbos config
 └── policies/
     ├── default/*.yaml               ─── Product-shipped policies (loaded by Cerbos)
     ├── examples/            ─── UDM/helpdesk/ouadmin example policies

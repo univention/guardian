@@ -1,4 +1,7 @@
 Type: file
+User: root
+Group: guardian-server
+Mode: 640
 File: usr/share/univention-guardian-server/docker-compose.yaml
 Variables: guardian/cerbos/log-level
 
@@ -6,6 +9,6 @@ Type: file
 User: root
 Group: guardian-server
 Mode: 640
-File: usr/share/univention-guardian-server/config/config.yaml
+File: usr/share/univention-guardian-server/config/cerbos.yaml
 Variables: guardian/cerbos/audit-logging/enabled
 Postinst: cerbos-restart.py

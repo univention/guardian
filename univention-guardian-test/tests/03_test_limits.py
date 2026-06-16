@@ -8,7 +8,7 @@
 # SPDX-FileCopyrightText: 2026 Univention GmbH
 # SPDX-License-Identifier: AGPL-3.0-only
 
-"""Pin config.yaml's requestLimits contract: 500 actions/resource, 500 resources/request."""
+"""Pin cerbos.yaml's requestLimits contract: 500 actions/resource, 500 resources/request."""
 
 from conftest import check_resources
 
