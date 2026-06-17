@@ -5,7 +5,7 @@
 set -e
 
 case "$1" in
-configure)
+    install|upgrade)
     # Fixed UID/GID: cerbos is FROM scratch, so docker-compose user: must be numeric.
     if ! getent group guardian-server > /dev/null 2>&1; then
         addgroup --system --gid 64110 guardian-server
@@ -16,10 +16,6 @@ configure)
             --home /nonexistent --shell /usr/sbin/nologin \
             guardian-server
     fi
-
-    # config.yaml may contain secrets; readable only by the container user group.
-    chown root:guardian-server /usr/share/univention-guardian-server/config/config.yaml
-    chmod 640 /usr/share/univention-guardian-server/config/config.yaml
     ;;
 esac
 
