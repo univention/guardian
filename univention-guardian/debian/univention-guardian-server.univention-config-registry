@@ -4,6 +4,7 @@ Group: guardian-server
 Mode: 640
 File: usr/share/univention-guardian-server/docker-compose.yaml
 Variables: guardian/cerbos/log-level
+Postinst: cerbos-restart.py
 
 Type: file
 User: root
