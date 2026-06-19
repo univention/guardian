@@ -1,7 +1,11 @@
 # univention-guardian-server - Cerbos PoC
 
 Standalone UCS package that runs [Cerbos](https://docs.cerbos.dev/) as
-a local policy (PDP) engine on a UCS Server, reachable on `127.0.0.1:3593` (gRPC).
+a local policy (PDP) engine on a UCS Server. In it's current configuration,
+Cerbos exposes two listeners, both bound to `localhost` only:
+
+- `127.0.0.1:3593` — gRPC API
+- `127.0.0.1:3592` — HTTP API
 
 > This is a Proof of Concept. The audience for this README is fellow
 > developers, not operators.
@@ -43,16 +47,3 @@ This manual step is only necessary until we've implemented [policy distribution 
 | Variable | Default | Notes |
 |---|---|---|
 | `guardian/cerbos/log-level` | `WARN` | One of `DEBUG`, `INFO`, `WARN`, `ERROR`. Change with `ucr set` then `systemctl restart univention-guardian-server.service`. |
-
-## Tests
-
-```sh
-sudo systemctl is-active univention-guardian-server.service    # active
-sudo docker ps                                           # guardian-cerbos healthy
-```
-
-Manually run the initial set of integration tests:
-
-1. Copy the `ucs-test-guardian` directory to the UCS VM
-2. Install pytest & cerbos: `apt install python3-pip && pip install cerbos pytest --break-system-packages`
-3. Run the tests `pytest ucs-test-guardian`
