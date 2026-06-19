@@ -25,9 +25,9 @@ This will be handled in
 The debian package can be installed on all UCS server roles.
 
 ```bash
-echo 'deb [trusted=yes] http://omar.knut.univention.de/build2/git/guardian cerbos main' | sudo tee /etc/apt/sources.list.d/guardian-cerbos-poc.list
-sudo apt update
-sudo apt install univention-guardian-server
+echo 'deb [trusted=yes] http://omar.knut.univention.de/build2/git/guardian cerbos main' | tee /etc/apt/sources.list.d/guardian.list
+apt update
+apt install univention-guardian-server
 ```
 
 ## Integrate your own policies
