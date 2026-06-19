@@ -21,3 +21,22 @@ Description: Cerbos policy engine for UCS
  an integrated, directory driven solution for managing
  corporate environments. For more information about UCS,
  refer to: https://www.univention.de/
+
+Package: ucs-test-guardian
+Architecture: all
+Depends:
+ ${misc:Depends},
+ ucs-test-framework,
+ ucs-test-libs,
+ univention-guardian-server (= ${binary:Version}),
+ python3-requests,
+Provides:
+ ucs-test-module,
+Description: Additional Guardian tests for ucs-test
+ This package includes integration tests for the univention-guardian-server
+ package as a ucs-test module.
+ .
+ This package is part of Univention Corporate Server (UCS),
+ an integrated, directory driven solution for managing
+ corporate environments. For more information about UCS,
+ refer to: https://www.univention.de/

@@ -1,4 +1,4 @@
-# univention-guardian-test
+# ucs-test-guardian
 
 Pytest suite for the `univention-guardian-server` package. Talks to the
 Cerbos instance run by the installed package (systemd-watched
