@@ -66,9 +66,9 @@ source for this branch:
 
 ```sh
 echo "deb [trusted=yes] http://omar.knut.univention.de/build2/git/guardian rowino-cerbos-poc main" \
-  | sudo tee /etc/apt/sources.list.d/guardian-cerbos.list
-sudo apt update
-sudo apt install -y docker-compose univention-guardian-server
+  | tee /etc/apt/sources.list.d/guardian.list
+apt update
+apt install -y docker-compose univention-guardian-server
 ```
 
 That's it. The systemd unit auto-starts Cerbos bound to
