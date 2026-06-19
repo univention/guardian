@@ -24,7 +24,7 @@ include:
 
 variables:
   # Bump this when starting a new UCS release branch.
-  UCS_VERSION: "5.2-5"
+  UCS_VERSION: "5.2-6"
   RUN_RENOVATE:
     value: "no"
     options:
