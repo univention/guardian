@@ -53,6 +53,6 @@ sudo docker ps                                           # guardian-cerbos healt
 
 Manually run the initial set of integration tests:
 
-1. Copy the `univention-guardian-test` directory to the UCS VM
+1. Copy the `ucs-test-guardian` directory to the UCS VM
 2. Install pytest & cerbos: `apt install python3-pip && pip install cerbos pytest --break-system-packages`
-3. Run the tests `pytest univention-guardian-test`
+3. Run the tests `pytest ucs-test-guardian`
