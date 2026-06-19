@@ -103,13 +103,9 @@ grpcurl -plaintext -d '{
 }' 127.0.0.1:3593 cerbos.svc.v1.CerbosService/CheckResources
 ```
 
-To compile and self-test the policies in the installed tree:
-
-```sh
-sudo univention-guardian-test
-```
-
-This runs Cerbos's compiler against the shipped policies plus the test
+Compiling and self-testing the policies in the installed tree is covered
+by the automated `ucs-test-guardian` tests (`01_test_compile_policies`),
+which run Cerbos's compiler against the shipped policies plus the test
 files; expect "38 tests executed [38 OK]".
 
 Hot-reload: edit a YAML file under `/usr/share/univention-guardian-server/policies/`
@@ -195,6 +191,6 @@ splitting policies into shipped `defaults/` and admin-writable
 - `grpcurl -plaintext 127.0.0.1:3593 cerbos.svc.v1.CerbosService/CheckResources` returns
   `EFFECT_ALLOW` / `EFFECT_DENY` as expected for the `<app>-admin`
   scenario.
-- `univention-guardian-test` → 38/38 policy tests pass.
+- `ucs-test-guardian`'s `01_test_compile_policies` → 38/38 policy tests pass.
 - Hot-reload of an edited YAML file in
   `/usr/share/univention-guardian-server/policies/` works.

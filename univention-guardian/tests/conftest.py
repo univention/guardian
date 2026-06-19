@@ -7,7 +7,7 @@ import os
 import time
 from collections.abc import Callable, Iterable
 from pathlib import Path
-from typing import Any, TypeVar
+from typing import Any, Generator, TypeVar
 
 import pytest
 import requests
@@ -33,7 +33,7 @@ def cerbos() -> requests.Session:
 
 
 @pytest.fixture
-def scratch_dir() -> Path:
+def scratch_dir() -> Generator[Path]:
     """Yields POLICIES_DIR; drops all `pytest_scratch_*.yaml` files on teardown.
 
     Scratch files land directly in POLICIES_DIR, not a subdirectory.
