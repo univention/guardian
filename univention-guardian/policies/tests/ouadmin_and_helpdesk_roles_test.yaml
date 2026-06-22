@@ -16,42 +16,42 @@ principals:
     attr:
       assignments:
        - role: ouadmin
-         context: hamburg
+         context: base.hamburg
        - role: ouadmin
-         context: berlin
+         context: base.berlin
        - role: helpdesk
-         context: bremen
+         context: base.bremen
        - role: ouadmin
-         context: kiel
+         context: base.kiel
        - role: helpdesk
-         context: kiel
+         context: base.kiel
 
 resources:
   resource1:
     id: user1
     kind: user
     attr:
-      position: hamburg
+      position: base.hamburg
   resource2:
     id: user2
     kind: user
     attr:
-      position: bremen
+      position: base.bremen
   resource3:
     id: user3
     kind: user
     attr:
-      position: berlin
+      position: base.berlin
   resource4:
     id: user4
     kind: user
     attr:
-      position: madrid
+      position: base.madrid
   resource5:
     id: user5
     kind: user
     attr:
-      position: kiel
+      position: base.kiel
 
 
 tests:

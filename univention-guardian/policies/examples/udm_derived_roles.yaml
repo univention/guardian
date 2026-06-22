@@ -12,6 +12,22 @@ derivedRoles:
         - helpdesk
       condition:
         match:
-          expr: request.principal.attr.assignments.exists(a,
-                  a.role == "helpdesk" &&
-                  a.context == request.resource.attr.position)
+          expr: request.principal.attr.assignments.exists(
+                  a,
+                  a.role == "helpdesk" && (
+                    hierarchy(a.context).ancestorOf(hierarchy(request.resource.attr.position)) || a.context == request.resource.attr.position
+
+                  )
+                )
+
+    - name: ouadmin_context
+      parentRoles:
+        - ouadmin
+      condition:
+        match:
+          expr: request.principal.attr.assignments.exists(
+                  a,
+                  a.role == "ouadmin" && (
+                    hierarchy(a.context).descendentOf(hierarchy(request.resource.attr.position)) || a.context == request.resource.attr.position
+                  )
+                )
