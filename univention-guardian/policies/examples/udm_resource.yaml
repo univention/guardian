@@ -20,10 +20,5 @@ resourcePolicy:
     - actions:
         - modify_user
       effect: EFFECT_ALLOW
-      roles:
-        - ouadmin
-      condition:
-        match:
-          expr: request.principal.attr.assignments.exists(a,
-                  a.role == "ouadmin" &&
-                  a.context == request.resource.attr.position)
+      derivedRoles:
+        - ouadmin_context
