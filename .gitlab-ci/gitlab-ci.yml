@@ -14,18 +14,10 @@ include:
       chat_destination: "#ucsschool"
       ucs_base_version: "5.0"
       additional_update_appcenter_needs:
+        # pre-semantic-release -> RELEASE_VERSION; whole container-build matrix
+        # so images exist before we write their tags. See *-update_appcenter.
+        - job: "pre-semantic-release"
         - job: "container-build"
-          parallel:
-            matrix:
-              - IMAGE_NAME: "guardian-authorization-api"
-                KANIKO_BUILD_CONTEXT: "${CI_PROJECT_DIR}/authorization-api"
-          optional: true
-        - job: "container-build"
-          parallel:
-            matrix:
-              - IMAGE_NAME: "guardian-opa"
-                KANIKO_BUILD_CONTEXT: "${CI_PROJECT_DIR}/opa"
-          optional: true
         - authz_keycloak_script
       appcenter_file_dir: "appcenter-authz/"
       # Shared across all three apps so a single "vX.Y.Z" tag releases all of
@@ -47,12 +39,8 @@ include:
       ucs_base_version: "5.0"
       additional_update_appcenter_needs:
         - management_keycloak_script
+        - job: "pre-semantic-release"
         - job: "container-build"
-          parallel:
-            matrix:
-              - IMAGE_NAME: "guardian-management-api"
-                KANIKO_BUILD_CONTEXT: "${CI_PROJECT_DIR}/management-api"
-          optional: true
       appcenter_file_dir: "appcenter-management/"
       # Shared "v" prefix: one "vX.Y.Z" tag releases all three apps together.
       release_tag_prefix: "v"
@@ -71,13 +59,8 @@ include:
       ucs_base_version: "5.0"
       additional_update_appcenter_needs:
         - management-ui_keycloak_script
+        - job: "pre-semantic-release"
         - job: "container-build"
-          parallel:
-            matrix:
-              - IMAGE_NAME: "guardian-management-ui"
-                KANIKO_BUILD_CONTEXT: "${CI_PROJECT_DIR}"
-                DOCKERFILE_PATH: "management-ui/docker/Dockerfile"
-          optional: true
       appcenter_file_dir: "appcenter-management-ui/"
       # Shared "v" prefix: one "vX.Y.Z" tag releases all three apps together.
       release_tag_prefix: "v"
@@ -213,6 +196,22 @@ container-release-attestation:
 # would fail with "release already exists"). Since the apps share one version and
 # tag, we keep a single Guardian-wide Release (on the management-api job) and disable
 # the per-app duplicates. Nothing depends on these jobs, so disabling is safe.
+# compose.jinja reads IMAGE_TAG / IMAGE_TAG_AUTHZ / IMAGE_TAG_OPA from the env;
+# build them from RELEASE_VERSION (the tag kaniko pushes to CI_REGISTRY_IMAGE)
+# instead of the compose :latest fallback.
+authz-update_appcenter:
+  before_script:
+    - export IMAGE_TAG_AUTHZ="${CI_REGISTRY_IMAGE}/guardian-authorization-api:${RELEASE_VERSION}"
+    - export IMAGE_TAG_OPA="${CI_REGISTRY_IMAGE}/guardian-opa:${RELEASE_VERSION}"
+
+management-update_appcenter:
+  before_script:
+    - export IMAGE_TAG="${CI_REGISTRY_IMAGE}/guardian-management-api:${RELEASE_VERSION}"
+
+management-ui-update_appcenter:
+  before_script:
+    - export IMAGE_TAG="${CI_REGISTRY_IMAGE}/guardian-management-ui:${RELEASE_VERSION}"
+
 authz-create_gitlab_release:
   rules:
     - when: never
