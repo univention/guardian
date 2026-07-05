@@ -96,6 +96,8 @@ include:
     file:
       - "dind.yml"
 
+  - component: "$CI_SERVER_FQDN/univention/dev/tooling/ci-components/ai-review@2.8.0"
+
 variables:
   # Opt in to common-ci's release-tag pipeline (the protected-vX.Y.Z rule lives in
   # nubus-workflow, gated on this).
