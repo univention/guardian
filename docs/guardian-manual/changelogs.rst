@@ -10,6 +10,16 @@ component and version of the app.
 Authorization API
 =================
 
+Version 3.0.10 (2026-07-06)
+---------------------------
+
+* Rebuild the container image on the ``ucs-base-python`` UCS base image
+  (tag ``5.2.3-build.20251030``); the Python build was migrated from Poetry to
+  uv.
+
+* Ship ``cryptography`` in the production image. It was previously declared as a
+  development-only dependency.
+
 Version 3.0.9 (2026-05-18)
 --------------------------
 
@@ -109,6 +119,23 @@ Version 1.0.0 (2023-12-11)
 Management API
 ==============
 
+Version 3.0.10 (2026-07-06)
+---------------------------
+
+* You can now delete objects through the Management API. New endpoints remove
+  apps, namespaces, roles, contexts, permissions, conditions and capabilities.
+
+* Built-in objects are marked as such and are protected from deletion.
+
+* Deleting an object that is still in use is refused with a ``409 Conflict``
+  response. For example, a role cannot be deleted while capabilities still
+  reference it, and a capability cannot be deleted while it is still assigned to
+  a role.
+
+* Rebuild the container image on the ``ucs-base-python`` UCS base image
+  (tag ``5.2.3-build.20251030``); the Python build was migrated from Poetry to
+  uv.
+
 Version 3.0.9 (2026-05-18)
 --------------------------
 
@@ -198,6 +225,12 @@ Version 1.0.0 (2023-12-11)
 
 Management UI
 ==============
+
+Version 3.0.10 (2026-07-06)
+---------------------------
+
+* No functional changes. Released together with the Authorization API and
+  Management API to keep the app versions in sync.
 
 Version 3.0.9 (2026-05-18)
 --------------------------

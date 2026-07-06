@@ -1,4 +1,11 @@
 <h1>Changelog</h1>
+<h2>v3.0.10 (2026-07-06)</h2>
+<ul>
+    <li>You can now delete objects through the Management API: apps, namespaces, roles, contexts, permissions, conditions and capabilities.</li>
+    <li>Built-in objects are protected from deletion.</li>
+    <li>Deleting an object that is still in use is refused with a 409 Conflict response, for example a role that is still referenced by a capability.</li>
+    <li>Rebuild the container image on the ucs-base-python base image (tag 5.2.3-build.20251030); the Python build was migrated from Poetry to uv.</li>
+</ul>
 <h2>v3.0.9 (2026-05-18)</h2>
 <ul>
     <li>Update base image.</li>
