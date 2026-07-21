@@ -97,14 +97,15 @@ grpcurl -plaintext -d '{
 }' 127.0.0.1:3593 cerbos.svc.v1.CerbosService/CheckResources
 ```
 
-Compiling and self-testing the policies in the installed tree is covered
-by the automated `ucs-test-guardian` tests (`01_test_compile_policies`),
-which run Cerbos's compiler against the shipped policies plus the test
-files; expect "38 tests executed [38 OK]".
+Compiling and self-testing the policies is covered in the CI pipeline
+(the `compile-policies` job), which runs Cerbos's compiler against the
+policies plus the `policies/tests/` suites.
 
-Hot-reload: edit a YAML file under `/usr/share/univention-guardian-server/policies/`
-and Cerbos picks it up within ~3 s (`journalctl -u univention-guardian-server.service`
-shows the reload). Note these edits are lost on next package upgrade.
+No hot-reload: Cerbos runs with `watchForChanges: false`, so editing a YAML file
+under `/usr/share/univention-guardian-server/policies/` has no effect on its own.
+Policy changes take effect only when Cerbos restarts, which the bundle listener
+does after installing a registered bundle. Manual on-disk edits are also lost on
+the next package upgrade.
 
 Do **not** name a policy file `*_test.yaml` — Cerbos treats those as
 test files (not policies) and silently ignores them at runtime.
@@ -185,6 +186,7 @@ splitting policies into shipped `defaults/` and admin-writable
 - `grpcurl -plaintext 127.0.0.1:3593 cerbos.svc.v1.CerbosService/CheckResources` returns
   `EFFECT_ALLOW` / `EFFECT_DENY` as expected for the `<app>-admin`
   scenario.
-- `ucs-test-guardian`'s `01_test_compile_policies` → 38/38 policy tests pass.
-- Hot-reload of an edited YAML file in
-  `/usr/share/univention-guardian-server/policies/` works.
+- CI `compile-policies` job → 38/38 policy tests pass.
+- An edited YAML file in `/usr/share/univention-guardian-server/policies/` is
+  NOT served until Cerbos restarts (`watchForChanges: false`); the listener
+  restarts Cerbos when it installs a registered bundle.

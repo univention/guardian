@@ -29,6 +29,10 @@ include:
 
 variables:
   UCS_VERSION: "5.2-6"    # bump when starting a new UCS release branch
+  # Keep the following three variables in sync with the Cerbos image in the docker-compose.yaml.
+  CERBOS_VERSION: "0.54.0"
+  CERBOS_TARBALL_SHA256: "68ce48355cf1df125da9ff2b6c0b07d35781155d3aa1707707c381c2e454f156"
+  CERBOS_IMAGE_DIGEST: "sha256:211c261f6031675522a35c6055b13fd719c4aff13747307e4bcb6907326537ef"
   RUN_RENOVATE:
     value: "no"
     options:
@@ -59,8 +63,7 @@ mirror-cerbos-image:
     name: docker-registry.knut.univention.de/skopeo/stable
     entrypoint: [""]
   variables:
-    CERBOS_VERSION: "0.54.0"
-    CERBOS_SRC_IMAGE: "ghcr.io/cerbos/cerbos@sha256:211c261f6031675522a35c6055b13fd719c4aff13747307e4bcb6907326537ef"
+    CERBOS_SRC_IMAGE: "ghcr.io/cerbos/cerbos@${CERBOS_IMAGE_DIGEST}"
     REGISTRY_HOST: "artifacts.software-univention.de"
     DEST_IMAGE: "artifacts.software-univention.de/nubus/images/cerbos"
     # "$$" escapes to a literal "$" for the Harbor robot-account name.
@@ -80,3 +83,36 @@ mirror-cerbos-image:
     - /bin/skopeo copy --all --preserve-digests
         "docker://${CERBOS_SRC_IMAGE}"
         "docker://${DEST_IMAGE}:${CERBOS_VERSION}"
+
+# Compile and test the shipped Guardian policies with the pinned Cerbos binary.
+# This is the policy-correctness gate: it compiles every policy and runs the
+# native tests in policies/tests/. (Only executes if there are changes to the
+# policies dir.) The binary is downloaded once, checksum-verified, and cached
+# per version. Keep CERBOS_VERSION in sync with the shipped docker-compose.yaml.
+compile-policies:
+  stage: test
+  image:
+    name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/library/debian:stable-slim
+  variables:
+    CERBOS_TARBALL: "cerbos_${CERBOS_VERSION}_Linux_x86_64.tar.gz"
+    CERBOS_NO_TELEMETRY: "1"
+  cache:
+    key: "cerbos-${CERBOS_VERSION}"
+    paths:
+      - .cerbos-bin/
+  rules:
+    - changes:
+        - univention-guardian/policies/**/*
+  script:
+    - |
+      set -eu
+      if [ ! -x .cerbos-bin/cerbos ]; then
+        apt-get update
+        apt-get install -y --no-install-recommends curl ca-certificates
+        mkdir -p .cerbos-bin
+        curl -fsSL -o /tmp/cerbos.tar.gz \
+          "https://github.com/cerbos/cerbos/releases/download/v${CERBOS_VERSION}/${CERBOS_TARBALL}"
+        echo "${CERBOS_TARBALL_SHA256}  /tmp/cerbos.tar.gz" | sha256sum -c -
+        tar -xzf /tmp/cerbos.tar.gz -C .cerbos-bin cerbos
+      fi
+    - .cerbos-bin/cerbos compile --no-color univention-guardian/policies
