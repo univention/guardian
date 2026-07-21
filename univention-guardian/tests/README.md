@@ -2,26 +2,38 @@
 
 Pytest suite for the `univention-guardian-server` package. Talks to the
 Cerbos instance run by the installed package (systemd-watched
-container on `127.0.0.1:3592`)
-Tests never start, stop, or reconfigure Cerbos.
+container on `127.0.0.1:3592`).
+
+`02_test_bundle_e2e.py` drives the full end-to-end delivery flow: it registers
+a bundle in LDAP and verifies the listener extracts it to disk, validates it
+with `cerbos compile`, restarts Cerbos, and Cerbos then serves it (invalid
+bundles are rolled back and never served). This is behavior only observable on
+a running UCS system. Policy correctness itself (that the shipped policies
+compile and their native `policies/tests/` suites pass) is checked in the CI
+pipeline with `cerbos compile`, not here.
+
+For how policies get from LDAP onto disk (the delivery model), see
+[`../listener/README.md`](../listener/README.md).
 
 ## What's covered
 
 | Test | What it pins |
 |---|---|
-| `test_smoke.py::test_d1_document_view_allowed_for_user` | Pure role-gate ALLOW path (examples/base.yaml) |
-| `test_smoke.py::test_u1_helpdesk_resets_password_in_matching_context` | Full chain — parent role + derived role + CEL condition over principal/resource attrs (examples/udm_*.yaml) |
-| `test_limits.py::test_l1_fifty_resources_in_one_request` | Documented contract: 500 resources/request, decisions keyed by resource id |
-| `test_limits.py::test_l2_one_hundred_actions_in_one_request` | Documented contract: 500 actions/resource, real ALLOW + synthetic DENY |
-| `test_hot_reload.py::test_hr1_add_policy_makes_kind_decidable` | Drop a `pytest_scratch_*.yaml` policy; new kind decidable within `CERBOS_RELOAD_TIMEOUT` |
-| `test_hot_reload.py::test_hr2_malformed_yaml_does_not_take_cerbos_down` | Drop invalid YAML; shipped policies keep serving |
-| `test_negative.py::test_n1_unknown_kind_denies` | Deny-by-default for an unknown kind, even under `admin` |
+| `02_test_bundle_e2e.py::test_e2e_valid_bundle_is_applied` | Full chain — register a bundle, listener writes it to disk (owned 64110:64110), Cerbos restarts and serves it |
+| `02_test_bundle_e2e.py::test_e2e_invalid_bundle_is_rejected` | A bundle that fails `cerbos compile` is rolled back, logged, and never served |
 
 ## Prerequisites
 
-- **Root** — the hot-reload tests write `pytest_scratch_*.yaml` directly
-  into `/usr/share/univention-guardian-server/policies/`. Non-root runs
-  auto-skip those.
+- **The Primary Directory Node** — restricted to the `domaincontroller_master`
+  role via the `## roles:` header (only the Primary can register LDAP
+  extensions); ucs-test skips it on other roles.
+- **`univention-guardian-server` installed** — declared in the `## packages:`
+  header, so ucs-test only runs it where the package (hence Cerbos and the
+  policies dir) is present.
+
+The test runs as root (ucs-test runs its tests as root), registers a bundle via
+`ucs_registerLDAPExtension` with `cn=admin` / `/etc/ldap.secret`, restarts
+Cerbos, and cleans up the LDAP object and app directory afterwards.
 
 ## Install and run
 
@@ -29,25 +41,3 @@ Tests never start, stop, or reconfigure Cerbos.
 univention-install ucs-test ucs-test-guardian
 ucs-test -E dangerous -s guardian
 ```
-
-## Configuration
-
-Defaults match the package's install layout. Override with environment
-variables:
-
-| Variable | Default | Purpose |
-|---|---|---|
-| `CERBOS_HOST` | `127.0.0.1:3592` | Cerbos HTTP endpoint |
-| `CERBOS_POLICIES_DIR` | `/usr/share/univention-guardian-server/policies` | Where hot-reload tests drop files |
-| `CERBOS_RELOAD_TIMEOUT` | `5` | Seconds to wait for a reload to take effect |
-
-## Notes
-
-- Scratch files use the `pytest_scratch_` prefix and land directly in
-  `POLICIES_DIR`, not a subdirectory. Cerbos only watches directories that
-  exist at startup; directories created at runtime are silently ignored because
-  `processEvent` drops directory-creation events as non-indexable before
-  `triggerUpdate` can add a watcher for them.
-- The fixture removes all `pytest_scratch_*.yaml` files in teardown (even on
-  test failure). If a previous run crashed hard, clean up by hand:
-  `sudo rm -f /usr/share/univention-guardian-server/policies/pytest_scratch_*.yaml`.

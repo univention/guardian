@@ -1,0 +1,20 @@
+#!/bin/sh
+# SPDX-FileCopyrightText: 2026 Univention GmbH
+# SPDX-License-Identifier: AGPL-3.0-only
+
+set -e
+
+#DEBHELPER#
+
+case "$1" in
+    configure)
+        docker-compose \
+            -f /usr/share/univention-guardian-server/docker-compose.yaml \
+            -p univention-guardian-server \
+            pull --quiet || true
+
+        systemctl try-restart univention-directory-listener || true
+        ;;
+esac
+
+exit 0

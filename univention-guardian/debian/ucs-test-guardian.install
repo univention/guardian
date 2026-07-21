@@ -1,2 +1,1 @@
-tests/conftest.py usr/share/ucs-test/96_guardian
 tests/[0-9]*_test_* usr/share/ucs-test/96_guardian

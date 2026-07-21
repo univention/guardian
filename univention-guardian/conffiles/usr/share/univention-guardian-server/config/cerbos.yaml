@@ -21,7 +21,7 @@ storage:
   driver: "disk"
   disk:
     directory: "/policies"
-    watchForChanges: true
+    watchForChanges: false
 
 schema:
   enforcement: reject

@@ -16,9 +16,10 @@ Cerbos exposes two listeners, both bound to `localhost` only:
 
 - No authentication
 - Not exposed outside the Server, only reachable on `localhost`
-- No policy distribution across the UCS domain.
-This will be handled in
-[#288](https://git.knut.univention.de/univention/dev/projects/authorization-engine/guardian/-/work_items/288).
+
+Policies are distributed across the UCS domain: a bundle is registered as a
+`settings/data` object in LDAP and the shipped listener installs it on every
+server running Cerbos (see [Integrate your own policies](#integrate-your-own-policies)).
 
 ## Installation
 
@@ -33,14 +34,22 @@ apt install univention-guardian-server
 ## Integrate your own policies
 
 The package ships its builtin policies under `policies/default/` and
-examples under `policies/examples/`. To add your own, copy your Cerbos
-policy files into a *separate*, per-app subdirectory:
+examples under `policies/examples/`.
+
+To distribute your own policies across the UCS domain, register them as a
+policy bundle in LDAP: the shipped listener extracts the bundle into a
+*separate*, per-app subdirectory on every server running Cerbos, validates it
+with `cerbos compile`, and restarts Cerbos to apply it. See
+[`listener/README.md`](listener/README.md) for how to build and register a
+bundle.
+
+For a quick local test on a single server you can instead drop policy files
+straight into a per-app subdirectory (Cerbos loads the tree recursively);
+restart Cerbos afterwards, since it does not hot-reload:
 
 ```bash
 /usr/share/univention-guardian-server/policies/<app-name>/<policy-name>.yaml
 ```
-
-This manual step is only necessary until we've implemented [policy distribution across the UCS domain](https://git.knut.univention.de/univention/dev/projects/authorization-engine/guardian/-/work_items/291)
 
 ## UCR variables this package owns
 
