@@ -18,13 +18,17 @@ include:
       - "defaults/nubus-workflow.yaml"
       - "jobs/lint-pre-commit.yaml"
       - "jobs/lint-commit-messages.yaml"
+  # Debian package: per-branch test builds, and release to the UCS errata repo.
   - component: "$CI_SERVER_FQDN/univention/dev/tooling/ci-components/debian-aptly@2.5.2"
     inputs:
       pkg-dir: univention-guardian
+  - component: "$CI_SERVER_FQDN/univention/dev/tooling/ci-components/debian-errata-build@2.5.2"
+    inputs:
+      debian-package: univention-guardian
+      pkg-dir: univention-guardian
 
 variables:
-  # Bump this when starting a new UCS release branch.
-  UCS_VERSION: "5.2-6"
+  UCS_VERSION: "5.2-6"    # bump when starting a new UCS release branch
   RUN_RENOVATE:
     value: "no"
     options:
@@ -46,3 +50,33 @@ lint-pre-commit:
   variables:
     RUNNER_REGISTRY_IMAGE: "gitregistry.knut.univention.de/univention/dev/tooling/pre-commit/univention-pre-commit"
     RUNNER_IMAGE_TAG: "0.6.2"
+
+# Copy the pinned upstream Cerbos image into the artifact registry
+# Keep in sync with the image in the shipped docker-compose.yaml
+mirror-cerbos-image:
+  stage: build
+  image:
+    name: docker-registry.knut.univention.de/skopeo/stable
+    entrypoint: [""]
+  variables:
+    CERBOS_VERSION: "0.54.0"
+    CERBOS_SRC_IMAGE: "ghcr.io/cerbos/cerbos@sha256:211c261f6031675522a35c6055b13fd719c4aff13747307e4bcb6907326537ef"
+    REGISTRY_HOST: "artifacts.software-univention.de"
+    DEST_IMAGE: "artifacts.software-univention.de/nubus/images/cerbos"
+    # "$$" escapes to a literal "$" for the Harbor robot-account name.
+    ROBOT_ACCOUNT: "robot$$nubus-push-from-gitlab"
+  rules:
+    # Release mirrors automatically. Branch/MR that changes the pin is manual,
+    # so a version bump can pre-populate the registry
+    - if: $CI_COMMIT_REF_PROTECTED == "true"
+    - changes:
+        - univention-guardian/conffiles/usr/share/univention-guardian-server/docker-compose.yaml
+        - .gitlab-ci.yml
+      when: manual
+      allow_failure: true
+  script:
+    - echo "${EXTERNAL_REGISTRY_ROBOT_TOKEN}" | /bin/skopeo login
+        --username "${ROBOT_ACCOUNT}" --password-stdin "${REGISTRY_HOST}"
+    - /bin/skopeo copy --all --preserve-digests
+        "docker://${CERBOS_SRC_IMAGE}"
+        "docker://${DEST_IMAGE}:${CERBOS_VERSION}"
