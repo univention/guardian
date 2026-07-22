@@ -5,7 +5,8 @@ output-format = "concise"
 line-length = 120
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "S", "N", "PT"]
+preview = true
+select = ["E", "F", "W", "I", "S", "N", "PT", "CPY"]
 ignore = [
  "S101",  # allow to use assert (must be used in pytest)
  "S404",  # suspicious-subprocess-import
