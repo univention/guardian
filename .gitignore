@@ -12,15 +12,6 @@
 *.temp
 __pycache__/
 _build/
-appcenter-authz/files/preinst
-appcenter-management/files/preinst
-appcenter-management-ui/files/preinst
-appcenter-authz/files/ini
-appcenter-management/files/ini
-appcenter-management-ui/files/ini
-appcenter-authz/files/compose
-appcenter-management/files/compose
-appcenter-management-ui/files/compose
 dist/
 management_service_dir/
 
