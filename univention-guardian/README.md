@@ -48,17 +48,18 @@ This manual step is only necessary until we've implemented [policy distribution 
 |---|---|---|
 | `guardian/cerbos/log-level` | `WARN` | One of `DEBUG`, `INFO`, `WARN`, `ERROR`. Change with `ucr set` then `systemctl restart univention-guardian-server.service`. |
 
-# Outlook
+## Outlook
 
-## How to implement context
+### How to implement context
 
-### Condition and role<->context mapping
+#### Condition and role<->context mapping
 
 Context as a parameter/restriction for roles can be implemented in cerbos as a condition
 
 - Client or UDM needs to provide a role context mapping as part of the
   `principal` data
-  ```
+
+  ```yaml
   attr:
   assignments:
     - role: ouadmin
@@ -68,8 +69,10 @@ Context as a parameter/restriction for roles can be implemented in cerbos as a c
     - role: helpdesk
       context: base.berlin
   ```
+
 - `resourcePolicy` defines rules and derived role
-  ```
+
+  ```yaml
   rules:
     - actions:
         - modify_user
@@ -77,8 +80,10 @@ Context as a parameter/restriction for roles can be implemented in cerbos as a c
       derivedRoles:
         - ouadmin_context
   ```
+
 - `derivedRoles` evaluates "context" condition
-  ```
+
+  ```yaml
   derivedRoles:
     name: udm_derived_roles
       - name: ouadmin_context
@@ -94,10 +99,11 @@ Context as a parameter/restriction for roles can be implemented in cerbos as a c
                   )
   ```
 
-#### Open questions
+##### Open questions
 
 - Provide the role<->context mapping as UDM property to simplify client handling? e.g.
-  ```
+
+  ```python
   class newGuardianRole(complex):
       delimiter = ', '
       subsyntaxes = [(_('Role'), string), (_('Context'), TwoThirdsString)]
@@ -122,16 +128,18 @@ Context as a parameter/restriction for roles can be implemented in cerbos as a c
               new.append([i.decode(*encoding), ' ', ' '])
       return new
   ```
+
 - Provide `roles` UDM property attribute?
 - We could make use of the built-in hierarchy functions if we would convert LDAP position and context to a cerbos scope string: ou=school1.ou=hamburg.dc=base -> dc=base.ou=hamburg.ou=school1
 - Or provide a cerbos/CEL extension for "LDAP" based hierarchy functions
-  ```
+
+  ```text
   ldap("ou=it,ou=bremen,dc=base")
     .descendentOf(
         ldap("ou=bremen,dc=base")
   )
   ```
 
-### Cerbos extension for role<->context mapping
+#### Cerbos extension for role<->context mapping
 
 To Be Discussed
