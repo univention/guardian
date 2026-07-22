@@ -1,7 +1,6 @@
-# Architecture -- Guardian Cerbos PoC
+# Architecture -- Guardian Cerbos Server
 
-**Date:** 2026-06-09
-**Version:** 0.0.1
+**Version:** 1.0.0
 **Type:** Standalone UCS Debian package
 
 ---
@@ -9,19 +8,13 @@
 ## Executive Summary
 
 Standalone UCS package (`univention-guardian-server`) that runs
-[Cerbos](https://docs.cerbos.dev/) as a policy engine on a UCS primary.
-The goal is to evaluate whether Cerbos could replace OPA as Guardian's
-policy backend, **without** touching the existing Guardian services. The
-package ships with a small set of YAML policies translated from
-Guardian's current OPA-based capabilities. Cerbos is reachable on
+[Cerbos](https://docs.cerbos.dev/) as the policy engine on a UCS Server.
+Cerbos is the Guardian's policy backend, replacing the legacy OPA-based
+engine. The package ships with a set of YAML policies translated from
+Guardian's original capabilities. Cerbos is reachable on
 `127.0.0.1:3593` (gRPC, localhost only).
 
-This is a Proof of Concept. It does not change Guardian's
-`authorization-api` / `management-api` / `management-ui` and is not
-intended for production.
-
-Tracking issue:
-[guardian#286](https://git.knut.univention.de/univention/dev/projects/authorization-engine/guardian/-/issues/286).
+Origin: [guardian#286](https://git.knut.univention.de/univention/dev/projects/authorization-engine/guardian/-/issues/286).
 
 ---
 
@@ -61,11 +54,12 @@ container exits.
 
 ## Install
 
-The deb is built and published via CI. On a UCS primary, add the apt
-source for this branch:
+The deb is built and published via CI. For a branch/test build, add the
+per-branch apt source (see [`docs/RELEASING.md`](RELEASING.md); replace the
+branch slug with your branch):
 
 ```sh
-echo "deb [trusted=yes] http://omar.knut.univention.de/build2/git/guardian rowino-cerbos-poc main" \
+echo "deb [trusted=yes] http://omar.knut.univention.de/build2/git/guardian <branch-slug> main" \
   | tee /etc/apt/sources.list.d/guardian.list
 apt update
 apt install -y docker-compose univention-guardian-server
@@ -137,13 +131,13 @@ Edit the template under `/etc/univention/templates/files/…` and
 
 ---
 
-## PoC limitations
+## Current limitations
 
-These are intentional gaps — fine for the PoC, would need to be
-addressed before any production use.
+Known gaps in this release, each tracked for a follow-up:
 
 - **No transport authentication.** Cerbos is bound to localhost only;
-  any caller on the primary can reach it.
+  any caller on the primary can reach it
+  ([guardian#288](https://git.knut.univention.de/univention/dev/projects/authorization-engine/guardian/-/issues/288)).
 - **No primary-role gate** in the deb. Just don't install it on a
   non-primary.
 - **Shipped policies are still replaced on upgrade; custom ones can be

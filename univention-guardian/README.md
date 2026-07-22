@@ -1,16 +1,16 @@
-# univention-guardian-server - Cerbos PoC
+# univention-guardian-server
 
 Standalone UCS package that runs [Cerbos](https://docs.cerbos.dev/) as
-a local policy (PDP) engine on a UCS Server. In it's current configuration,
+a local policy (PDP) engine on a UCS Server. In its current configuration,
 Cerbos exposes two listeners, both bound to `localhost` only:
 
-- `127.0.0.1:3593` — gRPC API
-- `127.0.0.1:3592` — HTTP API
+- `127.0.0.1:3593` - gRPC API
+- `127.0.0.1:3592` - HTTP API
 
-> This is a Proof of Concept. The audience for this README is fellow
-> developers, not operators.
+> The audience for this README is fellow developers, not operators.
 > Design rationale and troubleshooting live in
 > [`docs/generated/architecture-cerbos-server.md`](../docs/generated/architecture-cerbos-server.md).
+> For how to test and release the package, see [`docs/RELEASING.md`](../docs/RELEASING.md).
 
 ## Current limitations
 
