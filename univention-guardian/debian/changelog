@@ -1,5 +1,6 @@
-univention-guardian (0.0.1) unstable; urgency=medium
+univention-guardian (1.0.0) unstable; urgency=medium
 
-  * Bug #0: initial release
+  * Bug #59669: Initial release of the Cerbos-based Guardian server
+    (univention-guardian-server), replacing the legacy OPA-based Guardian.
 
- -- Felix Botner <botner@univention.de>  Wed, 03 Jun 2026 15:56:33 +0200
+ -- Rehema Owino <rehema.owino@univention.de>  Wed, 22 Jul 2026 21:59:56 +0300
