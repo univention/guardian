@@ -6,6 +6,4 @@ from subprocess import call  # nosec B404
 
 
 def postinst(ucr, changes):
-    call(
-        ["/usr/bin/systemctl", "try-restart", "univention-guardian-server"]
-    )  # nosec B603
+    call(['/usr/bin/systemctl', 'try-restart', 'univention-guardian-server'])  # nosec B603
