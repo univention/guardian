@@ -1,5 +1,5 @@
 <!--
-Copyright (C) 2023 Univention GmbH
+Copyright (C) 2023-2026 Univention GmbH
 
 SPDX-License-Identifier: AGPL-3.0-only
 -->
@@ -9,52 +9,39 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 # Guardian
 
-This repository contains various components that make up the Guardian.
+The Guardian is the UCS authorization engine. It is built on
+[Cerbos](https://docs.cerbos.dev/) as the policy decision point (PDP).
 
-The Guardian is the main component of the UCS authorization engine and
-contains the management of roles, permissions, etc. (Guardian Management API) as well as the API for
-querying policy decisions (Guardian Authorization API). The Guardian allows to set up complex attribute based
-access control (ABAC) and enables the integration with various UCS and third party components.
+The release deliverable is the **`univention-guardian-server`** Debian
+package, which runs Cerbos as a systemd-managed container on a UCS server
+and ships a set of YAML policies. It is packaged in `univention-guardian/`
+and shipped through the regular UCS errata release process.
 
-The Guardian manual can be found [here](https://docs.software-univention.de/guardian-manual/latest/index.html).
+> **Migration from OPA:** the Guardian previously used Open Policy Agent
+> (OPA) together with the Authorization/Management APIs and UI. Those
+> OPA-based components have been retired in favour of the Cerbos package.
+> The last commit containing the full OPA source is tagged
+> **`v3.0.9-opa-final`**.
 
-## Project Documentation
+## Documentation
 
-A thorough project documentation including developer guidance can be found at [docs/index.md](docs/index.md).
+- Package overview, installation and UCR variables:
+  [`univention-guardian/README.md`](univention-guardian/README.md)
+- Architecture and design rationale:
+  [`docs/generated/architecture-cerbos-server.md`](docs/generated/architecture-cerbos-server.md)
+- How to test (developer-facing):
+  [`docs/RELEASING.md`](docs/RELEASING.md)
+- Policy test suite and ucs-test integration:
+  [`univention-guardian/tests/README.md`](univention-guardian/tests/README.md)
 
-## Developer reference
+## Quick start
 
-The Guardian developer reference is not yet published anywhere and has to be build locally.
-This can be done by running:
-
-```bash
-docker run -ti --rm -v "$PWD:/project" -w /project -u $UID --network=host --pull always \
-docker-registry.knut.univention.de/sphinx:latest \
-make -C docs/developer-reference/ livehtml
-```
-
-It can now be accessed at http://localhost:8000
-
-Some documentation was not yet migrated to the developer reference and can be found here:
-
-- [Guardian Management API](management-api/README.md)
-- [Guardian Authorization API](authorization-api/README.md)
-- [OPA service](opa/README.md)
-
-The information contained in those README files might be incomplete or faulty and should be migrated
-to the developer reference as soon as possible.
-
-## Development environment and local testing
-
-See [README.dev.md](README.dev.md).
-
-## Running the unit tests
-
-The unit tests are registered as pre-commit hooks but excluded from the default run
-because they are slow. To run them explicitly:
+Install a branch build on a UCS server (see
+[`docs/RELEASING.md`](docs/RELEASING.md) for how branch builds are
+published) and verify Cerbos is serving:
 
 ```bash
-prek run --hook-stage manual --all-files
+apt install univention-guardian-server
+systemctl is-active univention-guardian-server.service   # -> active
+docker ps                                                # cerbos container healthy
 ```
-
-To run a single suite, pass its hook id (e.g. `unittests-management-api`).
