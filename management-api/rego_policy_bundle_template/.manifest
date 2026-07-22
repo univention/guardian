@@ -1,7 +1,0 @@
-{
-  "roots": [
-    "univention",
-    "guardian/conditions"
-  ]
-}
-
