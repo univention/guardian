@@ -1,0 +1,36 @@
+[Application]
+ID = univention-guardian
+Code = 52
+Name = Univention Guardian
+Version = 1.0.0
+SupportedUcsVersions = 5.2-0
+License = free
+WithoutRepository = True
+NotifyVendor = False
+Description = Cerbos-based authorization engine for UCS.
+LongDescription = <p>
+	The Univention Guardian is the authorization engine for UCS. This app
+	installs the univention-guardian-server package, which runs Cerbos as a
+	local policy decision point (PDP) and ships a set of policies. Other apps
+	can depend on this component to use a ready-to-run policy engine.
+	</p>
+Categories = UCS components
+Contact = sales@univention.de
+NotificationEmail = appcenter-reporting@univention.de
+Maintainer = Univention GmbH
+WebsiteMaintainer = https://www.univention.com/
+DefaultPackages = univention-guardian-server
+ServerRole = domaincontroller_master, domaincontroller_backup
+AppCategories = Security
+
+[de]
+Name = Univention Guardian
+Description = Cerbos-basierte Autorisierungs-Engine für UCS.
+LongDescription = <p>
+	Der Univention Guardian ist die Autorisierungs-Engine für UCS. Diese App
+	installiert das Paket univention-guardian-server, das Cerbos als lokalen
+	Policy Decision Point (PDP) betreibt und einen Satz Richtlinien mitbringt.
+	Andere Apps können diese Komponente als Abhängigkeit nutzen, um eine
+	einsatzbereite Richtlinien-Engine zu verwenden.
+	</p>
+WebsiteMaintainer = https://www.univention.de/
