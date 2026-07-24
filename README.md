@@ -15,7 +15,10 @@ The Guardian is the UCS authorization engine. It is built on
 The release deliverable is the **`univention-guardian-server`** Debian
 package, which runs Cerbos as a systemd-managed container on a UCS server
 and ships a set of YAML policies. It is packaged in `univention-guardian/`
-and shipped through the regular UCS errata release process.
+and shipped through the regular UCS errata release process. It is also
+published as the `univention-guardian` App Center **component App** (a
+package-based app that installs the errata package), so other apps can
+depend on it via `RequiredAppsInDomain = univention-guardian`.
 
 > **Migration from OPA:** the Guardian previously used Open Policy Agent
 > (OPA) together with the Authorization/Management APIs and UI. Those
@@ -33,6 +36,8 @@ and shipped through the regular UCS errata release process.
   [`docs/RELEASING.md`](docs/RELEASING.md)
 - Policy test suite and ucs-test integration:
   [`univention-guardian/tests/README.md`](univention-guardian/tests/README.md)
+- App Center component App definition:
+  [`appcenter-guardian/ini`](appcenter-guardian/ini)
 
 ## Quick start
 
