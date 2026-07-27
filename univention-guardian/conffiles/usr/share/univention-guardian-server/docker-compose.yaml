@@ -23,8 +23,9 @@ services:
     command: ["server", "--log-level=@%@guardian/cerbos/log-level@%@", "--config=/config/cerbos.yaml"]
     restart: unless-stopped
     networks:
-      - guardian-internal
+      - guardian
 
 networks:
-  guardian-internal:
-    driver: bridge
+  # Created by the systemd unit, so consumers can join it while Cerbos is down.
+  guardian:
+    external: true

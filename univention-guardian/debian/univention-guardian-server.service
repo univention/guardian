@@ -8,6 +8,9 @@ WantedBy=multi-user.target
 
 [Service]
 Type=simple
+ExecStartPre=/usr/share/univention-guardian-server/ensure-network.sh
+ExecStartPre=-/usr/bin/docker network rm univention-guardian-server_guardian-internal
+ExecStartPre=-/etc/security/packetfilter.d/60_univention-guardian-server.sh
 ExecStart=/usr/bin/docker-compose -f /usr/share/univention-guardian-server/docker-compose.yaml -p univention-guardian-server up --no-build
 ExecStop=/usr/bin/docker-compose -f /usr/share/univention-guardian-server/docker-compose.yaml -p univention-guardian-server down --remove-orphans
 Restart=on-failure

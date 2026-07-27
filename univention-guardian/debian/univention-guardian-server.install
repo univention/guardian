@@ -1,3 +1,5 @@
 policies/default	usr/share/univention-guardian-server/policies/
 policies/examples	usr/share/univention-guardian-server/policies/
 listener/src/cerbos-policies.py	usr/lib/univention-directory-listener/system/
+packetfilter/60_univention-guardian-server.sh	etc/security/packetfilter.d/
+scripts/ensure-network.sh	usr/share/univention-guardian-server/

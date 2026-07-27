@@ -15,6 +15,8 @@ Depends:
  ${shlibs:Depends},
  docker-compose,
  univention-directory-listener,
+ docker.io | docker-ce,
+ iptables,
 Description: Cerbos policy engine for UCS
  This package installs Cerbos as a policy engine on a UCS primary.
  .
