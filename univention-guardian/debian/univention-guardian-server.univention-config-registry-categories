@@ -1,0 +1,4 @@
+[service-guardian]
+name[de]=Dienst: Univention Guardian
+name[en]=Service: Univention Guardian
+icon=service-guardian.gif

@@ -14,6 +14,18 @@ case "$1" in
             pull --quiet || true
 
         systemctl try-restart univention-directory-listener || true
+
+        # Make 'cerbos' resolve on the host, as it already does inside the network.
+        names="$(univention-config-registry get hosts/static/127.0.0.1 || true)"
+        case " $names " in
+            *" cerbos "*) ;;
+            *) univention-config-registry set "hosts/static/127.0.0.1=${names:+$names }cerbos" ;;
+        esac
+
+        # Until 1.0.0 the join script set this in the NORMAL layer, shadowing the default.
+        if [ -n "$2" ] && [ "$(univention-config-registry get guardian/cerbos/url)" = 'http://127.0.0.1:3592' ]; then
+            univention-config-registry unset guardian/cerbos/url
+        fi
         ;;
 esac
 

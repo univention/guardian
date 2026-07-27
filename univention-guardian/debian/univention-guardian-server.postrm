@@ -1,0 +1,25 @@
+#!/bin/sh
+# SPDX-FileCopyrightText: 2026 Univention GmbH
+# SPDX-License-Identifier: AGPL-3.0-only
+
+set -e
+
+case "$1" in
+	remove|purge)
+		if command -v univention-config-registry >/dev/null 2>&1; then
+			names="$(univention-config-registry get hosts/static/127.0.0.1 || true)"
+			rest="$(echo "$names" | tr ' ' '\n' | grep -vx cerbos | xargs || true)"
+			if [ -z "$rest" ]; then
+				univention-config-registry unset hosts/static/127.0.0.1
+			else
+				univention-config-registry set "hosts/static/127.0.0.1=$rest"
+			fi
+		fi
+		iptables -D DOCKER-USER ! -i br-guardian -o br-guardian -j DROP 2>/dev/null || true
+		docker network rm guardian >/dev/null 2>&1 || true
+		;;
+esac
+
+#DEBHELPER#
+
+exit 0

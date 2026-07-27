@@ -1,3 +1,10 @@
+[guardian/cerbos/url]
+Description[en]=HTTP base URL where services discover the Cerbos endpoint. The host name resolves to the loopback interface for native processes and to the Cerbos container for services on the 'guardian' Docker network, so the same value works in both cases.
+Description[de]=HTTP-Basis-URL, unter der Dienste den Cerbos-Endpunkt finden. Der Hostname wird für native Prozesse auf die Loopback-Schnittstelle und für Dienste im Docker-Netzwerk 'guardian' auf den Cerbos-Container aufgelöst, sodass derselbe Wert in beiden Fällen funktioniert.
+Type=str
+Categories=service-guardian
+Default=http://cerbos:3592
+
 [guardian/cerbos/log-level]
 Description[en]=Cerbos log level. One of DEBUG, INFO, WARN, ERROR.
 Description[de]=Cerbos Log-Level. Einer von DEBUG, INFO, WARN, ERROR.
