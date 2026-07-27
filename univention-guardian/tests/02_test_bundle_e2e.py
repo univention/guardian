@@ -33,7 +33,7 @@ import requests
 from univention.config_registry import ucr
 
 
-CERBOS_BASE_URL = 'http://127.0.0.1:3592'
+CERBOS_BASE_URL = ucr.get('guardian/cerbos/url', 'http://cerbos:3592')
 POLICIES_DIR = Path('/usr/share/univention-guardian-server/policies')
 APP_POLICIES_DIR = POLICIES_DIR / 'ucstest_e2e'
 E2E_TIMEOUT = 60.0

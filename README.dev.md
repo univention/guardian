@@ -51,19 +51,15 @@ docker run --rm -v "$PWD/univention-guardian/policies:/policies" \
   ghcr.io/cerbos/cerbos:0.54.0 compile /policies
 ```
 
-## E2E testing on UCS
+## Testing on UCS
 
-Run the integration tests on a UCS VM that has the package installed:
+Run the suite in `univention-guardian/tests/` on a UCS VM that has the package
+installed:
 
 ```sh
 univention-install ucs-test ucs-test-guardian
 ucs-test -E dangerous -s guardian
 ```
-
-| Test | What it tests |
-|---|---|
-| `02_test_bundle_e2e.py::test_e2e_valid_bundle_is_applied` | End-to-end — register a bundle, listener writes it to disk, Cerbos restarts and serves it |
-| `02_test_bundle_e2e.py::test_e2e_invalid_bundle_is_rejected` | A bundle that fails `cerbos compile` is rolled back, logged, and never served |
 
 ## Releasing
 
