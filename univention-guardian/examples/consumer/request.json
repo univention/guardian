@@ -1,0 +1,19 @@
+{
+  "principal": {
+    "id": "alice",
+    "roles": [
+      "user"
+    ]
+  },
+  "resources": [
+    {
+      "actions": [
+        "view"
+      ],
+      "resource": {
+        "id": "r-1",
+        "kind": "document"
+      }
+    }
+  ]
+}

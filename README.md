@@ -17,10 +17,8 @@ registered in LDAP (see [Policies](#policies)). The package is released through 
 process and is also published as the `univention-guardian` App Center component,
 so other apps can depend on it via `RequiredAppsInDomain = univention-guardian`.
 
-Cerbos exposes two listeners, both bound to `localhost` only:
-
-- `127.0.0.1:3593` — gRPC API
-- `127.0.0.1:3592` — HTTP API
+Cerbos exposes an HTTP API on `3592` and a gRPC API on `3593`, reachable from the
+host and from containers on the shared `guardian` Docker network.
 
 > **Migration from OPA.** The Guardian previously used Open Policy Agent (OPA)
 > together with a Management API, an Authorization API and a web UI. Those
@@ -38,6 +36,8 @@ Cerbos exposes two listeners, both bound to `localhost` only:
   layout and design concepts not yet implemented.
 - [`docs/policy-bundles.md`](docs/policy-bundles.md) — how to author and register
   your own policies from another app or package.
+- [`docs/endpoint-access.md`](docs/endpoint-access.md) — how a service reaches the
+  endpoint from a container, an App Center app or an N4K pod.
 - [`README.dev.md`](README.dev.md) — building, testing and releasing the package
   (internal developer workflows).
 
@@ -63,7 +63,7 @@ policies and returns decisions — one expected allow and one expected deny:
 
 ```sh
 # Same-app: alice (guardian:myapp-admin) on a myapp resource -> EFFECT_ALLOW
-curl -s http://127.0.0.1:3592/api/check/resources \
+curl -s "$(ucr get guardian/cerbos/url)/api/check/resources" \
   -H 'Content-Type: application/json' \
   -d '{
   "requestId": "r1",
@@ -76,7 +76,7 @@ curl -s http://127.0.0.1:3592/api/check/resources \
 }'
 
 # Cross-app: same alice on an otherapp resource -> EFFECT_DENY
-curl -s http://127.0.0.1:3592/api/check/resources \
+curl -s "$(ucr get guardian/cerbos/url)/api/check/resources" \
   -H 'Content-Type: application/json' \
   -d '{
   "requestId": "r2",
@@ -89,12 +89,20 @@ curl -s http://127.0.0.1:3592/api/check/resources \
 }'
 ```
 
+## Accessing the Cerbos endpoint
+
+Services read one setting, `guardian/cerbos/url`, and the same value works for a
+native process, a container on the shared `guardian` Docker network and an N4K
+pod. A container has to join that network for the name to resolve. See
+[`docs/endpoint-access.md`](docs/endpoint-access.md).
+
 ## Configuration
 
-The package owns two UCR variables. Setting these will restart Cerbos.
+The package owns three UCR variables. Setting these will restart Cerbos.
 
 | Variable | Default | Notes |
 |---|---|---|
+| `guardian/cerbos/url` | `http://cerbos:3592` | HTTP base URL services use to reach Cerbos, in every deployment target. |
 | `guardian/cerbos/log-level` | `WARN` | One of `DEBUG`, `INFO`, `WARN`, `ERROR`. |
 | `guardian/cerbos/audit-logging/enabled` | `false` | Writes Cerbos access and decision logs to stdout. |
 
@@ -136,8 +144,9 @@ Two constraints of the on-disk model:
 
 ## Current limitations
 
-- **No transport authentication.** Cerbos is bound to localhost only, but any
-  caller on the server can reach it
+- **No transport authentication.** The `guardian` network is the trust boundary:
+  any caller on the server, or in a container on that network, can reach Cerbos
+  and ask it anything. It is not reachable from the LAN
   ([guardian#288](https://git.knut.univention.de/univention/dev/projects/authorization-engine/guardian/-/issues/288)).
 - **No server-role check** in the deb. Install it only on Primary or Backup
   Directory Nodes (the App Center component enforces this; installing the `.deb`

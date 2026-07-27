@@ -1,0 +1,21 @@
+# SPDX-FileCopyrightText: 2026 Univention GmbH
+# SPDX-License-Identifier: AGPL-3.0-only
+
+services:
+  consumer:
+    # Any image with an HTTP client will do; this one keeps the example short.
+    image: curlimages/curl:8.11.1
+    environment:
+      CERBOS_URL: ${CERBOS_URL:?export CERBOS_URL="$(ucr get guardian/cerbos/url)" first}
+    entrypoint:
+      - sh
+      - -c
+      - curl --fail-with-body -sS --json @/request.json "$$CERBOS_URL/api/check/resources"
+    volumes:
+      - ./request.json:/request.json:ro
+    networks:
+      - guardian
+
+networks:
+  guardian:
+    external: true

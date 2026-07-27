@@ -22,7 +22,9 @@ building, testing and releasing, see [`README.dev.md`](../README.dev.md).
 | **Standalone package** on the UCS server | Self-contained: Cerbos runs as a docker-compose stack under systemd, with no runtime dependency on other services. It can be installed and removed cleanly. |
 | **Policies as YAML** under `/usr/share/univention-guardian-server/policies` | Included in the deb, loaded from a single directory. Cerbos's disk driver has no shadow semantics, so a dual-mount split into included and admin-writable directories was not adopted. |
 | **Policy distribution model** | The package includes its own policies in the deb (replaced by `apt upgrade`); apps and other packages distribute their policies across the domain by registering policy bundles in LDAP that the listener installs (see [Policy delivery](#policy-delivery)). |
-| **No transport authentication** | Cerbos binds to `127.0.0.1` only. Authentication is not yet implemented; see [guardian#288](https://git.knut.univention.de/univention/dev/projects/authorization-engine/guardian/-/issues/288). |
+| **No transport authentication** | Membership of the `guardian` network is the trust boundary. Ports are published on the loopback interface, and a `DOCKER-USER` rule drops anything reaching the bridge from elsewhere — Docker otherwise forwards traffic to a published port from any interface, LAN included. Authentication is not yet implemented; see [guardian#288](https://git.knut.univention.de/univention/dev/projects/authorization-engine/guardian/-/issues/288). |
+| **One hostname for the endpoint**, in `guardian/cerbos/url` | `cerbos` resolves to the loopback interface on the host (static hosts entry) and to the container inside the `guardian` network (Docker DNS), so native processes, containers and N4K pods all read the same value. See [guardian#296](https://git.knut.univention.de/univention/dev/projects/authorization-engine/guardian/-/issues/296). |
+| **The systemd unit owns the network**, compose joins it as external | Consumers can start while Cerbos is down, and stopping Cerbos does not try to delete a network they are attached to. |
 | **Service auto-starts** at install | Default `dh_installsystemd` flow; no manual `systemctl` needed. |
 
 ## Component layout
@@ -73,7 +75,8 @@ registration workflow is documented in
 
 ### Transport authentication
 
-Cerbos currently trusts every local caller.
+Cerbos currently trusts every local caller, and every container on the
+`guardian` network.
 
 ### Role-to-context mapping
 
