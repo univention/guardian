@@ -75,7 +75,8 @@ RUN apt-get --assume-yes --verbose-versions --no-install-recommends install \
   && groupadd -r ${USER} -g 1000 \
   && useradd -r -d /app -g ${USER} -N ${USER} -u 1000 \
   && mkdir -p /guardian_service_dir/conf \
-  && touch /guardian_service_dir/conf/m2m.secret
+  && touch /guardian_service_dir/conf/m2m.secret \
+  && chown -R ${USER}:${USER} /guardian_service_dir
 
 COPY --from=build --chmod=555 /usr/local/bin/opa /usr/local/bin/opa
 COPY --from=build --chown=${USER}:${USER} /app/.venv /app/.venv
