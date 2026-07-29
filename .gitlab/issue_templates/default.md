@@ -63,15 +63,15 @@ Technical QA is focused on the code quality and basic runability of the code.
 All Technical QA steps should also be performed by the implementer before handing over to QA.
 
 - [ ] Code review on the merge request:
-  - [ ] Changelogs are present (`README_UPDATE_*`-files and `docs/guardian-manual/changelogs.rst`)
+  - [ ] A changelog entry is present in `univention-guardian/debian/changelog` (with its `Bug #` reference).
   - [ ] Tests sufficiently cover the changed lines of code.
 - [ ] Pipelines pass.
 - [ ] App installation succeeds on a test VM.
 - [ ] App update succeeds on a test VM.
 - [ ] Basic smoke test:
   - [ ] If a service was changed (added, modified) the service is running after the installation and restarting works without problems. If it was removed, it must not be running anymore.
-  - [ ] The apps guardian-management-api, guardian-authorization-api and guardian-management-ui are running.
-  - [ ] Log in to the guardian-management-ui as `Administrator` and try to list some roles, permissions and conditions.
+  - [ ] `univention-guardian-server.service` is active and the `guardian-cerbos` container is healthy (`systemctl is-active univention-guardian-server.service`; `docker ps`).
+  - [ ] Cerbos answers a `CheckResources` request (see "Verify it is working" in the README).
   - [ ] New Cron jobs, listeners, etc. actually run.
   - [ ] Permissions are checked for new files (e.g., a script must be executable, right ownership of directories and created files in regard to data security).
 - [ ] Manual test run:
@@ -79,7 +79,7 @@ All Technical QA steps should also be performed by the implementer before handin
 
 ## Functional QA
 
-Functional QA focuses on the user using the Guardian UI.
+Functional QA focuses on the Guardian's authorization behavior (policy decisions).
 
 - [ ] Post a QA plan on the gitlab issue of what will be tested:
   - [ ] Include a happy path and multiple non-happy path scenarios.
