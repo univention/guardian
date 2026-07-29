@@ -66,4 +66,4 @@ repos:
       stages: [ manual ]
       args: ["--check"]
 
-exclude: ".claude|.opencode|_bmad*"
+exclude: ".claude|.opencode"
