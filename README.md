@@ -56,35 +56,37 @@ component restricts the app to these roles. The systemd unit
 long-lived process and auto-starts at install; `Restart=on-failure` recovers
 from container exits.
 
-### Verify it is working
+### Verify Cerbos is serving decisions
 
-The included example policy grants a principal holding `guardian:<app>-admin`
-full CRUD on the `guardian.management_api` resource kind whose `app_name`
-matches.  The following requests confirm that Cerbos loads policies and returns
-decisions — one expected allow and one expected deny, via `grpcurl`:
+The following requests to Cerbos's HTTP API confirm that it loads
+policies and returns decisions — one expected allow and one expected deny:
 
 ```sh
-# Same-app: alice (guardian:myapp-admin) on a myapp resource -> ALLOW
-grpcurl -plaintext -d '{
+# Same-app: alice (guardian:myapp-admin) on a myapp resource -> EFFECT_ALLOW
+curl -s http://127.0.0.1:3592/api/check/resources \
+  -H 'Content-Type: application/json' \
+  -d '{
   "requestId": "r1",
   "principal": {"id": "alice", "roles": ["guardian:myapp-admin"]},
   "resources": [{
     "resource": {"id": "x", "kind": "guardian.management_api",
-                 "attr": {"app_name": {"stringValue": "myapp"}}},
+                 "attr": {"app_name": "myapp"}},
     "actions": ["read_resource"]
   }]
-}' 127.0.0.1:3593 cerbos.svc.v1.CerbosService/CheckResources
+}'
 
-# Cross-app: same alice on an otherapp resource -> DENY
-grpcurl -plaintext -d '{
+# Cross-app: same alice on an otherapp resource -> EFFECT_DENY
+curl -s http://127.0.0.1:3592/api/check/resources \
+  -H 'Content-Type: application/json' \
+  -d '{
   "requestId": "r2",
   "principal": {"id": "alice", "roles": ["guardian:myapp-admin"]},
   "resources": [{
     "resource": {"id": "y", "kind": "guardian.management_api",
-                 "attr": {"app_name": {"stringValue": "otherapp"}}},
+                 "attr": {"app_name": "otherapp"}},
     "actions": ["read_resource"]
   }]
-}' 127.0.0.1:3593 cerbos.svc.v1.CerbosService/CheckResources
+}'
 ```
 
 ## Configuration
