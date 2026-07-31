@@ -10,7 +10,8 @@ The Guardian is delivered as a standalone UCS Debian package
 (`univention-guardian-server`) that runs [Cerbos](https://docs.cerbos.dev/) as
 the policy engine on a UCS server. Cerbos replaces the legacy OPA-based engine
 and evaluates requests against a set of YAML policies. It is reachable on
-`127.0.0.1:3593` (gRPC) and `127.0.0.1:3592` (HTTP), localhost only.
+`127.0.0.1:3593` (gRPC) and `127.0.0.1:3592` (HTTP), and from containers on the
+shared `guardian` Docker network.
 
 For install and configuration, see the [root README](../README.md); for
 building, testing and releasing, see [`README.dev.md`](../README.dev.md).
@@ -22,7 +23,6 @@ building, testing and releasing, see [`README.dev.md`](../README.dev.md).
 | **Standalone package** on the UCS server | Self-contained: Cerbos runs as a docker-compose stack under systemd, with no runtime dependency on other services. It can be installed and removed cleanly. |
 | **Policies as YAML** under `/usr/share/univention-guardian-server/policies` | Included in the deb, loaded from a single directory. Cerbos's disk driver has no shadow semantics, so a dual-mount split into included and admin-writable directories was not adopted. |
 | **Policy distribution model** | The package includes its own policies in the deb (replaced by `apt upgrade`); apps and other packages distribute their policies across the domain by registering policy bundles in LDAP that the listener installs (see [Policy delivery](#policy-delivery)). |
-| **No transport authentication** | Cerbos binds to `127.0.0.1` only. Authentication is not yet implemented; see [guardian#288](https://git.knut.univention.de/univention/dev/projects/authorization-engine/guardian/-/issues/288). |
 | **Service auto-starts** at install | Default `dh_installsystemd` flow; no manual `systemctl` needed. |
 
 ## Component layout

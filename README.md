@@ -17,10 +17,9 @@ registered in LDAP (see [Policies](#policies)). The package is released through 
 process and is also published as the `univention-guardian` App Center component,
 so other apps can depend on it via `RequiredAppsInDomain = univention-guardian`.
 
-Cerbos exposes two listeners, both bound to `localhost` only:
-
-- `127.0.0.1:3593` — gRPC API
-- `127.0.0.1:3592` — HTTP API
+Cerbos exposes an HTTP API on `3592` and a gRPC API on `3593`, published on the
+host loopback interface and reachable from containers on the shared `guardian`
+Docker network.
 
 > **Migration from OPA.** The Guardian previously used Open Policy Agent (OPA)
 > together with a Management API, an Authorization API and a web UI. Those
@@ -87,6 +86,34 @@ curl -s http://127.0.0.1:3592/api/check/resources \
     "actions": ["read_resource"]
   }]
 }'
+```
+
+## Accessing the Cerbos endpoint
+
+A native host process uses the published loopback port, `http://127.0.0.1:3592`.
+
+A container cannot reach that interface, so it joins the shared `guardian`
+network instead and addresses Cerbos by its DNS name:
+
+```yaml
+# your service's docker-compose.yaml
+services:
+  my-service:
+    environment:
+      CERBOS_URL: http://cerbos:3592
+    networks:
+      - guardian
+networks:
+  guardian:
+    external: true
+```
+
+For a single-container App Center app, set this UCR variable from the app's
+`preinst`, which runs before the container is started. `--network guardian` is
+then added to the container's docker parameters:
+
+```sh
+ucr set appcenter/apps/<app-id>/docker/params='--network guardian'
 ```
 
 ## Configuration
