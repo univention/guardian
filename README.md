@@ -346,8 +346,7 @@ Cerbos. See [`docs/policy-bundles.md`](docs/policy-bundles.md).
 ## Current limitations
 
 - **No transport authentication.** Cerbos is bound to localhost only, but any
-  caller on the server can reach it
-  ([guardian#288](https://git.knut.univention.de/univention/dev/projects/authorization-engine/guardian/-/issues/288)).
+  caller on the server can reach it.
 - **No server-role check** in the deb. Install it only on Primary or Backup
   Directory Nodes (the App Center component enforces this; installing the `.deb`
   directly does not).
