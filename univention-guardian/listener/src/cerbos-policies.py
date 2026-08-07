@@ -223,7 +223,8 @@ class CerbosPoliciesListener(ListenerModuleHandler):
             return f'could not run cerbos compile: {exc}'
         if proc.returncode == 0:
             return None
-        return proc.stderr.strip() or proc.stdout.strip() or f'exit code {proc.returncode}'
+        output = '\n'.join(part for part in (proc.stdout.strip(), proc.stderr.strip()) if part)
+        return output or f'exit code {proc.returncode}'
 
     def _extract_bundle(self, tar_bytes: bytes, staging: Path) -> None:
         """Extract the tar into ``staging``, rejecting members that aren't plain files/dirs or escape it."""
