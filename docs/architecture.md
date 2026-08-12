@@ -71,6 +71,15 @@ registration workflow is documented in
 
 ## Design concepts (not yet implemented)
 
+### Configuration setting for guardian endpoint
+
+We need a configuration for services to retrieve the Cerbos endpoint
+This will be required as soon as a service starts using guardian and
+runs on both deployments, UCS and N4K (such as UDM or the Portal).
+
+Because endpoints will likely differ between deployments, we should simplify
+service integration by providing a standardized configuration.
+
 ### Transport authentication
 
 Cerbos currently trusts every local caller.
