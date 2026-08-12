@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 include:
-  - local: /.gitlab-ci/ai-review.yml
+  - component: $CI_SERVER_FQDN/univention/dev/tooling/ci-components/ai-review@2.10.1
     rules:
       - if: $RUN_RENOVATE != "yes"
   - project: univention/infrastructure/docker-services
