@@ -31,6 +31,45 @@ systemctl is-active univention-guardian-server.service   # -> active
 docker ps                                                # guardian-cerbos healthy
 ```
 
+## UCS package builds on the main branch
+
+Pipeline jobs automatically build the UCS packages `univention-guardian` and
+`ucs-test-guardian` via repo-ng after pushing to `main`.
+
+**You need to bump the version in `univention-guardian/debian/changelog`**
+
+These packages are available in the internal apt repository:
+
+```bash
+deb [trusted=yes] http://omar.knut.univention.de/build2/ ucs_5.2-0-errata5.2-6/all/
+deb [trusted=yes] http://omar.knut.univention.de/build2/ ucs_5.2-0-errata5.2-6/$(ARCH)/
+```
+
+and in the external errata test component, used by the jenkins tests.
+
+The UCS version for the build system can be configured in `.gitlab-ci.yml`.
+
+### New UCS patchlevel version
+
+Update `UCS_VERSION` in `.gitlab-ci.yml` to the new patchlevel version.
+Bump the MINOR version of the debian package version in
+`univention-guardian/debian/changelog` (no release need if that is the only changes).
+
+### New UCS major/minor version
+
+Once we have a new UCS major/minor version, for example `5.3-0`, we need to
+create a new protected branch, for example `5.2`, for updates we might need
+to ship for the old UCS version.
+
+The `main` branch should always be for the newest UCS version.
+
+Update `UCS_VERSION` in `.gitlab-ci.yml` to the new patchlevel version.
+Bump the MAJOR version of the debian package version in
+`univention-guardian/debian/changelog` (no release need if that is the only changes).
+
+And create a new component App version in the provider portal (test App Center)
+for the corresponding UCS version.
+
 ## Linting
 
 Run the hooks defined in `.pre-commit-config.yaml` and apply Ruff autofixes
@@ -63,11 +102,13 @@ ucs-test -E dangerous -s guardian
 ## Releasing
 
 The `.deb` is released like any other UCS package through the regular errata
-process; the release mechanics are not Guardian-specific. It is additionally
-published as the `univention-guardian` App Center component app.
+process; the release mechanics are not Guardian-specific.
 
-Every branch or MR build publishes the `.deb` to a per-branch Aptly repo
-(`debian-aptly`), which is what [Branch builds](#branch-builds) installs from.
+It is additionally published as the `univention-guardian` App Center component app.
+For regular updates we do not need to make any changes on this component App.
+For new minor or major UCS versions we need to create a corresponding App in the
+provider portal (test App Center); see
+[New UCS major/minor version](#new-ucs-majorminor-version).
 
 **Cerbos image.** The package pulls Cerbos from Univention's artifact registry.
 The `mirror-cerbos-image` CI job copies the pinned upstream image there; it runs
