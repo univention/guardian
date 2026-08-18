@@ -3,7 +3,9 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 include:
-  - component: $CI_SERVER_FQDN/univention/dev/tooling/ci-components/ai-review@2.10.1
+  - component: $CI_SERVER_FQDN/univention/dev/tooling/ci-components/ai-review@2.13.1
+    inputs:
+      clear_previous_comments: true
     rules:
       - if: $RUN_RENOVATE != "yes"
   - project: univention/infrastructure/docker-services
