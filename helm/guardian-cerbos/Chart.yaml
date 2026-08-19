@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-FileCopyrightText: 2024 Univention GmbH
+
+---
+
+apiVersion: v2
+name: "guardian-cerbos"
+description: "A Helm chart for the Nubus Guardian Cerbos component"
+type: "application"
+
+version: "0.0.1"
+
+appVersion: "0.54.0"
+
+dependencies:
+  - name: "nubus-common"
+    version: "0.28.0"
+    repository: "oci://artifacts.software-univention.de/nubus/charts"
+...

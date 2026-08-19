@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-FileCopyrightText: 2025 Univention GmbH
+---
+# Guardian service-specific configuration for Kyverno tests
+global:
+  imageRegistry: "registry.kyverno.test"
+  imagePullPolicy: "kyverno"
+
+replicaCount: 42
+
+cerbos:
+  image:
+    registry: "registry.kyverno.test"
+    pullPolicy: "kyverno"

@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-FileCopyrightText: 2024-2026 Univention GmbH
+
+---
+kind: "ConfigMap"
+apiVersion: "v1"
+metadata:
+  name: "{{ include "common.names.fullname" . }}-config"
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels:
+    {{- include "common.labels.standard" ( dict "customLabels" .Values.additionalLabels "context" . ) | nindent 4 }}
+  {{- include "nubus-common.annotations.render" ( dict
+    "values" ( list .Values.additionalAnnotations )
+    "context" . )
+    | nindent 2 }}
+data:
+  # Raw Cerbos configuration, except for storage: the chart mounts the policy
+  # sources and compiles that tree itself, so it owns the driver and directory.
+  # watchForChanges is forced off, so a policy change cannot skip that compile.
+  cerbos.yaml: |
+    {{- $storage := mustFromJson `{"storage": {"driver": "disk", "disk": {"directory": "/policies", "watchForChanges": false}}}` }}
+    {{- mustMergeOverwrite .Values.cerbos.config $storage | toYaml | nindent 4 }}
+...

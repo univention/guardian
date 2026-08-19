@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-FileCopyrightText: 2024-2026 Univention GmbH
+
+{{- if .Values.service.enabled }}
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "{{ include "common.names.fullname" . }}"
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels:
+    {{- include "common.labels.standard" ( dict "customLabels" .Values.additionalLabels "context" . ) | nindent 4 }}
+  {{- include "nubus-common.annotations.render" ( dict
+    "values" ( list .Values.service.annotations .Values.additionalAnnotations )
+    "context" . )
+    | nindent 2 }}
+spec:
+  type: "{{ .Values.service.type }}"
+  ports:
+    - name: "http"
+      port: 3592
+      targetPort: "http"
+      protocol: "TCP"
+    - name: "grpc"
+      port: 3593
+      targetPort: "grpc"
+      protocol: "TCP"
+  selector:
+    {{- include "common.labels.matchLabels" . | nindent 4 }}
+    app.kubernetes.io/component: "server"
+...
+{{- end }}

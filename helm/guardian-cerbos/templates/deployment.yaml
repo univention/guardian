@@ -1,0 +1,189 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-FileCopyrightText: 2024-2026 Univention GmbH
+
+---
+apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
+kind: Deployment
+metadata:
+  name: {{ include "common.names.fullname" . }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels:
+    {{- include "common.labels.standard" ( dict "customLabels" .Values.additionalLabels "context" . ) | nindent 4 }}
+  {{- include "nubus-common.annotations.render" ( dict
+    "values" ( list .Values.additionalAnnotations )
+    "context" . )
+    | nindent 2 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy: {{- include "common.tplvalues.render" (dict "value" .Values.updateStrategy "context" .) | nindent 4 }}
+  selector:
+    matchLabels:
+      {{- include "common.labels.matchLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print .Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/policies: {{ include (print .Template.BasePath "/configmap-policies.yaml") . | sha256sum }}
+        {{- if .Values.podAnnotations }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.podAnnotations "context" .) | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- /* additionalLabels applies to every object, the pod included. Merged
+              rather than appended so a key set in both stays one key, and
+              additionalLabels wins here as it does on every other object. */}}
+        {{- $podTemplateLabels := merge (dict) .Values.additionalLabels (dict "app.kubernetes.io/component" "server") }}
+        {{- include "common.labels.standard" ( dict "customLabels" $podTemplateLabels "context" . ) | nindent 8 }}
+    spec:
+      {{- if or .Values.imagePullSecrets .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range .Values.global.imagePullSecrets }}
+        - name: "{{ . }}"
+        {{ end }}
+        {{- range .Values.imagePullSecrets }}
+        - name: "{{ . }}"
+        {{- end }}
+      {{- end }}
+      {{- if .Values.affinity }}
+      affinity: {{- include "common.tplvalues.render" (dict "value" .Values.affinity "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.tolerations }}
+      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.tolerations "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.topologySpreadConstraints }}
+      topologySpreadConstraints: {{- include "common.tplvalues.render" (dict "value" .Values.topologySpreadConstraints "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.nodeSelector }}
+      nodeSelector: {{- include "common.tplvalues.render" (dict "value" .Values.nodeSelector "context" .) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.podSecurityContext.enabled }}
+      securityContext: {{- omit .Values.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      {{- end }}
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ include "common.names.fullname" . }}
+      {{- end }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
+      {{- if .Values.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      {{- end }}
+      {{- $extensions := concat
+        (default (list) (coalesce .Values.systemExtensions .Values.global.systemExtensions))
+        (default (list) (coalesce .Values.extensions .Values.global.extensions)) }}
+      {{- if or $extensions .Values.cerbos.policyValidation.enabled }}
+      initContainers:
+        {{- range $extensions }}
+        - name: "load-{{ .name }}-extension"
+          {{- if $.Values.containerSecurityContext.enabled }}
+          securityContext: {{- omit $.Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          image: "{{ coalesce .image.registry $.Values.global.imageRegistry }}/{{ .image.repository }}:{{ .image.tag }}"
+          imagePullPolicy: {{ coalesce .image.pullPolicy $.Values.global.imagePullPolicy | quote }}
+          {{- with $.Values.extraEnvVars }}
+          env:
+            {{- . | toYaml | nindent 12 }}
+          {{- end }}
+          {{- /*
+          Not a subPath: the kubelet creates one root-owned after fsGroup, and
+          the loader runs non-root. Mounting the emptyDir root also makes the
+          directory exist, which the loader requires.
+          */}}
+          volumeMounts:
+            - name: "plugin-targets"
+              mountPath: "/target/guardian-policies"
+          {{- if $.Values.resources }}
+          resources: {{- include "common.tplvalues.render" (dict "value" $.Values.resources "context" $) | nindent 12 }}
+          {{- end }}
+        {{- end }}
+        {{- if .Values.cerbos.policyValidation.enabled }}
+        - name: "validate-policies"
+          {{- if .Values.containerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          image: "{{ coalesce .Values.cerbos.image.registry .Values.global.imageRegistry }}/{{ .Values.cerbos.image.repository }}:{{ .Values.cerbos.image.tag }}"
+          imagePullPolicy: {{ coalesce .Values.cerbos.image.pullPolicy .Values.global.imagePullPolicy | quote }}
+          args:
+            - "compile"
+            # Tests belong in CI. This gate has to accept exactly what the
+            # server accepts, and the server never runs them.
+            - "--skip-tests"
+            - "--no-color"
+            - "/policies"
+          env:
+            - name: "CERBOS_NO_TELEMETRY"
+              value: "1"
+            {{- with .Values.extraEnvVars }}
+            {{- . | toYaml | nindent 12 }}
+            {{- end }}
+          {{- if .Values.resources }}
+          resources: {{- include "common.tplvalues.render" (dict "value" .Values.resources "context" .) | nindent 12 }}
+          {{- end }}
+          {{- /* Same tree as the server, or this proves nothing. */}}
+          volumeMounts:
+            - name: "policies"
+              mountPath: "/policies/chart"
+              readOnly: true
+            - name: "plugin-targets"
+              mountPath: "/policies/extensions"
+              readOnly: true
+            {{- if .Values.extraVolumeMounts }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumeMounts "context" .) | nindent 12 }}
+            {{- end }}
+        {{- end }}
+      {{- end }}
+      containers:
+        - name: "cerbos"
+          {{- if .Values.containerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          image: "{{ coalesce .Values.cerbos.image.registry .Values.global.imageRegistry }}/{{ .Values.cerbos.image.repository }}:{{ .Values.cerbos.image.tag }}"
+          imagePullPolicy: {{ coalesce .Values.cerbos.image.pullPolicy .Values.global.imagePullPolicy | quote }}
+          args:
+            - "server"
+            - "--config=/config/cerbos.yaml"
+            - "--log-level={{ .Values.cerbos.logLevel }}"
+          {{- with .Values.extraEnvVars }}
+          env:
+            {{- . | toYaml | nindent 12 }}
+          {{- end }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.livenessProbe "context" .) | nindent 12 }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.readinessProbe "context" .) | nindent 12 }}
+          startupProbe: {{- include "common.tplvalues.render" (dict "value" .Values.startupProbe "context" .) | nindent 12 }}
+          # The Cerbos listen defaults, which cerbos.config leaves unset.
+          ports:
+            - name: "http"
+              containerPort: 3592
+              protocol: "TCP"
+            - name: "grpc"
+              containerPort: 3593
+              protocol: "TCP"
+          {{- if .Values.resources }}
+          resources: {{- include "common.tplvalues.render" (dict "value" .Values.resources "context" .) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.lifecycleHooks }}
+          lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.lifecycleHooks "context" .) | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: "config"
+              mountPath: "/config"
+              readOnly: true
+            - name: "policies"
+              mountPath: "/policies/chart"
+              readOnly: true
+            - name: "plugin-targets"
+              mountPath: "/policies/extensions"
+              readOnly: true
+            {{- if .Values.extraVolumeMounts }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumeMounts "context" .) | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: "config"
+          configMap:
+            name: "{{ include "common.names.fullname" . }}-config"
+        - name: "policies"
+          configMap:
+            name: "{{ include "common.names.fullname" . }}-policies"
+        - name: "plugin-targets"
+          emptyDir: {}
+        {{- if .Values.extraVolumes }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumes "context" .) | nindent 8 }}
+        {{- end }}
+...

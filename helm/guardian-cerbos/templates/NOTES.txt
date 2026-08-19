@@ -1,0 +1,5 @@
+Thank you for installing the Guardian policy engine
+
+You can reach Cerbos in the cluster at
+http://{{ include "common.names.fullname" . }}:3592 (HTTP)
+and {{ include "common.names.fullname" . }}:3593 (gRPC)
