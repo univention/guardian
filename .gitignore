@@ -8,6 +8,13 @@
 .env
 .mypy_cache/
 .yarn
+.idea/
+
+# Helm chart dependencies and generated kyverno test files
+helm/*/charts/
+helm/**/.kyverno/kyverno-test.yaml
+helm/**/.kyverno/manifest.yaml
+
 *.db
 *.temp
 __pycache__/
