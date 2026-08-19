@@ -14,12 +14,15 @@ include:
     rules:
       - if: $RUN_RENOVATE == "yes"
   - project: "univention/dev/nubus-for-k8s/common-ci"
-    ref: "v1.64.0"
+    ref: "v1.67.0"
     file:
       - "defaults/stages.yaml"
       - "defaults/nubus-workflow.yaml"
       - "jobs/lint-pre-commit.yaml"
       - "jobs/lint-commit-messages.yaml"
+      # Helm chart: derive the release version and publish to the OCI registry.
+      - "jobs/semantic-release-env.yaml"
+      - "jobs/package-and-publish-helm-charts-external.yaml"
   # Debian package: per-branch test builds, and release to the UCS errata repo.
   - component: "$CI_SERVER_FQDN/univention/dev/tooling/ci-components/debian-aptly@2.5.2"
     inputs:
@@ -31,7 +34,12 @@ include:
 
 variables:
   UCS_VERSION: "5.2-6"    # bump when starting a new UCS release branch
-  # Keep the following three variables in sync with the Cerbos image in the docker-compose.yaml.
+  # The Cerbos pin lives in three more places; keep these two variables in sync
+  # with all of
+  # one MR.
+  #   univention-guardian/conffiles/.../docker-compose.yaml  image:
+  #   helm/guardian-cerbos/values.yaml                       cerbos.image.tag
+  #   helm/guardian-cerbos/Chart.yaml                        appVersion
   CERBOS_VERSION: "0.54.0"
   CERBOS_TARBALL_SHA256: "68ce48355cf1df125da9ff2b6c0b07d35781155d3aa1707707c381c2e454f156"
   CERBOS_IMAGE_DIGEST: "sha256:211c261f6031675522a35c6055b13fd719c4aff13747307e4bcb6907326537ef"
@@ -57,8 +65,19 @@ lint-pre-commit:
     RUNNER_REGISTRY_IMAGE: "gitregistry.knut.univention.de/univention/dev/tooling/pre-commit/univention-pre-commit"
     RUNNER_IMAGE_TAG: "0.6.2"
 
-# Copy the pinned upstream Cerbos image into the artifact registry
-# Keep in sync with the image in the shipped docker-compose.yaml
+# Unit tests of the Helm chart in helm/guardian-cerbos.
+test-chart-unit:
+  stage: test
+  image: "gitregistry.knut.univention.de/univention/dev/nubus-for-k8s/common-helm/testrunner:0.29.17"
+  needs: []
+  script:
+    - helm dep build helm/guardian-cerbos
+    - pytest tests/chart
+
+# Copy the pinned upstream Cerbos image into the artifact registry, which is the
+# registry both the shipped docker-compose.yaml and the Helm chart pull from.
+# Every file holding the pin has to be listed under rules:changes below, or a
+# bump lands without the escape hatch to pre-populate the registry.
 mirror-cerbos-image:
   stage: build
   image:
@@ -76,6 +95,8 @@ mirror-cerbos-image:
     - if: $CI_COMMIT_REF_PROTECTED == "true"
     - changes:
         - univention-guardian/conffiles/usr/share/univention-guardian-server/docker-compose.yaml
+        - helm/guardian-cerbos/values.yaml
+        - helm/guardian-cerbos/Chart.yaml
         - .gitlab-ci.yml
       when: manual
       allow_failure: true

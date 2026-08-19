@@ -110,13 +110,24 @@ For new minor or major UCS versions we need to create a corresponding App in the
 provider portal (test App Center); see
 [New UCS major/minor version](#new-ucs-majorminor-version).
 
-**Cerbos image.** The package pulls Cerbos from Univention's artifact registry.
-The `mirror-cerbos-image` CI job copies the pinned upstream image there; it runs
-automatically on protected branches and as a manual job on any branch or MR that
-changes the pin. The registry image is shared and immutable, so once a version
-is mirrored it is available to every branch. When updating the version, trigger
-the manual `mirror-cerbos-image` job on the branch pipeline first, then install
-the branch `.deb` on a VM. Update the pin in both
-`univention-guardian/conffiles/usr/share/univention-guardian-server/docker-compose.yaml`
-and the `mirror-cerbos-image` job in `.gitlab-ci.yml`, keeping the digest
-identical.
+**Cerbos image.** Both the package and the Helm chart pull Cerbos from
+Univention's artifact registry. The `mirror-cerbos-image` CI job copies the
+pinned upstream image there; it runs automatically on protected branches and as a
+manual job on any branch or MR that changes the pin. The registry image is shared
+and immutable, so once a version is mirrored it is available to every branch.
+
+The pin is spelled out in four places, and `tests/chart/test_cerbos_image_pin.py`
+fails if they disagree:
+
+| Where | What |
+| --- | --- |
+| `.gitlab-ci.yml` | `CERBOS_VERSION`, `CERBOS_TARBALL_SHA256`, `CERBOS_IMAGE_DIGEST` |
+| `univention-guardian/conffiles/usr/share/univention-guardian-server/docker-compose.yaml` | `image:` |
+| `helm/guardian-cerbos/values.yaml` | `cerbos.image.tag` |
+| `helm/guardian-cerbos/Chart.yaml` | `appVersion` |
+
+When updating the version, change all of them keeping version and digest
+identical, and keep the `rules:changes` list of `mirror-cerbos-image` covering
+every file that holds the pin. Then trigger the manual `mirror-cerbos-image` job
+on the branch pipeline before installing the branch `.deb` on a VM or the chart
+in a cluster -- until the image is mirrored, neither can pull it.
