@@ -1,0 +1,16 @@
+.*.sw?
+.pybuild
+debian/debhelper-build-stamp
+debian/files
+debian/*.debhelper.log
+debian/*.debhelper
+debian/*.substvars
+debian/*/
+!debian/patches/
+cerbos-*.tar.gz
+pyproject.toml
+src/
+tests/
+proto/
+utils/
+pdm.lock

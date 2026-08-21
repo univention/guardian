@@ -1,0 +1,32 @@
+Source: python-cerbos
+Section: univention
+Priority: optional
+Maintainer: Univention GmbH <packages@univention.de>
+Build-Depends:
+ debhelper-compat (=13),
+ dh-python,
+ python3-all,
+ python3-dev,
+ python3-setuptools,
+ ca-certificates,
+ coreutils,
+ quilt,
+ wget,
+ pybuild-plugin-pyproject,
+Standards-Version: 4.3.0.3
+
+Package: python3-cerbos
+Architecture: all
+Depends:
+ ${misc:Depends},
+ ${python3:Depends},
+ python3-grpc-interceptorplus | python3-grpcio,
+Description: Python 3 SDK for the Cerbos policy engine
+ Cerbos is an open core, language-agnostic, scalable authorization solution.
+ This package provides the Python SDK to interact with a Cerbos policy decision
+ point (PDP) over HTTP or gRPC.
+ .
+ It is part of Univention Corporate Server (UCS), an
+ integrated, directory driven solution for managing
+ corporate environments. For more information about UCS,
+ refer to: https://www.univention.de/
