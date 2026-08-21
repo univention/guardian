@@ -51,6 +51,19 @@ workflow:
     - if: $CI_COMMIT_TAG
     - if: $RUN_RENOVATE == "yes"
 
+ # Override the default single-package job
+build-deb:
+  variables:
+    PKG_DIR: univention-guardian
+
+build-client:
+  extends: .build-deb
+  variables:
+    PKG_DIR: python-cerbos
+  needs:
+    - prepare-aptly
+    - build-deb
+
 lint-pre-commit:
   extends: .lint-pre-commit
   variables:
