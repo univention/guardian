@@ -10,7 +10,7 @@ The Guardian is the Nubus authorization engine. It runs
 [Cerbos](https://docs.cerbos.dev/) as the policy decision point (PDP) and
 evaluates access requests against a set of YAML policies.
 
-The release deliverable is the **`univention-guardian-server`** Debian package.
+The release deliverable on UCS is the **`univention-guardian-server`** Debian package.
 It runs Cerbos as a systemd-managed container on a UCS server and includes
 example policies; products deliver their own policies as policy bundles
 registered in LDAP (see [Policies](#policies)). The package is released through the regular UCS errata
@@ -20,6 +20,14 @@ so other apps can depend on it via `RequiredAppsInDomain = univention-guardian`.
 Cerbos exposes an HTTP API on `3592` and a gRPC API on `3593`, published on the
 host loopback interface and reachable from containers on the shared `guardian`
 Docker network.
+
+On Nubus for Kubernetes,
+the same engine is deployed by the **`guardian-cerbos`** Helm chart in
+[`helm/guardian-cerbos/`](helm/guardian-cerbos/),
+a subchart of the Nubus umbrella chart.
+It needs no deployment of its own;
+operators enable it in their Nubus values.
+See [Nubus for Kubernetes](#nubus-for-kubernetes).
 
 > **Migration from OPA.** The Guardian previously used Open Policy Agent (OPA)
 > together with a Management API, an Authorization API and a web UI. Those
@@ -34,11 +42,15 @@ Docker network.
 
 - **This file** - install, operate and configure the package, manage its
   policies, and call it from your own service.
-- [`docs/architecture.md`](docs/architecture.md) — design decisions, component
+- [`docs/architecture.md`](docs/architecture.md): design decisions, component
   layout and design concepts not yet implemented.
-- [`docs/policy-bundles.md`](docs/policy-bundles.md) — how to author and register
+- [`docs/policy-bundles.md`](docs/policy-bundles.md): how to author and register
   your own policies from another app or package.
-- [`README.dev.md`](README.dev.md) — building, testing and releasing the package
+- [`docs/kubernetes-policies.md`](docs/kubernetes-policies.md):
+  every way a policy reaches Cerbos in Nubus for Kubernetes.
+- [`helm/guardian-cerbos/README.md`](helm/guardian-cerbos/README.md):
+  the chart's values, generated from `values.yaml`.
+- [`README.dev.md`](README.dev.md): building, testing and releasing the package
   (internal developer workflows).
 
 ## Installation
@@ -131,6 +143,15 @@ UCR-templated `/usr/share/univention-guardian-server/docker-compose.yaml` and
 `config/cerbos.yaml`.
 
 ## Policies
+
+Policy delivery differs by platform, and neither mechanism exists on the other.
+On UCS, policies are files below
+`/usr/share/univention-guardian-server/policies/`,
+distributed across the domain as LDAP policy bundles;
+that is what this section describes.
+In Nubus for Kubernetes, each source is a mounted subdirectory of `/policies`,
+shipped as a packaged integration — see
+[`docs/kubernetes-policies.md`](docs/kubernetes-policies.md).
 
 Cerbos loads every policy under
 `/usr/share/univention-guardian-server/policies/` recursively. Policies reach a
@@ -226,10 +247,41 @@ Set `guardian/cerbos/log-level` to `DEBUG` for more detail, and
 decisions. Reset both when you finish. Debug logs and audit logs contain
 request payloads.
 
-### Nubus for Kubernetes
+## Nubus for Kubernetes
 
-Nubus for Kubernetes has no Cerbos deployment today. The Guardian package and
-the policy bundle mechanism are available on UCS only.
+The `guardian-cerbos` chart deploys one Cerbos Deployment
+and one ClusterIP Service;
+[`helm/guardian-cerbos/README.md`](helm/guardian-cerbos/README.md)
+documents every value.
+
+### Reach Cerbos from another pod
+
+| | Address |
+|---|---|
+| HTTP | `http://<release>-guardian-cerbos:3592` |
+| gRPC | `<release>-guardian-cerbos:3593` |
+
+The Service is named after the release and the chart,
+so a `nameOverride` changes it;
+`kubectl -n <namespace> get svc` shows the actual name.
+From another namespace, append `.<namespace>.svc.cluster.local`.
+
+Everything [Integrating your service](#integrating-your-service) says applies
+here too, with the client pointed at the Service name instead of `127.0.0.1`.
+Cerbos runs without TLS in the cluster and authenticates nobody,
+so any pod that reaches either port can ask for any decision;
+restrict access with a NetworkPolicy if the cluster does not already.
+
+### Load policies into Cerbos
+
+The chart ships no policies of its own, and Cerbos denies by default,
+so a fresh deployment authorizes nothing.
+The primary way to ship a policy set is a
+[packaged integration](https://docs.software-univention.de/nubus-customization/1.x/en/packaged-integrations/overview.html)
+carrying policy files under the `guardian-policies` plugin type,
+the Kubernetes counterpart of the LDAP policy bundles used on UCS.
+The chart values and another component's ConfigMap are the other two ways;
+[`docs/kubernetes-policies.md`](docs/kubernetes-policies.md) covers all three.
 
 ## Integrating your service
 
@@ -237,8 +289,11 @@ Your service is the policy enforcement point (PEP). It collects the facts about
 a request and asks Cerbos, the policy decision point (PDP), for a decision. Your
 service then enforces that decision.
 
-Cerbos binds to `localhost` only. Your service must run on the same UCS server
-as the Guardian package. There is no remote access to the PDP.
+On UCS, Cerbos binds to `localhost` only.
+Your service must run on the same UCS server as the Guardian package;
+there is no remote access to the PDP.
+In a cluster it is the Service that scopes access instead — see
+[Reach Cerbos from another pod](#reach-cerbos-from-another-pod).
 
 ### Choose a client
 
@@ -343,10 +398,15 @@ Package your policies as a policy bundle and register them from your join
 script. The listener then installs them on every server in the domain that runs
 Cerbos. See [`docs/policy-bundles.md`](docs/policy-bundles.md).
 
+In Nubus for Kubernetes, ship them as a packaged integration instead:
+[`docs/kubernetes-policies.md`](docs/kubernetes-policies.md).
+
 ## Current limitations
 
 - **No transport authentication.** Cerbos is bound to localhost only, but any
   caller on the server can reach it.
+  In a cluster the Service is reachable from any pod,
+  and the chart ships no NetworkPolicy to narrow that.
 - **No server-role check** in the deb. Install it only on Primary or Backup
   Directory Nodes (the App Center component enforces this; installing the `.deb`
   directly does not).

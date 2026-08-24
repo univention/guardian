@@ -79,6 +79,12 @@ locally:
 prek run -a && ruff check --fix
 ```
 
+To run them in the same image the pipeline uses, without installing anything:
+
+```sh
+docker compose run pre-commit
+```
+
 ## Compiling and testing policies
 
 Run a local `cerbos compile` from the repo root to check correctness of policies.
@@ -116,12 +122,11 @@ pinned upstream image there; it runs automatically on protected branches and as 
 manual job on any branch or MR that changes the pin. The registry image is shared
 and immutable, so once a version is mirrored it is available to every branch.
 
-The pin is spelled out in four places, and `tests/chart/test_cerbos_image_pin.py`
-fails if they disagree:
+The pin is spelled out in four places, which have to agree:
 
 | Where | What |
 | --- | --- |
-| `.gitlab-ci.yml` | `CERBOS_VERSION`, `CERBOS_TARBALL_SHA256`, `CERBOS_IMAGE_DIGEST` |
+| `.gitlab-ci.yml` | `CERBOS_VERSION`, `CERBOS_IMAGE_DIGEST` |
 | `univention-guardian/conffiles/usr/share/univention-guardian-server/docker-compose.yaml` | `image:` |
 | `helm/guardian-cerbos/values.yaml` | `cerbos.image.tag` |
 | `helm/guardian-cerbos/Chart.yaml` | `appVersion` |

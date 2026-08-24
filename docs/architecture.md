@@ -69,6 +69,15 @@ restart is required for any policy change to take effect. The authoring and
 registration workflow is documented in
 [`policy-bundles.md`](policy-bundles.md).
 
+On Nubus for Kubernetes,
+the `guardian-cerbos` chart mounts each policy source
+as its own subdirectory below `/policies`
+and compiles the whole tree in an init container before the server starts.
+There is no listener and no LDAP bundle there;
+a packaged integration carries the policy files instead.
+The per-source subdirectory layout is the same on both platforms.
+See [`kubernetes-policies.md`](kubernetes-policies.md).
+
 ## Design concepts (not yet implemented)
 
 ### Configuration setting for guardian endpoint
