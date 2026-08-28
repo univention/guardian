@@ -8,7 +8,7 @@ variables:
   UV_LINK_MODE: copy
   DEBIAN_PACKAGE: python-cerbos
   DEBIAN_RELEASE: ${DEBIAN_RELEASE:-5.2-0-0}
-  DEBIAN_SCOPE: ${DEBIAN_SCOPE:-errata5.2-3}
+  DEBIAN_SCOPE: ${DEBIAN_SCOPE:-errata5.2-6}
 
 stages:
   - build
