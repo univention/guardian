@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-# SPDX-FileCopyrightText: 2024 Univention GmbH
+# SPDX-FileCopyrightText: 2026 Univention GmbH
 
 ---
-## Global values
+# -- Global values, shared with the umbrella chart and its other subcharts.
 global:
   # -- Allows to configure extensions globally.
   extensions: []
@@ -42,7 +42,7 @@ additionalLabels: {}
 # Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
 affinity: {}
 
-# Security Context.
+# -- Security Context.
 # Cerbos ships as a "scratch" image and runs as the fixed guardian-server uid/gid 64110.
 # Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 containerSecurityContext:
@@ -52,6 +52,7 @@ containerSecurityContext:
   allowPrivilegeEscalation: false
   # -- Security capabilities for container.
   capabilities:
+    # -- List of capabilities to be dropped.
     drop:
       - "ALL"
   # -- Enable security context.
@@ -64,7 +65,7 @@ containerSecurityContext:
   runAsNonRoot: true
   # -- Mounts the container's root filesystem as read-only.
   readOnlyRootFilesystem: true
-  # Set Seccomp profile.
+  # -- Set Seccomp profile.
   seccompProfile:
     # -- Disallow custom Seccomp profile by setting it to RuntimeDefault.
     type: "RuntimeDefault"
@@ -121,7 +122,7 @@ imagePullSecrets: []
 # -- Lifecycle to automate configuration before or after startup.
 lifecycleHooks: {}
 
-#  Configure extra options for containers probes.
+# -- Configure extra options for container liveness probes.
 livenessProbe:
   # -- Number of failed executions until container is terminated.
   failureThreshold: 10
@@ -135,7 +136,9 @@ livenessProbe:
   timeoutSeconds: 5
   # -- The Cerbos health endpoint.
   httpGet:
+    # -- Path of the health endpoint.
     path: "/_cerbos/health"
+    # -- Port the health endpoint is served on.
     port: "http"
 
 # -- String to partially override release name.
@@ -148,7 +151,7 @@ nodeSelector: {}
 # -- Pod Annotations.
 podAnnotations: {}
 
-# Pod Security Context.
+# -- Pod Security Context.
 # Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 podSecurityContext:
   # -- Enable security context.
@@ -160,7 +163,7 @@ podSecurityContext:
   # -- Change ownership and permission of the volume before being exposed inside a Pod.
   fsGroupChangePolicy: "Always"
 
-#  Configure extra options for containers probes.
+# -- Configure extra options for container startup probes.
 readinessProbe:
   # -- Number of failed executions until container is terminated.
   failureThreshold: 10
@@ -174,29 +177,31 @@ readinessProbe:
   timeoutSeconds: 5
   # -- The Cerbos health endpoint.
   httpGet:
+    # -- Path of the health endpoint.
     path: "/_cerbos/health"
+    # -- Port the health endpoint is served on.
     port: "http"
 
 # -- Set the amount of replicas of deployment.
 replicaCount: 1
 
-# Configure resource requests and limits.
+# -- Configure resource requests and limits.
 #
 # Ref: https://kubernetes.io/docs/user-guide/compute-resources/
 resources:
+  # -- Resources the container is guaranteed and scheduled with.
   requests:
     # -- CPU the container is guaranteed and scheduled with.
     cpu: "100m"
     # -- Memory the container is guaranteed and scheduled with.
     memory: "128Mi"
+  # -- Resource ceilings the container is held to.
   limits:
     # -- Memory ceiling, above which the container is OOM-killed. No CPU limit
     # is set, so policy compilation may burst above the request.
     memory: "512Mi"
 
-# Define and create Kubernetes Service.
-#
-# Ref.: https://kubernetes.io/docs/concepts/services-networking/service
+# -- Kubernetes Service for the Cerbos ports.
 service:
   # -- Additional custom annotations.
   annotations: {}
@@ -206,6 +211,8 @@ service:
   type: "ClusterIP"
   # The ports are fixed at the Cerbos defaults, 3592 (HTTP) and 3593 (gRPC).
 
+# -- Service account the pod runs under.
+# Ref.: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
 serviceAccount:
   # -- Specifies whether a service account should be created.
   create: true
@@ -216,7 +223,7 @@ serviceAccount:
   # Kubernetes API.
   automountServiceAccountToken: false
 
-#  Configure extra options for containers probes.
+# -- Configure extra options for container probes.
 startupProbe:
   # -- Number of failed executions until container is terminated.
   failureThreshold: 10
@@ -230,7 +237,9 @@ startupProbe:
   timeoutSeconds: 5
   # -- The Cerbos health endpoint.
   httpGet:
+    # -- Path of the health endpoint.
     path: "/_cerbos/health"
+    # -- Port the health endpoint is served on.
     port: "http"
 
 # -- Allows to configure the system extensions to load. This is intended for
@@ -255,7 +264,7 @@ tolerations: []
 #     whenUnsatisfiable: DoNotSchedule
 topologySpreadConstraints: []
 
-# Set up update strategy.
+# -- Configure the update strategy.
 #
 # Ref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy
 #
@@ -269,9 +278,9 @@ updateStrategy:
   # -- Deployment update strategy, one of "RollingUpdate" or "Recreate".
   type: "RollingUpdate"
 
-# Cerbos policy engine configuration.
+# -- Cerbos policy engine configuration.
 cerbos:
-  # Container image section.
+  # -- Container image section.
   image:
     # -- Container registry address. Higher precedence than global.imageRegistry.
     registry: ""
@@ -282,6 +291,7 @@ cerbos:
     # -- Container image tag.
     tag: "0.54.0@sha256:211c261f6031675522a35c6055b13fd719c4aff13747307e4bcb6907326537ef"
 
+  # -- Policy validation before the server starts.
   policyValidation:
     # -- Run `cerbos compile` in an init container before the server starts, so
     # an invalid policy tree stalls the rollout instead of crash-looping Cerbos.
@@ -297,16 +307,31 @@ cerbos:
   #
   # Ref: https://docs.cerbos.dev/cerbos/latest/configuration/index.html
   config:
+    # -- Cerbos server block.
+    # Ref: https://docs.cerbos.dev/cerbos/latest/configuration/server
     server:
+      # -- Serve the policy playground from the server. Off: it evaluates
+      # arbitrary policies supplied by the caller.
       playgroundEnabled: false
+      # -- Serve the interactive API explorer. Off: it is a documentation UI on
+      # an endpoint that answers authorization questions.
       apiExplorerEnabled: false
+      # -- Ceilings on a single check request, so one caller cannot ask for an
+      # unbounded amount of evaluation.
       requestLimits:
+        # -- Maximum actions asked about per resource.
         maxActionsPerResource: 500
+        # -- Maximum resources asked about per request.
         maxResourcesPerRequest: 500
+    # -- Cerbos schema block.
+    # Ref: https://docs.cerbos.dev/cerbos/latest/configuration/schema
     schema:
-      # One of "none", "warn", "reject".
+      # -- What a request that violates an attribute schema does, one of
+      # "none", "warn" or "reject".
       enforcement: "reject"
+    # -- Cerbos telemetry block.
     telemetry:
+      # -- Report anonymous usage statistics upstream.
       disabled: true
 
   # -- Policies supplied through this chart, one file per key, mounted at
