@@ -2,5 +2,54 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "local>univention/dev/nubus-for-k8s/common-renovate#v1.7.1"
+  ],
+
+  // The Cerbos pin is spelled out in four files and has to move as one. Two of
+  // the four are invisible to the built-in managers, so all four are declared
+  // here instead -- against the upstream image, because the mirror registry
+  // only ever holds versions this repository has already asked for.
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "The Cerbos pin",
+      "managerFilePatterns": [
+        "/^\\.gitlab-ci\\.yml$/",
+        "/^helm/guardian-cerbos/(Chart|values)\\.yaml$/",
+        "/^univention-guardian/conffiles/.*/docker-compose\\.yaml$/"
+      ],
+      "matchStrings": [
+        "CERBOS_VERSION: \"(?<currentValue>[^\"]+)\"[\\s\\S]*?CERBOS_IMAGE_DIGEST: \"(?<currentDigest>sha256:[0-9a-f]{64})\"",
+        "appVersion: \"(?<currentValue>[^\"]+)\"",
+        "tag: \"(?<currentValue>[^\"@]+)@(?<currentDigest>sha256:[0-9a-f]{64})\"",
+        "cerbos:(?<currentValue>[^\"@\\s]+)@(?<currentDigest>sha256:[0-9a-f]{64})"
+      ],
+      "depNameTemplate": "ghcr.io/cerbos/cerbos",
+      "datasourceTemplate": "docker"
+    }
+  ],
+
+  "packageRules": [
+    {
+      "description": "The custom manager owns the Cerbos pin, so the built-ins stay off it",
+      "matchManagers": [
+        "helm-values",
+        "docker-compose"
+      ],
+      "matchFileNames": [
+        "helm/guardian-cerbos/values.yaml",
+        "univention-guardian/conffiles/usr/share/univention-guardian-server/docker-compose.yaml"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "appVersion is a bare version string and takes no digest",
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchFileNames": [
+        "helm/guardian-cerbos/Chart.yaml"
+      ],
+      "pinDigests": false
+    }
   ]
 }

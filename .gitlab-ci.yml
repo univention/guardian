@@ -34,8 +34,9 @@ include:
 
 variables:
   UCS_VERSION: "5.2-6"    # bump when starting a new UCS release branch
-  # The Cerbos pin lives in three more places; keep these two variables in sync
-  # with all of them in one MR.
+  # The Cerbos pin lives in three more places;
+  # keep these two variables in sync with all of them.
+  # The custom managers in renovate.json5 bump all four in one MR.
   #   univention-guardian/conffiles/.../docker-compose.yaml  image:
   #   helm/guardian-cerbos/values.yaml                       cerbos.image.tag
   #   helm/guardian-cerbos/Chart.yaml                        appVersion
