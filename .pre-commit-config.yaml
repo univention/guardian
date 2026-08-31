@@ -41,6 +41,30 @@ repos:
       require_serial: true
       args:
         - --chart-search-root=helm
+- repo: "https://git.knut.univention.de/univention/infrastructure/pre-commit-hooks/ensure-helm-docs"
+  rev: "v0.0.1"
+  hooks:
+    - id: "ensure-helm-docs"
+      name: "helm-ensure-helm-docs"
+      description: >-
+        Fails on a key in values.yaml that helm-docs would leave out of the
+        generated README.
+      # The hook ships as pre-commit only; the CI job runs the manual stage.
+      stages: [ pre-commit, manual ]
+- repo: "https://github.com/Y0-L0/helm-snoop"
+  rev: "v0.7.0"
+  hooks:
+    - id: "helm-snoop"
+      name: "helm-snoop"
+      description: >-
+        Detects values that no template reads and template references that no
+        values.yaml declares. Known false positives are listed in
+        .helm-snoop.yaml.
+      files: "^helm/.+/(Chart\\.yaml|values\\.yaml|values/.+\\.yaml|templates/.+)$"
+      # Needs the helm-snoop binary on PATH, which the Univention dev image and
+      # the CI pre-commit image both ship. Swap to "helm-snoop-docker" if you
+      # would rather use Docker.
+      stages: [ pre-commit, manual ]
 - repo: "https://git.knut.univention.de/univention/dev/tooling/kyverno-test-pre-commit"
   rev: "v0.5.0"
   hooks:

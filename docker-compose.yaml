@@ -1,0 +1,36 @@
+---
+# SPDX-FileCopyrightText: 2026 Univention GmbH
+# SPDX-License-Identifier: AGPL-3.0-only
+
+# Development environment. Not to be confused with the docker-compose.yaml
+# under univention-guardian/conffiles/, which is runtime configuration shipped
+# by the Debian package.
+
+services:
+  test-chart:
+    image: "gitregistry.knut.univention.de/univention/dev/nubus-for-k8s/common-helm/testrunner:0.29.18"
+    working_dir: "/app/"
+    command: "pytest tests/chart"
+    profiles:
+      - "test"
+    volumes:
+      - "./helm/:/app/helm/"
+      - "./tests/chart/:/app/tests/chart"
+
+  # Environment of the pre-commit linter.
+  pre-commit:
+    profiles:
+      - "pre-commit"
+    image: "gitregistry.knut.univention.de/univention/dev/tooling/pre-commit/univention-pre-commit:0.7.0"
+    volumes:
+      - type: "bind"
+        source: "."
+        target: "/code"
+      - type: "volume"
+        # pre-commit installs dependencies, having them cached speeds things up
+        # a lot.
+        source: "pre-commit-cache"
+        target: "/cache"
+
+volumes:
+  pre-commit-cache: {}

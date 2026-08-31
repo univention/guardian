@@ -14,7 +14,7 @@ include:
     rules:
       - if: $RUN_RENOVATE == "yes"
   - project: "univention/dev/nubus-for-k8s/common-ci"
-    ref: "v1.67.0"
+    ref: "v1.67.3"
     file:
       - "defaults/stages.yaml"
       - "defaults/nubus-workflow.yaml"
@@ -35,13 +35,11 @@ include:
 variables:
   UCS_VERSION: "5.2-6"    # bump when starting a new UCS release branch
   # The Cerbos pin lives in three more places; keep these two variables in sync
-  # with all of
-  # one MR.
+  # with all of them in one MR.
   #   univention-guardian/conffiles/.../docker-compose.yaml  image:
   #   helm/guardian-cerbos/values.yaml                       cerbos.image.tag
   #   helm/guardian-cerbos/Chart.yaml                        appVersion
   CERBOS_VERSION: "0.54.0"
-  CERBOS_TARBALL_SHA256: "68ce48355cf1df125da9ff2b6c0b07d35781155d3aa1707707c381c2e454f156"
   CERBOS_IMAGE_DIGEST: "sha256:211c261f6031675522a35c6055b13fd719c4aff13747307e4bcb6907326537ef"
   RUN_RENOVATE:
     value: "no"
@@ -59,16 +57,10 @@ workflow:
     - if: $CI_COMMIT_TAG
     - if: $RUN_RENOVATE == "yes"
 
-lint-pre-commit:
-  extends: .lint-pre-commit
-  variables:
-    RUNNER_REGISTRY_IMAGE: "gitregistry.knut.univention.de/univention/dev/tooling/pre-commit/univention-pre-commit"
-    RUNNER_IMAGE_TAG: "0.6.2"
-
 # Unit tests of the Helm chart in helm/guardian-cerbos.
 test-chart-unit:
   stage: test
-  image: "gitregistry.knut.univention.de/univention/dev/nubus-for-k8s/common-helm/testrunner:0.29.17"
+  image: "gitregistry.knut.univention.de/univention/dev/nubus-for-k8s/common-helm/testrunner:0.29.18"
   needs: []
   script:
     - helm dep build helm/guardian-cerbos
@@ -110,32 +102,18 @@ mirror-cerbos-image:
 # Compile and test the shipped Guardian policies with the pinned Cerbos binary.
 # This is the policy-correctness gate: it compiles every policy and runs the
 # native tests in policies/tests/. (Only executes if there are changes to the
-# policies dir.) The binary is downloaded once, checksum-verified, and cached
-# per version. Keep CERBOS_VERSION in sync with the shipped docker-compose.yaml.
+# policies dir.) The binary comes from the pre-commit image, which copies it out
+# of the same upstream image CERBOS_IMAGE_DIGEST pins.
 compile-policies:
+  # Inherited for its image only, the pre-commit one carrying the cerbos
+  # binary; stage, cache, rules and script are all replaced below.
+  extends: ".lint-pre-commit"
   stage: test
-  image:
-    name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/library/debian:stable-slim
+  cache: []
   variables:
-    CERBOS_TARBALL: "cerbos_${CERBOS_VERSION}_Linux_x86_64.tar.gz"
     CERBOS_NO_TELEMETRY: "1"
-  cache:
-    key: "cerbos-${CERBOS_VERSION}"
-    paths:
-      - .cerbos-bin/
   rules:
     - changes:
         - univention-guardian/policies/**/*
   script:
-    - |
-      set -eu
-      if [ ! -x .cerbos-bin/cerbos ]; then
-        apt-get update
-        apt-get install -y --no-install-recommends curl ca-certificates
-        mkdir -p .cerbos-bin
-        curl -fsSL -o /tmp/cerbos.tar.gz \
-          "https://github.com/cerbos/cerbos/releases/download/v${CERBOS_VERSION}/${CERBOS_TARBALL}"
-        echo "${CERBOS_TARBALL_SHA256}  /tmp/cerbos.tar.gz" | sha256sum -c -
-        tar -xzf /tmp/cerbos.tar.gz -C .cerbos-bin cerbos
-      fi
-    - .cerbos-bin/cerbos compile --no-color univention-guardian/policies
+    - cerbos compile --no-color univention-guardian/policies
