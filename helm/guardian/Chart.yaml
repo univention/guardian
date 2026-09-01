@@ -4,11 +4,11 @@
 ---
 
 apiVersion: v2
-name: "guardian-cerbos"
-description: "A Helm chart for the Nubus Guardian Cerbos component"
+name: "guardian"
+description: "A Helm chart for the Nubus Guardian component"
 type: "application"
 
-version: "0.0.1"
+version: "1.0.0"
 
 appVersion: "0.54.0"
 

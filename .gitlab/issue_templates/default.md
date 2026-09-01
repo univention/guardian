@@ -70,7 +70,7 @@ All Technical QA steps should also be performed by the implementer before handin
 - [ ] App update succeeds on a test VM.
 - [ ] Basic smoke test:
   - [ ] If a service was changed (added, modified) the service is running after the installation and restarting works without problems. If it was removed, it must not be running anymore.
-  - [ ] `univention-guardian-server.service` is active and the `guardian-cerbos` container is healthy (`systemctl is-active univention-guardian-server.service`; `docker ps`).
+  - [ ] `univention-guardian-server.service` is active and the `cerbos` container is healthy (`systemctl is-active univention-guardian-server.service`; `docker ps`).
   - [ ] Cerbos answers a `CheckResources` request (see "Verify it is working" in the README).
   - [ ] New Cron jobs, listeners, etc. actually run.
   - [ ] Permissions are checked for new files (e.g., a script must be executable, right ownership of directories and created files in regard to data security).

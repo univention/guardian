@@ -28,7 +28,7 @@ apt update
 apt install -y univention-guardian-server
 
 systemctl is-active univention-guardian-server.service   # -> active
-docker ps                                                # guardian-cerbos healthy
+docker ps                                                # cerbos healthy
 ```
 
 ## UCS package builds on the main branch
@@ -128,8 +128,8 @@ The pin is spelled out in four places, which have to agree:
 | --- | --- |
 | `.gitlab-ci.yml` | `CERBOS_VERSION`, `CERBOS_IMAGE_DIGEST` |
 | `univention-guardian/conffiles/usr/share/univention-guardian-server/docker-compose.yaml` | `image:` |
-| `helm/guardian-cerbos/values.yaml` | `cerbos.image.tag` |
-| `helm/guardian-cerbos/Chart.yaml` | `appVersion` |
+| `helm/guardian/values.yaml` | `cerbos.image.tag` |
+| `helm/guardian/Chart.yaml` | `appVersion` |
 
 When updating the version, change all of them keeping version and digest
 identical, and keep the `rules:changes` list of `mirror-cerbos-image` covering

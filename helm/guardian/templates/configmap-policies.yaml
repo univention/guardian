@@ -5,7 +5,7 @@
 kind: "ConfigMap"
 apiVersion: "v1"
 metadata:
-  name: "{{ include "common.names.fullname" . }}-policies"
+  name: "{{ include "guardian.fullname" . }}-policies"
   namespace: {{ include "common.names.namespace" . | quote }}
   labels:
     {{- include "common.labels.standard" ( dict "customLabels" .Values.additionalLabels "context" . ) | nindent 4 }}

@@ -5,7 +5,7 @@
 apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
 kind: Deployment
 metadata:
-  name: {{ include "common.names.fullname" . }}
+  name: {{ include "guardian.fullname" . }}
   namespace: {{ include "common.names.namespace" . | quote }}
   labels:
     {{- include "common.labels.standard" ( dict "customLabels" .Values.additionalLabels "context" . ) | nindent 4 }}
@@ -59,7 +59,7 @@ spec:
       securityContext: {{- omit .Values.podSecurityContext "enabled" | toYaml | nindent 8 }}
       {{- end }}
       {{- if .Values.serviceAccount.create }}
-      serviceAccountName: {{ include "common.names.fullname" . }}
+      serviceAccountName: {{ include "guardian.fullname" . }}
       {{- end }}
       automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
       {{- if .Values.terminationGracePeriodSeconds }}
@@ -177,10 +177,10 @@ spec:
       volumes:
         - name: "config"
           configMap:
-            name: "{{ include "common.names.fullname" . }}-config"
+            name: "{{ include "guardian.fullname" . }}-config"
         - name: "policies"
           configMap:
-            name: "{{ include "common.names.fullname" . }}-policies"
+            name: "{{ include "guardian.fullname" . }}-policies"
         - name: "plugin-targets"
           emptyDir: {}
         {{- if .Values.extraVolumes }}

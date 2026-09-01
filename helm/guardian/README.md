@@ -1,6 +1,6 @@
-# guardian-cerbos
+# guardian
 
-A Helm chart for the Nubus Guardian Cerbos component
+A Helm chart for the Nubus Guardian component
 
 - **Type**: application
 - **AppVersion**: 0.54.0
@@ -11,8 +11,8 @@ A Helm chart for the Nubus Guardian Cerbos component
 This chart deploys Cerbos as the Guardian policy engine.
 
 Other pods reach the decision API at
-`http://<release>-guardian-cerbos:3592` (HTTP)
-and `<release>-guardian-cerbos:3593` (gRPC).
+`http://<release>-guardian:3592` (HTTP)
+and `<release>-guardian:3593` (gRPC).
 
 The chart ships no policies of its own, and Cerbos denies by default.
 [`docs/kubernetes-policies.md`](../../docs/kubernetes-policies.md)

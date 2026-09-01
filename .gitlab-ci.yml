@@ -38,8 +38,8 @@ variables:
   # keep these two variables in sync with all of them.
   # The custom managers in renovate.json5 bump all four in one MR.
   #   univention-guardian/conffiles/.../docker-compose.yaml  image:
-  #   helm/guardian-cerbos/values.yaml                       cerbos.image.tag
-  #   helm/guardian-cerbos/Chart.yaml                        appVersion
+  #   helm/guardian/values.yaml                              cerbos.image.tag
+  #   helm/guardian/Chart.yaml                               appVersion
   CERBOS_VERSION: "0.54.0"
   CERBOS_IMAGE_DIGEST: "sha256:211c261f6031675522a35c6055b13fd719c4aff13747307e4bcb6907326537ef"
   RUN_RENOVATE:
@@ -58,13 +58,13 @@ workflow:
     - if: $CI_COMMIT_TAG
     - if: $RUN_RENOVATE == "yes"
 
-# Unit tests of the Helm chart in helm/guardian-cerbos.
+# Unit tests of the Helm chart in helm/guardian.
 test-chart-unit:
   stage: test
   image: "gitregistry.knut.univention.de/univention/dev/nubus-for-k8s/common-helm/testrunner:0.29.18"
   needs: []
   script:
-    - helm dep build helm/guardian-cerbos
+    - helm dep build helm/guardian
     - pytest tests/chart
 
 # Copy the pinned upstream Cerbos image into the artifact registry, which is the
@@ -88,8 +88,8 @@ mirror-cerbos-image:
     - if: $CI_COMMIT_REF_PROTECTED == "true"
     - changes:
         - univention-guardian/conffiles/usr/share/univention-guardian-server/docker-compose.yaml
-        - helm/guardian-cerbos/values.yaml
-        - helm/guardian-cerbos/Chart.yaml
+        - helm/guardian/values.yaml
+        - helm/guardian/Chart.yaml
         - .gitlab-ci.yml
       when: manual
       allow_failure: true

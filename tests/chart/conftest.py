@@ -11,5 +11,5 @@ base_dir = (Path(__file__).parent / '../../').resolve()
 
 @pytest.fixture
 def chart_default_path():
-    chart_path = base_dir / 'helm/guardian-cerbos'
+    chart_path = base_dir / 'helm/guardian'
     return chart_path

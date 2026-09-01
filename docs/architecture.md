@@ -70,7 +70,7 @@ registration workflow is documented in
 [`policy-bundles.md`](policy-bundles.md).
 
 On Nubus for Kubernetes,
-the `guardian-cerbos` chart mounts each policy source
+the `guardian` chart mounts each policy source
 as its own subdirectory below `/policies`
 and compiles the whole tree in an init container before the server starts.
 There is no listener and no LDAP bundle there;

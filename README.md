@@ -22,8 +22,8 @@ host loopback interface and reachable from containers on the shared `guardian`
 Docker network.
 
 On Nubus for Kubernetes,
-the same engine is deployed by the **`guardian-cerbos`** Helm chart in
-[`helm/guardian-cerbos/`](helm/guardian-cerbos/),
+the same engine is deployed by the **`guardian`** Helm chart in
+[`helm/guardian/`](helm/guardian/),
 a subchart of the Nubus umbrella chart.
 It needs no deployment of its own;
 operators enable it in their Nubus values.
@@ -48,7 +48,7 @@ See [Nubus for Kubernetes](#nubus-for-kubernetes).
   your own policies from another app or package.
 - [`docs/kubernetes-policies.md`](docs/kubernetes-policies.md):
   every way a policy reaches Cerbos in Nubus for Kubernetes.
-- [`helm/guardian-cerbos/README.md`](helm/guardian-cerbos/README.md):
+- [`helm/guardian/README.md`](helm/guardian/README.md):
   the chart's values, generated from `values.yaml`.
 - [`README.dev.md`](README.dev.md): building, testing and releasing the package
   (internal developer workflows).
@@ -249,17 +249,17 @@ request payloads.
 
 ## Nubus for Kubernetes
 
-The `guardian-cerbos` chart deploys one Cerbos Deployment
+The `guardian` chart deploys one Cerbos Deployment
 and one ClusterIP Service;
-[`helm/guardian-cerbos/README.md`](helm/guardian-cerbos/README.md)
+[`helm/guardian/README.md`](helm/guardian/README.md)
 documents every value.
 
 ### Reach Cerbos from another pod
 
 | | Address |
 |---|---|
-| HTTP | `http://<release>-guardian-cerbos:3592` |
-| gRPC | `<release>-guardian-cerbos:3593` |
+| HTTP | `http://<release>-guardian:3592` |
+| gRPC | `<release>-guardian:3593` |
 
 The Service is named after the release and the chart,
 so a `nameOverride` changes it;

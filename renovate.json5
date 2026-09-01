@@ -14,7 +14,7 @@
       "description": "The Cerbos pin",
       "managerFilePatterns": [
         "/^\\.gitlab-ci\\.yml$/",
-        "/^helm/guardian-cerbos/(Chart|values)\\.yaml$/",
+        "/^helm/guardian/(Chart|values)\\.yaml$/",
         "/^univention-guardian/conffiles/.*/docker-compose\\.yaml$/"
       ],
       "matchStrings": [
@@ -36,7 +36,7 @@
         "docker-compose"
       ],
       "matchFileNames": [
-        "helm/guardian-cerbos/values.yaml",
+        "helm/guardian/values.yaml",
         "univention-guardian/conffiles/usr/share/univention-guardian-server/docker-compose.yaml"
       ],
       "enabled": false
@@ -47,7 +47,7 @@
         "custom.regex"
       ],
       "matchFileNames": [
-        "helm/guardian-cerbos/Chart.yaml"
+        "helm/guardian/Chart.yaml"
       ],
       "pinDigests": false
     }

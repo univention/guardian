@@ -5,8 +5,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 # Deploying policies in Nubus for Kubernetes
 
-This guide lists the ways a Cerbos policy set reaches the `guardian-cerbos`
-container, and when to use which.
+This guide lists the ways a Cerbos policy set reaches the Cerbos container
+deployed by the `guardian` chart, and when to use which.
 
 Each policy source is mounted as **its own subdirectory** below `/policies`,
 and Cerbos loads that tree recursively at startup.
