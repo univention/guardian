@@ -64,7 +64,7 @@ workflow:
 # Unit tests of the Helm chart in helm/guardian.
 test-chart-unit:
   stage: test
-  image: "gitregistry.knut.univention.de/univention/dev/nubus-for-k8s/common-helm/testrunner:0.29.18"
+  image: "gitregistry.knut.univention.de/univention/dev/nubus-for-k8s/common-helm/testrunner:0.29.18@sha256:b6de12c791bd919df7daaf916b4a216d01349e139c73924684ebb10fdbc217ea"
   needs: []
   script:
     - helm dep build helm/guardian
@@ -77,7 +77,7 @@ test-chart-unit:
 mirror-cerbos-image:
   stage: build
   image:
-    name: docker-registry.knut.univention.de/skopeo/stable
+    name: docker-registry.knut.univention.de/skopeo/stable@sha256:7882c5adc45fef01d82c09d92330d7d3074df6e7b792a0c026d1f68c4c6c269f
     entrypoint: [""]
   variables:
     CERBOS_SRC_IMAGE: "ghcr.io/cerbos/cerbos@${CERBOS_IMAGE_DIGEST}"
