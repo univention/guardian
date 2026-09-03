@@ -22,7 +22,7 @@ lists every way a policy set reaches the container.
 
 | Repository | Name | Version |
 |------------|------|---------|
-| oci://artifacts.software-univention.de/nubus/charts | nubus-common | 0.29.18 |
+| oci://artifacts.software-univention.de/nubus/charts | nubus-common | 0.29.19 |
 
 ## Values
 
