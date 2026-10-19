@@ -47,6 +47,15 @@
       ],
       "pinDigests": false
     },
+    {
+      "description": "Mention the Cerbos owner on every Cerbos merge request",
+      "matchPackageNames": [
+        "ghcr.io/cerbos/cerbos"
+      ],
+      "prBodyNotes": [
+        "cc @jlohmer @fbest @ccastens @fbotner @jconde @ekipsang"
+      ]
+    },
 
     // The inherited task only covers the built-in helm managers, and the pin
     // above is owned by the custom one.
