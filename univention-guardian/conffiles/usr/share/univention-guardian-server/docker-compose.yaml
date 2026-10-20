@@ -5,7 +5,7 @@
 services:
   cerbos:
     container_name: cerbos
-    image: artifacts.software-univention.de/nubus/images/cerbos:0.55.0@sha256:4b9d3b58c4f11c1b8953bc798d8d086e64f276882253ab169625fddc7f432515
+    image: artifacts.software-univention.de/nubus/images/cerbos:0.56.0@sha256:540643bc67ba628011a150ad1d3370f285daa38995be5cd7a4be181da902bec1
     # Cerbos is built FROM scratch (static binary, no /etc/passwd), so UID must be numeric.
     # guardian-server system user is created with this fixed UID by the Debian package preinst.
     user: "64110:64110"

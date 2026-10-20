@@ -40,8 +40,8 @@ variables:
   #   univention-guardian/conffiles/.../docker-compose.yaml  image:
   #   helm/guardian/values.yaml                              cerbos.image.tag
   #   helm/guardian/Chart.yaml                               appVersion
-  CERBOS_VERSION: "0.55.0"
-  CERBOS_IMAGE_DIGEST: "sha256:4b9d3b58c4f11c1b8953bc798d8d086e64f276882253ab169625fddc7f432515"
+  CERBOS_VERSION: "0.56.0"
+  CERBOS_IMAGE_DIGEST: "sha256:540643bc67ba628011a150ad1d3370f285daa38995be5cd7a4be181da902bec1"
   RUN_RENOVATE:
     value: "no"
     options:
