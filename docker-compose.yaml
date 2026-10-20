@@ -8,7 +8,7 @@
 
 services:
   test-chart:
-    image: "gitregistry.knut.univention.de/univention/dev/nubus-for-k8s/common-helm/testrunner:0.29.18"
+    image: "gitregistry.knut.univention.de/univention/dev/nubus-for-k8s/common-helm/testrunner:0.29.18@sha256:b6de12c791bd919df7daaf916b4a216d01349e139c73924684ebb10fdbc217ea"
     working_dir: "/app/"
     command: "pytest tests/chart"
     profiles:
@@ -21,7 +21,7 @@ services:
   pre-commit:
     profiles:
       - "pre-commit"
-    image: "gitregistry.knut.univention.de/univention/dev/tooling/pre-commit/univention-pre-commit:0.7.0"
+    image: "gitregistry.knut.univention.de/univention/dev/tooling/pre-commit/univention-pre-commit:0.7.0@sha256:bca4152a9e2f12fc27ae91eac6d8bb796aa353ac675b472440ecab5424ba26ee"
     volumes:
       - type: "bind"
         source: "."
