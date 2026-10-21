@@ -1,3 +1,9 @@
+univention-guardian (1.0.1) unstable; urgency=medium
+
+  * Bug #60058: Update Cerbos to 0.56.0.
+
+ -- Johannes Lohmer <lohmer@univention.de>  Wed, 21 Oct 2026 08:49:21 +0000
+
 univention-guardian (1.0.0) unstable; urgency=medium
 
   * Bug #59669: Initial release of the Cerbos-based Guardian server
