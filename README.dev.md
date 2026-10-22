@@ -136,3 +136,33 @@ identical, and keep the `rules:changes` list of `mirror-cerbos-image` covering
 every file that holds the pin. Then trigger the manual `mirror-cerbos-image` job
 on the branch pipeline before installing the branch `.deb` on a VM or the chart
 in a cluster -- until the image is mirrored, neither can pull it.
+
+### Errata release
+
+The [errata updates workflow](https://univention.gitpages.knut.univention.de/dev/internal/dev-handbook/errata-updates/index.html#errata-updates-workflow)
+in the dev handbook describes the full process.
+For this package it comes down to these steps:
+
+1. Open a Bugzilla bug from the [bug template](#bug-template).
+2. Add the changelog entry with `dch -i`, starting with `Bug #<id>:`, and merge it to `main`.
+   The `debian-errata-build` job builds the package into the `errata<UCS_VERSION>` scope.
+3. In `univention/dev/ucs`, on the branch named by `UCS_VERSION` in `.gitlab-ci.yml`,
+   copy `doc/errata/staging/0template.yaml` to `doc/errata/staging/univention-guardian.yaml`,
+   or `0security-template.yaml` if the update fixes CVEs.
+   Fill in `src: univention-guardian`, the new package version in `fix:`, and the bug number in `bug:`.
+   Commit it as `chore(univention-guardian): add advisory` with `Bug #<id>` as the body.
+4. QA installs the package from the internal errata repository,
+   runs the [ucs-test module](#testing-on-ucs), and sets the bug to `VERIFIED FIXED`.
+   The errata release on Wednesday includes advisories whose bugs are `VERIFIED FIXED`.
+
+#### Bug template
+
+```text
+Product:   UCS
+Version:   UCS <UCS_VERSION>
+Component: same as Bug #59669
+Summary:   univention-guardian: Update Cerbos to <version>
+
+The Cerbos container image of univention-guardian-server should be updated from <oldversion> to <version>.
+Release notes: https://docs.cerbos.dev/cerbos/latest/releases/v<version>.html
+```
