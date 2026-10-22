@@ -1,4 +1,4 @@
-univention-guardian (1.0.1) unstable; urgency=medium
+univention-guardian (1.1.0) unstable; urgency=medium
 
   * Bug #60058: Update Cerbos to 0.56.0.
 

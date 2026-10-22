@@ -41,8 +41,8 @@ Pipeline jobs automatically build the UCS packages `univention-guardian` and
 These packages are available in the internal apt repository:
 
 ```bash
-deb [trusted=yes] http://omar.knut.univention.de/build2/ ucs_5.2-0-errata5.2-6/all/
-deb [trusted=yes] http://omar.knut.univention.de/build2/ ucs_5.2-0-errata5.2-6/$(ARCH)/
+deb [trusted=yes] http://omar.knut.univention.de/build2/ ucs_5.2-0-errata5.2-7/all/
+deb [trusted=yes] http://omar.knut.univention.de/build2/ ucs_5.2-0-errata5.2-7/$(ARCH)/
 ```
 
 and in the external errata test component, used by the jenkins tests.
