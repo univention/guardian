@@ -1,3 +1,9 @@
+univention-guardian (1.1.2) unstable; urgency=medium
+
+  * Bug #60058: enable strict evaluation by default
+
+ -- Florian Best <best@univention.de>  Mon, 26 Oct 2026 18:02:44 +0100
+
 univention-guardian (1.1.1) unstable; urgency=medium
 
   * Bug #60058: Update Cerbos to 0.57.0.

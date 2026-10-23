@@ -26,6 +26,10 @@ storage:
 schema:
   enforcement: reject
 
+engine:
+  strictEvaluation: true
+  celErrorLogLevel: warn
+
 @!@
 if configRegistry.is_true('guardian/cerbos/audit-logging/enabled', False):
     print('audit:')
