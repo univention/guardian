@@ -1,3 +1,9 @@
+univention-guardian (1.1.1) unstable; urgency=medium
+
+  * Bug #60058: Update Cerbos to 0.57.0.
+
+ -- Johannes Lohmer <lohmer@univention.de>  Fri, 23 Oct 2026 14:58:54 +0000
+
 univention-guardian (1.1.0) unstable; urgency=medium
 
   * Bug #60058: Update Cerbos to 0.56.0.
