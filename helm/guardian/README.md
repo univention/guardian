@@ -3,7 +3,7 @@
 A Helm chart for the Nubus Guardian component
 
 - **Type**: application
-- **AppVersion**: 0.56.0
+- **AppVersion**: 0.57.0
 -
 
 ## Introduction
@@ -86,7 +86,7 @@ lists every way a policy set reaches the container.
     "pullPolicy": null,
     "registry": "",
     "repository": "nubus/images/cerbos",
-    "tag": "0.56.0@sha256:540643bc67ba628011a150ad1d3370f285daa38995be5cd7a4be181da902bec1"
+    "tag": "0.57.0@sha256:e5e3b150b3cb0090975605254f255164567d67e233634199fb20972e3eaff300"
   },
   "logLevel": "WARN",
   "policies": {},
@@ -234,7 +234,7 @@ true
   "pullPolicy": null,
   "registry": "",
   "repository": "nubus/images/cerbos",
-  "tag": "0.56.0@sha256:540643bc67ba628011a150ad1d3370f285daa38995be5cd7a4be181da902bec1"
+  "tag": "0.57.0@sha256:e5e3b150b3cb0090975605254f255164567d67e233634199fb20972e3eaff300"
 }
 </pre>
 </td>
@@ -271,7 +271,7 @@ null
 			<td>cerbos.image.tag</td>
 			<td>string</td>
 			<td><pre lang="json">
-"0.56.0@sha256:540643bc67ba628011a150ad1d3370f285daa38995be5cd7a4be181da902bec1"
+"0.57.0@sha256:e5e3b150b3cb0090975605254f255164567d67e233634199fb20972e3eaff300"
 </pre>
 </td>
 			<td>Container image tag.</td>

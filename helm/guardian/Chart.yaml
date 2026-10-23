@@ -10,7 +10,7 @@ type: "application"
 
 version: "1.0.0"
 
-appVersion: "0.56.0"
+appVersion: "0.57.0"
 
 dependencies:
   - name: "nubus-common"

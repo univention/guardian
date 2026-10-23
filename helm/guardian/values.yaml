@@ -289,7 +289,7 @@ cerbos:
     # -- Image pull policy. Higher precedence than global.imagePullPolicy.
     pullPolicy: null
     # -- Container image tag.
-    tag: "0.56.0@sha256:540643bc67ba628011a150ad1d3370f285daa38995be5cd7a4be181da902bec1"
+    tag: "0.57.0@sha256:e5e3b150b3cb0090975605254f255164567d67e233634199fb20972e3eaff300"
 
   # -- Policy validation before the server starts.
   policyValidation:
