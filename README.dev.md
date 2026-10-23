@@ -165,4 +165,5 @@ Summary:   univention-guardian: Update Cerbos to <version>
 
 The Cerbos container image of univention-guardian-server should be updated from <oldversion> to <version>.
 Release notes: https://docs.cerbos.dev/cerbos/latest/releases/v<version>.html
+Commit list: https://github.com/cerbos/cerbos/releases/tag/v<version>
 ```
