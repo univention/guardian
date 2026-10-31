@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 include:
-  - component: $CI_SERVER_FQDN/univention/dev/tooling/ci-components/ai-review@2.13.1
+  - component: $CI_SERVER_FQDN/univention/dev/tooling/ci-components/ai-review@2.25.1
     inputs:
       clear_previous_comments: true
     rules:
@@ -24,10 +24,10 @@ include:
       - "jobs/semantic-release-env.yaml"
       - "jobs/package-and-publish-helm-charts-external.yaml"
   # Debian package: per-branch test builds, and release to the UCS errata repo.
-  - component: "$CI_SERVER_FQDN/univention/dev/tooling/ci-components/debian-aptly@2.5.2"
+  - component: "$CI_SERVER_FQDN/univention/dev/tooling/ci-components/debian-aptly@2.25.1"
     inputs:
       pkg-dir: univention-guardian
-  - component: "$CI_SERVER_FQDN/univention/dev/tooling/ci-components/debian-errata-build@2.5.2"
+  - component: "$CI_SERVER_FQDN/univention/dev/tooling/ci-components/debian-errata-build@2.25.1"
     inputs:
       debian-package: univention-guardian
       pkg-dir: univention-guardian
