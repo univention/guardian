@@ -117,10 +117,11 @@ provider portal (test App Center); see
 [New UCS major/minor version](#new-ucs-majorminor-version).
 
 **Cerbos image.** Both the package and the Helm chart pull Cerbos from
-Univention's artifact registry. The `mirror-cerbos-image` CI job copies the
-pinned upstream image there; it runs automatically on protected branches and as a
-manual job on any branch or MR that changes the pin. The registry image is shared
-and immutable, so once a version is mirrored it is available to every branch.
+Univention's artifact registry. The `mirror-image` CI job, from the
+`ci-components` component of the same name, copies the pinned upstream image there
+and signs it; it runs on protected branches and on any branch or MR that changes
+the pin. The registry image is shared and immutable, so once a version is mirrored
+it is available to every branch.
 
 The pin is spelled out in four places, which have to agree:
 
@@ -132,10 +133,10 @@ The pin is spelled out in four places, which have to agree:
 | `helm/guardian/Chart.yaml` | `appVersion` |
 
 When updating the version, change all of them keeping version and digest
-identical, and keep the `rules:changes` list of `mirror-cerbos-image` covering
-every file that holds the pin. Then trigger the manual `mirror-cerbos-image` job
-on the branch pipeline before installing the branch `.deb` on a VM or the chart
-in a cluster -- until the image is mirrored, neither can pull it.
+identical, and keep the `changes_paths` input of the `mirror-image` include covering
+every file that holds the pin. Wait for the `mirror-image` job on the branch
+pipeline before installing the branch `.deb` on a VM or the chart in a cluster --
+until the image is mirrored, neither can pull it.
 
 ### Errata release
 

@@ -31,6 +31,22 @@ include:
     inputs:
       debian-package: univention-guardian
       pkg-dir: univention-guardian
+  # Copy the pinned upstream Cerbos image into the artifact registry, which is the
+  # registry both the shipped docker-compose.yaml and the Helm chart pull from.
+  # The pin stays in the CERBOS_* variables below, where Renovate's regex finds it.
+  # Every file holding the pin has to be listed under changes_paths, or a bump
+  # lands without mirroring the image it needs.
+  - component: "$CI_SERVER_FQDN/univention/dev/tooling/ci-components/mirror-image@2.26.1"
+    inputs:
+      source: "ghcr.io/cerbos/cerbos"
+      tag: "$CERBOS_VERSION"
+      digest: "$CERBOS_IMAGE_DIGEST"
+      destination: "artifacts.software-univention.de/nubus/images/cerbos"
+      changes_paths:
+        - univention-guardian/conffiles/usr/share/univention-guardian-server/docker-compose.yaml
+        - helm/guardian/values.yaml
+        - helm/guardian/Chart.yaml
+        - .gitlab-ci.yml
 
 variables:
   UCS_VERSION: "5.2-7"    # bump when starting a new UCS release branch
@@ -69,39 +85,6 @@ test-chart-unit:
   script:
     - helm dep build helm/guardian
     - pytest tests/chart
-
-# Copy the pinned upstream Cerbos image into the artifact registry, which is the
-# registry both the shipped docker-compose.yaml and the Helm chart pull from.
-# Every file holding the pin has to be listed under rules:changes below, or a
-# bump lands without the escape hatch to pre-populate the registry.
-mirror-cerbos-image:
-  stage: build
-  image:
-    name: docker-registry.knut.univention.de/skopeo/stable
-    entrypoint: [""]
-  variables:
-    CERBOS_SRC_IMAGE: "ghcr.io/cerbos/cerbos@${CERBOS_IMAGE_DIGEST}"
-    REGISTRY_HOST: "artifacts.software-univention.de"
-    DEST_IMAGE: "artifacts.software-univention.de/nubus/images/cerbos"
-    # "$$" escapes to a literal "$" for the Harbor robot-account name.
-    ROBOT_ACCOUNT: "robot$$nubus-push-from-gitlab"
-  rules:
-    # Release mirrors automatically. Branch/MR that changes the pin is manual,
-    # so a version bump can pre-populate the registry
-    - if: $CI_COMMIT_REF_PROTECTED == "true"
-    - changes:
-        - univention-guardian/conffiles/usr/share/univention-guardian-server/docker-compose.yaml
-        - helm/guardian/values.yaml
-        - helm/guardian/Chart.yaml
-        - .gitlab-ci.yml
-      when: manual
-      allow_failure: true
-  script:
-    - echo "${EXTERNAL_REGISTRY_ROBOT_TOKEN}" | /bin/skopeo login
-        --username "${ROBOT_ACCOUNT}" --password-stdin "${REGISTRY_HOST}"
-    - /bin/skopeo copy --all --preserve-digests
-        "docker://${CERBOS_SRC_IMAGE}"
-        "docker://${DEST_IMAGE}:${CERBOS_VERSION}"
 
 # Compile and test the shipped Guardian policies with the pinned Cerbos binary.
 # This is the policy-correctness gate: it compiles every policy and runs the
