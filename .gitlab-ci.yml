@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 include:
-  - component: $CI_SERVER_FQDN/univention/dev/tooling/ci-components/ai-review@2.13.1
+  - component: $CI_SERVER_FQDN/univention/dev/tooling/ci-components/ai-review@2.27.0
     inputs:
       clear_previous_comments: true
     rules:
@@ -14,7 +14,7 @@ include:
     rules:
       - if: $RUN_RENOVATE == "yes"
   - project: "univention/dev/nubus-for-k8s/common-ci"
-    ref: "v1.68.2"
+    ref: "v1.71.0"
     file:
       - "defaults/stages.yaml"
       - "defaults/nubus-workflow.yaml"
@@ -24,10 +24,10 @@ include:
       - "jobs/semantic-release-env.yaml"
       - "jobs/package-and-publish-helm-charts-external.yaml"
   # Debian package: per-branch test builds, and release to the UCS errata repo.
-  - component: "$CI_SERVER_FQDN/univention/dev/tooling/ci-components/debian-aptly@2.5.2"
+  - component: "$CI_SERVER_FQDN/univention/dev/tooling/ci-components/debian-aptly@2.27.0"
     inputs:
       pkg-dir: univention-guardian
-  - component: "$CI_SERVER_FQDN/univention/dev/tooling/ci-components/debian-errata-build@2.5.2"
+  - component: "$CI_SERVER_FQDN/univention/dev/tooling/ci-components/debian-errata-build@2.27.0"
     inputs:
       debian-package: univention-guardian
       pkg-dir: univention-guardian
@@ -36,7 +36,7 @@ include:
   # The pin stays in the CERBOS_* variables below, where Renovate's regex finds it.
   # Every file holding the pin has to be listed under changes_paths, or a bump
   # lands without mirroring the image it needs.
-  - component: "$CI_SERVER_FQDN/univention/dev/tooling/ci-components/mirror-image@2.26.1"
+  - component: "$CI_SERVER_FQDN/univention/dev/tooling/ci-components/mirror-image@2.27.0"
     inputs:
       source: "ghcr.io/cerbos/cerbos"
       tag: "$CERBOS_VERSION"
@@ -80,7 +80,7 @@ workflow:
 # Unit tests of the Helm chart in helm/guardian.
 test-chart-unit:
   stage: test
-  image: "gitregistry.knut.univention.de/univention/dev/nubus-for-k8s/common-helm/testrunner:0.29.18"
+  image: "gitregistry.knut.univention.de/univention/dev/nubus-for-k8s/common-helm/testrunner:0.29.24@sha256:1f34d54d23452475db4e92a43b669b8cb1817c4837b0003b2d897d47ed2f9d35"
   needs: []
   script:
     - helm dep build helm/guardian
