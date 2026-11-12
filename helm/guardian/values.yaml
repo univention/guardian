@@ -350,4 +350,23 @@ cerbos:
   #             effect: EFFECT_ALLOW
   #             roles: ["*"]
   policies: {}
+
+  # -- Generated UDM policies supplied through a ConfigMap created by UDM REST API.
+  udmAuthorization:
+    # -- Enable loading generated UDM authorization policies.
+    enabled: false
+    # -- Name of the ConfigMap containing the generated policy archive.
+    configMapName: "guardian-udm-policies"
+    # -- ConfigMap key containing the gzip-compressed policy archive.
+    configMapKey: "udm-policies.tar.gz"
+    # -- Image used to extract the policy archive.
+    image:
+      # -- Container registry address. Higher precedence than global.imageRegistry.
+      registry: ""
+      # -- Container image repository.
+      repository: "nubus-dev/images/udm-rest-api"
+      # -- Image pull policy. Higher precedence than global.imagePullPolicy.
+      pullPolicy: null
+      # -- Container image tag.
+      tag: "latest"
 ...

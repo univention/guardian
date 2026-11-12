@@ -92,6 +92,17 @@ lists every way a policy set reaches the container.
   "policies": {},
   "policyValidation": {
     "enabled": true
+  },
+  "udmAuthorization": {
+    "configMapKey": "udm-policies.tar.gz",
+    "configMapName": "guardian-udm-policies",
+    "enabled": false,
+    "image": {
+      "pullPolicy": null,
+      "registry": "",
+      "repository": "nubus-dev/images/udm-rest-api",
+      "tag": "latest"
+    }
   }
 }
 </pre>
@@ -313,6 +324,102 @@ true
 </pre>
 </td>
 			<td>Run `cerbos compile` in an init container before the server starts, so an invalid policy tree stalls the rollout instead of crash-looping Cerbos.</td>
+		</tr>
+		<tr>
+			<td>cerbos.udmAuthorization</td>
+			<td>object</td>
+			<td><pre lang="json">
+{
+  "configMapKey": "udm-policies.tar.gz",
+  "configMapName": "guardian-udm-policies",
+  "enabled": false,
+  "image": {
+    "pullPolicy": null,
+    "registry": "",
+    "repository": "nubus-dev/images/udm-rest-api",
+    "tag": "latest"
+  }
+}
+</pre>
+</td>
+			<td>Generated UDM policies supplied through a ConfigMap created by UDM REST API.</td>
+		</tr>
+		<tr>
+			<td>cerbos.udmAuthorization.configMapKey</td>
+			<td>string</td>
+			<td><pre lang="json">
+"udm-policies.tar.gz"
+</pre>
+</td>
+			<td>ConfigMap key containing the gzip-compressed policy archive.</td>
+		</tr>
+		<tr>
+			<td>cerbos.udmAuthorization.configMapName</td>
+			<td>string</td>
+			<td><pre lang="json">
+"guardian-udm-policies"
+</pre>
+</td>
+			<td>Name of the ConfigMap containing the generated policy archive.</td>
+		</tr>
+		<tr>
+			<td>cerbos.udmAuthorization.enabled</td>
+			<td>bool</td>
+			<td><pre lang="json">
+false
+</pre>
+</td>
+			<td>Enable loading generated UDM authorization policies.</td>
+		</tr>
+		<tr>
+			<td>cerbos.udmAuthorization.image</td>
+			<td>object</td>
+			<td><pre lang="json">
+{
+  "pullPolicy": null,
+  "registry": "",
+  "repository": "nubus-dev/images/udm-rest-api",
+  "tag": "latest"
+}
+</pre>
+</td>
+			<td>Image used to extract the policy archive.</td>
+		</tr>
+		<tr>
+			<td>cerbos.udmAuthorization.image.pullPolicy</td>
+			<td>string</td>
+			<td><pre lang="json">
+null
+</pre>
+</td>
+			<td>Image pull policy. Higher precedence than global.imagePullPolicy.</td>
+		</tr>
+		<tr>
+			<td>cerbos.udmAuthorization.image.registry</td>
+			<td>string</td>
+			<td><pre lang="json">
+""
+</pre>
+</td>
+			<td>Container registry address. Higher precedence than global.imageRegistry.</td>
+		</tr>
+		<tr>
+			<td>cerbos.udmAuthorization.image.repository</td>
+			<td>string</td>
+			<td><pre lang="json">
+"nubus-dev/images/udm-rest-api"
+</pre>
+</td>
+			<td>Container image repository.</td>
+		</tr>
+		<tr>
+			<td>cerbos.udmAuthorization.image.tag</td>
+			<td>string</td>
+			<td><pre lang="json">
+"latest"
+</pre>
+</td>
+			<td>Container image tag.</td>
 		</tr>
 		<tr>
 			<td>containerSecurityContext</td>
