@@ -217,7 +217,7 @@ spec:
         {{- if .Values.cerbos.udmAuthorization.enabled }}
         - name: "udm-authorization"
           configMap:
-            name: {{ .Values.cerbos.udmAuthorization.configMapName | quote }}
+            name: {{ tpl .Values.cerbos.udmAuthorization.configMapName . | quote }}
         - name: "udm-policies"
           emptyDir: {}
         {{- end }}
