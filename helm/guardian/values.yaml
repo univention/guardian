@@ -307,6 +307,24 @@ cerbos:
   #
   # Ref: https://docs.cerbos.dev/cerbos/latest/configuration/index.html
   config:
+    # -- Cerbos engine block.
+    engine:
+      # -- Level at which CEL runtime errors raised during policy evaluation are logged.
+      celErrorLogLevel: warn
+      # -- Policy version to assume if the request does not specify one.
+      defaultPolicyVersion: "default"
+      # -- Scope to assume if the request does not specify one.
+      defaultScope: ""
+      # -- Environment-specific variables made available to policy conditions.
+      globals:
+        # -- Deployment environment exposed to policy conditions.
+        environment: "staging"
+      # -- Ignore missing scopes and search upwards through the scope tree for a usable policy.
+      lenientScopeSearch: false
+      # -- Timeout for loading policies from the policy store.
+      policyLoaderTimeout: 2s
+      # -- Deny the affected action when policy evaluation raises an error.
+      strictEvaluation: true
     # -- Cerbos server block.
     # Ref: https://docs.cerbos.dev/cerbos/latest/configuration/server
     server:
@@ -316,13 +334,67 @@ cerbos:
       # -- Serve the interactive API explorer. Off: it is a documentation UI on
       # an endpoint that answers authorization questions.
       apiExplorerEnabled: false
+      # -- Admin API configuration.
+      adminAPI:
+        # -- Enable the admin API.
+        enabled: false
+      # -- Advanced server settings.
+      advanced:
+        # -- gRPC server settings.
+        grpc:
+          # -- Timeout for establishing a new connection.
+          connectionTimeout: 60s
+          # -- Maximum concurrent streams per connection.
+          maxConcurrentStreams: 1024
+          # -- Maximum age of a connection.
+          maxConnectionAge: 600s
+          # -- Maximum size of a single request message in bytes.
+          maxRecvMsgSizeBytes: 83886080
+        # -- HTTP server settings.
+        http:
+          # -- Keepalive timeout.
+          idleTimeout: 120s
+          # -- Timeout for reading request headers.
+          readHeaderTimeout: 15s
+          # -- Timeout for reading a request.
+          readTimeout: 30s
+          # -- Timeout for writing a response.
+          writeTimeout: 30s
+      # -- CORS configuration for the server.
+      cors:
+        # -- Headers included in the allowed-headers response header.
+        allowedHeaders: ['content-type']
+        # -- Origins included in the allowed-origins response header.
+        allowedOrigins: ['*']
+        # -- Disable CORS.
+        disabled: true
+        # -- Maximum age of the CORS preflight check.
+        maxAge: 10s
+      # -- Dedicated gRPC listen address.
+      grpcListenAddr: ":3593"
+      # -- Dedicated HTTP listen address.
+      httpListenAddr: ":3592"
+      # -- Log request payloads.
+      logRequestPayloads: false
+      # -- Enable the metrics endpoint.
+      metricsEnabled: true
       # -- Ceilings on a single check request, so one caller cannot ask for an
       # unbounded amount of evaluation.
       requestLimits:
         # -- Maximum actions asked about per resource.
-        maxActionsPerResource: 500
+        maxActionsPerResource: 4000
         # -- Maximum resources asked about per request.
-        maxResourcesPerRequest: 500
+        maxResourcesPerRequest: 4000
+      # # -- TLS configuration for the server.
+      # tls:
+      #   # -- Path to the optional CA certificate for verifying client requests.
+      #   caCert: /path/to/CA_certificate
+      #   # -- Path to the TLS certificate file.
+      #   cert: /path/to/certificate
+      #   # -- Path to the TLS private key file.
+      #   key: /path/to/private_key
+      # -- File mode for Unix domain sockets created by the server.
+      udsFileMode: 0o766
     # -- Cerbos schema block.
     # Ref: https://docs.cerbos.dev/cerbos/latest/configuration/schema
     schema:

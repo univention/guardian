@@ -67,16 +67,59 @@ lists every way a policy set reaches the container.
 			<td><pre lang="json">
 {
   "config": {
+    "engine": {
+      "celErrorLogLevel": "warn",
+      "defaultPolicyVersion": "default",
+      "defaultScope": "",
+      "globals": {
+        "environment": "staging"
+      },
+      "lenientScopeSearch": false,
+      "policyLoaderTimeout": "2s",
+      "strictEvaluation": true
+    },
     "schema": {
       "enforcement": "reject"
     },
     "server": {
+      "adminAPI": {
+        "enabled": false
+      },
+      "advanced": {
+        "grpc": {
+          "connectionTimeout": "60s",
+          "maxConcurrentStreams": 1024,
+          "maxConnectionAge": "600s",
+          "maxRecvMsgSizeBytes": 83886080
+        },
+        "http": {
+          "idleTimeout": "120s",
+          "readHeaderTimeout": "15s",
+          "readTimeout": "30s",
+          "writeTimeout": "30s"
+        }
+      },
       "apiExplorerEnabled": false,
+      "cors": {
+        "allowedHeaders": [
+          "content-type"
+        ],
+        "allowedOrigins": [
+          "*"
+        ],
+        "disabled": true,
+        "maxAge": "10s"
+      },
+      "grpcListenAddr": ":3593",
+      "httpListenAddr": ":3592",
+      "logRequestPayloads": false,
+      "metricsEnabled": true,
       "playgroundEnabled": false,
       "requestLimits": {
-        "maxActionsPerResource": 500,
-        "maxResourcesPerRequest": 500
-      }
+        "maxActionsPerResource": 4000,
+        "maxResourcesPerRequest": 4000
+      },
+      "udsFileMode": 502
     },
     "telemetry": {
       "disabled": true
@@ -114,16 +157,59 @@ lists every way a policy set reaches the container.
 			<td>object</td>
 			<td><pre lang="json">
 {
+  "engine": {
+    "celErrorLogLevel": "warn",
+    "defaultPolicyVersion": "default",
+    "defaultScope": "",
+    "globals": {
+      "environment": "staging"
+    },
+    "lenientScopeSearch": false,
+    "policyLoaderTimeout": "2s",
+    "strictEvaluation": true
+  },
   "schema": {
     "enforcement": "reject"
   },
   "server": {
+    "adminAPI": {
+      "enabled": false
+    },
+    "advanced": {
+      "grpc": {
+        "connectionTimeout": "60s",
+        "maxConcurrentStreams": 1024,
+        "maxConnectionAge": "600s",
+        "maxRecvMsgSizeBytes": 83886080
+      },
+      "http": {
+        "idleTimeout": "120s",
+        "readHeaderTimeout": "15s",
+        "readTimeout": "30s",
+        "writeTimeout": "30s"
+      }
+    },
     "apiExplorerEnabled": false,
+    "cors": {
+      "allowedHeaders": [
+        "content-type"
+      ],
+      "allowedOrigins": [
+        "*"
+      ],
+      "disabled": true,
+      "maxAge": "10s"
+    },
+    "grpcListenAddr": ":3593",
+    "httpListenAddr": ":3592",
+    "logRequestPayloads": false,
+    "metricsEnabled": true,
     "playgroundEnabled": false,
     "requestLimits": {
-      "maxActionsPerResource": 500,
-      "maxResourcesPerRequest": 500
-    }
+      "maxActionsPerResource": 4000,
+      "maxResourcesPerRequest": 4000
+    },
+    "udsFileMode": 502
   },
   "telemetry": {
     "disabled": true
@@ -132,6 +218,99 @@ lists every way a policy set reaches the container.
 </pre>
 </td>
 			<td>Cerbos server configuration, written verbatim to `/config/cerbos.yaml`. Anything Cerbos accepts can be set here; Helm merges overrides key by key. `storage` is the exception: the chart owns and hard-codes it.  Ref: https://docs.cerbos.dev/cerbos/latest/configuration/index.html</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.engine</td>
+			<td>object</td>
+			<td><pre lang="json">
+{
+  "celErrorLogLevel": "warn",
+  "defaultPolicyVersion": "default",
+  "defaultScope": "",
+  "globals": {
+    "environment": "staging"
+  },
+  "lenientScopeSearch": false,
+  "policyLoaderTimeout": "2s",
+  "strictEvaluation": true
+}
+</pre>
+</td>
+			<td>Cerbos engine block.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.engine.celErrorLogLevel</td>
+			<td>string</td>
+			<td><pre lang="json">
+"warn"
+</pre>
+</td>
+			<td>Level at which CEL runtime errors raised during policy evaluation are logged.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.engine.defaultPolicyVersion</td>
+			<td>string</td>
+			<td><pre lang="json">
+"default"
+</pre>
+</td>
+			<td>Policy version to assume if the request does not specify one.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.engine.defaultScope</td>
+			<td>string</td>
+			<td><pre lang="json">
+""
+</pre>
+</td>
+			<td>Scope to assume if the request does not specify one.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.engine.globals</td>
+			<td>object</td>
+			<td><pre lang="json">
+{
+  "environment": "staging"
+}
+</pre>
+</td>
+			<td>Environment-specific variables made available to policy conditions.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.engine.globals.environment</td>
+			<td>string</td>
+			<td><pre lang="json">
+"staging"
+</pre>
+</td>
+			<td>Deployment environment exposed to policy conditions.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.engine.lenientScopeSearch</td>
+			<td>bool</td>
+			<td><pre lang="json">
+false
+</pre>
+</td>
+			<td>Ignore missing scopes and search upwards through the scope tree for a usable policy.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.engine.policyLoaderTimeout</td>
+			<td>string</td>
+			<td><pre lang="json">
+"2s"
+</pre>
+</td>
+			<td>Timeout for loading policies from the policy store.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.engine.strictEvaluation</td>
+			<td>bool</td>
+			<td><pre lang="json">
+true
+</pre>
+</td>
+			<td>Deny the affected action when policy evaluation raises an error.</td>
 		</tr>
 		<tr>
 			<td>cerbos.config.schema</td>
@@ -158,16 +337,190 @@ lists every way a policy set reaches the container.
 			<td>object</td>
 			<td><pre lang="json">
 {
+  "adminAPI": {
+    "enabled": false
+  },
+  "advanced": {
+    "grpc": {
+      "connectionTimeout": "60s",
+      "maxConcurrentStreams": 1024,
+      "maxConnectionAge": "600s",
+      "maxRecvMsgSizeBytes": 83886080
+    },
+    "http": {
+      "idleTimeout": "120s",
+      "readHeaderTimeout": "15s",
+      "readTimeout": "30s",
+      "writeTimeout": "30s"
+    }
+  },
   "apiExplorerEnabled": false,
+  "cors": {
+    "allowedHeaders": [
+      "content-type"
+    ],
+    "allowedOrigins": [
+      "*"
+    ],
+    "disabled": true,
+    "maxAge": "10s"
+  },
+  "grpcListenAddr": ":3593",
+  "httpListenAddr": ":3592",
+  "logRequestPayloads": false,
+  "metricsEnabled": true,
   "playgroundEnabled": false,
   "requestLimits": {
-    "maxActionsPerResource": 500,
-    "maxResourcesPerRequest": 500
-  }
+    "maxActionsPerResource": 4000,
+    "maxResourcesPerRequest": 4000
+  },
+  "udsFileMode": 502
 }
 </pre>
 </td>
 			<td>Cerbos server block. Ref: https://docs.cerbos.dev/cerbos/latest/configuration/server</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.server.adminAPI</td>
+			<td>object</td>
+			<td><pre lang="json">
+{
+  "enabled": false
+}
+</pre>
+</td>
+			<td>Admin API configuration.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.server.adminAPI.enabled</td>
+			<td>bool</td>
+			<td><pre lang="json">
+false
+</pre>
+</td>
+			<td>Enable the admin API.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.server.advanced</td>
+			<td>object</td>
+			<td><pre lang="json">
+{
+  "grpc": {
+    "connectionTimeout": "60s",
+    "maxConcurrentStreams": 1024,
+    "maxConnectionAge": "600s",
+    "maxRecvMsgSizeBytes": 83886080
+  },
+  "http": {
+    "idleTimeout": "120s",
+    "readHeaderTimeout": "15s",
+    "readTimeout": "30s",
+    "writeTimeout": "30s"
+  }
+}
+</pre>
+</td>
+			<td>Advanced server settings.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.server.advanced.grpc</td>
+			<td>object</td>
+			<td><pre lang="json">
+{
+  "connectionTimeout": "60s",
+  "maxConcurrentStreams": 1024,
+  "maxConnectionAge": "600s",
+  "maxRecvMsgSizeBytes": 83886080
+}
+</pre>
+</td>
+			<td>gRPC server settings.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.server.advanced.grpc.connectionTimeout</td>
+			<td>string</td>
+			<td><pre lang="json">
+"60s"
+</pre>
+</td>
+			<td>Timeout for establishing a new connection.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.server.advanced.grpc.maxConcurrentStreams</td>
+			<td>int</td>
+			<td><pre lang="json">
+1024
+</pre>
+</td>
+			<td>Maximum concurrent streams per connection.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.server.advanced.grpc.maxConnectionAge</td>
+			<td>string</td>
+			<td><pre lang="json">
+"600s"
+</pre>
+</td>
+			<td>Maximum age of a connection.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.server.advanced.grpc.maxRecvMsgSizeBytes</td>
+			<td>int</td>
+			<td><pre lang="json">
+83886080
+</pre>
+</td>
+			<td>Maximum size of a single request message in bytes.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.server.advanced.http</td>
+			<td>object</td>
+			<td><pre lang="json">
+{
+  "idleTimeout": "120s",
+  "readHeaderTimeout": "15s",
+  "readTimeout": "30s",
+  "writeTimeout": "30s"
+}
+</pre>
+</td>
+			<td>HTTP server settings.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.server.advanced.http.idleTimeout</td>
+			<td>string</td>
+			<td><pre lang="json">
+"120s"
+</pre>
+</td>
+			<td>Keepalive timeout.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.server.advanced.http.readHeaderTimeout</td>
+			<td>string</td>
+			<td><pre lang="json">
+"15s"
+</pre>
+</td>
+			<td>Timeout for reading request headers.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.server.advanced.http.readTimeout</td>
+			<td>string</td>
+			<td><pre lang="json">
+"30s"
+</pre>
+</td>
+			<td>Timeout for reading a request.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.server.advanced.http.writeTimeout</td>
+			<td>string</td>
+			<td><pre lang="json">
+"30s"
+</pre>
+</td>
+			<td>Timeout for writing a response.</td>
 		</tr>
 		<tr>
 			<td>cerbos.config.server.apiExplorerEnabled</td>
@@ -177,6 +530,100 @@ false
 </pre>
 </td>
 			<td>Serve the interactive API explorer. Off: it is a documentation UI on an endpoint that answers authorization questions.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.server.cors</td>
+			<td>object</td>
+			<td><pre lang="json">
+{
+  "allowedHeaders": [
+    "content-type"
+  ],
+  "allowedOrigins": [
+    "*"
+  ],
+  "disabled": true,
+  "maxAge": "10s"
+}
+</pre>
+</td>
+			<td>CORS configuration for the server.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.server.cors.allowedHeaders</td>
+			<td>list</td>
+			<td><pre lang="json">
+[
+  "content-type"
+]
+</pre>
+</td>
+			<td>Headers included in the allowed-headers response header.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.server.cors.allowedOrigins</td>
+			<td>list</td>
+			<td><pre lang="json">
+[
+  "*"
+]
+</pre>
+</td>
+			<td>Origins included in the allowed-origins response header.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.server.cors.disabled</td>
+			<td>bool</td>
+			<td><pre lang="json">
+true
+</pre>
+</td>
+			<td>Disable CORS.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.server.cors.maxAge</td>
+			<td>string</td>
+			<td><pre lang="json">
+"10s"
+</pre>
+</td>
+			<td>Maximum age of the CORS preflight check.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.server.grpcListenAddr</td>
+			<td>string</td>
+			<td><pre lang="json">
+":3593"
+</pre>
+</td>
+			<td>Dedicated gRPC listen address.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.server.httpListenAddr</td>
+			<td>string</td>
+			<td><pre lang="json">
+":3592"
+</pre>
+</td>
+			<td>Dedicated HTTP listen address.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.server.logRequestPayloads</td>
+			<td>bool</td>
+			<td><pre lang="json">
+false
+</pre>
+</td>
+			<td>Log request payloads.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.server.metricsEnabled</td>
+			<td>bool</td>
+			<td><pre lang="json">
+true
+</pre>
+</td>
+			<td>Enable the metrics endpoint.</td>
 		</tr>
 		<tr>
 			<td>cerbos.config.server.playgroundEnabled</td>
@@ -192,8 +639,8 @@ false
 			<td>object</td>
 			<td><pre lang="json">
 {
-  "maxActionsPerResource": 500,
-  "maxResourcesPerRequest": 500
+  "maxActionsPerResource": 4000,
+  "maxResourcesPerRequest": 4000
 }
 </pre>
 </td>
@@ -203,7 +650,7 @@ false
 			<td>cerbos.config.server.requestLimits.maxActionsPerResource</td>
 			<td>int</td>
 			<td><pre lang="json">
-500
+4000
 </pre>
 </td>
 			<td>Maximum actions asked about per resource.</td>
@@ -212,10 +659,19 @@ false
 			<td>cerbos.config.server.requestLimits.maxResourcesPerRequest</td>
 			<td>int</td>
 			<td><pre lang="json">
-500
+4000
 </pre>
 </td>
 			<td>Maximum resources asked about per request.</td>
+		</tr>
+		<tr>
+			<td>cerbos.config.server.udsFileMode</td>
+			<td>int</td>
+			<td><pre lang="json">
+502
+</pre>
+</td>
+			<td>File mode for Unix domain sockets created by the server.</td>
 		</tr>
 		<tr>
 			<td>cerbos.config.telemetry</td>
